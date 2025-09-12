@@ -1,0 +1,58 @@
+{
+  "name": "brisalog-portal",
+  "version": "1.0.0",
+  "description": "Sistema completo de agendamento de entregas para fornecedores da Brisanet",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "node prisma/seed.js",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset --force && npm run db:seed",
+    "init-project": "npm install && npm run db:generate && npm run db:push && npm run db:seed",
+    "build": "echo 'Frontend já compilado com Tailwind CDN'",
+    "deploy": "npm run db:push && npm start"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "prisma",
+    "sqlite",
+    "brisanet",
+    "agendamento",
+    "entregas",
+    "fornecedores"
+  ],
+  "author": "Brisanet",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^5.7.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "prisma": "^5.7.1"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brisanet/brisalog-portal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/brisanet/brisalog-portal/issues"
+  },
+  "homepage": "https://github.com/brisanet/brisalog-portal#readme"
+}
