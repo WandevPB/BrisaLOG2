@@ -2,16 +2,15 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+// ...existing code...
+
+
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { PrismaClient } = require('@prisma/client');
-
-// Importar rotas de autenticação
 const authRoutes = require('./authRoutes');
-
 require('dotenv').config();
-
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
@@ -1653,6 +1652,158 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
 });
 
 // ============================================================================
+// ROTA DE KPIs DO DASHBOARD
+// ============================================================================ 
+app.get('/api/kpis', authenticateToken, async (req, res) => {
+  try {
+    console.log('• GET /api/kpis - query:', req.query, 'user:', req.user && req.user.id);
+    // Filtros via query params
+    const reqCd = req.query.cd || req.user.id; // se passar cd, permitir (desde que o usuário tenha permissão)
+    const cdId = Number(reqCd) || req.user.id;
+
+    const cd = await prisma.cd.findUnique({ where: { id: cdId } });
+    if (!cd) return res.status(404).json({ error: 'CD não encontrado' });
+
+    const where = { cdId };
+    const { start, end } = req.query;
+    // Filtrar por período quando informado (assume formato YYYY-MM-DD)
+    if (start || end) {
+      where.dataEntrega = {};
+      if (start) where.dataEntrega.gte = new Date(start + 'T00:00:00');
+      if (end) where.dataEntrega.lte = new Date(end + 'T23:59:59');
+    }
+
+    // Buscar agendamentos com fornecedor
+    const agendamentos = await prisma.agendamento.findMany({
+      where,
+      include: { fornecedor: true }
+    });
+    const totalAgendamentos = agendamentos.length;
+    const entregues = agendamentos.filter(a => a.status === 'entregue').length;
+    const naoVeio = agendamentos.filter(a => a.status === 'nao-veio').length;
+    const reagendados = agendamentos.filter(a => a.status === 'reagendamento').length;
+    const pendentes = agendamentos.filter(a => a.status === 'pendente').length;
+    const confirmados = agendamentos.filter(a => a.status === 'confirmado').length;
+
+    // % KPIs
+    const percentEntregues = totalAgendamentos ? ((entregues / totalAgendamentos) * 100).toFixed(1) + '%' : '-';
+    const percentNaoVeio = totalAgendamentos ? ((naoVeio / totalAgendamentos) * 100).toFixed(1) + '%' : '-';
+    const percentReagendados = totalAgendamentos ? ((reagendados / totalAgendamentos) * 100).toFixed(1) + '%' : '-';
+
+  // Tempo médio de permanência (em minutos)
+    // Supondo que existam campos dataEntrada e dataSaida (ajuste se necessário)
+    let tempoTotal = 0, countTempo = 0;
+    agendamentos.forEach(a => {
+      if (a.dataEntrada && a.dataSaida) {
+        const entrada = new Date(a.dataEntrada);
+        const saida = new Date(a.dataSaida);
+        const diff = (saida - entrada) / 60000; // minutos
+        if (diff > 0) {
+          tempoTotal += diff;
+          countTempo++;
+        }
+      }
+    });
+  const tempoMedioPermanencia = countTempo ? Math.round(tempoTotal / countTempo) + ' min' : null;
+
+    // Distribuição dos status (para gráfico pizza)
+    const statusLabels = ['Entregue','Confirmado','Não Veio','Reagendado','Pendente'];
+    const statusValores = [entregues, confirmados, naoVeio, reagendados, pendentes];
+
+  // Top 5 fornecedores com mais "Não Veio"
+    const fornecedoresNaoVeio = {};
+    agendamentos.forEach(a => {
+      if (a.status === 'nao-veio' && a.fornecedor) {
+        const nome = a.fornecedor.nome;
+        fornecedoresNaoVeio[nome] = (fornecedoresNaoVeio[nome] || 0) + 1;
+      }
+    });
+    const topFornecedores = Object.entries(fornecedoresNaoVeio)
+      .sort((a,b) => b[1]-a[1])
+      .slice(0,5);
+    const topFornecedoresLabels = topFornecedores.map(f => f[0]);
+    const topFornecedoresValores = topFornecedores.map(f => f[1]);
+
+    // Agendamentos por dia (linha)
+    const agendamentosPorDia = {};
+    agendamentos.forEach(a => {
+      if (a.dataEntrega) {
+        const dia = a.dataEntrega.toISOString().split('T')[0];
+        agendamentosPorDia[dia] = (agendamentosPorDia[dia] || 0) + 1;
+      }
+    });
+    const agendamentosLabels = Object.keys(agendamentosPorDia).sort().slice(-14);
+    const agendamentosValores = agendamentosLabels.map(d => agendamentosPorDia[d]);
+
+    // Não veio por dia (mesma janela de labels)
+    const naoVeioPorDiaMap = {};
+    agendamentos.forEach(a => {
+      if (a.dataEntrega && a.status === 'nao-veio') {
+        const dia = a.dataEntrega.toISOString().split('T')[0];
+        naoVeioPorDiaMap[dia] = (naoVeioPorDiaMap[dia] || 0) + 1;
+      }
+    });
+    const naoVeioPorDia = agendamentosLabels.map(d => naoVeioPorDiaMap[d] || 0);
+
+    // Tendência comparando com período anterior (se start/end fornecidos)
+    let tendenciaEntregues = null;
+    let tendenciaNaoVeio = null;
+    let tendenciaReagendados = null;
+    if (start && end) {
+      const startDate = new Date(start + 'T00:00:00');
+      const endDate = new Date(end + 'T23:59:59');
+      const delta = endDate.getTime() - startDate.getTime();
+      const prevStart = new Date(startDate.getTime() - delta - 24*60*60*1000);
+      const prevEnd = new Date(startDate.getTime() - 24*60*60*1000);
+
+      const prevWhere = { cdId, dataEntrega: { gte: prevStart, lte: prevEnd } };
+      const prevAgend = await prisma.agendamento.findMany({ where: prevWhere });
+      const prevEntregues = prevAgend.filter(a => a.status === 'entregue').length;
+      const prevNaoVeio = prevAgend.filter(a => a.status === 'nao-veio').length;
+      const prevReag = prevAgend.filter(a => a.status === 'reagendamento').length;
+
+      tendenciaEntregues = entregues - prevEntregues;
+      tendenciaNaoVeio = naoVeio - prevNaoVeio;
+      tendenciaReagendados = reagendados - prevReag;
+    }
+
+    res.json({
+      cdNome: cd.nome,
+      totalAgendamentos,
+      percentEntregues,
+      percentNaoVeio,
+      percentReagendados,
+      tempoMedioPermanencia,
+      taxaPontualidade: null, // Indisponível por falta de campos confiáveis
+      statusLabels,
+      statusValores,
+      topFornecedoresLabels,
+      topFornecedoresValores,
+      agendamentosLabels,
+      agendamentosValores,
+      naoVeioPorDia,
+      tendenciaEntregues,
+      tendenciaNaoVeio,
+      tendenciaReagendados
+    });
+  } catch (error) {
+    console.error('Erro ao buscar KPIs:', error);
+    res.status(500).json({ error: 'Erro ao buscar KPIs' });
+  }
+});
+
+// Rota para listar CDs (para select)
+app.get('/api/cds', authenticateToken, async (req, res) => {
+  try {
+    const cds = await prisma.cd.findMany({ select: { id: true, nome: true } });
+    res.json(cds);
+  } catch (err) {
+    console.error('Erro ao listar CDs:', err);
+    res.status(500).json({ error: 'Erro ao listar CDs' });
+  }
+});
+
+// ============================================================================
 // MIDDLEWARE DE ERROR E INICIALIZAÇÃO
 // ============================================================================
 
@@ -1687,6 +1838,7 @@ app.listen(PORT, () => {
   console.log('• DELETE /api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF - Excluir NF');
   console.log('• GET /api/dashboard/stats - Estatísticas');
   console.log('• GET /api/files/:filename - Download de arquivos');
+  console.log('• GET /api/kpis - KPIs do dashboard');
 });
 
 // Graceful shutdown

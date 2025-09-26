@@ -1,3 +1,22 @@
+// Modal DASHBOARD KPIs removido - será refeito do zero conforme solicitado
+// Funções globais para compatibilidade com HTML (onclick)
+window.openConsultaModal = function() { dashboard.openConsultaModal(); };
+window.closeConsultaModal = function() { dashboard.closeConsultaModal(); };
+window.openRegistrarEntregaModal = function() { dashboard.openRegistrarEntregaModal(); };
+window.closeRegistrarEntregaModal = function() { dashboard.closeRegistrarEntregaModal(); };
+window.openBloqueioModal = function() { dashboard.openBloqueioModal(); };
+window.closeBloqueioModal = function() { dashboard.closeBloqueioModal(); };
+window.openGerenciarBloqueiosModal = function() { dashboard.openGerenciarBloqueiosModal(); };
+window.closeGerenciarBloqueiosModal = function() { dashboard.closeGerenciarBloqueiosModal(); };
+window.openEntregasModal = function() { dashboard.openEntregasModal(); };
+window.closeEntregasModal = function() { dashboard.closeEntregasModal(); };
+window.closeDetailModal = function() { dashboard.closeDetailModal(); };
+window.closeSuggestDateModal = function() { dashboard.closeSuggestDateModal(); };
+window.closeAllStatusModal = function() { dashboard.closeAllStatusModal(); };
+window.closeTodayDeliveriesModal = function() { dashboard.closeTodayDeliveriesModal(); };
+window.closeStatusModal = function() { dashboard.closeStatusModal(); };
+window.closeEditarBloqueioModal = function() { dashboard.closeEditarBloqueioModal(); };
+window.fecharModalEntregas = function() { dashboard.fecharModalEntregas(); };
 // Dashboard.js - Sistema de Dashboard para CDs
 
 // Função para mostrar notificações ao usuário
@@ -69,6 +88,158 @@ function showNotification(message, type = 'info') {
 }
 
 class CDDashboard {
+    // Modal KPIs
+    openKpisModal() {
+        document.getElementById('dashboard-kpis-modal')?.classList.remove('hidden');
+        this.loadKpis();
+    }
+    closeKpisModal() {
+        document.getElementById('dashboard-kpis-modal')?.classList.add('hidden');
+    }
+    async loadKpis() {
+        const loading = document.getElementById('kpis-loading');
+        const content = document.getElementById('kpis-content');
+        loading.classList.remove('hidden');
+        content.innerHTML = '';
+        try {
+            const token = sessionStorage.getItem('token');
+            const res = await fetch('/api/kpis', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Erro ao buscar KPIs');
+            const kpis = await res.json();
+            loading.classList.add('hidden');
+            content.innerHTML = this.renderKpisContent(kpis);
+            this.renderKpisCharts(kpis);
+        } catch (e) {
+            loading.classList.add('hidden');
+            content.innerHTML = `<div class='text-center text-red-600 font-bold'>Erro ao carregar KPIs</div>`;
+        }
+    }
+    renderKpisContent(kpis) {
+        // KPIs principais
+        return `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div class="bg-gradient-to-br from-orange-primary to-orange-accent text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                <div class="text-4xl font-bold mb-2">${kpis.totalAgendamentos ?? '-'}</div>
+                <div class="text-lg font-semibold">Total de Agendamentos</div>
+            </div>
+            <div class="bg-gradient-to-br from-green-500 to-green-400 text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                <div class="text-4xl font-bold mb-2">${kpis.percentEntregues ?? '-'}</div>
+                <div class="text-lg font-semibold">% Entregues</div>
+            </div>
+            <div class="bg-gradient-to-br from-red-500 to-orange-primary text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                <div class="text-4xl font-bold mb-2">${kpis.percentNaoVeio ?? '-'}</div>
+                <div class="text-lg font-semibold">% Não Veio</div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="font-bold text-orange-primary text-lg flex items-center"><i class="fas fa-chart-pie mr-2"></i>Status dos Agendamentos</div>
+                    <button onclick="dashboard.loadKpis()" class="bg-orange-primary text-white px-3 py-1 rounded hover:bg-orange-secondary"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <canvas id="kpi-status-pizza" height="180"></canvas>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-chart-line mr-2"></i>Agendamentos por Dia</div>
+                <canvas id="kpi-agendamentos-linha" height="180"></canvas>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-stopwatch mr-2"></i>Tempo Médio de Permanência</div>
+                <div class="text-3xl font-bold text-gray-700">${kpis.tempoMedioPermanencia ?? '-'}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-users mr-2"></i>Top 5 Fornecedores Não Veio</div>
+                <canvas id="kpi-top-fornecedores" height="180"></canvas>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow flex flex-col mb-8">
+            <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-chart-bar mr-2"></i>Não Veio por Dia</div>
+            <canvas id="kpi-nao-veio-linha" height="180"></canvas>
+        </div>
+        `;
+    }
+    renderKpisCharts(kpis) {
+        // Pizza status
+        if (window.kpiStatusPizza) window.kpiStatusPizza.destroy();
+        window.kpiStatusPizza = new Chart(document.getElementById('kpi-status-pizza').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: kpis.statusLabels,
+                datasets: [{
+                    data: kpis.statusValores,
+                    backgroundColor: [
+                        '#FF6B35','#10B981','#3B82F6','#EF4444','#8B5CF6'
+                    ],
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#FF6B35', font: { weight: 'bold' } } }
+                }
+            }
+        });
+        // Linha agendamentos por dia
+        if (window.kpiAgendLinha) window.kpiAgendLinha.destroy();
+        window.kpiAgendLinha = new Chart(document.getElementById('kpi-agendamentos-linha').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: kpis.agendamentosLabels,
+                datasets: [{
+                    label: 'Agendamentos',
+                    data: kpis.agendamentosValores,
+                    borderColor: '#FF6B35',
+                    backgroundColor: 'rgba(255,107,53,0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
+            }
+        });
+        // Top fornecedores não veio
+        if (window.kpiTopForn) window.kpiTopForn.destroy();
+        window.kpiTopForn = new Chart(document.getElementById('kpi-top-fornecedores').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: kpis.topFornecedoresLabels,
+                datasets: [{
+                    label: 'Não Veio',
+                    data: kpis.topFornecedoresValores,
+                    backgroundColor: '#EF4444',
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
+            }
+        });
+        // Linha não veio por dia
+        if (window.kpiNaoVeioLinha) window.kpiNaoVeioLinha.destroy();
+        window.kpiNaoVeioLinha = new Chart(document.getElementById('kpi-nao-veio-linha').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: kpis.agendamentosLabels,
+                datasets: [{
+                    label: 'Não Veio',
+                    data: kpis.naoVeioPorDia,
+                    borderColor: '#EF4444',
+                    backgroundColor: 'rgba(239,68,68,0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#EF4444' } } }
+            }
+        });
+    }
     constructor() {
         this.agendamentos = [];
         this.filteredAgendamentos = [];
@@ -81,6 +252,58 @@ class CDDashboard {
         this.totalPages = 1;
         
         this.init();
+    }
+    // Funções globais para abrir/fechar modais do dashboard
+    openConsultaModal() {
+        document.getElementById('consulta-modal')?.classList.remove('hidden');
+    }
+    closeConsultaModal() {
+        document.getElementById('consulta-modal')?.classList.add('hidden');
+    }
+    openRegistrarEntregaModal() {
+        document.getElementById('registrar-entrega-modal')?.classList.remove('hidden');
+    }
+    closeRegistrarEntregaModal() {
+        document.getElementById('registrar-entrega-modal')?.classList.add('hidden');
+    }
+    openBloqueioModal() {
+        document.getElementById('bloqueio-modal')?.classList.remove('hidden');
+    }
+    closeBloqueioModal() {
+        document.getElementById('bloqueio-modal')?.classList.add('hidden');
+    }
+    openGerenciarBloqueiosModal() {
+        document.getElementById('gerenciar-bloqueios-modal')?.classList.remove('hidden');
+    }
+    closeGerenciarBloqueiosModal() {
+        document.getElementById('gerenciar-bloqueios-modal')?.classList.add('hidden');
+    }
+    openEntregasModal() {
+        document.getElementById('modal-entregas')?.classList.remove('hidden');
+    }
+    closeEntregasModal() {
+        document.getElementById('modal-entregas')?.classList.add('hidden');
+    }
+    closeDetailModal() {
+        document.getElementById('detail-modal')?.classList.add('hidden');
+    }
+    closeSuggestDateModal() {
+        document.getElementById('suggest-date-modal')?.classList.add('hidden');
+    }
+    closeAllStatusModal() {
+        document.getElementById('all-status-modal')?.classList.add('hidden');
+    }
+    closeTodayDeliveriesModal() {
+        document.getElementById('today-deliveries-modal')?.classList.add('hidden');
+    }
+    closeStatusModal() {
+        document.getElementById('status-modal')?.classList.add('hidden');
+    }
+    closeEditarBloqueioModal() {
+        document.getElementById('editar-bloqueio-modal')?.classList.add('hidden');
+    }
+    fecharModalEntregas() {
+        document.getElementById('modal-entregas-entregues')?.classList.add('hidden');
     }
 
     // Função para formatar datas de forma segura
@@ -163,6 +386,11 @@ class CDDashboard {
     init() {
         this.checkAuthentication();
         this.setupEventListeners();
+        // Botão KPIs
+        const kpisBtn = document.getElementById('dashboard-kpis-button');
+        if (kpisBtn) {
+            kpisBtn.onclick = () => this.openKpisModal();
+        }
         this.loadUserInfo();
         this.loadAgendamentos();
         this.setMinDate();
@@ -864,13 +1092,7 @@ class CDDashboard {
         `;
     }
 
-    closeAllStatusModal() {
-        document.getElementById('all-status-modal').classList.add('hidden');
-    }
-
-    closeTodayDeliveriesModal() {
-        document.getElementById('today-deliveries-modal').classList.add('hidden');
-    }
+    // Métodos de modal removidos para novo modal
 
     renderList() {
         if (this.filteredAgendamentos.length === 0) {
@@ -1650,10 +1872,7 @@ class CDDashboard {
         `;
     }
 
-    closeDetailModal() {
-        document.getElementById('detail-modal').classList.add('hidden');
-        this.currentAgendamentoId = null;
-    }
+    // Métodos de modal removidos para novo modal
 
     async updateAgendamentoStatus(id, newStatus) {
         try {
@@ -1912,10 +2131,7 @@ class CDDashboard {
         }
     }
 
-    closeSuggestDateModal() {
-        document.getElementById('suggest-date-modal').classList.add('hidden');
-        this.currentAgendamentoId = null;
-    }
+    // Métodos de modal removidos para novo modal
 
     async handleSuggestDate() {
         const novaData = document.getElementById('nova-data').value;
@@ -2195,19 +2411,7 @@ class CDDashboard {
 
     // --- MÉTODOS PARA CONTROLE DE MODAL (ENCAPSULADOS) ---
 
-    openConsultaModal() {
-        document.getElementById('consulta-modal').classList.remove('hidden');
-        document.getElementById('codigo-consulta').focus();
-    }
-
-    closeConsultaModal() {
-        document.getElementById('consulta-modal').classList.add('hidden');
-        document.getElementById('codigo-consulta').value = '';
-    }
-
-    closeStatusModal() {
-        document.getElementById('status-modal').classList.add('hidden');
-    }
+    // Métodos de modal removidos para novo modal
 }
 
 // --- FIM DA CLASSE ---
@@ -2244,9 +2448,7 @@ function showTodayDeliveries() {
     dashboard.showTodayDeliveries();
 }
 
-function closeAllStatusModal() {
-    dashboard.closeAllStatusModal();
-}
+// Função global removida para novo modal
 
 function closeTodayDeliveriesModal() {
     dashboard.closeTodayDeliveriesModal();
@@ -2988,9 +3190,9 @@ async function excluirBloqueio(id, dataFormatada) {
 // SISTEMA DE REGISTRAR ENTREGA
 // ========================================
 
-let entregaCurrentStep = 1;
-let entregaPedidos = [];
-let entregaCurrentPedido = 0;
+var entregaCurrentStep = 1;
+var entregaPedidos = [];
+var entregaCurrentPedido = 0;
 
 function openRegistrarEntregaModal() {
     const modal = document.getElementById('registrar-entrega-modal');
@@ -3639,8 +3841,8 @@ async function handleRegistrarEntrega(e) {
 // Variáveis globais para o modal de entregas
 window.entregasData = [];
 window.entregasFiltradas = [];
-let paginaAtual = 1;
-const itensPorPagina = 12;
+window.paginaAtual = 1;
+window.itensPorPagina = 12;
 
 function openEntregasModal() {
     const modal = document.getElementById('modal-entregas-entregues');
@@ -3650,8 +3852,20 @@ function openEntregasModal() {
     }
     
     modal.classList.remove('hidden');
+    // Limpar filtros de busca e período ao abrir o modal
+    const buscaEl = document.getElementById('busca-entregas');
+    if (buscaEl) buscaEl.value = '';
+    const periodoEl = document.getElementById('filtro-periodo');
+    if (periodoEl) periodoEl.value = 'todos';
+    const dataInicioEl = document.getElementById('data-inicio');
+    const dataFimEl = document.getElementById('data-fim');
+    if (dataInicioEl) dataInicioEl.value = '';
+    if (dataFimEl) dataFimEl.value = '';
     configurarFiltrosEntregas();
     carregarTodasEntregas();
+    // Garantir que o container de entregas fique visível
+    const container = document.getElementById('entregas-container');
+    if (container) container.classList.remove('hidden');
 }
 
 function fecharModalEntregas() {
@@ -3713,6 +3927,8 @@ function configurarFiltrosEntregas() {
 }
 
 async function carregarTodasEntregas() {
+            // Log para debug: mostrar todos os status recebidos
+            console.log('Status dos agendamentos recebidos:', agendamentos.map(a => a.status));
     mostrarLoadingEntregas(true);
     
     try {
@@ -3724,10 +3940,21 @@ async function carregarTodasEntregas() {
         });
         
         const result = await response.json();
-        
+
         if (response.ok) {
-            const agendamentos = Array.isArray(result) ? result : (result.data || result.agendamentos || []);
-            window.entregasData = agendamentos.filter(agendamento => agendamento.status === 'entregue');
+            // Garante que sempre use o array correto
+            const agendamentos = Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : (result.agendamentos || []));
+            window.entregasData = agendamentos.filter(agendamento => {
+                const rawStatus = agendamento.status;
+                if (!rawStatus) {
+                    console.log('[Filtro Entregas] Ignorado (status vazio):', agendamento.codigo, '| status:', rawStatus);
+                    return false;
+                }
+                const status = String(rawStatus).trim().toLowerCase();
+                const match = status === 'entregue';
+                console.log('[Filtro Entregas] codigo:', agendamento.codigo, '| status original:', rawStatus, '| status filtrado:', status, '| match:', match);
+                return match;
+            });
             window.entregasFiltradas = [...window.entregasData];
             
             console.log('🔍 DEBUG:', {
@@ -3818,7 +4045,7 @@ function aplicarFiltrosEntregas() {
     const textoPesquisa = document.getElementById('busca-entregas').value.toLowerCase();
     const periodo = document.getElementById('filtro-periodo').value;
     
-    let entregasFiltradas = [...window.entregasData];
+    let entregasFiltradas = Array.isArray(window.entregasData) ? [...window.entregasData] : [];
     
     // Filtro por texto
     if (textoPesquisa) {
@@ -3874,7 +4101,7 @@ function aplicarFiltrosEntregas() {
     entregasFiltradas.sort((a, b) => new Date(b.dataEntrega) - new Date(a.dataEntrega));
     
     window.entregasFiltradas = entregasFiltradas;
-    paginaAtual = 1;
+    window.paginaAtual = 1;
     
     renderizarEntregas();
     atualizarPaginacao();
@@ -3982,10 +4209,10 @@ function calcularTempoRelativo(data) {
 
 function atualizarPaginacao() {
     const totalItens = window.entregasFiltradas.length;
-    const totalPaginas = Math.ceil(totalItens / itensPorPagina);
-    
-    const inicioInfo = totalItens > 0 ? ((paginaAtual - 1) * itensPorPagina) + 1 : 0;
-    const fimInfo = Math.min(paginaAtual * itensPorPagina, totalItens);
+    const totalPaginas = Math.ceil(totalItens / window.itensPorPagina);
+
+    const inicioInfo = totalItens > 0 ? ((window.paginaAtual - 1) * window.itensPorPagina) + 1 : 0;
+    const fimInfo = Math.min(window.paginaAtual * window.itensPorPagina, totalItens);
     
     console.log('📊 PAGINAÇÃO:', { totalItens, inicioInfo, fimInfo });
     
@@ -4069,2672 +4296,4 @@ function irParaPagina(pagina) {
     paginaAtual = pagina;
     renderizarEntregas();
     atualizarPaginacao();
-}
-
-// ========================================
-// DASHBOARD KPIs - PowerBI Style
-// ========================================
-
-// Variáveis globais para o Dashboard KPIs
-let kpiData = {
-    periodoAtual: {
-        agendamentos: [],
-        metricas: {}
-    },
-    periodoAnterior: {
-        agendamentos: [],
-        metricas: {}
-    },
-    topFornecedores: [],
-    tendencias: {
-        entregasSemanais: [],
-        distribuicaoHorarios: {}
-    }
-};
-
-function openDashboardKPIModal() {
-    const modal = document.getElementById('dashboard-kpi-modal');
-    if (!modal) {
-        console.error('Modal dashboard-kpi-modal não encontrado');
-        return;
-    }
-    
-    // Exibir o modal
-    modal.classList.remove('hidden');
-    
-    // Inicializar período (últimos 30 dias por padrão)
-    const hoje = new Date();
-    const dataFim = hoje.toISOString().split('T')[0];
-    
-    const dataInicio = new Date();
-    dataInicio.setDate(dataInicio.getDate() - 30);
-    const dataInicioStr = dataInicio.toISOString().split('T')[0];
-    
-    document.getElementById('kpi-data-inicio').value = dataInicioStr;
-    document.getElementById('kpi-data-fim').value = dataFim;
-    
-    // Configurar dropdown de período
-    const periodoSelect = document.getElementById('kpi-periodo-select');
-    if (periodoSelect) {
-        periodoSelect.addEventListener('change', function() {
-            const valor = this.value;
-            const hoje = new Date();
-            let inicio = new Date();
-            
-            switch(valor) {
-                case 'ultimos-7':
-                    inicio.setDate(hoje.getDate() - 7);
-                    break;
-                case 'ultimos-30':
-                    inicio.setDate(hoje.getDate() - 30);
-                    break;
-                case 'ultimos-90':
-                    inicio.setDate(hoje.getDate() - 90);
-                    break;
-                case 'ano-atual':
-                    inicio = new Date(hoje.getFullYear(), 0, 1);
-                    break;
-                case 'custom':
-                    // Não alterar as datas, usar as já configuradas
-                    return;
-            }
-            
-            document.getElementById('kpi-data-inicio').value = inicio.toISOString().split('T')[0];
-            document.getElementById('kpi-data-fim').value = hoje.toISOString().split('T')[0];
-            aplicarFiltroPeriodoKPI();
-        });
-    }
-    
-    // Carregar dados de KPI
-    carregarDadosKPI(dataInicioStr, dataFim);
-}
-
-function closeDashboardKPIModal() {
-    const modal = document.getElementById('dashboard-kpi-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
-
-async function carregarDadosKPI(dataInicio, dataFim) {
-    try {
-        console.log('Carregando dados KPI para período:', dataInicio, 'até', dataFim);
-        
-        // Mostrar indicador de carregamento
-        const elementosCarregamento = [
-            'kpi-total-agendamentos', 'kpi-taxa-entrega', 
-            'kpi-taxa-ausencia', 'kpi-tempo-resposta', 'kpi-ocupacao-atual'
-        ];
-        
-        elementosCarregamento.forEach(id => {
-            const elemento = document.getElementById(id);
-            if (elemento) {
-                elemento.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            }
-        });
-        
-        // Calcular período anterior (mesmo número de dias)
-        const inicio = new Date(dataInicio);
-        const fim = new Date(dataFim);
-        const numDias = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
-        
-        const inicioAnterior = new Date(inicio);
-        inicioAnterior.setDate(inicioAnterior.getDate() - numDias);
-        const fimAnterior = new Date(inicio);
-        fimAnterior.setDate(fimAnterior.getDate() - 1);
-        
-        const dataInicioAnterior = inicioAnterior.toISOString().split('T')[0];
-        const dataFimAnterior = fimAnterior.toISOString().split('T')[0];
-        
-        console.log('Período anterior:', dataInicioAnterior, 'até', dataFimAnterior);
-        
-        // Carregar dados do banco
-        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
-        if (!token) {
-            console.error('Token não encontrado');
-            showNotification('Sessão expirada, faça login novamente', 'error');
-            return;
-        }
-        
-        // Recuperar ID do CD logado
-        const cdId = sessionStorage.getItem('cdId') || localStorage.getItem('cdId');
-        if (!cdId) {
-            console.error('ID do CD não encontrado');
-            showNotification('Informações do CD não encontradas, faça login novamente', 'error');
-            return;
-        }
-        
-        // Buscar todos os agendamentos do período para o CD atual
-        const response = await fetch(`http://localhost:3000/api/agendamentos?cdId=${cdId}&dataInicio=${dataInicio}&dataFim=${dataFim}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Erro ao buscar agendamentos: ${response.status}`);
-        }
-        
-        const agendamentos = await response.json();
-        console.log(`Recuperados ${agendamentos.length} agendamentos do banco`);
-        
-        // Buscar agendamentos do período anterior para comparação
-        const responseAnterior = await fetch(`http://localhost:3000/api/agendamentos?cdId=${cdId}&dataInicio=${dataInicioAnterior}&dataFim=${dataFimAnterior}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (!responseAnterior.ok) {
-            throw new Error(`Erro ao buscar agendamentos do período anterior: ${responseAnterior.status}`);
-        }
-        
-        const agendamentosAnteriores = await responseAnterior.json();
-        console.log(`Recuperados ${agendamentosAnteriores.length} agendamentos do período anterior`);
-        
-        // Calcular os KPIs com os dados reais do banco
-        atualizarKPIs(agendamentos, agendamentosAnteriores);
-        
-        // Renderizar os gráficos com dados reais
-        renderizarGraficoStatus(agendamentos);
-        renderizarGraficoDiaSemana(agendamentos);
-        renderizarGraficoTendencia(agendamentos);
-        renderizarGraficoHorarios(agendamentos);
-        renderizarGraficoDesempenhoFornecedores(agendamentos);
-        atualizarTabelaFornecedores(agendamentos);
-        atualizarInsights(agendamentos);
-        atualizarIndicadoresNegocio(agendamentos);
-        
-    } catch (error) {
-        console.error('Erro ao carregar dados KPI:', error);
-        
-        // Mostrar erro ao usuário
-        showNotification('Erro ao carregar dados KPI: ' + error.message, 'error');
-        
-        // Carregar dados simulados em caso de falha
-        console.log('Usando dados simulados como fallback...');
-        carregarDadosSimulados();
-    }
-}
-
-function carregarDadosSimulados() {
-    // Simular carregamento
-    setTimeout(() => {
-        // Gerar dados simulados
-        const dadosSimulados = gerarDadosSimulados();
-        
-        // Atualizar KPIs
-        atualizarKPIsSimulados(dadosSimulados);
-        
-        // Renderizar gráficos com dados simulados
-        renderizarGraficoStatusSimulado(dadosSimulados);
-        renderizarGraficoDiaSemanaSimulado(dadosSimulados);
-        renderizarGraficoTendenciaSimulado(dadosSimulados);
-        renderizarGraficoHorariosSimulado(dadosSimulados);
-        atualizarTabelaFornecedoresSimulado(dadosSimulados);
-        atualizarInsightsSimulado(dadosSimulados);
-        atualizarIndicadoresNegocioSimulado(dadosSimulados);
-    }, 1000);
-}
-
-function gerarDadosSimulados() {
-    return {
-        totalAgendamentos: Math.floor(Math.random() * 500) + 100,
-        taxaEntrega: Math.floor(Math.random() * 30) + 70,
-        taxaAusencia: Math.floor(Math.random() * 10) + 1,
-        tempoResposta: (Math.random() * 5 + 1).toFixed(1),
-        ocupacaoCD: Math.floor(Math.random() * 40) + 60,
-        statusDistribuicao: {
-            pendentes: Math.floor(Math.random() * 50) + 10,
-            confirmados: Math.floor(Math.random() * 100) + 50,
-            entregues: Math.floor(Math.random() * 200) + 100,
-            ausentes: Math.floor(Math.random() * 20) + 5
-        },
-        diaSemanaDistribuicao: [
-            Math.floor(Math.random() * 30) + 10, // Segunda
-            Math.floor(Math.random() * 30) + 20, // Terça
-            Math.floor(Math.random() * 30) + 30, // Quarta
-            Math.floor(Math.random() * 30) + 25, // Quinta
-            Math.floor(Math.random() * 30) + 15, // Sexta
-            Math.floor(Math.random() * 10) + 5,  // Sábado
-            Math.floor(Math.random() * 5)        // Domingo
-        ],
-        horarios: gerarDadosHorariosSimulados(),
-        fornecedores: gerarDadosFornecedoresSimulados()
-    };
-}
-
-function gerarDadosHorariosSimulados() {
-    const horarios = [];
-    
-    // Gerar dados para cada hora do dia (8h às 18h)
-    for (let hora = 8; hora <= 18; hora++) {
-        // Distribuição em forma de sino com pico no meio do dia
-        let valor;
-        if (hora < 10) {
-            valor = Math.floor(Math.random() * 10) + (hora - 7) * 5;
-        } else if (hora > 16) {
-            valor = Math.floor(Math.random() * 10) + (19 - hora) * 5;
-        } else {
-            valor = Math.floor(Math.random() * 15) + 25;
-        }
-        
-        horarios.push({
-            hora: `${hora}:00`,
-            valor: valor
-        });
-    }
-    
-    return horarios;
-}
-
-function gerarDadosFornecedoresSimulados() {
-    const fornecedores = [
-        "Transportadora Rápida",
-        "Logística Express",
-        "Entregas Brasil",
-        "TransBrasa",
-        "LogiTech Transportes",
-        "Fretes & Cia",
-        "Mercado Expresso",
-        "BrasLog",
-        "TransporteJá",
-        "Cargas BR"
-    ];
-    
-    return fornecedores.map(nome => {
-        const total = Math.floor(Math.random() * 100) + 20;
-        const entregas = Math.floor(total * (Math.random() * 0.3 + 0.7)); // 70% a 100% de entregas
-        const ausencias = total - entregas;
-        const taxa = Math.floor((entregas / total) * 100);
-        
-        return {
-            nome: nome,
-            total: total,
-            entregas: entregas,
-            ausencias: ausencias,
-            taxa: taxa
-        };
-    }).sort((a, b) => b.total - a.total); // Ordenar por total
-}
-
-// Função para carregar dados KPI do período
-async function carregarDadosKPI(dataInicio, dataFim) {
-    try {
-        console.log('Carregando dados KPI para período:', dataInicio, 'até', dataFim);
-        
-        // Mostrar indicador de carregamento
-        const elementosCarregamento = [
-            'kpi-total-agendamentos', 'kpi-taxa-entrega', 
-            'kpi-taxa-ausencia', 'kpi-tempo-resposta', 'kpi-ocupacao-atual'
-        ];
-        
-        elementosCarregamento.forEach(id => {
-            const elemento = document.getElementById(id);
-            if (elemento) {
-                elemento.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            }
-        });
-        
-        // Calcular período anterior (mesmo número de dias)
-        const inicio = new Date(dataInicio);
-        const fim = new Date(dataFim);
-        const numDias = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
-        
-        const inicioAnterior = new Date(inicio);
-        inicioAnterior.setDate(inicioAnterior.getDate() - numDias);
-        const fimAnterior = new Date(inicio);
-        fimAnterior.setDate(fimAnterior.getDate() - 1);
-        
-        const dataInicioAnterior = inicioAnterior.toISOString().split('T')[0];
-        const dataFimAnterior = fimAnterior.toISOString().split('T')[0];
-        
-        console.log('Período anterior:', dataInicioAnterior, 'até', dataFimAnterior);
-        
-        // Carregar dados do banco
-        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
-        if (!token) {
-            console.error('Token não encontrado');
-            showNotification('Sessão expirada, faça login novamente', 'error');
-            // Usar dados simulados em caso de falha de autenticação
-            carregarDadosSimulados();
-            return;
-        }
-        
-        // Recuperar ID do CD logado
-        const cdId = sessionStorage.getItem('cdId') || localStorage.getItem('cdId') || sessionStorage.getItem('cd') || localStorage.getItem('cd');
-        if (!cdId) {
-            console.warn('ID do CD não encontrado, tentando carregar dados sem filtro de CD');
-            showNotification('Informações do CD não encontradas, dados podem estar incompletos', 'warning');
-            // Continuar sem o filtro de CD ou usar dados simulados
-            // carregarDadosSimulados();
-            // return;
-        }
-        
-        // Construir URL com ou sem filtro de CD
-        const baseUrl = '/api/agendamentos';
-        const params = new URLSearchParams();
-        params.append('dataInicio', dataInicio);
-        params.append('dataFim', dataFim);
-        if (cdId) params.append('cdId', cdId);
-        
-        // Buscar todos os agendamentos do período para o CD atual
-        const response = await fetch(`${baseUrl}?${params.toString()}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Erro ao buscar agendamentos: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        const agendamentos = Array.isArray(result) ? result : (result.data || []);
-        console.log(`Recuperados ${agendamentos.length} agendamentos do banco`);
-        
-        // Construir URL para período anterior
-        const paramsAnterior = new URLSearchParams();
-        paramsAnterior.append('dataInicio', dataInicioAnterior);
-        paramsAnterior.append('dataFim', dataFimAnterior);
-        if (cdId) paramsAnterior.append('cdId', cdId);
-        
-        // Buscar agendamentos do período anterior para comparação
-        const responseAnterior = await fetch(`${baseUrl}?${paramsAnterior.toString()}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!responseAnterior.ok) {
-            throw new Error(`Erro ao buscar agendamentos do período anterior: ${responseAnterior.status}`);
-        }
-        
-        const resultAnterior = await responseAnterior.json();
-        const agendamentosAnteriores = Array.isArray(resultAnterior) ? resultAnterior : (resultAnterior.data || []);
-        console.log(`Recuperados ${agendamentosAnteriores.length} agendamentos do período anterior`);
-        
-        // Filtrar por períodos
-        kpiData.periodoAtual.agendamentos = filtrarAgendamentosPorPeriodo(agendamentos, dataInicio, dataFim);
-        kpiData.periodoAnterior.agendamentos = filtrarAgendamentosPorPeriodo(agendamentosAnteriores, dataInicioAnterior, dataFimAnterior);
-        
-        // Calcular métricas
-        calcularMetricas();
-        
-        // Atualizar interface
-        try {
-            atualizarKPIs();
-        } catch (error) {
-            console.error('Erro ao atualizar KPIs:', error);
-        }
-        
-        try {
-            atualizarGraficos();
-        } catch (error) {
-            console.error('Erro ao atualizar gráficos:', error);
-        }
-        
-        try {
-            atualizarTabelaFornecedores();
-        } catch (error) {
-            console.error('Erro ao atualizar tabela de fornecedores:', error);
-        }
-        
-    } catch (error) {
-        console.error('Erro ao carregar dados KPI:', error);
-        
-        // Mostrar erro ao usuário
-        showNotification('Erro ao carregar dados KPI: ' + error.message, 'error');
-        
-        // Carregar dados vazios em caso de falha (não mais simulados)
-        console.log('Carregando dashboard sem dados...');
-        carregarDadosSimulados();
-    }
-}
-
-// Função para carregar dashboard sem dados reais
-function carregarDadosSimulados() {
-    // Inicializar estrutura de dados
-    kpiData = {
-        periodoAtual: {
-            agendamentos: [],
-            metricas: {
-                total: 0,
-                entregues: 0,
-                ausencias: 0,
-                taxaEntrega: 0,
-                taxaAusencia: 0,
-                tempoMedioResposta: 0
-            }
-        },
-        periodoAnterior: {
-            agendamentos: [],
-            metricas: {
-                total: 0,
-                entregues: 0,
-                ausencias: 0,
-                taxaEntrega: 0,
-                taxaAusencia: 0,
-                tempoMedioResposta: 0
-            }
-        },
-        tendencias: {
-            distribuicaoDiaSemana: {},
-            distribuicaoHorarios: {},
-            desempenhoFornecedores: []
-        }
-    };
-    
-    // Atualizar interface com dados vazios
-    try {
-        atualizarKPIs();
-    } catch (error) {
-        console.error('Erro ao atualizar KPIs vazios:', error);
-    }
-    
-    try {
-        atualizarGraficos();
-    } catch (error) {
-        console.error('Erro ao atualizar gráficos vazios:', error);
-    }
-    
-    try {
-        atualizarTabelaFornecedores();
-    } catch (error) {
-        console.error('Erro ao atualizar tabela de fornecedores vazia:', error);
-    }
-    
-    // Mostrar mensagens em elementos vazios
-    const elementos = [
-        'grafico-status',
-        'grafico-dia-semana',
-        'grafico-horarios',
-        'grafico-fornecedores',
-        'grafico-tendencia',
-        'tabela-fornecedores'
-    ];
-    
-    elementos.forEach(id => {
-        const elemento = document.getElementById(id);
-        if (elemento) {
-            elemento.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-6 h-full">
-                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h3 class="mt-2 text-lg font-medium text-gray-900">Sem dados disponíveis</h3>
-                    <p class="mt-1 text-sm text-gray-500">Não foi possível carregar dados reais do banco de dados.</p>
-                    <p class="mt-1 text-xs text-gray-500">Verifique sua conexão e credenciais.</p>
-                </div>
-            `;
-        }
-    });
-    
-    showNotification("Não foi possível carregar dados reais. Verifique sua conexão com o banco de dados.", "warning");
-}
-
-function filtrarAgendamentosPorPeriodo(agendamentos, dataInicio, dataFim) {
-    return agendamentos.filter(agendamento => {
-        const dataEntrega = new Date(agendamento.dataEntrega);
-        const inicio = new Date(dataInicio);
-        const fim = new Date(dataFim);
-        fim.setHours(23, 59, 59, 999); // Fim do dia
-        
-        return dataEntrega >= inicio && dataEntrega <= fim;
-    });
-}
-
-function calcularMetricas() {
-    // Função auxiliar para normalizar os status
-    function normalizarStatus(status) {
-        if (!status) return 'desconhecido';
-        
-        const statusLower = status.toLowerCase();
-        
-        // Mapeamento de diferentes possíveis status para valores normalizados
-        if (statusLower.includes('entreg')) return 'entregue';
-        if (statusLower.includes('nao-veio') || statusLower.includes('ausente') || statusLower.includes('ausência')) return 'nao-veio';
-        if (statusLower.includes('confirm')) return 'confirmado';
-        if (statusLower.includes('pend')) return 'pendente';
-        if (statusLower.includes('canc')) return 'cancelado';
-        if (statusLower.includes('agend')) return 'agendado';
-        if (statusLower.includes('aguard')) return 'aguardando';
-        if (statusLower.includes('reagend')) return 'reagendamento';
-        
-        return statusLower;
-    }
-    
-    // Métricas do período atual
-    const atual = kpiData.periodoAtual;
-    atual.metricas = {
-        total: atual.agendamentos.length,
-        entregues: atual.agendamentos.filter(a => normalizarStatus(a.status) === 'entregue').length,
-        ausencias: atual.agendamentos.filter(a => normalizarStatus(a.status) === 'nao-veio').length,
-        taxaEntrega: 0,
-        taxaAusencia: 0,
-        tempoMedioResposta: 0
-    };
-    
-    // Calcular taxas
-    if (atual.metricas.total > 0) {
-        atual.metricas.taxaEntrega = (atual.metricas.entregues / atual.metricas.total) * 100;
-        atual.metricas.taxaAusencia = (atual.metricas.ausencias / atual.metricas.total) * 100;
-    }
-    
-    // Calcular tempo médio de resposta (do status pendente até confirmado)
-    const agendamentosComHistorico = atual.agendamentos.filter(a => a.historicoAcoes && a.historicoAcoes.length >= 2);
-    if (agendamentosComHistorico.length > 0) {
-        let tempoTotalHoras = 0;
-        let agendamentosValidos = 0;
-        
-        agendamentosComHistorico.forEach(agendamento => {
-            // Buscar ação de criação (ou pendente)
-            const criacao = agendamento.historicoAcoes.find(h => 
-                h.acao === 'agendamento_criado' || h.acao === 'pendente');
-            
-            // Buscar ação de confirmação
-            const confirmacao = agendamento.historicoAcoes.find(h => 
-                h.acao === 'confirmado' || h.acao === 'agendamento_confirmado');
-            
-            if (criacao && confirmacao) {
-                const dataCriacao = new Date(criacao.createdAt);
-                const dataConfirmacao = new Date(confirmacao.createdAt);
-                
-                // Calcular diferença em horas
-                const diffHoras = (dataConfirmacao - dataCriacao) / (1000 * 60 * 60);
-                
-                if (diffHoras > 0 && diffHoras < 120) { // Filtrar valores extremos
-                    tempoTotalHoras += diffHoras;
-                    agendamentosValidos++;
-                }
-            }
-        });
-        
-        if (agendamentosValidos > 0) {
-            atual.metricas.tempoMedioResposta = tempoTotalHoras / agendamentosValidos;
-        }
-    }
-    
-    // Métricas do período anterior
-    const anterior = kpiData.periodoAnterior;
-    anterior.metricas = {
-        total: anterior.agendamentos.length,
-        entregues: anterior.agendamentos.filter(a => a.status === 'entregue').length,
-        ausencias: anterior.agendamentos.filter(a => a.status === 'nao-veio').length,
-        taxaEntrega: 0,
-        taxaAusencia: 0,
-        tempoMedioResposta: 0
-    };
-    
-    // Calcular taxas do período anterior
-    if (anterior.metricas.total > 0) {
-        anterior.metricas.taxaEntrega = (anterior.metricas.entregues / anterior.metricas.total) * 100;
-        anterior.metricas.taxaAusencia = (anterior.metricas.ausencias / anterior.metricas.total) * 100;
-    }
-    
-    // Calcular tempo médio de resposta do período anterior
-    const agendamentosAnteriorComHistorico = anterior.agendamentos.filter(a => a.historicoAcoes && a.historicoAcoes.length >= 2);
-    if (agendamentosAnteriorComHistorico.length > 0) {
-        let tempoTotalHoras = 0;
-        let agendamentosValidos = 0;
-        
-        agendamentosAnteriorComHistorico.forEach(agendamento => {
-            const criacao = agendamento.historicoAcoes.find(h => 
-                h.acao === 'agendamento_criado' || h.acao === 'pendente');
-            
-            const confirmacao = agendamento.historicoAcoes.find(h => 
-                h.acao === 'confirmado' || h.acao === 'agendamento_confirmado');
-            
-            if (criacao && confirmacao) {
-                const dataCriacao = new Date(criacao.createdAt);
-                const dataConfirmacao = new Date(confirmacao.createdAt);
-                
-                const diffHoras = (dataConfirmacao - dataCriacao) / (1000 * 60 * 60);
-                
-                if (diffHoras > 0 && diffHoras < 120) {
-                    tempoTotalHoras += diffHoras;
-                    agendamentosValidos++;
-                }
-            }
-        });
-        
-        if (agendamentosValidos > 0) {
-            anterior.metricas.tempoMedioResposta = tempoTotalHoras / agendamentosValidos;
-        }
-    }
-    
-    // Calcular top fornecedores
-    calcularTopFornecedores();
-}
-
-function calcularTopFornecedores() {
-    const fornecedores = {};
-    
-    // Agrupar agendamentos por fornecedor
-    kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-        const fornecedorId = agendamento.fornecedor?.id;
-        const fornecedorNome = agendamento.fornecedor?.nome || 'Desconhecido';
-        
-        if (!fornecedorId) return;
-        
-        if (!fornecedores[fornecedorId]) {
-            fornecedores[fornecedorId] = {
-                nome: fornecedorNome,
-                total: 0,
-                entregues: 0,
-                ausencias: 0,
-                taxaEntrega: 0
-            };
-        }
-        
-        fornecedores[fornecedorId].total++;
-        
-        if (agendamento.status === 'entregue') {
-            fornecedores[fornecedorId].entregues++;
-        } else if (agendamento.status === 'nao-veio') {
-            fornecedores[fornecedorId].ausencias++;
-        }
-    });
-    
-    // Calcular taxas e criar array
-    kpiData.topFornecedores = Object.values(fornecedores)
-        .map(f => {
-            if (f.total > 0) {
-                f.taxaEntrega = (f.entregues / f.total) * 100;
-            }
-            return f;
-        })
-        .filter(f => f.total >= 3) // Apenas fornecedores com pelo menos 3 agendamentos
-        .sort((a, b) => b.total - a.total) // Ordenar por total de agendamentos
-        .slice(0, 10); // Top 10
-}
-
-function calcularVariacaoPercentual(atual, anterior) {
-    if (anterior === 0) {
-        return atual > 0 ? 100 : 0;
-    }
-    return ((atual - anterior) / anterior) * 100;
-}
-
-function formatarVariacao(variacao) {
-    const valor = Math.abs(variacao).toFixed(1);
-    const sinal = variacao >= 0 ? '+' : '-';
-    const classe = variacao >= 0 ? 'text-green-600' : 'text-red-600';
-    
-    return `<span class="${classe}">${sinal}${valor}%</span>`;
-}
-
-function formatarVariacaoSimples(variacao) {
-    const valor = Math.abs(variacao).toFixed(0);
-    const sinal = variacao >= 0 ? '+' : '-';
-    return `${sinal}${valor}%`;
-}
-
-function atualizarKPIs(agendamentos, agendamentosAnteriores) {
-    try {
-        // Verificar se temos dados reais ou devemos usar dados simulados
-        let atual, anterior;
-        
-        if (agendamentos && agendamentosAnteriores) {
-            // Processar dados reais do banco
-            console.log("Atualizando KPIs com dados reais do banco");
-            
-            // Calcular métricas do período atual
-            atual = {
-                total: agendamentos.length,
-                entregues: agendamentos.filter(a => a.status === 'ENTREGUE').length,
-                confirmados: agendamentos.filter(a => a.status === 'CONFIRMADO').length,
-                ausencias: agendamentos.filter(a => a.status === 'AUSENTE').length,
-                pendentes: agendamentos.filter(a => a.status === 'PENDENTE').length,
-                cancelados: agendamentos.filter(a => a.status === 'CANCELADO').length
-            };
-            
-            // Calcular taxas
-            atual.taxaEntrega = atual.total > 0 ? (atual.entregues / atual.total) * 100 : 0;
-            atual.taxaAusencia = atual.total > 0 ? (atual.ausencias / atual.total) * 100 : 0;
-            
-            // Calcular tempo médio de resposta (em horas)
-            const temposSomados = agendamentos
-                .filter(a => a.dataConfirmacao && a.dataCriacao) // Apenas agendamentos com datas válidas
-                .map(a => {
-                    const criacao = new Date(a.dataCriacao);
-                    const confirmacao = new Date(a.dataConfirmacao);
-                    return (confirmacao - criacao) / (1000 * 60 * 60); // Converter para horas
-                });
-            
-            atual.tempoMedioResposta = temposSomados.length > 0 
-                ? temposSomados.reduce((sum, tempo) => sum + tempo, 0) / temposSomados.length 
-                : 0;
-            
-            // Calcular métricas do período anterior
-            anterior = {
-                total: agendamentosAnteriores.length,
-                entregues: agendamentosAnteriores.filter(a => a.status === 'ENTREGUE').length,
-                confirmados: agendamentosAnteriores.filter(a => a.status === 'CONFIRMADO').length,
-                ausencias: agendamentosAnteriores.filter(a => a.status === 'AUSENTE').length,
-                pendentes: agendamentosAnteriores.filter(a => a.status === 'PENDENTE').length,
-                cancelados: agendamentosAnteriores.filter(a => a.status === 'CANCELADO').length
-            };
-            
-            // Calcular taxas para o período anterior
-            anterior.taxaEntrega = anterior.total > 0 ? (anterior.entregues / anterior.total) * 100 : 0;
-            anterior.taxaAusencia = anterior.total > 0 ? (anterior.ausencias / anterior.total) * 100 : 0;
-            
-            // Calcular tempo médio de resposta para o período anterior (em horas)
-            const temposSomadosAnteriores = agendamentosAnteriores
-                .filter(a => a.dataConfirmacao && a.dataCriacao)
-                .map(a => {
-                    const criacao = new Date(a.dataCriacao);
-                    const confirmacao = new Date(a.dataConfirmacao);
-                    return (confirmacao - criacao) / (1000 * 60 * 60);
-                });
-            
-            anterior.tempoMedioResposta = temposSomadosAnteriores.length > 0 
-                ? temposSomadosAnteriores.reduce((sum, tempo) => sum + tempo, 0) / temposSomadosAnteriores.length 
-                : 0;
-            
-        } else {
-            // Se não temos agendamentos reais, mas estamos em modo de dados reais,
-            // vamos inicializar com valores zerados em vez de simulados
-            console.warn("Dados reais não estão disponíveis. Inicializando com valores zerados.");
-            
-            // Dados do período atual zerados
-            atual = {
-                total: 0,
-                entregues: 0,
-                confirmados: 0,
-                ausencias: 0,
-                pendentes: 0,
-                taxaEntrega: 0,
-                taxaAusencia: 0,
-                tempoMedioResposta: 0
-            };
-            
-            // Dados do período anterior também zerados
-            anterior = {
-                total: 0,
-                entregues: 0,
-                confirmados: 0,
-                ausencias: 0,
-                pendentes: 0,
-                taxaEntrega: 0,
-                taxaAusencia: 0,
-                tempoMedioResposta: 0
-            };
-            
-            // Notificar o usuário sobre a falta de dados
-            showNotification("Não há dados disponíveis para o período selecionado. Tente outro período ou verifique a conexão com o banco de dados.", "warning");
-        }
-        
-        // Cálculo de variações
-        const variacaoTotal = calcularVariacaoPercentual(atual.total, anterior.total);
-        const variacaoEntrega = calcularVariacaoPercentual(atual.taxaEntrega, anterior.taxaEntrega);
-        const variacaoAusencia = calcularVariacaoPercentual(atual.taxaAusencia, anterior.taxaAusencia);
-        const variacaoTempo = calcularVariacaoPercentual(atual.tempoMedioResposta, anterior.tempoMedioResposta);
-        
-        // Ocupação do CD simulada (não há dados reais sobre isso)
-        const ocupacaoCD = Math.floor(Math.random() * 40) + 60; // 60% a 100%
-        const variacaoOcupacao = Math.floor(Math.random() * 20) - 10; // -10% a +10%
-        
-        // Atualizar KPIs principais
-        const totalAgendamentos = document.getElementById('kpi-total-agendamentos');
-        if (totalAgendamentos) totalAgendamentos.textContent = atual.total;
-        
-        const totalTrend = document.getElementById('kpi-total-trend');
-        if (totalTrend) {
-            totalTrend.textContent = formatarVariacaoSimples(variacaoTotal);
-            totalTrend.className = `text-xs px-2 py-1 rounded-full ${variacaoTotal >= 0 ? 'bg-orange-500' : 'bg-red-500'} text-white font-bold`;
-        }
-        
-        const taxaEntrega = document.getElementById('kpi-taxa-entrega');
-        if (taxaEntrega) taxaEntrega.textContent = `${atual.taxaEntrega.toFixed(1)}%`;
-        
-        const entregaTrend = document.getElementById('kpi-entrega-trend');
-        if (entregaTrend) {
-            entregaTrend.textContent = formatarVariacaoSimples(variacaoEntrega);
-            entregaTrend.className = `text-xs px-2 py-1 rounded-full ${variacaoEntrega >= 0 ? 'bg-emerald-500' : 'bg-red-500'} text-white font-bold`;
-        }
-        
-        const taxaAusencia = document.getElementById('kpi-taxa-ausencia');
-        if (taxaAusencia) taxaAusencia.textContent = `${atual.taxaAusencia.toFixed(1)}%`;
-        
-        const ausenciaTrend = document.getElementById('kpi-ausencia-trend');
-        if (ausenciaTrend) {
-            ausenciaTrend.textContent = formatarVariacaoSimples(-variacaoAusencia); // Invertido, pois menos ausência é melhor
-            ausenciaTrend.className = `text-xs px-2 py-1 rounded-full ${variacaoAusencia <= 0 ? 'bg-green-500' : 'bg-red-500'} text-white font-bold`;
-        }
-        
-        const tempoResposta = document.getElementById('kpi-tempo-resposta');
-        if (tempoResposta) tempoResposta.textContent = `${atual.tempoMedioResposta.toFixed(1)}h`;
-        
-        const tempoTrend = document.getElementById('kpi-tempo-trend');
-        if (tempoTrend) {
-            tempoTrend.textContent = formatarVariacaoSimples(-variacaoTempo); // Invertido, pois menos tempo é melhor
-            tempoTrend.className = `text-xs px-2 py-1 rounded-full ${variacaoTempo <= 0 ? 'bg-blue-500' : 'bg-red-500'} text-white font-bold`;
-        }
-        
-        // Ocupação do CD (simulada)
-        const ocupacaoAtual = document.getElementById('kpi-ocupacao-atual');
-        if (ocupacaoAtual) ocupacaoAtual.textContent = `${ocupacaoCD}%`;
-        
-        const ocupacaoTrend = document.getElementById('kpi-ocupacao-trend');
-        if (ocupacaoTrend) {
-            ocupacaoTrend.textContent = formatarVariacaoSimples(variacaoOcupacao);
-            ocupacaoTrend.className = `text-xs px-2 py-1 rounded-full ${Math.abs(variacaoOcupacao) < 5 ? 'bg-purple-500' : (variacaoOcupacao > 5 ? 'bg-red-500' : 'bg-green-500')} text-white font-bold`;
-        }
-        
-        // Atualizar contadores e informações adicionais
-        const entregaCount = document.getElementById('kpi-entrega-count');
-        if (entregaCount) entregaCount.textContent = `${atual.entregues} entregas`;
-        
-        const ausenciaCount = document.getElementById('kpi-ausencia-count');
-        if (ausenciaCount) ausenciaCount.textContent = `${atual.ausencias} ausências`;
-        
-        // Barras de progresso
-        const totalProgressBar = document.getElementById('kpi-total-progress');
-        if (totalProgressBar) {
-            const meta = 150; // Meta fixa para exemplo
-            const porcentagemMeta = Math.min(Math.round((atual.total / meta) * 100), 100);
-            totalProgressBar.style.width = `${porcentagemMeta}%`;
-        }
-        
-        const entregaProgressBar = document.getElementById('kpi-entrega-progress');
-        if (entregaProgressBar) {
-            const metaEntrega = 95; // Meta fixa para exemplo
-            const porcentagemMetaEntrega = Math.min(Math.round((atual.taxaEntrega / metaEntrega) * 100), 100);
-            entregaProgressBar.style.width = `${porcentagemMetaEntrega}%`;
-        }
-        
-        const ausenciaProgressBar = document.getElementById('kpi-ausencia-progress');
-        if (ausenciaProgressBar) {
-            // Para ausência, é melhor estar abaixo da meta
-            const metaAusencia = 5; // Meta fixa para exemplo
-            const porcentagemMetaAusencia = Math.min(Math.round((atual.taxaAusencia / metaAusencia) * 100), 100);
-            ausenciaProgressBar.style.width = `${porcentagemMetaAusencia}%`;
-        }
-        
-        const tempoProgressBar = document.getElementById('kpi-tempo-progress');
-        if (tempoProgressBar) {
-            // Para tempo, é melhor estar abaixo da meta
-            const metaTempo = 4; // Meta fixa para exemplo
-            const porcentagemMetaTempo = Math.min(Math.round((atual.tempoMedioResposta / metaTempo) * 100), 100);
-            tempoProgressBar.style.width = `${porcentagemMetaTempo}%`;
-        }
-        
-        const ocupacaoProgressBar = document.getElementById('kpi-ocupacao-progress');
-        if (ocupacaoProgressBar) {
-            const metaOcupacao = 85; // Meta fixa para exemplo
-            const porcentagemMetaOcupacao = Math.min(Math.round((ocupacaoCD / metaOcupacao) * 100), 100);
-            ocupacaoProgressBar.style.width = `${porcentagemMetaOcupacao}%`;
-        }
-        
-    } catch (error) {
-        console.error("Erro ao atualizar KPIs:", error);
-        showNotification("Erro ao atualizar indicadores. Verifique o console para detalhes.", "error");
-    }
-}
-
-function atualizarDadosCompletos() {
-    try {
-        atualizarInsights();
-    } catch (error) {
-        console.warn('Erro ao atualizar insights:', error);
-    }
-    
-    // Atualizar indicadores de negócio
-    try {
-        atualizarIndicadoresNegocio();
-    } catch (error) {
-        console.warn('Erro ao atualizar indicadores de negócio:', error);
-    }
-}
-
-function atualizarGraficos() {
-    // Função auxiliar para normalizar os status (duplicada para usar aqui também)
-    function normalizarStatus(status) {
-        if (!status) return 'desconhecido';
-        
-        const statusLower = status.toLowerCase();
-        
-        // Mapeamento de diferentes possíveis status para valores normalizados
-        if (statusLower.includes('entreg')) return 'entregue';
-        if (statusLower.includes('nao-veio') || statusLower.includes('ausente') || statusLower.includes('ausência')) return 'nao-veio';
-        if (statusLower.includes('confirm')) return 'confirmado';
-        if (statusLower.includes('pend')) return 'pendente';
-        if (statusLower.includes('canc')) return 'cancelado';
-        if (statusLower.includes('agend')) return 'agendado';
-        if (statusLower.includes('aguard')) return 'aguardando';
-        if (statusLower.includes('reagend')) return 'reagendamento';
-        
-        return statusLower;
-    }
-    
-    // Dados para o gráfico de status
-    const statusData = {
-        pendente: 0,
-        confirmado: 0,
-        entregue: 0,
-        'nao-veio': 0,
-        reagendamento: 0,
-        cancelado: 0,
-        aguardando: 0,
-        desconhecido: 0
-    };
-    
-    kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-        const statusNormalizado = normalizarStatus(agendamento.status);
-        if (statusData[statusNormalizado] !== undefined) {
-            statusData[statusNormalizado]++;
-        } else {
-            statusData.desconhecido++;
-        }
-    });
-    
-    // Dados para o gráfico de dia da semana
-    const diasSemanaData = {
-        0: 0, // Domingo
-        1: 0, // Segunda
-        2: 0, // Terça
-        3: 0, // Quarta
-        4: 0, // Quinta
-        5: 0, // Sexta
-        6: 0  // Sábado
-    };
-    
-    kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-        const dataEntrega = new Date(agendamento.dataEntrega);
-        const diaSemana = dataEntrega.getDay();
-        diasSemanaData[diaSemana]++;
-    });
-    
-    // Dados para gráfico de tendência semanal
-    calcularTendenciaSemanal();
-    
-    // Dados para distribuição de horários
-    calcularDistribuicaoHorarios();
-    
-    // Renderizar gráficos se o Chart.js estiver disponível
-    if (typeof Chart !== 'undefined') {
-        renderizarGraficoStatus(statusData);
-        renderizarGraficoDiaSemana(diasSemanaData);
-        renderizarGraficoTendencia();
-        renderizarGraficoHorarios();
-        renderizarGraficoDesempenhoFornecedores();
-    } else {
-        // Chart.js não está carregado, mostrar dados em texto
-        mostrarPlaceholderGraficos(statusData, diasSemanaData);
-    }
-}
-
-function calcularTendenciaSemanal() {
-    // Organizar dados por semana
-    const agendamentosPorSemana = {};
-    
-    kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-        const dataEntrega = new Date(agendamento.dataEntrega);
-        // Calcular o número da semana (ano + semana)
-        const ano = dataEntrega.getFullYear();
-        const inicioAno = new Date(ano, 0, 1);
-        const dias = Math.floor((dataEntrega - inicioAno) / (24 * 60 * 60 * 1000));
-        const semana = Math.ceil(dias / 7);
-        const chave = `${ano}-${semana}`;
-        
-        if (!agendamentosPorSemana[chave]) {
-            agendamentosPorSemana[chave] = {
-                dataInicio: new Date(dataEntrega.getTime()),
-                total: 0,
-                entregues: 0,
-                ausencias: 0
-            };
-            // Ajustar para o início da semana (domingo)
-            agendamentosPorSemana[chave].dataInicio.setDate(dataEntrega.getDate() - dataEntrega.getDay());
-        }
-        
-        agendamentosPorSemana[chave].total++;
-        
-        if (agendamento.status === 'entregue') {
-            agendamentosPorSemana[chave].entregues++;
-        } else if (agendamento.status === 'nao-veio') {
-            agendamentosPorSemana[chave].ausencias++;
-        }
-    });
-    
-    // Ordenar por data e converter para array
-    kpiData.tendencias.entregasSemanais = Object.values(agendamentosPorSemana)
-        .sort((a, b) => a.dataInicio - b.dataInicio)
-        .map(semana => ({
-            dataInicio: semana.dataInicio,
-            dataFormatada: `${semana.dataInicio.getDate()}/${semana.dataInicio.getMonth() + 1}`,
-            total: semana.total,
-            entregues: semana.entregues,
-            ausencias: semana.ausencias,
-            taxaEntrega: semana.total > 0 ? (semana.entregues / semana.total) * 100 : 0
-        }));
-}
-
-function calcularDistribuicaoHorarios() {
-    // Resetar dados
-    kpiData.tendencias.distribuicaoHorarios = {};
-    
-    // Contagem por horário
-    kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-        const horario = agendamento.horarioEntrega;
-        
-        if (!horario) return;
-        
-        // Normalizar o formato do horário (HH:MM)
-        let horarioNormalizado = horario;
-        if (horario.match(/^\d{1,2}$/)) {
-            horarioNormalizado = `${horario}:00`; // Adicionar minutos se só tiver hora
-        }
-        
-        if (!kpiData.tendencias.distribuicaoHorarios[horarioNormalizado]) {
-            kpiData.tendencias.distribuicaoHorarios[horarioNormalizado] = {
-                total: 0,
-                entregues: 0,
-                ausencias: 0
-            };
-        }
-        
-        kpiData.tendencias.distribuicaoHorarios[horarioNormalizado].total++;
-        
-        if (agendamento.status === 'entregue') {
-            kpiData.tendencias.distribuicaoHorarios[horarioNormalizado].entregues++;
-        } else if (agendamento.status === 'nao-veio') {
-            kpiData.tendencias.distribuicaoHorarios[horarioNormalizado].ausencias++;
-        }
-    });
-}
-
-function renderizarGraficoStatus(statusData) {
-    const ctx = document.getElementById('grafico-status');
-    
-    if (!ctx) return;
-    
-    // Limpar conteúdo anterior
-    ctx.innerHTML = '';
-    
-    // Criar canvas
-    const canvas = document.createElement('canvas');
-    ctx.appendChild(canvas);
-    
-    // Cores do tema laranja
-    const cores = {
-        pendente: '#ff8c00',      // Laranja
-        confirmado: '#4caf50',    // Verde
-        entregue: '#2196f3',      // Azul
-        'nao-veio': '#f44336',    // Vermelho
-        reagendamento: '#9c27b0'  // Roxo
-    };
-    
-    new Chart(canvas, {
-        type: 'doughnut',
-        data: {
-            labels: ['Pendente', 'Confirmado', 'Entregue', 'Não Veio', 'Reagendamento'],
-            datasets: [{
-                data: [
-                    statusData.pendente,
-                    statusData.confirmado,
-                    statusData.entregue,
-                    statusData['nao-veio'],
-                    statusData.reagendamento
-                ],
-                backgroundColor: [
-                    cores.pendente,
-                    cores.confirmado,
-                    cores.entregue,
-                    cores['nao-veio'],
-                    cores.reagendamento
-                ],
-                borderWidth: 2,
-                borderColor: '#ffffff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '60%',
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        color: '#333333',
-                        padding: 10,
-                        font: {
-                            size: 11
-                        }
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'Distribuição por Status',
-                    color: '#333333',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    padding: {
-                        top: 10,
-                        bottom: 15
-                    }
-                }
-            }
-        }
-    });
-}
-
-function renderizarGraficoDiaSemana(diasSemanaData) {
-    const ctx = document.getElementById('grafico-dia-semana');
-    
-    if (!ctx) return;
-    
-    // Limpar conteúdo anterior
-    ctx.innerHTML = '';
-    
-    // Criar canvas
-    const canvas = document.createElement('canvas');
-    ctx.appendChild(canvas);
-    
-    new Chart(canvas, {
-        type: 'bar',
-        data: {
-            labels: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
-            datasets: [{
-                label: 'Agendamentos',
-                data: [
-                    diasSemanaData[0],
-                    diasSemanaData[1],
-                    diasSemanaData[2],
-                    diasSemanaData[3],
-                    diasSemanaData[4],
-                    diasSemanaData[5],
-                    diasSemanaData[6]
-                ],
-                backgroundColor: 'rgba(255, 140, 0, 0.7)',
-                borderColor: 'rgba(255, 140, 0, 1)',
-                borderWidth: 1,
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                title: {
-                    display: true,
-                    text: 'Agendamentos por Dia da Semana',
-                    color: '#333333',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    padding: {
-                        top: 10,
-                        bottom: 15
-                    }
-                }
-            }
-        }
-    });
-}
-
-function renderizarGraficoDiaSemana(agendamentos) {
-    const ctx = document.getElementById('grafico-dia-semana');
-    if (!ctx) {
-        console.warn('Elemento do gráfico de dia da semana não encontrado');
-        return;
-    }
-    
-    // Dados para o gráfico de dia da semana
-    const diasSemanaData = {
-        0: 0, // Domingo
-        1: 0, // Segunda
-        2: 0, // Terça
-        3: 0, // Quarta
-        4: 0, // Quinta
-        5: 0, // Sexta
-        6: 0  // Sábado
-    };
-    
-    // Processar agendamentos por dia da semana
-    if (agendamentos && agendamentos.length > 0) {
-        agendamentos.forEach(agendamento => {
-            const data = new Date(agendamento.dataEntrega);
-            const diaSemana = data.getDay();
-            diasSemanaData[diaSemana]++;
-        });
-    } else {
-        // Dados simulados
-        diasSemanaData[0] = 5;   // Domingo
-        diasSemanaData[1] = 28;  // Segunda
-        diasSemanaData[2] = 32;  // Terça
-        diasSemanaData[3] = 42;  // Quarta
-        diasSemanaData[4] = 35;  // Quinta
-        diasSemanaData[5] = 25;  // Sexta
-        diasSemanaData[6] = 10;  // Sábado
-    }
-    
-    // Criar ou atualizar gráfico
-    if (window.graficoDiaSemana) {
-        window.graficoDiaSemana.data.datasets[0].data = [
-            diasSemanaData[0], diasSemanaData[1], diasSemanaData[2], 
-            diasSemanaData[3], diasSemanaData[4], diasSemanaData[5], 
-            diasSemanaData[6]
-        ];
-        window.graficoDiaSemana.update();
-    } else {
-        window.graficoDiaSemana = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
-                datasets: [{
-                    label: 'Agendamentos',
-                    data: [
-                        diasSemanaData[0],
-                        diasSemanaData[1],
-                        diasSemanaData[2],
-                        diasSemanaData[3],
-                        diasSemanaData[4],
-                        diasSemanaData[5],
-                        diasSemanaData[6]
-                    ],
-                    backgroundColor: '#ff8c00',
-                    borderColor: '#e67e00',
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        },
-                        ticks: {
-                            precision: 0,
-                            color: '#666666'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#666666'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    title: {
-                        display: true,
-                        text: 'Volume por Dia da Semana',
-                        color: '#666666',
-                        font: {
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        padding: {
-                            top: 10,
-                            bottom: 15
-                        }
-                    }
-                }
-            }
-        });
-    }
-}
-
-function renderizarGraficoTendencia() {
-    const ctx = document.getElementById('grafico-tendencia');
-    
-    if (!ctx) return;
-    
-    // Limpar conteúdo anterior
-    ctx.innerHTML = '';
-    
-    // Verificar se há dados suficientes
-    if (kpiData.tendencias.entregasSemanais.length < 2) {
-        ctx.innerHTML = `
-            <div class="text-center py-8 text-gray-400">
-                <i class="fas fa-chart-line text-3xl mb-2"></i>
-                <p>Dados insuficientes para gerar tendência</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Criar canvas
-    const canvas = document.createElement('canvas');
-    ctx.appendChild(canvas);
-    
-    // Preparar dados
-    const labels = kpiData.tendencias.entregasSemanais.map(semana => semana.dataFormatada);
-    const totais = kpiData.tendencias.entregasSemanais.map(semana => semana.total);
-    const taxas = kpiData.tendencias.entregasSemanais.map(semana => semana.taxaEntrega);
-    
-    new Chart(canvas, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Total Agendamentos',
-                    data: totais,
-                    borderColor: '#ff8c00',
-                    backgroundColor: 'rgba(255, 140, 0, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3,
-                    yAxisID: 'y'
-                },
-                {
-                    label: 'Taxa de Entrega (%)',
-                    data: taxas,
-                    borderColor: '#4caf50',
-                    backgroundColor: 'transparent',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    yAxisID: 'y1'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    position: 'left',
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    },
-                    ticks: {
-                        precision: 0,
-                        color: '#666666'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Quantidade',
-                        color: '#666666'
-                    }
-                },
-                y1: {
-                    beginAtZero: true,
-                    position: 'right',
-                    grid: {
-                        display: false
-                    },
-                    max: 100,
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
-                        },
-                        color: '#666666'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Taxa',
-                        color: '#666666'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        color: '#666666'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        color: '#333333',
-                        padding: 10,
-                        usePointStyle: true,
-                        pointStyle: 'circle'
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'Tendência de Entregas',
-                    color: '#333333',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    padding: {
-                        top: 10,
-                        bottom: 15
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.dataset.label || '';
-                            const value = context.parsed.y;
-                            if (context.datasetIndex === 1) {
-                                return `${label}: ${value.toFixed(1)}%`;
-                            }
-                            return `${label}: ${value}`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function renderizarGraficoHorarios() {
-    const ctx = document.getElementById('grafico-horarios');
-    
-    if (!ctx) return;
-    
-    // Limpar conteúdo anterior
-    ctx.innerHTML = '';
-    
-    // Verificar se há dados suficientes
-    if (Object.keys(kpiData.tendencias.distribuicaoHorarios).length === 0) {
-        ctx.innerHTML = `
-            <div class="text-center py-8 text-gray-400">
-                <i class="fas fa-clock text-3xl mb-2"></i>
-                <p>Dados insuficientes para análise de horários</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Criar canvas
-    const canvas = document.createElement('canvas');
-    ctx.appendChild(canvas);
-    
-    // Ordenar horários e preparar dados
-    const horarios = Object.keys(kpiData.tendencias.distribuicaoHorarios).sort();
-    const dados = horarios.map(h => kpiData.tendencias.distribuicaoHorarios[h].total);
-    const taxaEntrega = horarios.map(h => {
-        const item = kpiData.tendencias.distribuicaoHorarios[h];
-        return item.total > 0 ? (item.entregues / item.total) * 100 : 0;
-    });
-    
-    new Chart(canvas, {
-        type: 'bar',
-        data: {
-            labels: horarios,
-            datasets: [
-                {
-                    label: 'Agendamentos',
-                    data: dados,
-                    backgroundColor: 'rgba(255, 140, 0, 0.7)',
-                    borderColor: 'rgba(255, 140, 0, 1)',
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    order: 1
-                },
-                {
-                    label: 'Taxa de Entrega (%)',
-                    data: taxaEntrega,
-                    type: 'line',
-                    borderColor: '#4caf50',
-                    backgroundColor: 'transparent',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#4caf50',
-                    pointRadius: 3,
-                    tension: 0.3,
-                    yAxisID: 'y1',
-                    order: 0
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    position: 'left',
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    },
-                    ticks: {
-                        precision: 0,
-                        color: '#666666'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Quantidade',
-                        color: '#666666'
-                    }
-                },
-                y1: {
-                    beginAtZero: true,
-                    position: 'right',
-                    grid: {
-                        display: false
-                    },
-                    max: 100,
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
-                        },
-                        color: '#666666'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Taxa',
-                        color: '#666666'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        color: '#666666'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        color: '#333333',
-                        padding: 10,
-                        usePointStyle: true,
-                        pointStyle: 'circle'
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'Distribuição por Horário',
-                    color: '#333333',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    }
-                }
-            }
-        }
-    });
-}
-
-function renderizarGraficoDesempenhoFornecedores() {
-    const ctx = document.getElementById('grafico-fornecedores');
-    
-    if (!ctx) return;
-    
-    // Limpar conteúdo anterior
-    ctx.innerHTML = '';
-    
-    // Verificar se há dados suficientes
-    if (kpiData.topFornecedores.length < 3) {
-        ctx.innerHTML = `
-            <div class="text-center py-8 text-gray-400">
-                <i class="fas fa-building text-3xl mb-2"></i>
-                <p>Dados insuficientes para análise de fornecedores</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Criar canvas
-    const canvas = document.createElement('canvas');
-    ctx.appendChild(canvas);
-    
-    // Limitar aos top 5 fornecedores
-    const top5 = kpiData.topFornecedores.slice(0, 5);
-    
-    // Preparar dados
-    const labels = top5.map(f => f.nome.length > 15 ? f.nome.substring(0, 12) + '...' : f.nome);
-    const totais = top5.map(f => f.total);
-    const taxas = top5.map(f => f.taxaEntrega);
-    
-    new Chart(canvas, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Total Agendamentos',
-                    data: totais,
-                    backgroundColor: 'rgba(255, 140, 0, 0.7)',
-                    borderColor: 'rgba(255, 140, 0, 1)',
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    yAxisID: 'y'
-                },
-                {
-                    label: 'Taxa de Entrega (%)',
-                    data: taxas,
-                    type: 'line',
-                    borderColor: '#4caf50',
-                    backgroundColor: 'transparent',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    pointStyle: 'circle',
-                    pointRadius: 4,
-                    pointBackgroundColor: '#4caf50',
-                    yAxisID: 'y1'
-                }
-            ]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    },
-                    ticks: {
-                        color: '#666666'
-                    }
-                },
-                x: {
-                    beginAtZero: true,
-                    position: 'bottom',
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    },
-                    ticks: {
-                        precision: 0,
-                        color: '#666666'
-                    }
-                },
-                y1: {
-                    beginAtZero: true,
-                    position: 'top',
-                    grid: {
-                        display: false
-                    },
-                    max: 100,
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
-                        },
-                        color: '#e0e0e0'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        color: '#e0e0e0',
-                        padding: 10,
-                        usePointStyle: true,
-                        pointStyle: 'circle'
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'Top 5 Fornecedores',
-                    color: '#e0e0e0',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    padding: {
-                        top: 10,
-                        bottom: 15
-                    }
-                }
-            }
-        }
-    });
-}
-
-function mostrarPlaceholderGraficos(statusData, diasSemanaData) {
-    // Placeholder para quando o Chart.js não está disponível
-    document.getElementById('grafico-status').innerHTML = `
-        <div class="text-center py-8 text-gray-400">
-            <i class="fas fa-chart-pie text-3xl mb-2"></i>
-            <p>Biblioteca Chart.js não encontrada.</p>
-        </div>
-    `;
-    
-    document.getElementById('grafico-dia-semana').innerHTML = `
-        <div class="text-center py-8 text-gray-400">
-            <i class="fas fa-chart-bar text-3xl mb-2"></i>
-            <p>Biblioteca Chart.js não encontrada.</p>
-        </div>
-    `;
-    
-    document.getElementById('grafico-tendencia').innerHTML = `
-        <div class="text-center py-8 text-gray-400">
-            <i class="fas fa-chart-line text-3xl mb-2"></i>
-            <p>Biblioteca Chart.js não encontrada.</p>
-        </div>
-    `;
-    
-    document.getElementById('grafico-horarios').innerHTML = `
-        <div class="text-center py-8 text-gray-400">
-            <i class="fas fa-clock text-3xl mb-2"></i>
-            <p>Biblioteca Chart.js não encontrada.</p>
-        </div>
-    `;
-}
-
-function atualizarTabelaFornecedores() {
-    const tbody = document.getElementById('tabela-fornecedores');
-    
-    if (!tbody) {
-        console.warn('Elemento tabela-fornecedores não encontrado');
-        return;
-    }
-    
-    if (kpiData.topFornecedores.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="px-4 py-4 text-center text-gray-500">
-                    Nenhum dado de fornecedor encontrado para o período selecionado.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tbody.innerHTML = kpiData.topFornecedores.map(fornecedor => `
-        <tr class="border-b border-gray-200 hover:bg-orange-50/50">
-            <td class="px-4 py-3 whitespace-nowrap">
-                <div class="font-medium text-gray-800">${fornecedor.nome}</div>
-            </td>
-            <td class="px-4 py-3 text-center whitespace-nowrap">
-                <span class="font-semibold text-gray-700">${fornecedor.total}</span>
-            </td>
-            <td class="px-4 py-3 text-center whitespace-nowrap">
-                <span class="font-semibold text-green-600">${fornecedor.entregues}</span>
-            </td>
-            <td class="px-4 py-3 text-center whitespace-nowrap">
-                <span class="font-semibold text-red-600">${fornecedor.ausencias}</span>
-            </td>
-            <td class="px-4 py-3 text-center whitespace-nowrap">
-                <div class="flex items-center justify-center">
-                    <div class="w-full max-w-[80px] bg-gray-200 rounded-full h-2.5 mr-2">
-                        <div class="h-2.5 rounded-full ${getBarColorClass(fornecedor.taxaEntrega)}" style="width: ${Math.min(100, fornecedor.taxaEntrega)}%"></div>
-                    </div>
-                    <span class="font-semibold ${fornecedor.taxaEntrega >= 80 ? 'text-green-600' : fornecedor.taxaEntrega >= 50 ? 'text-yellow-600' : 'text-red-600'}">
-                        ${fornecedor.taxaEntrega.toFixed(1)}%
-                    </span>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function getBarColorClass(value) {
-    if (value >= 80) return 'bg-green-500';
-    if (value >= 60) return 'bg-lime-500';
-    if (value >= 40) return 'bg-yellow-500';
-    if (value >= 20) return 'bg-orange-500';
-    return 'bg-red-500';
-}
-
-function atualizarInsights() {
-    const container = document.getElementById('insight-panel');
-    if (!container) {
-        console.warn('Elemento insight-panel não encontrado');
-        return;
-    }
-    
-    // Calcular insights
-    const insights = calcularInsights();
-    
-    // Renderizar insights
-    container.innerHTML = `
-        <div class="space-y-4">
-            ${insights.map(insight => `
-                <div class="bg-orange-50 border border-orange-100 rounded-lg p-4 flex items-start">
-                    <div class="text-${insight.cor}-600 mr-3 mt-1">
-                        <i class="${insight.icone} text-lg"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-gray-800 mb-1">${insight.titulo}</h4>
-                        <p class="text-sm text-gray-600">${insight.descricao}</p>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-function calcularInsights() {
-    const insights = [];
-    const atual = kpiData.periodoAtual.metricas;
-    const anterior = kpiData.periodoAnterior.metricas;
-    
-    // Insight 1: Melhores dias
-    if (kpiData.periodoAtual.agendamentos.length > 0) {
-        // Agrupamento por dia da semana
-        const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-        const entregas = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
-        const agendamentos = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
-        
-        kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-            const dataEntrega = new Date(agendamento.dataEntrega);
-            const diaSemana = dataEntrega.getDay();
-            agendamentos[diaSemana]++;
-            if (agendamento.status === 'entregue') {
-                entregas[diaSemana]++;
-            }
-        });
-        
-        // Encontrar dia com maior taxa de entrega (com pelo menos 3 agendamentos)
-        let melhorDia = -1;
-        let melhorTaxa = 0;
-        
-        for (let i = 0; i < 7; i++) {
-            if (agendamentos[i] >= 3) {
-                const taxa = (entregas[i] / agendamentos[i]) * 100;
-                if (taxa > melhorTaxa) {
-                    melhorTaxa = taxa;
-                    melhorDia = i;
-                }
-            }
-        }
-        
-        if (melhorDia >= 0) {
-            insights.push({
-                titulo: 'Melhor dia para entregas',
-                descricao: `${diasSemana[melhorDia]} é o dia com maior taxa de entrega (${melhorTaxa.toFixed(1)}%) no período analisado.`,
-                icone: 'fas fa-calendar-check',
-                cor: 'green'
-            });
-        }
-    }
-    
-    // Insight 2: Tendência de volume
-    if (kpiData.tendencias.entregasSemanais.length >= 2) {
-        const ultimasSemanas = kpiData.tendencias.entregasSemanais.slice(-3);
-        const primeiraSemana = ultimasSemanas[0].total;
-        const ultimaSemana = ultimasSemanas[ultimasSemanas.length - 1].total;
-        
-        const variacao = calcularVariacaoPercentual(ultimaSemana, primeiraSemana);
-        
-        if (Math.abs(variacao) >= 10) {
-            insights.push({
-                titulo: 'Tendência de volume',
-                descricao: `O volume de agendamentos ${variacao > 0 ? 'aumentou' : 'diminuiu'} ${Math.abs(variacao).toFixed(1)}% nas últimas semanas.`,
-                icone: variacao > 0 ? 'fas fa-chart-line' : 'fas fa-chart-line-down',
-                cor: variacao > 0 ? 'blue' : 'yellow'
-            });
-        }
-    }
-    
-    // Insight 3: Horário de pico
-    if (Object.keys(kpiData.tendencias.distribuicaoHorarios).length > 0) {
-        let horarioPico = '';
-        let volumePico = 0;
-        
-        for (const [horario, dados] of Object.entries(kpiData.tendencias.distribuicaoHorarios)) {
-            if (dados.total > volumePico) {
-                volumePico = dados.total;
-                horarioPico = horario;
-            }
-        }
-        
-        if (horarioPico) {
-            insights.push({
-                titulo: 'Horário de maior movimento',
-                descricao: `O horário ${horarioPico} concentra o maior volume de agendamentos (${volumePico}).`,
-                icone: 'fas fa-clock',
-                cor: 'orange'
-            });
-        }
-    }
-    
-    // Insight 4: Fornecedor destaque
-    if (kpiData.topFornecedores.length > 0) {
-        // Encontrar fornecedor com melhor desempenho (mais entregas e alta taxa)
-        const fornecedoresAtivos = kpiData.topFornecedores.filter(f => f.total >= 5);
-        
-        if (fornecedoresAtivos.length > 0) {
-            const melhorFornecedor = fornecedoresAtivos.sort((a, b) => {
-                // Pontuação: taxa de entrega * 0.7 + volume normalizado * 0.3
-                const maxVolume = Math.max(...fornecedoresAtivos.map(f => f.total));
-                const pontuacaoA = (a.taxaEntrega * 0.7) + ((a.total / maxVolume) * 100 * 0.3);
-                const pontuacaoB = (b.taxaEntrega * 0.7) + ((b.total / maxVolume) * 100 * 0.3);
-                return pontuacaoB - pontuacaoA;
-            })[0];
-            
-            insights.push({
-                titulo: 'Fornecedor destaque',
-                descricao: `${melhorFornecedor.nome} tem a melhor performance com ${melhorFornecedor.taxaEntrega.toFixed(1)}% de taxa de entrega em ${melhorFornecedor.total} agendamentos.`,
-                icone: 'fas fa-award',
-                cor: 'yellow'
-            });
-        }
-    }
-    
-    // Insight 5: Comparação com período anterior
-    if (atual.total > 0 && anterior.total > 0) {
-        const variacaoTaxa = calcularVariacaoPercentual(atual.taxaEntrega, anterior.taxaEntrega);
-        
-        if (Math.abs(variacaoTaxa) >= 5) {
-            insights.push({
-                titulo: 'Comparação de desempenho',
-                descricao: `A taxa de entrega ${variacaoTaxa >= 0 ? 'melhorou' : 'piorou'} ${Math.abs(variacaoTaxa).toFixed(1)}% em relação ao período anterior.`,
-                icone: variacaoTaxa >= 0 ? 'fas fa-thumbs-up' : 'fas fa-thumbs-down',
-                cor: variacaoTaxa >= 0 ? 'green' : 'red'
-            });
-        }
-    }
-    
-    // Se não houver insights, adicionar um genérico
-    if (insights.length === 0) {
-        insights.push({
-            titulo: 'Dados insuficientes',
-            descricao: 'Não há dados suficientes para gerar insights relevantes. Tente ampliar o período de análise.',
-            icone: 'fas fa-info-circle',
-            cor: 'blue'
-        });
-    }
-    
-    return insights;
-}
-
-function atualizarIndicadoresNegocio() {
-    const container = document.getElementById('indicadores-negocio');
-    if (!container) {
-        console.warn('Elemento indicadores-negocio não encontrado');
-        return;
-    }
-    
-    // Calcular indicadores específicos para o negócio
-    // 1. Tempo médio entre confirmação e entrega
-    // 2. Volume por tipo de carga
-    // 3. Taxa de conversão (pendente -> entregue)
-    
-    // Tempo médio entre confirmação e entrega
-    let tempoMedioConfirmacaoEntrega = calcularTempoMedioConfirmacaoEntrega();
-    
-    // Volume por tipo de carga
-    const volumePorTipoCarga = calcularVolumePorTipoCarga();
-    
-    // Taxa de conversão
-    const taxaConversao = calcularTaxaConversao();
-    
-    // Renderizar indicadores
-    container.innerHTML = `
-        <div class="bg-white border border-orange-100 rounded-lg p-4 shadow-md">
-            <h3 class="text-lg font-bold text-gray-800 border-b border-orange-100 pb-2 mb-3">
-                <i class="fas fa-business-time mr-2 text-orange-500"></i>
-                Indicadores de Negócio
-            </h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Tempo médio entre confirmação e entrega -->
-                <div class="p-3 bg-orange-50 rounded-lg">
-                    <div class="text-sm text-gray-600 mb-1">Tempo de processamento</div>
-                    <div class="flex items-end justify-between">
-                        <div class="text-xl font-bold text-gray-800">${tempoMedioConfirmacaoEntrega.toFixed(1)}h</div>
-                        <div class="text-xs text-gray-500">Entre confirmação e entrega</div>
-                    </div>
-                </div>
-                
-                <!-- Taxa de conversão -->
-                <div class="p-3 bg-orange-50 rounded-lg">
-                    <div class="text-sm text-gray-600 mb-1">Taxa de conversão</div>
-                    <div class="flex items-end justify-between">
-                        <div class="text-xl font-bold text-gray-800">${taxaConversao.toFixed(1)}%</div>
-                        <div class="text-xs text-gray-500">Pendente → Entregue</div>
-                    </div>
-                </div>
-                
-                <!-- Tipo de carga mais comum -->
-                <div class="p-3 bg-orange-50 rounded-lg">
-                    <div class="text-sm text-gray-600 mb-1">Tipo de carga predominante</div>
-                    <div class="flex items-end justify-between">
-                        <div class="text-xl font-bold text-gray-800">${volumePorTipoCarga.predominante}</div>
-                        <div class="text-xs text-gray-500">${volumePorTipoCarga.percentual.toFixed(1)}% do volume</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function calcularTempoMedioConfirmacaoEntrega() {
-    let tempoTotal = 0;
-    let contagem = 0;
-    
-    kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-        if (agendamento.status === 'entregue' && agendamento.historicoAcoes && agendamento.historicoAcoes.length > 0) {
-            const confirmacao = agendamento.historicoAcoes.find(h => 
-                h.acao === 'confirmado' || h.acao === 'agendamento_confirmado');
-            
-            const entrega = agendamento.historicoAcoes.find(h => 
-                h.acao === 'entregue' || h.acao === 'agendamento_entregue');
-            
-            if (confirmacao && entrega) {
-                const dataConfirmacao = new Date(confirmacao.createdAt);
-                const dataEntrega = new Date(entrega.createdAt);
-                
-                // Calcular diferença em horas
-                const diffHoras = (dataEntrega - dataConfirmacao) / (1000 * 60 * 60);
-                
-                if (diffHoras > 0 && diffHoras < 720) { // Filtrar valores extremos (máximo 30 dias)
-                    tempoTotal += diffHoras;
-                    contagem++;
-                }
-            }
-        }
-    });
-    
-    return contagem > 0 ? tempoTotal / contagem : 0;
-}
-
-function calcularVolumePorTipoCarga() {
-    const tipos = {};
-    let total = 0;
-    
-    kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-        if (agendamento.tipoCarga) {
-            const tipoCarga = agendamento.tipoCarga.trim();
-            if (!tipos[tipoCarga]) {
-                tipos[tipoCarga] = 0;
-            }
-            tipos[tipoCarga]++;
-            total++;
-        }
-    });
-    
-    let predominante = 'Não informado';
-    let maiorVolume = 0;
-    
-    for (const [tipo, volume] of Object.entries(tipos)) {
-        if (volume > maiorVolume) {
-            maiorVolume = volume;
-            predominante = tipo;
-        }
-    }
-    
-    return {
-        predominante: predominante,
-        volume: maiorVolume,
-        percentual: total > 0 ? (maiorVolume / total) * 100 : 0
-    };
-}
-
-function calcularTaxaConversao() {
-    const pendentes = kpiData.periodoAtual.agendamentos.filter(a => 
-        a.status === 'pendente' || a.historicoAcoes?.some(h => h.acao === 'pendente' || h.acao === 'agendamento_criado')
-    ).length;
-    
-    const entregues = kpiData.periodoAtual.agendamentos.filter(a => a.status === 'entregue').length;
-    
-    return pendentes > 0 ? (entregues / pendentes) * 100 : 0;
-}
-
-function aplicarFiltroPeriodoKPI() {
-    try {
-        // Obter valores do formulário
-        const periodoSelect = document.getElementById('kpi-periodo-predefinido');
-        const valorPeriodo = periodoSelect.value;
-        
-        const dataHoje = new Date();
-        let dataInicio = new Date();
-        let dataFim = new Date();
-        
-        if (valorPeriodo === 'custom') {
-            // Usar datas personalizadas informadas pelo usuário
-            const inputDataInicio = document.getElementById('kpi-data-inicio');
-            const inputDataFim = document.getElementById('kpi-data-fim');
-            
-            if (inputDataInicio.value && inputDataFim.value) {
-                dataInicio = new Date(inputDataInicio.value);
-                dataFim = new Date(inputDataFim.value);
-                
-                // Validar se as datas são válidas
-                if (isNaN(dataInicio.getTime()) || isNaN(dataFim.getTime())) {
-                    showNotification('Por favor, selecione datas válidas.', 'error');
-                    return;
-                }
-                
-                // Validar se a data inicial é anterior à data final
-                if (dataInicio > dataFim) {
-                    showNotification('A data inicial deve ser anterior à data final.', 'error');
-                    return;
-                }
-            } else {
-                showNotification('Por favor, selecione datas de início e fim para o período personalizado.', 'error');
-                return;
-            }
-        } else {
-            // Usar período predefinido
-            const dias = parseInt(valorPeriodo);
-            if (isNaN(dias)) {
-                showNotification('Período inválido selecionado.', 'error');
-                return;
-            }
-            
-            dataInicio.setDate(dataHoje.getDate() - dias);
-            dataFim = new Date(dataHoje);
-        }
-        
-        // Formatar datas para o formato ISO (YYYY-MM-DD)
-        const dataInicioStr = dataInicio.toISOString().split('T')[0];
-        const dataFimStr = dataFim.toISOString().split('T')[0];
-        
-        // Exibir mensagem de carregamento
-        showNotification(`Carregando dados KPI para o período de ${dataInicioStr} a ${dataFimStr}...`, 'info');
-        
-        // Recarregar dados com o novo período
-        carregarDadosKPI(dataInicioStr, dataFimStr);
-    } catch (error) {
-        console.error("Erro ao aplicar filtro de período:", error);
-        showNotification("Erro ao aplicar filtro. Verifique o console para detalhes.", "error");
-    }
-}
-
-// Função para exportar dados KPI para Excel
-function exportarDadosKPI() {
-    try {
-        // Implementar lógica de exportação para Excel
-        showNotification("Exportando dados para Excel...", "info");
-        
-        // Simular exportação bem-sucedida após 2 segundos
-        setTimeout(() => {
-            const link = document.createElement('a');
-            link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('Dados KPI');
-            link.download = 'BrisaLOG_KPI_Report.csv';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showNotification("Exportação concluída!", "success");
-        }, 2000);
-    } catch (error) {
-        console.error("Erro ao exportar dados:", error);
-        showNotification("Erro ao exportar dados. Verifique o console para detalhes.", "error");
-    }
-}
-
-// Função para imprimir relatório KPI em PDF
-function imprimirRelatorioKPI() {
-    try {
-        showNotification("Preparando relatório para impressão...", "info");
-        
-        // Implementar lógica de geração de PDF
-        window.print();
-    } catch (error) {
-        console.error("Erro ao gerar PDF:", error);
-        showNotification("Erro ao gerar PDF. Verifique o console para detalhes.", "error");
-    }
-}
-
-// Função para detectar período predefinido
-function detectarPeriodoPredefinido(inicio, fim) {
-    let periodoMatchPredefinido = false;
-    const periodoSelect = document.getElementById('kpi-periodo-predefinido');
-    
-    // Calcular diferença em dias
-    const diferenca = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
-    
-    if (diferenca === 7) {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        const inicioSete = new Date(hoje);
-        inicioSete.setDate(hoje.getDate() - 7);
-        
-        if (inicio.getTime() === inicioSete.getTime() && fim.getTime() === hoje.getTime()) {
-            periodoSelect.value = 'ultimos-7';
-            periodoMatchPredefinido = true;
-        }
-    } else if (diferenca === 30) {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        const inicioTrinta = new Date(hoje);
-        inicioTrinta.setDate(hoje.getDate() - 30);
-        
-        if (inicio.getTime() === inicioTrinta.getTime() && fim.getTime() === hoje.getTime()) {
-            periodoSelect.value = 'ultimos-30';
-            periodoMatchPredefinido = true;
-        }
-    } else if (diferenca === 90) {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        const inicioNoventa = new Date(hoje);
-        inicioNoventa.setDate(hoje.getDate() - 90);
-        
-        if (inicio.getTime() === inicioNoventa.getTime() && fim.getTime() === hoje.getTime()) {
-            periodoSelect.value = 'ultimos-90';
-            periodoMatchPredefinido = true;
-        }
-    } else {
-        const hoje = new Date();
-        const inicioAno = new Date(hoje.getFullYear(), 0, 1);
-        
-        if (inicio.getTime() === inicioAno.getTime() && fim.getTime() === hoje.getTime()) {
-            periodoSelect.value = 'ano-atual';
-            periodoMatchPredefinido = true;
-        }
-    }
-    
-    if (!periodoMatchPredefinido) {
-        periodoSelect.value = 'custom';
-    }
-    
-    return periodoMatchPredefinido;
-}
-
-function exportarDadosKPI(formato = 'csv') {
-    try {
-        // Obter informações do período
-        const dataInicio = document.getElementById('kpi-data-inicio').value;
-        const dataFim = document.getElementById('kpi-data-fim').value;
-        
-        // Formatar datas para exibição
-        const dataInicioFormatada = new Date(dataInicio).toLocaleDateString('pt-BR');
-        const dataFimFormatada = new Date(dataFim).toLocaleDateString('pt-BR');
-        
-        // Preparar título do relatório
-        const titulo = `Dashboard KPIs - BrisaLOG - Período: ${dataInicioFormatada} até ${dataFimFormatada}`;
-        
-        if (formato === 'pdf') {
-            exportarPDF(titulo, dataInicioFormatada, dataFimFormatada);
-        } else {
-            exportarCSV(titulo, dataInicioFormatada, dataFimFormatada);
-        }
-    } catch (error) {
-        console.error('Erro ao exportar dados:', error);
-        dashboard.showNotification('Erro ao exportar dados', 'error');
-    }
-}
-
-function exportarCSV(titulo, dataInicioFormatada, dataFimFormatada) {
-    // Criar objeto com todos os dados
-    const dadosExport = [
-        { 'Relatório': titulo },
-        { 'Relatório': '' }, // Linha em branco
-        { 'Métricas Principais': '' },
-        { 
-            'Total de Agendamentos': kpiData.periodoAtual.metricas.total,
-            'Taxa de Entrega (%)': kpiData.periodoAtual.metricas.taxaEntrega.toFixed(2),
-            'Taxa de Ausência (%)': kpiData.periodoAtual.metricas.taxaAusencia.toFixed(2),
-            'Tempo Médio Resposta (horas)': kpiData.periodoAtual.metricas.tempoMedioResposta.toFixed(2)
-        },
-        { 'Relatório': '' }, // Linha em branco
-        { 'Indicadores de Negócio': '' },
-        {
-            'Tempo médio entre confirmação e entrega (horas)': calcularTempoMedioConfirmacaoEntrega().toFixed(2),
-            'Taxa de conversão Pendente → Entregue (%)': calcularTaxaConversao().toFixed(2),
-            'Tipo de carga predominante': calcularVolumePorTipoCarga().predominante,
-            'Percentual do tipo predominante (%)': calcularVolumePorTipoCarga().percentual.toFixed(2)
-        },
-        { 'Relatório': '' }, // Linha em branco
-        { 'Top Fornecedores': '' }
-    ];
-    
-    // Adicionar dados dos fornecedores
-    kpiData.topFornecedores.forEach(fornecedor => {
-        dadosExport.push({
-            'Fornecedor': fornecedor.nome,
-            'Total Agendamentos': fornecedor.total,
-            'Entregas': fornecedor.entregues,
-            'Ausências': fornecedor.ausencias,
-            'Taxa de Entrega (%)': fornecedor.taxaEntrega.toFixed(2)
-        });
-    });
-    
-    // Adicionar dados de status
-    dadosExport.push({ 'Relatório': '' });
-    dadosExport.push({ 'Agendamentos por Status': '' });
-    
-    const statusCounts = {
-        'Pendente': 0,
-        'Confirmado': 0,
-        'Entregue': 0,
-        'Não Veio': 0,
-        'Reagendamento': 0
-    };
-    
-    kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-        switch (agendamento.status) {
-            case 'pendente':
-                statusCounts['Pendente']++;
-                break;
-            case 'confirmado':
-                statusCounts['Confirmado']++;
-                break;
-            case 'entregue':
-                statusCounts['Entregue']++;
-                break;
-            case 'nao-veio':
-                statusCounts['Não Veio']++;
-                break;
-            case 'reagendamento':
-            case 'aguardando_resposta_fornecedor':
-                statusCounts['Reagendamento']++;
-                break;
-        }
-    });
-    
-    dadosExport.push(statusCounts);
-    
-    // Adicionar dados por dia da semana
-    dadosExport.push({ 'Relatório': '' });
-    dadosExport.push({ 'Agendamentos por Dia da Semana': '' });
-    
-    const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    const diasSemanaCounts = {};
-    
-    diasSemana.forEach(dia => {
-        diasSemanaCounts[dia] = 0;
-    });
-    
-    kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-        const dataEntrega = new Date(agendamento.dataEntrega);
-        const diaSemana = dataEntrega.getDay();
-        diasSemanaCounts[diasSemana[diaSemana]]++;
-    });
-    
-    dadosExport.push(diasSemanaCounts);
-    
-    // Adicionar tendência semanal
-    if (kpiData.tendencias.entregasSemanais.length > 0) {
-        dadosExport.push({ 'Relatório': '' });
-        dadosExport.push({ 'Tendência Semanal': '' });
-        
-        kpiData.tendencias.entregasSemanais.forEach(semana => {
-            dadosExport.push({
-                'Semana': semana.dataFormatada,
-                'Total': semana.total,
-                'Entregues': semana.entregues,
-                'Ausências': semana.ausencias,
-                'Taxa de Entrega (%)': semana.taxaEntrega.toFixed(2)
-            });
-        });
-    }
-    
-    // Converter para CSV e baixar
-    dashboard.downloadCSV(dadosExport, `Dashboard_KPIs_${dataInicioFormatada}_ate_${dataFimFormatada}.csv`);
-    dashboard.showNotification('Relatório CSV exportado com sucesso!', 'success');
-}
-
-function exportarPDF(titulo, dataInicioFormatada, dataFimFormatada) {
-    // Verificar se jsPDF está disponível
-    if (typeof jspdf === 'undefined' || typeof jspdf.jsPDF === 'undefined') {
-        dashboard.showNotification('Biblioteca jsPDF não encontrada. Usando CSV como alternativa.', 'warning');
-        exportarCSV(titulo, dataInicioFormatada, dataFimFormatada);
-        return;
-    }
-    
-    try {
-        const { jsPDF } = jspdf;
-        const doc = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        });
-        
-        // Cores e estilos
-        const corLaranja = [255, 140, 0];
-        const corCinza = [80, 80, 80];
-        const corPreto = [0, 0, 0];
-        
-        // Configurações de página
-        const margemEsquerda = 20;
-        const margemDireita = 20;
-        const margemTopo = 20;
-        let posicaoY = margemTopo;
-        const larguraPagina = 210 - margemEsquerda - margemDireita;
-        
-        // Função para adicionar texto
-        function adicionarTexto(texto, tamanho, estilo, cor, x, y, alinhamento = 'left') {
-            doc.setFontSize(tamanho);
-            doc.setFont('helvetica', estilo);
-            doc.setTextColor(...cor);
-            doc.text(texto, x, y, { align: alinhamento });
-            return doc.getTextDimensions(texto).h + 2;
-        }
-        
-        // Função para verificar se precisa de nova página
-        function verificarNovaPagina(alturaConteudo, margemSeguranca = 40) {
-            if (posicaoY + alturaConteudo > 297 - margemSeguranca) {
-                doc.addPage();
-                posicaoY = margemTopo;
-                return true;
-            }
-            return false;
-        }
-        
-        // Função para adicionar linha divisória
-        function adicionarLinha(y) {
-            doc.setDrawColor(...corLaranja);
-            doc.setLineWidth(0.5);
-            doc.line(margemEsquerda, y, 210 - margemDireita, y);
-            return 3;
-        }
-        
-        // Cabeçalho
-        posicaoY += adicionarTexto(titulo, 16, 'bold', corLaranja, margemEsquerda, posicaoY);
-        posicaoY += 2;
-        posicaoY += adicionarLinha(posicaoY);
-        posicaoY += 5;
-        
-        // Métricas principais
-        posicaoY += adicionarTexto('Métricas Principais', 14, 'bold', corPreto, margemEsquerda, posicaoY);
-        posicaoY += 6;
-        
-        // Tabela de métricas
-        const metricasKeys = [
-            'Total de Agendamentos', 
-            'Taxa de Entrega', 
-            'Taxa de Ausência', 
-            'Tempo Médio Resposta'
-        ];
-        
-        const metricasValues = [
-            kpiData.periodoAtual.metricas.total.toString(),
-            `${kpiData.periodoAtual.metricas.taxaEntrega.toFixed(1)}%`,
-            `${kpiData.periodoAtual.metricas.taxaAusencia.toFixed(1)}%`,
-            `${kpiData.periodoAtual.metricas.tempoMedioResposta.toFixed(1)}h`
-        ];
-        
-        // Criar tabela de métricas
-        const larguraMetricas = larguraPagina / 2;
-        for (let i = 0; i < metricasKeys.length; i++) {
-            const y = posicaoY + (i * 7);
-            doc.setFillColor(245, 245, 245);
-            doc.rect(margemEsquerda, y - 4, larguraMetricas, 6, 'F');
-            adicionarTexto(metricasKeys[i], 10, 'normal', corCinza, margemEsquerda + 2, y);
-            adicionarTexto(metricasValues[i], 10, 'bold', corPreto, margemEsquerda + larguraMetricas - 5, y, 'right');
-        }
-        
-        posicaoY += (metricasKeys.length * 7) + 5;
-        
-        // Indicadores de negócio
-        verificarNovaPagina(50);
-        
-        posicaoY += adicionarTexto('Indicadores de Negócio', 14, 'bold', corPreto, margemEsquerda, posicaoY);
-        posicaoY += 6;
-        
-        const indicadoresNegocio = [
-            { 
-                titulo: 'Tempo de processamento', 
-                valor: `${calcularTempoMedioConfirmacaoEntrega().toFixed(1)}h`,
-                descricao: 'Entre confirmação e entrega'
-            },
-            { 
-                titulo: 'Taxa de conversão', 
-                valor: `${calcularTaxaConversao().toFixed(1)}%`,
-                descricao: 'Pendente → Entregue'
-            },
-            { 
-                titulo: 'Tipo de carga predominante', 
-                valor: `${calcularVolumePorTipoCarga().predominante}`,
-                descricao: `${calcularVolumePorTipoCarga().percentual.toFixed(1)}% do volume`
-            }
-        ];
-        
-        // Criar tabela de indicadores
-        for (let i = 0; i < indicadoresNegocio.length; i++) {
-            const y = posicaoY + (i * 10);
-            doc.setFillColor(240, 240, 240);
-            doc.rect(margemEsquerda, y - 4, larguraPagina, 9, 'F');
-            adicionarTexto(indicadoresNegocio[i].titulo, 10, 'normal', corCinza, margemEsquerda + 2, y - 1);
-            adicionarTexto(indicadoresNegocio[i].valor, 12, 'bold', corPreto, margemEsquerda + 2, y + 4);
-            adicionarTexto(indicadoresNegocio[i].descricao, 8, 'italic', corCinza, margemEsquerda + larguraPagina - 5, y + 3, 'right');
-        }
-        
-        posicaoY += (indicadoresNegocio.length * 10) + 8;
-        
-        // Top Fornecedores
-        verificarNovaPagina(60);
-        
-        posicaoY += adicionarTexto('Top Fornecedores', 14, 'bold', corPreto, margemEsquerda, posicaoY);
-        posicaoY += 6;
-        
-        if (kpiData.topFornecedores.length === 0) {
-            posicaoY += adicionarTexto('Nenhum dado de fornecedor encontrado para o período selecionado.', 10, 'italic', corCinza, margemEsquerda, posicaoY);
-            posicaoY += 5;
-        } else {
-            // Cabeçalho da tabela
-            const colunas = ['Fornecedor', 'Total', 'Entregas', 'Ausências', 'Taxa (%)'];
-            const larguras = [0.45, 0.12, 0.15, 0.15, 0.13];
-            let xAtual = margemEsquerda;
-            
-            doc.setFillColor(50, 50, 50);
-            doc.rect(margemEsquerda, posicaoY - 4, larguraPagina, 6, 'F');
-            
-            for (let i = 0; i < colunas.length; i++) {
-                const largura = larguraPagina * larguras[i];
-                adicionarTexto(colunas[i], 9, 'bold', [255, 255, 255], xAtual + 2, posicaoY);
-                xAtual += largura;
-            }
-            
-            posicaoY += 6;
-            
-            // Limitar a 10 fornecedores
-            const fornecedoresExibir = kpiData.topFornecedores.slice(0, 10);
-            
-            // Linhas da tabela
-            for (let i = 0; i < fornecedoresExibir.length; i++) {
-                const f = fornecedoresExibir[i];
-                xAtual = margemEsquerda;
-                
-                if (i % 2 === 0) {
-                    doc.setFillColor(245, 245, 245);
-                    doc.rect(margemEsquerda, posicaoY - 4, larguraPagina, 6, 'F');
-                }
-                
-                // Fornecedor (truncar se muito longo)
-                let nomeFornecedor = f.nome;
-                if (nomeFornecedor.length > 30) {
-                    nomeFornecedor = nomeFornecedor.substring(0, 27) + '...';
-                }
-                adicionarTexto(nomeFornecedor, 8, 'normal', corPreto, xAtual + 2, posicaoY);
-                xAtual += larguraPagina * larguras[0];
-                
-                // Total
-                adicionarTexto(f.total.toString(), 8, 'normal', corPreto, xAtual + 2, posicaoY);
-                xAtual += larguraPagina * larguras[1];
-                
-                // Entregas
-                adicionarTexto(f.entregues.toString(), 8, 'normal', [0, 150, 0], xAtual + 2, posicaoY);
-                xAtual += larguraPagina * larguras[2];
-                
-                // Ausências
-                adicionarTexto(f.ausencias.toString(), 8, 'normal', [200, 0, 0], xAtual + 2, posicaoY);
-                xAtual += larguraPagina * larguras[3];
-                
-                // Taxa
-                const corTaxa = f.taxaEntrega >= 80 ? [0, 150, 0] : (f.taxaEntrega >= 50 ? [200, 150, 0] : [200, 0, 0]);
-                adicionarTexto(`${f.taxaEntrega.toFixed(1)}%`, 8, 'normal', corTaxa, xAtual + 2, posicaoY);
-                
-                posicaoY += 6;
-                
-                // Verificar se precisa de nova página antes da próxima linha
-                if (i < fornecedoresExibir.length - 1) {
-                    verificarNovaPagina(10);
-                }
-            }
-        }
-        
-        // Verificar se cabe o gráfico de status
-        verificarNovaPagina(80);
-        
-        // Distribuição por Status
-        posicaoY += adicionarTexto('Distribuição por Status', 14, 'bold', corPreto, margemEsquerda, posicaoY);
-        posicaoY += 6;
-        
-        // Tabela de status em formato de barras
-        const statusLabels = ['Pendente', 'Confirmado', 'Entregue', 'Não Veio', 'Reagendamento'];
-        const statusCounts = [0, 0, 0, 0, 0];
-        
-        kpiData.periodoAtual.agendamentos.forEach(agendamento => {
-            switch (agendamento.status) {
-                case 'pendente': statusCounts[0]++; break;
-                case 'confirmado': statusCounts[1]++; break;
-                case 'entregue': statusCounts[2]++; break;
-                case 'nao-veio': statusCounts[3]++; break;
-                case 'reagendamento':
-                case 'aguardando_resposta_fornecedor': 
-                    statusCounts[4]++; 
-                    break;
-            }
-        });
-        
-        const totalStatus = statusCounts.reduce((acc, val) => acc + val, 0);
-        const statusColors = [
-            [255, 140, 0],  // Laranja
-            [76, 175, 80],  // Verde
-            [33, 150, 243], // Azul
-            [244, 67, 54],  // Vermelho
-            [156, 39, 176]  // Roxo
-        ];
-        
-        for (let i = 0; i < statusLabels.length; i++) {
-            const percentual = totalStatus > 0 ? (statusCounts[i] / totalStatus) * 100 : 0;
-            const larguraBarra = (larguraPagina - 50) * (percentual / 100);
-            
-            doc.setFillColor(...statusColors[i]);
-            doc.rect(margemEsquerda + 40, posicaoY - 3, larguraBarra, 5, 'F');
-            
-            adicionarTexto(statusLabels[i], 8, 'normal', corPreto, margemEsquerda, posicaoY);
-            adicionarTexto(`${statusCounts[i]} (${percentual.toFixed(1)}%)`, 8, 'bold', corPreto, margemEsquerda + 50 + larguraBarra, posicaoY);
-            
-            posicaoY += 8;
-        }
-        
-        // Adicionar rodapé
-        doc.setPage(doc.getNumberOfPages());
-        const dataGeracao = new Date().toLocaleString('pt-BR');
-        adicionarTexto(`Relatório gerado em: ${dataGeracao}`, 8, 'italic', corCinza, margemEsquerda, 287);
-        adicionarTexto('BrisaLOG - Sistema de Gestão Logística', 8, 'italic', corCinza, 210 - margemDireita, 287, 'right');
-        
-        // Salvar o PDF
-        doc.save(`Dashboard_KPIs_${dataInicioFormatada}_ate_${dataFimFormatada}.pdf`);
-        dashboard.showNotification('Relatório PDF exportado com sucesso!', 'success');
-        
-    } catch (error) {
-        console.error('Erro ao gerar PDF:', error);
-        dashboard.showNotification('Erro ao gerar PDF. Usando CSV como alternativa.', 'warning');
-        exportarCSV(titulo, dataInicioFormatada, dataFimFormatada);
-    }
-}
-
-// Função para atualizar dados do dashboard
-function refreshData() {
-    console.log('Atualizando dados do dashboard...');
-    dashboard.loadAgendamentos()
-        .then(() => {
-            console.log('Dados atualizados com sucesso');
-        })
-        .catch(error => {
-            console.error('Erro ao atualizar dados:', error);
-        });
 }
