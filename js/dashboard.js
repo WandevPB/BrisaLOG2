@@ -1,3 +1,21 @@
+// Garantir função global para o botão do bloqueio
+window.submitBloqueioButton = function() {
+    try {
+        const form = document.getElementById('bloqueio-form');
+        if (!form) {
+            console.error('[Frontend] submitBloqueioButton: formulário não encontrado');
+            return;
+        }
+        const fakeEvent = {
+            preventDefault: () => {},
+            target: form
+        };
+        console.log('[Frontend] submitBloqueioButton chamado — executando handleBloqueioSubmit');
+        handleBloqueioSubmit(fakeEvent);
+    } catch (err) {
+        console.error('[Frontend] Erro em submitBloqueioButton:', err);
+    }
+};
 // Modal DASHBOARD KPIs removido - será refeito do zero conforme solicitado
 // Funções globais para compatibilidade com HTML (onclick)
 window.openConsultaModal = function() { dashboard.openConsultaModal(); };
@@ -2567,7 +2585,44 @@ function setupBloqueioEventListeners() {
     document.getElementById('hora-fim').addEventListener('change', validateHorarios);
     
     // Submit do formulário
-    form.addEventListener('submit', handleBloqueioSubmit);
+    // Usar onsubmit para evitar múltiplos listeners caso o modal seja reaberto várias vezes
+    form.onsubmit = function(e) {
+        console.log('[Frontend] bloqueio-form submit triggered (onsubmit bind)');
+        return handleBloqueioSubmit(e);
+    };
+
+    // Prevenir que a tecla Enter dispare um submit nativo (exceto em textarea)
+    form.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+            if (tag !== 'textarea') {
+                e.preventDefault();
+                console.log('[Frontend] Enter pressed in bloqueio-form - prevented native submit');
+            }
+        }
+    });
+
+// Função chamada pelo botão para garantir que não haverá submit nativo
+window.submitBloqueioButton = function() {
+    try {
+        const form = document.getElementById('bloqueio-form');
+        if (!form) {
+            console.error('[Frontend] submitBloqueioButton: formulário não encontrado');
+            return;
+        }
+
+        // Criar um evento que será passado ao handler
+        const fakeEvent = {
+            preventDefault: () => {},
+            target: form
+        };
+
+        console.log('[Frontend] submitBloqueioButton chamado — executando handleBloqueioSubmit');
+        handleBloqueioSubmit(fakeEvent);
+    } catch (err) {
+        console.error('[Frontend] Erro em submitBloqueioButton:', err);
+    }
+}
 }
 
 function updateBloqueioPreview() {
@@ -2623,6 +2678,7 @@ function validateHorarios() {
 
 async function handleBloqueioSubmit(e) {
     e.preventDefault();
+    console.debug('[Frontend] handleBloqueioSubmit invoked');
     
     const formData = new FormData(e.target);
     const data = {
@@ -2656,6 +2712,7 @@ async function handleBloqueioSubmit(e) {
         dashboard.showLoading(true);
         
         const token = sessionStorage.getItem('token');
+        console.debug('[Frontend] Criando bloqueio - token presente?', !!token, 'payload:', data);
         const response = await fetch('http://localhost:3000/api/bloqueios-horario', {
             method: 'POST',
             headers: {
@@ -2670,6 +2727,10 @@ async function handleBloqueioSubmit(e) {
         if (response.ok) {
             dashboard.showNotification('Bloqueio de horário criado com sucesso!', 'success');
             closeBloqueioModal();
+            // Recarregar lista de bloqueios no modal de gerenciamento
+            if (typeof carregarBloqueios === 'function') {
+                carregarBloqueios();
+            }
             dashboard.loadAgendamentos(); // Recarregar dados
         } else {
             dashboard.showNotification(result.error || 'Erro ao criar bloqueio', 'error');

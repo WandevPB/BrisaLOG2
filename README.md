@@ -186,7 +186,7 @@ GET /api/files/:filename         # Download de PDF
 ## 📊 Dados de Exemplo
 
 O sistema vem com dados de exemplo incluindo:
-- **3 CDs** (Bahia, Pernambuco, Lagoa Nova)
+- **3 CDs** (Bahia, Pernambuco, CENTRAL)
 - **5 Fornecedores** fictícios
 - **20 Agendamentos** com status variados
 - **Notas fiscais** e histórico de ações

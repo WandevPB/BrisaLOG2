@@ -1,343 +1,139 @@
+// Funções globais para navegação dos steps
+function nextStep() {
+    if (window.agendamentoForm) {
+        window.agendamentoForm.nextStep();
+    }
+}
+
+function previousStep() {
+    if (window.agendamentoForm) {
+        window.agendamentoForm.previousStep();
+    }
+}
 // Agendamento.js - Sistema de Agendamento de Entregas
+// Todos os métodos da classe AgendamentoForm devem estar dentro do bloco da classe
+
 class AgendamentoForm {
     constructor() {
         this.currentStep = 1;
         this.maxSteps = 4;
-        this.formData = {
-            fornecedor: {},
-            entrega: {},
-            pedidos: [],
-            arquivos: []
-        };
+        this.formData = {};
         this.pedidoCounter = 0;
-        
-        // Verificar autenticação antes de inicializar
-        this.checkAuthentication();
-        this.init();
+        this.attachEventListeners();
+        this.showStep(this.currentStep);
     }
 
-    checkAuthentication() {
-        // Verificar se existe um token na sessionStorage
-        const token = sessionStorage.getItem('token');
-        const tokenStorage = localStorage.getItem('token');
-        
-        if (!token && !tokenStorage) {
-            console.warn('Token de autenticação não encontrado. Algumas funcionalidades podem não funcionar corretamente.');
-            
-            // Se houver um login de fornecedor, podemos usar esse token
-            const fornecedorToken = sessionStorage.getItem('fornecedor_token');
-            if (fornecedorToken) {
-                // Usar token do fornecedor para autenticação de agendamento
-                sessionStorage.setItem('token', fornecedorToken);
-                console.log('Usando token de fornecedor para autenticação');
-            }
-        } else if (tokenStorage && !token) {
-            // Transferir token do localStorage para sessionStorage se necessário
-            sessionStorage.setItem('token', tokenStorage);
-            console.log('Token transferido do localStorage para sessionStorage');
-        }
-    }
+    attachEventListeners() {
+        // Navegação
+        document.getElementById('next-btn')?.addEventListener('click', () => this.nextStep());
+        document.getElementById('prev-btn')?.addEventListener('click', () => this.previousStep());
 
-    init() {
-        
-        this.setupEventListeners();
-        this.setMinDate();
-        // Não adicionar pedido automaticamente - será adicionado quando chegar na etapa 3
-    }
-
-    setupEventListeners() {
-        // Validação em tempo real
-        document.querySelectorAll('input, select, textarea').forEach(field => {
-            field.addEventListener('blur', () => this.validateField(field));
-            field.addEventListener('input', () => this.clearFieldError(field));
-        });
-
-        // Máscara para telefone
-        document.getElementById('telefone').addEventListener('input', this.formatPhone);
-        
-        // Máscara para documento
-        document.getElementById('documento').addEventListener('input', this.formatDocument);
-
-        // Submit do formulário
-        document.getElementById('agendamento-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.submitForm();
-        });
-
-        // Event listeners para carregar horários disponíveis
-        const dataEntrega = document.getElementById('data-entrega');
-        const cdDestino = document.getElementById('cd-destino');
-        
-        if (dataEntrega && cdDestino) {
-            // Carregar horários quando a data mudar
-            dataEntrega.addEventListener('change', () => {
-                const date = dataEntrega.value;
-                const cd = cdDestino.value;
-                if (date && cd) {
-                    this.loadAvailableHours(date, cd);
-                }
-            });
-
-            // Carregar horários quando o CD mudar
-            cdDestino.addEventListener('change', () => {
-                const date = dataEntrega.value;
-                const cd = cdDestino.value;
-                if (date && cd) {
-                    this.loadAvailableHours(date, cd);
-                }
-            });
-        }
-    }
-
-    setMinDate() {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        // Pular fins de semana
-        while (tomorrow.getDay() === 0 || tomorrow.getDay() === 6) {
-            tomorrow.setDate(tomorrow.getDate() + 1);
-        }
-        
-        const dateInput = document.getElementById('data-entrega');
-        dateInput.min = tomorrow.toISOString().split('T')[0];
-        
-        // Validação de dias úteis
-        dateInput.addEventListener('change', (e) => {
-            const selectedDate = new Date(e.target.value);
-            if (selectedDate.getDay() === 0 || selectedDate.getDay() === 6) {
-                this.showNotification('Por favor, selecione um dia útil (Segunda à Sexta)', 'error');
-                e.target.value = '';
-            }
-        });
-    }
-
-    formatPhone(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length <= 11) {
-            value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-            if (value.length < 14) {
-                value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-            }
-        }
-        e.target.value = value;
-    }
-
-    formatDocument(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length <= 11) {
-            // CPF
-            value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-        } else {
-            // CNPJ
-            value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-        }
-        e.target.value = value;
-    }
-
-    validateField(field) {
-        const value = field.value.trim();
-        let isValid = true;
-        let message = '';
-
-        if (field.hasAttribute('required') && !value) {
-            isValid = false;
-            message = 'Este campo é obrigatório.';
-        } else if (field.type === 'email' && value) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(value)) {
-                isValid = false;
-                message = 'Digite um e-mail válido.';
-            }
-        } else if (field.id === 'telefone' && value) {
-            const phoneRegex = /^\(\d{2}\) \d{4,5}-\d{4}$/;
-            if (!phoneRegex.test(value)) {
-                isValid = false;
-                message = 'Digite um telefone válido.';
-            }
-        } else if (field.id === 'documento' && value) {
-            const docValue = value.replace(/\D/g, '');
-            if (docValue.length !== 11 && docValue.length !== 14) {
-                isValid = false;
-                message = 'Digite um CPF ou CNPJ válido.';
-            }
-        }
-
-        this.setFieldValidation(field, isValid, message);
-        return isValid;
-    }
-
-    setFieldValidation(field, isValid, message) {
-        if (!field) return;
-        
-        // Buscar o elemento de feedback de diferentes maneiras
-        let feedback = field.parentNode.querySelector('.invalid-feedback');
-        
-        // Se não encontrou no parent direto, tentar no próximo sibling
-        if (!feedback) {
-            feedback = field.nextElementSibling;
-            if (feedback && !feedback.classList.contains('invalid-feedback')) {
-                feedback = null;
-            }
-        }
-        
-        // Se ainda não encontrou, criar um
-        if (!feedback) {
-            feedback = document.createElement('div');
-            feedback.className = 'invalid-feedback hidden text-red-500 text-xs mt-1';
-            field.parentNode.appendChild(feedback);
-        }
-        
-        if (isValid) {
-            field.classList.remove('border-red-500');
-            field.classList.add('border-green-500');
-            if (feedback) {
-                feedback.classList.add('hidden');
-            }
-        } else {
-            field.classList.remove('border-green-500');
-            field.classList.add('border-red-500');
-            if (feedback) {
-                feedback.textContent = message;
-                feedback.classList.remove('hidden');
-            }
-        }
-    }
-
-    clearFieldError(field) {
-        if (!field) return;
-        
-        field.classList.remove('border-red-500');
-        const feedback = field.parentNode.querySelector('.invalid-feedback');
-        if (feedback) {
-            feedback.classList.add('hidden');
-        }
+        // Adicionar Pedido
+        document.getElementById('add-pedido-btn')?.addEventListener('click', () => this.addPedido());
     }
 
     validateStep(step) {
-        const stepElement = document.getElementById(`form-step-${step}`);
-        const requiredFields = stepElement.querySelectorAll('[required]');
         let isValid = true;
+        let formId = `form-step-${step}`;
+        const inputs = document.querySelectorAll(`#${formId} [required]`);
+        const stepContainer = document.getElementById(formId);
 
-        requiredFields.forEach(field => {
-            if (!this.validateField(field)) {
+        inputs.forEach(input => {
+            if (input.type === 'file') {
+                const fileInput = input;
+                const fileSelected = fileInput.closest('.file-drop-zone')?.querySelector('.file-selected');
+                if (!fileSelected || fileSelected.classList.contains('hidden')) {
+                    this.showInvalidFeedback(input, 'Este campo é obrigatório.');
+                    isValid = false;
+                } else {
+                    this.hideInvalidFeedback(input);
+                }
+            } else if (!input.value.trim()) {
+                this.showInvalidFeedback(input, 'Este campo é obrigatório.');
                 isValid = false;
+            } else {
+                this.hideInvalidFeedback(input);
             }
         });
 
         if (step === 3) {
-            // Verificar se existe pelo menos um pedido
-            const pedidos = document.querySelectorAll('.pedido-content');
-            
-            if (pedidos.length === 0) {
-                this.showNotification('Adicione pelo menos um pedido antes de continuar.', 'error');
+            const pedidoInputs = stepContainer?.querySelectorAll('.pedido-content [name="numeroPedido"]');
+            if (pedidoInputs?.length === 0) {
+                this.showNotification('É necessário adicionar pelo menos um pedido.', 'error');
                 isValid = false;
-                return isValid;
-            }
-
-            // Verificar se todos os pedidos têm número preenchido e pelo menos uma NF
-            let hasValidPedido = false;
-            pedidos.forEach((pedido, pedidoIndex) => {
-                const numeroPedido = pedido.querySelector('[name="numeroPedido"]');
-                if (!numeroPedido || !numeroPedido.value.trim()) {
-                    if (numeroPedido) {
-                        this.setFieldValidation(numeroPedido, false, 'Número do pedido é obrigatório.');
-                    }
-                    isValid = false;
-                    return;
-                }
-
-                const numeroNFs = pedido.querySelectorAll('[name="numeroNF"]');
-                const valorNFs = pedido.querySelectorAll('[name="valorNF"]');
-                const arquivoNFs = pedido.querySelectorAll('[name="arquivoNF"]');
-
-                if (numeroNFs.length === 0) {
-                    this.showNotification('Cada pedido deve ter pelo menos uma nota fiscal.', 'error');
-                    isValid = false;
-                    return;
-                }
-
-                // Validar se todas as NFs têm número, valor e arquivo
-                let pedidoTemNFValida = false;
-                numeroNFs.forEach((input, index) => {
-                    if (!input.value || input.value.trim() === '') {
-                        this.setFieldValidation(input, false, 'Número da nota fiscal é obrigatório.');
+            } else {
+                pedidoInputs?.forEach(input => {
+                    if (!input.value.trim()) {
+                        this.showInvalidFeedback(input, 'Este campo é obrigatório.');
                         isValid = false;
                     } else {
-                        this.setFieldValidation(input, true, '');
+                        this.hideInvalidFeedback(input);
                     }
                 });
 
-                valorNFs.forEach((input, index) => {
-                    if (!input.value || input.value.trim() === '') {
-                        this.setFieldValidation(input, false, 'Valor da nota fiscal é obrigatório.');
+                const nfInputs = stepContainer?.querySelectorAll('.nota-fiscal-item [name="numeroNF"], .nota-fiscal-item [name="valorNF"]');
+                nfInputs?.forEach(input => {
+                    if (!input.value.trim()) {
+                        this.showInvalidFeedback(input, 'Este campo é obrigatório.');
                         isValid = false;
                     } else {
-                        const valor = input.value.replace(/[^\d,]/g, '').replace(',', '.');
-                        const valorNumerico = parseFloat(valor);
-                        if (isNaN(valorNumerico) || valorNumerico <= 0) {
-                            this.setFieldValidation(input, false, 'Valor deve ser maior que zero.');
-                            isValid = false;
-                        } else {
-                            pedidoTemNFValida = true;
-                            this.setFieldValidation(input, true, '');
-                        }
+                        this.hideInvalidFeedback(input);
                     }
                 });
-
-                // Validar se todas as NFs têm arquivo
-                arquivoNFs.forEach((input, index) => {
-                    if (!input.files || input.files.length === 0) {
-                        this.showNotification('Todas as notas fiscais devem ter um arquivo PDF anexado.', 'error');
-                        isValid = false;
-                    }
-                });
-
-                if (pedidoTemNFValida) {
-                    hasValidPedido = true;
-                }
-            });
-
-            if (!hasValidPedido) {
-                this.showNotification('Pelo menos uma nota fiscal deve ter valor válido.', 'error');
-                isValid = false;
             }
         }
-
+        
         return isValid;
     }
 
-    nextStep() {
-        if (this.validateStep(this.currentStep)) {
-            this.saveStepData();
-            
-            if (this.currentStep < this.maxSteps) {
-                this.currentStep++;
-                this.updateStepDisplay();
-                
-                // Se chegando na etapa 3 e não há pedidos, adicionar o primeiro
-                if (this.currentStep === 3 && this.pedidoCounter === 0) {
-                    this.addPedido();
-                }
-                
-                if (this.currentStep === 4) {
-                    this.generateResumo();
-                }
-            }
+    showInvalidFeedback(input, message) {
+        const feedback = input.parentElement.querySelector('.invalid-feedback');
+        if (feedback) {
+            feedback.textContent = message;
+            feedback.classList.remove('hidden');
         }
+    }
+
+    hideInvalidFeedback(input) {
+        const feedback = input.parentElement.querySelector('.invalid-feedback');
+        if (feedback) {
+            feedback.textContent = '';
+            feedback.classList.add('hidden');
+        }
+    }
+
+    nextStep() {
+        if (!this.validateStep(this.currentStep)) {
+            this.showNotification('Por favor, preencha todos os campos obrigatórios.', 'error');
+            return;
+        }
+
+        this.saveStepData();
+        this.currentStep++;
+
+        if (this.currentStep > this.maxSteps) {
+            this.currentStep = this.maxSteps;
+        }
+
+        if (this.currentStep === 4) {
+            this.generateResumo();
+        }
+
+        this.showStep(this.currentStep);
     }
 
     previousStep() {
-        if (this.currentStep > 1) {
-            this.currentStep--;
-            this.updateStepDisplay();
+        this.currentStep--;
+        if (this.currentStep < 1) {
+            this.currentStep = 1;
         }
+        this.showStep(this.currentStep);
     }
 
-    updateStepDisplay() {
+    showStep(step) {
         // Ocultar todas as etapas
-        document.querySelectorAll('.form-step').forEach(step => {
-            step.classList.add('hidden');
+        document.querySelectorAll('.form-step').forEach(stepElement => {
+            stepElement.classList.add('hidden');
         });
 
         // Mostrar etapa atual
@@ -357,6 +153,14 @@ class AgendamentoForm {
         document.getElementById('current-step').textContent = this.currentStep;
         document.getElementById('step-description').textContent = descriptions[this.currentStep];
 
+        // Ao entrar no step 3, garantir que pelo menos um pedido seja criado
+        if (this.currentStep === 3) {
+            const pedidosContainer = document.getElementById('pedidos-container');
+            // Se não houver nenhum pedido, adicionar automaticamente
+            if (pedidosContainer && pedidosContainer.children.length === 0) {
+                this.addPedido();
+            }
+        }
         // Scroll para o topo
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -453,8 +257,7 @@ class AgendamentoForm {
                 
                 <div class="space-y-4">
                     <div class="notas-fiscais-container" data-pedido="${pedidoId}">
-                        <!-- Notas fiscais serão adicionadas aqui -->
-                    </div>
+                        </div>
                     
                     <div class="text-left">
                         <button type="button" onclick="addNotaFiscal('${pedidoId}')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all">
@@ -1084,6 +887,8 @@ class AgendamentoForm {
 }
 
 // Funções globais
+let agendamentoForm;
+
 function nextStep() {
     agendamentoForm.nextStep();
 }
@@ -1191,7 +996,49 @@ function formatCurrency(input) {
 }
 
 // Inicializar quando o DOM estiver carregado
-let agendamentoForm;
 document.addEventListener('DOMContentLoaded', () => {
     agendamentoForm = new AgendamentoForm();
+
+    // Intercepta submit do formulário principal
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            agendamentoForm.submitForm();
+        });
+    }
+
+    // Mapeamento de nome para ID dos CDs
+    const cdMap = {
+        'Bahia': 1,
+        'Pernambuco': 2,
+        'Lagoa Nova': 3
+        // Adicione outros CDs conforme necessário
+    };
+
+    // Listeners para carregar horários disponíveis ao mudar CD ou data
+    const cdInput = document.getElementById('cd-destino');
+    const dateInput = document.getElementById('data-entrega');
+    const horarioSelect = document.getElementById('horario-entrega');
+    if (horarioSelect) {
+        horarioSelect.disabled = true;
+    }
+    function atualizarHorarios() {
+        const cdNome = cdInput.value;
+        const cdId = cdMap[cdNome];
+        const date = dateInput.value;
+        if (cdId && date) {
+            if (horarioSelect) horarioSelect.disabled = false;
+            agendamentoForm.loadAvailableHours(date, cdId);
+        } else {
+            if (horarioSelect) {
+                horarioSelect.disabled = true;
+                horarioSelect.innerHTML = '<option value="">Selecione um horário</option>';
+            }
+        }
+    }
+    if (cdInput && dateInput) {
+        cdInput.addEventListener('change', atualizarHorarios);
+        dateInput.addEventListener('change', atualizarHorarios);
+    }
 });

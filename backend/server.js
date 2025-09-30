@@ -1,16 +1,16 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 // ...existing code...
 
-
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { PrismaClient } = require('@prisma/client');
 const authRoutes = require('./authRoutes');
-require('dotenv').config();
+const emailService = require('./emailService');
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
@@ -357,6 +357,20 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       }
     });
 
+    // Enviar email de confirmação de criação para o fornecedor
+    try {
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${codigo}`;
+      await emailService.sendConfirmadoEmail({
+        to: fornecedor.email,
+        fornecedorNome: fornecedor.nome,
+        agendamentoCodigo: codigo,
+        cdNome: cd.nome,
+        consultaUrl
+      });
+    } catch (emailError) {
+      console.error('Erro ao enviar email de confirmação de agendamento:', emailError);
+    }
+
     res.json({
       success: true,
       codigo: codigo,
@@ -477,6 +491,10 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
       where: {
         id: parseInt(id),
         cdId: cdId
+      },
+      include: {
+        fornecedor: true,
+        cd: true
       }
     });
 
@@ -516,6 +534,38 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
         cdId: cdId
       }
     });
+
+    // Enviar emails automáticos conforme o novo status
+    try {
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      if (status === 'confirmado') {
+        await emailService.sendConfirmadoEmail({
+          to: agendamento.fornecedor.email,
+          fornecedorNome: agendamento.fornecedor.nome,
+          agendamentoCodigo: agendamento.codigo,
+          cdNome: agendamento.cd.nome,
+          consultaUrl
+        });
+      } else if (status === 'entregue') {
+        await emailService.sendEntregueEmail({
+          to: agendamento.fornecedor.email,
+          fornecedorNome: agendamento.fornecedor.nome,
+          agendamentoCodigo: agendamento.codigo,
+          cdNome: agendamento.cd.nome,
+          consultaUrl
+        });
+      } else if (status === 'nao-veio') {
+        await emailService.sendNaoVeioEmail({
+          to: agendamento.fornecedor.email,
+          fornecedorNome: agendamento.fornecedor.nome,
+          agendamentoCodigo: agendamento.codigo,
+          cdNome: agendamento.cd.nome,
+          consultaUrl
+        });
+      }
+    } catch (emailError) {
+      console.error('Erro ao enviar email de status:', emailError);
+    }
 
     console.log(`🎯 [PUT /api/agendamentos/${id}/status] Respondendo com sucesso:`, {
       success: true,
@@ -615,16 +665,18 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
       console.log(`📧 [POST /api/agendamentos/${id}/reagendar] Enviando email para fornecedor...`);
       const emailService = require('./emailService');
       
-      const emailResult = await emailService.sendReagendamentoEmail(
-        agendamento.fornecedor.email,
-        agendamento.fornecedor.nome,
-        agendamento.codigo,
-        agendamento.dataEntrega,
-        new Date(novaData + 'T00:00:00'),
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      const emailResult = await emailService.sendReagendamentoEmail({
+        to: agendamento.fornecedor.email,
+        fornecedorNome: agendamento.fornecedor.nome,
+        agendamentoCodigo: agendamento.codigo,
+        cdNome: agendamento.cd.nome,
+        dataOriginal: agendamento.dataEntrega,
+        novaDataSugerida: new Date(novaData + 'T00:00:00'),
         novoHorario,
         motivo,
-        agendamento.cd.nome
-      );
+        consultaUrl
+      });
 
       if (emailResult.success) {
         console.log(`✅ [POST /api/agendamentos/${id}/reagendar] Email enviado com sucesso:`, emailResult.messageId);
@@ -729,7 +781,7 @@ app.post('/api/agendamentos/:codigo/responder-reagendamento', async (req, res) =
     // Buscar agendamento
     const agendamento = await prisma.agendamento.findFirst({
       where: { codigo: codigo },
-      include: { cd: true }
+      include: { cd: true, fornecedor: true }
     });
 
     if (!agendamento) {
@@ -807,6 +859,23 @@ app.post('/api/agendamentos/:codigo/responder-reagendamento', async (req, res) =
         cdId: agendamento.cdId
       }
     });
+
+    // Enviar email de resposta de reagendamento
+    try {
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      await emailService.sendRespostaReagendamentoEmail({
+        to: agendamento.cd.email,
+        fornecedorNome: agendamento.fornecedor.nome,
+        agendamentoCodigo: agendamento.codigo,
+        resposta,
+        novaData,
+        novoHorario,
+        comentario,
+        consultaUrl
+      });
+    } catch (emailError) {
+      console.error('Erro ao enviar email de resposta de reagendamento:', emailError);
+    }
 
     console.log(`✅ [POST /api/agendamentos/${codigo}/responder-reagendamento] Resposta processada com sucesso:`, {
       resposta,
@@ -946,7 +1015,8 @@ app.post('/api/agendamentos/:codigo/cancelar', async (req, res) => {
 
     // Buscar agendamento
     const agendamento = await prisma.agendamento.findFirst({
-      where: { codigo: codigo }
+      where: { codigo: codigo },
+      include: { fornecedor: true, cd: true }
     });
 
     if (!agendamento) {
@@ -971,6 +1041,20 @@ app.post('/api/agendamentos/:codigo/cancelar', async (req, res) => {
         cdId: agendamento.cdId
       }
     });
+
+    // Enviar email de cancelamento para o fornecedor
+    try {
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      await emailService.sendCanceladoFornecedorEmail({
+        to: agendamento.fornecedor.email,
+        fornecedorNome: agendamento.fornecedor.nome,
+        agendamentoCodigo: agendamento.codigo,
+        motivo,
+        consultaUrl
+      });
+    } catch (emailError) {
+      console.error('Erro ao enviar email de cancelamento:', emailError);
+    }
 
     res.json({
       success: true,
@@ -1378,12 +1462,15 @@ app.post('/api/bloqueios-horario', authenticateToken, async (req, res) => {
   try {
     const { dataBloqueio, horaInicio, horaFim, motivo } = req.body;
     const cdId = req.user.id;
+    console.log('[Bloqueio] POST /api/bloqueios-horario');
+    console.log('cdId recebido:', cdId);
+    console.log('Dados recebidos:', { dataBloqueio, horaInicio, horaFim, motivo });
 
     // Mapear para os novos campos do modelo
     const bloqueio = await prisma.bloqueioHorario.create({
       data: {
-        dataInicio: new Date(dataBloqueio),
-        dataFim: new Date(dataBloqueio), // Mesmo dia para início e fim
+  dataInicio: new Date(dataBloqueio + 'T03:00:00'),
+  dataFim: new Date(dataBloqueio + 'T03:00:00'), // Mesmo dia para início e fim
         horarioInicio: horaInicio,
         horarioFim: horaFim,
         motivo,
@@ -1391,6 +1478,7 @@ app.post('/api/bloqueios-horario', authenticateToken, async (req, res) => {
       }
     });
 
+    console.log('Bloqueio salvo:', bloqueio);
     res.json({ success: true, data: bloqueio });
   } catch (error) {
     console.error('Erro ao criar bloqueio:', error);
@@ -1590,24 +1678,22 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
     // Horários padrão do CD conforme regra de negócio:
     // Das 08:00 às 11:00 e das 13:00 às 16:00
     const horariosBase = [
-      { valor: '08:00', label: '08:00' },
-      { valor: '09:00', label: '09:00' },
-      { valor: '10:00', label: '10:00' },
-      { valor: '11:00', label: '11:00' },
-      { valor: '13:00', label: '13:00' },
-      { valor: '14:00', label: '14:00' },
-      { valor: '15:00', label: '15:00' },
-      { valor: '16:00', label: '16:00' }
+  { valor: '08:00', label: '08:00' },
+  { valor: '09:00', label: '09:00' },
+  { valor: '10:00', label: '10:00' },
+  { valor: '11:00', label: '11:00' },
+  { valor: '13:00', label: '13:00' },
+  { valor: '14:00', label: '14:00' },
+  { valor: '15:00', label: '15:00' },
+  { valor: '16:00', label: '16:00' }
     ];
 
     // Função para verificar se um horário está bloqueado
     const isHorarioBloqueado = (horario) => {
       return bloqueiosExistentes.some(bloqueio => {
-        // Verificar se o horário está dentro do período de bloqueio
-        const horarioNum = parseInt(horario.replace(':', ''));
-        const inicioNum = parseInt(bloqueio.horarioInicio.replace(':', ''));
-        const fimNum = parseInt(bloqueio.horarioFim.replace(':', ''));
-        return horarioNum >= inicioNum && horarioNum < fimNum;
+        // Comparar horários inteiros (ex: 08:00, 09:00)
+        return horario === bloqueio.horarioInicio || horario === bloqueio.horarioFim ||
+          (horario >= bloqueio.horarioInicio && horario < bloqueio.horarioFim);
       });
     };
 
@@ -1847,3 +1933,6 @@ process.on('SIGINT', async () => {
   await prisma.$disconnect();
   process.exit(0);
 });
+// ...existing code...
+
+// ...existing code...

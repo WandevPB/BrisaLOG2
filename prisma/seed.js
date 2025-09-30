@@ -39,7 +39,7 @@ async function main() {
     }),
     prisma.cd.create({
       data: {
-        nome: 'Lagoa Nova',
+  nome: 'CENTRAL',
         usuario: 'LagoaNova',
         senha: senhaHash,
         primeiroLogin: true,
