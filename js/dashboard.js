@@ -106,6 +106,20 @@ function showNotification(message, type = 'info') {
 }
 
 class CDDashboard {
+    toggleUserMenu() {
+        const userMenu = document.getElementById('user-menu');
+        if (userMenu) {
+            userMenu.classList.toggle('hidden');
+        }
+    }
+    // Define a data mínima dos campos de data para hoje
+    setMinDate() {
+        const today = new Date().toISOString().split('T')[0];
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            input.min = today;
+        });
+    }
     // Modal KPIs
     openKpisModal() {
         document.getElementById('dashboard-kpis-modal')?.classList.remove('hidden');
@@ -326,6 +340,10 @@ class CDDashboard {
 
     // Função para formatar datas de forma segura
     formatDate(dateString) {
+        // LOG para depuração: valor bruto recebido do backend
+        if (typeof dateString === 'string') {
+            console.log('[DASHBOARD] Valor bruto de agendamento.dataEntrega:', dateString);
+        }
         if (!dateString) {
             return 'Data não informada';
         }
@@ -490,97 +508,34 @@ class CDDashboard {
 
     loadUserInfo() {
         const usuario = sessionStorage.getItem('usuario');
+        // Preencher nome do usuário no menu
+        const usuarioNomeEl = document.getElementById('usuario-nome');
+        if (usuarioNomeEl && usuario) {
+            usuarioNomeEl.textContent = usuario;
+        }
         const cd = sessionStorage.getItem('cd');
         const cdInfo = sessionStorage.getItem('cdInfo');
-        
-        // Extrair ID do CD do token ou cdInfo
-        if (cdInfo) {
-            try {
-                const cdInfoObj = JSON.parse(cdInfo);
-                this.cdId = cdInfoObj.id;
-                console.log('CD ID carregado do cdInfo:', this.cdId);
-            } catch (error) {
-                console.error('Erro ao parsear cdInfo:', error);
-            }
-        }
-        
-        // Se não conseguiu obter o ID do CD do cdInfo, tentar extrair do token
-        if (!this.cdId) {
-            const token = sessionStorage.getItem('token');
-            if (token && token.includes('.')) {
+        // Preencher o nome do CD no header
+        const cdNomeEl = document.getElementById('cd-nome');
+        if (cdNomeEl) {
+            let nome = 'Não identificado';
+            if (cdInfo) {
                 try {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    this.cdId = payload.id;
-                    console.log('CD ID extraído do token:', this.cdId);
-                } catch (error) {
-                    console.error('Erro ao decodificar token:', error);
+                    const cdObj = JSON.parse(cdInfo);
+                    if (cdObj && cdObj.nome) {
+                        nome = cdObj.nome;
+                    }
+                } catch (e) {
+                    // Se der erro, mantém o padrão
                 }
             }
+            cdNomeEl.textContent = nome;
         }
-        
-        // Se ainda não conseguiu o ID, usar o valor armazenado em 'cdId'
-        if (!this.cdId) {
-            this.cdId = sessionStorage.getItem('cdId');
-            console.log('CD ID obtido diretamente do sessionStorage:', this.cdId);
-        }
-        
-        document.getElementById('usuario-nome').textContent = usuario;
-        document.getElementById('cd-nome').textContent = `Centro de Distribuição ${cd}`;
-    }
-    
-    // Método para extrair o ID do CD do token JWT ou sessão
-    getCDFromToken() {
-        // Primeiro, tentar pegar o cdId que já está armazenado na classe
-        if (this.cdId) {
-            return this.cdId;
-        }
-        
-        // Tentar obter do cdInfo
-        const cdInfo = sessionStorage.getItem('cdInfo');
-        if (cdInfo) {
-            try {
-                const cdInfoObj = JSON.parse(cdInfo);
-                if (cdInfoObj.id) {
-                    return cdInfoObj.id;
-                }
-            } catch (error) {
-                console.error('Erro ao parsear cdInfo:', error);
-            }
-        }
-        
-        // Tentar extrair do token JWT
-        const token = sessionStorage.getItem('token');
-        if (token && token.includes('.')) {
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                if (payload.id) {
-                    return payload.id;
-                }
-            } catch (error) {
-                console.error('Erro ao decodificar token:', error);
-            }
-        }
-        
-        // Por último, tentar pegar diretamente do sessionStorage
-        return sessionStorage.getItem('cdId');
-    }
+    // (Removida chave de fechamento extra aqui)
 
-    setMinDate() {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        while (tomorrow.getDay() === 0 || tomorrow.getDay() === 6) { // Pular fins de semana
-            tomorrow.setDate(tomorrow.getDate() + 1);
-        }
-        
-        document.getElementById('nova-data').min = tomorrow.toISOString().split('T')[0];
+// ...existing code...
     }
-
-    toggleUserMenu() {
-        const userMenu = document.getElementById('user-menu');
-        userMenu.classList.toggle('hidden');
-    }
+    // ...existing code...
 
     async loadAgendamentos() {
         console.log('🔄 Recarregando agendamentos...');
@@ -611,34 +566,18 @@ class CDDashboard {
 
             const data = await response.json();
             console.log('📊 Dados recebidos:', data);
-            
-            if (data.success) {
-                this.agendamentos = data.data || [];
-                this.filteredAgendamentos = [...this.agendamentos];
-                console.log('✅ Agendamentos carregados:', this.agendamentos.length);
-                console.log('📋 Status dos agendamentos:', this.agendamentos.map(a => ({ id: a.id, codigo: a.codigo, status: a.status })));
-            } else {
-                throw new Error(data.error || 'Erro ao carregar agendamentos');
-            }
-            
-            this.updateStats();
-            this.renderAgendamentos();
-            
+            this.agendamentos = data.data || [];
+            this.filteredAgendamentos = [...this.agendamentos];
+        this.showLoading(false);
+        this.renderAgendamentos();
         } catch (error) {
-            console.error('❌ Erro ao carregar agendamentos:', error);
-            this.showNotification('Erro ao carregar agendamentos. Verifique sua conexão e tente novamente.', 'error');
-            
-            // Manter listas vazias quando não há dados do banco
-            this.agendamentos = [];
-            this.filteredAgendamentos = [];
-            this.updateStats();
-            this.renderAgendamentos();
-        } finally {
+            console.error('Erro ao carregar agendamentos:', error);
+            this.showNotification('Erro ao carregar agendamentos.', 'error');
             this.showLoading(false);
+            return;
         }
-    }
 
-    updateStats() {
+        // Calcula as estatísticas para todos os cards
         const stats = {
             total: this.agendamentos.length,
             pendente: this.agendamentos.filter(a => a.status === 'pendente').length,
@@ -1350,6 +1289,10 @@ class CDDashboard {
     }
 
     getStatusText(status) {
+        // Permite exibir 'Pendente (reagendamento)' se observações contiverem 'reagend'
+        if (typeof this === 'object' && this.currentAgendamento && this.currentAgendamento.status === 'pendente' && this.currentAgendamento.observacoes && this.currentAgendamento.observacoes.toLowerCase().includes('reagend')) {
+            return 'Pendente (reagendamento)';
+        }
         const texts = {
             'pendente': 'Pendente',
             'confirmado': 'Confirmado',
@@ -1457,6 +1400,7 @@ class CDDashboard {
         
         const detailContent = document.getElementById('detail-content');
         detailContent.innerHTML = `
+    
             <div class="space-y-4">
                 ${cdIndicatorHtml}
                 
@@ -2501,6 +2445,11 @@ function logout() {
 }
 
 // Registrar funções globais no objeto window para acesso a partir do HTML
+function openDashboardKPIModal() {
+    if (window.dashboard && typeof window.dashboard.openKpisModal === 'function') {
+        window.dashboard.openKpisModal();
+    }
+}
 window.openDashboardKPIModal = openDashboardKPIModal;
 window.closeDashboardKPIModal = closeDashboardKPIModal;
 window.aplicarFiltroPeriodoKPI = aplicarFiltroPeriodoKPI;

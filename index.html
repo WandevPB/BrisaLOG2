@@ -2897,7 +2897,43 @@
 
             abrirContraProposta(codigo) {
                 this.currentCodigoReagendamento = codigo;
-                document.getElementById('contra-proposta-modal').classList.remove('hidden');
+                const modal = document.getElementById('contra-proposta-modal');
+                modal.classList.remove('hidden');
+                // Garante z-index máximo e força no topo
+                modal.style.zIndex = '2147483647';
+
+                // Limpa horários ao abrir
+                const selectHorario = document.getElementById('contra-proposta-horario');
+                selectHorario.innerHTML = '<option value="">Selecione o horário</option>';
+                document.getElementById('contra-proposta-data').value = '';
+                // Adiciona listener para buscar horários ao selecionar data
+                const inputData = document.getElementById('contra-proposta-data');
+                if (!inputData.dataset.listener) {
+                    inputData.addEventListener('change', async function() {
+                        const data = this.value;
+                        if (!data) return;
+                        selectHorario.innerHTML = '<option value="">Carregando...</option>';
+                        try {
+                            // Aqui você pode passar o CD se necessário, ex: ?date=YYYY-MM-DD&cd=CD1
+                            const resp = await fetch(`/api/horarios-disponiveis?date=${data}`);
+                            const result = await resp.json();
+                            if (result.success && result.horarios) {
+                                const disponiveis = result.horarios.filter(h => h.disponivel);
+                                if (disponiveis.length === 0) {
+                                    selectHorario.innerHTML = '<option value="">Nenhum horário disponível</option>';
+                                } else {
+                                    selectHorario.innerHTML = '<option value="">Selecione o horário</option>' +
+                                        disponiveis.map(h => `<option value="${h.valor}">${h.label}</option>`).join('');
+                                }
+                            } else {
+                                selectHorario.innerHTML = '<option value="">Erro ao buscar horários</option>';
+                            }
+                        } catch (e) {
+                            selectHorario.innerHTML = '<option value="">Erro ao buscar horários</option>';
+                        }
+                    });
+                    inputData.dataset.listener = 'true';
+                }
             }
 
             fecharContraPropostaModal() {

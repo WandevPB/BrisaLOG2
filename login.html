@@ -416,6 +416,8 @@
                             sessionStorage.setItem('usuario', data.cd.usuario);
                             sessionStorage.setItem('cd', data.cd.nome);
                             sessionStorage.setItem('cd_id', data.cd.id);
+                            // Salvar objeto cdInfo para o dashboard
+                            sessionStorage.setItem('cdInfo', JSON.stringify({ id: data.cd.id, nome: data.cd.nome }));
                             
                             if (lembrarMe) {
                                 localStorage.setItem('rememberedUser', usuario);
@@ -516,6 +518,7 @@
                     sessionStorage.setItem('usuario', loginData.cd.usuario);
                     sessionStorage.setItem('cd', loginData.cd.nome);
                     sessionStorage.setItem('cd_id', loginData.cd.id);
+                    sessionStorage.setItem('cdInfo', JSON.stringify({ id: loginData.cd.id, nome: loginData.cd.nome }));
                     sessionStorage.removeItem('temp_usuario');
 
                     // Fechar modal

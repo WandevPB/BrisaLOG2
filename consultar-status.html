@@ -6,6 +6,30 @@
     <title>Consultar Status - BrisaLOG Agenda</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // Função utilitária para formatar datas ISO ou YYYY-MM-DD no padrão brasileiro sem bug de fuso
+            // Função igual à do dashboard para formatar datas de forma robusta
+            function formatDateBrFromISO(dateString) {
+                if (!dateString) {
+                    return 'Data não informada';
+                }
+                try {
+                    let date;
+                    if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        date = new Date(dateString + 'T00:00:00');
+                    } else if (dateString.includes('T')) {
+                        date = new Date(dateString);
+                    } else {
+                        date = new Date(dateString);
+                    }
+                    if (isNaN(date.getTime())) {
+                        return 'Data inválida';
+                    }
+                    return date.toLocaleDateString('pt-BR');
+                } catch (error) {
+                    console.error('Erro ao formatar data:', error, 'Data:', dateString);
+                    return 'Data inválida';
+                }
+            }
         tailwind.config = {
             theme: {
                 extend: {
@@ -231,6 +255,29 @@
         </div>
     </section>
 
+    <!-- Modal Sugerir Outra Data -->
+    <div id="modal-contra-proposta" style="z-index:2147483647 !important; position:fixed !important; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7) !important; display:flex; align-items:center; justify-content:center;" class="hidden">
+        <div class="bg-white rounded-2xl shadow-3d p-8 w-full max-w-md relative animate-fade-in">
+            <button onclick="fecharContraProposta()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-2xl font-bold">&times;</button>
+            <h2 class="text-2xl font-bold mb-4 text-orange-primary flex items-center"><i class="fas fa-calendar-alt mr-2"></i>Sugerir Outra Data</h2>
+            <form id="form-contra-proposta">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Nova Data</label>
+                    <input type="date" id="nova-data" name="nova-data" class="w-full border rounded-lg px-4 py-2" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Novo Horário</label>
+                    <input type="text" id="novo-horario" name="novo-horario" class="w-full border rounded-lg px-4 py-2" placeholder="Ex: 08:00-10:00" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Motivo (opcional)</label>
+                    <textarea id="motivo-contra-proposta" name="motivo" class="w-full border rounded-lg px-4 py-2" rows="2"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-orange-primary text-white font-bold py-3 rounded-lg btn-3d hover:bg-orange-secondary transition-all">Enviar Sugestão</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-gray-dark text-white py-12 mt-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -272,6 +319,41 @@
     <div id="notification-container" class="fixed top-5 right-5 z-50"></div>
 
     <script>
+    // Modal Sugerir Outra Data
+    let codigoContraProposta = null;
+    function abrirContraPropostaModal(codigo) {
+        // Fecha qualquer modal de status que esteja aberto
+        const possiveisModais = [
+            document.getElementById('status-modal'),
+            document.getElementById('consulta-modal'),
+            document.getElementById('detail-modal'),
+            document.getElementById('all-status-modal'),
+            document.getElementById('bloqueio-modal'),
+            document.getElementById('modal-entregas'),
+            document.getElementById('gerenciar-bloqueios-modal'),
+            document.getElementById('suggest-date-modal')
+        ];
+        possiveisModais.forEach(function(m){ if(m) m.classList.add('hidden'); });
+
+        codigoContraProposta = codigo;
+        const modal = document.getElementById('modal-contra-proposta');
+        if (modal.parentNode) modal.parentNode.removeChild(modal);
+        document.body.appendChild(modal);
+        modal.setAttribute('style', 'z-index:2147483647 !important; position:fixed !important; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7) !important; display:flex; align-items:center; justify-content:center;');
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+    function fecharContraProposta() {
+        document.getElementById('modal-contra-proposta').classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('form-contra-proposta').addEventListener('submit', function(e) {
+            e.preventDefault();
+            fecharContraProposta();
+            consultaPage.showNotification('Sugestão enviada! (simulação)', 'success');
+        });
+    });
         class ConsultaStatusPage {
             constructor() {
                 this.init();
@@ -472,6 +554,8 @@
             }
 
             showResult(agendamento) {
+                // LOG para depuração: valor bruto recebido do backend
+                console.log('[MODAL] Valor bruto de agendamento.dataEntrega:', agendamento.dataEntrega);
                 const resultSection = document.getElementById('result-section');
                 const resultContent = document.getElementById('result-content');
                 
@@ -494,7 +578,7 @@
                                     <div class="grid md:grid-cols-2 gap-4 mb-4">
                                         <div class="bg-white p-4 rounded-lg">
                                             <p class="text-yellow-700 font-semibold">Nova Data:</p>
-                                            <p class="text-yellow-800 text-lg">${new Date(agendamento.dataSugestao).toLocaleDateString('pt-BR')}</p>
+                                            <p class="text-yellow-800 text-lg">${formatDateBrFromISO(agendamento.dataSugestao)}</p>
                                         </div>
                                         <div class="bg-white p-4 rounded-lg">
                                             <p class="text-yellow-700 font-semibold">Novo Horário:</p>
@@ -561,11 +645,17 @@
                                         <div class="space-y-3">
                                             <div>
                                                 <label class="text-gray-medium font-semibold text-sm">Data de Entrega</label>
-                                                <p class="text-gray-dark text-lg">${new Date(agendamento.dataEntrega).toLocaleDateString('pt-BR')}</p>
+                                                <p class="text-gray-dark text-lg">
+                                                    ${agendamento.dataSugestao ? formatDateBrFromISO(agendamento.dataSugestao) : formatDateBrFromISO(agendamento.dataEntrega)}
+                                                    ${agendamento.dataSugestao ? '<span class="text-xs text-orange-500 ml-2">(sugerida)</span>' : ''}
+                                                </p>
                                             </div>
                                             <div>
                                                 <label class="text-gray-medium font-semibold text-sm">Horário</label>
-                                                <p class="text-gray-dark text-lg">${agendamento.horarioEntrega}</p>
+                                                <p class="text-gray-dark text-lg">
+                                                    ${agendamento.horarioSugestao ? agendamento.horarioSugestao : agendamento.horarioEntrega}
+                                                    ${agendamento.horarioSugestao ? '<span class="text-xs text-orange-500 ml-2">(sugerido)</span>' : ''}
+                                                </p>
                                             </div>
                                             <div>
                                                 <label class="text-gray-medium font-semibold text-sm">CD de Destino</label>
@@ -765,6 +855,10 @@
             }
 
             getStatusText(status) {
+                // Exibe 'Pendente (reagendamento)' se status for 'pendente' e observacoes contiver 'reagend'
+                if (typeof this === 'object' && this.currentAgendamento && this.currentAgendamento.status === 'pendente' && this.currentAgendamento.observacoes && this.currentAgendamento.observacoes.toLowerCase().includes('reagend')) {
+                    return 'Pendente (reagendamento)';
+                }
                 const texts = {
                     'pendente': 'Aguardando Confirmação',
                     'confirmado': 'Confirmado',
@@ -799,7 +893,7 @@
             }
 
             abrirContraProposta(codigo) {
-                this.showNotification('Funcionalidade de contra-proposta será implementada em breve. Entre em contato pelo telefone para sugerir uma nova data.', 'info');
+                abrirContraPropostaModal(codigo);
             }
 
             imprimirAgendamento(codigo) {
