@@ -249,13 +249,17 @@ class EmailService {
 
     // Utilitário de envio
     async _send({ to, subject, html }) {
-        // Se estiver usando SendGrid API
-        if (this.useSendGridAPI) {
-            return this._sendWithSendGridAPI({ to, subject, html });
+        console.log(`📧 Iniciando envio de email para: ${to}`);
+        
+        // Tentar SMTP primeiro devido a problemas na entrega da API
+        let result = await this._sendWithSMTP({ to, subject, html });
+        
+        if (!result.success && this.useSendGridAPI) {
+            console.log('📧 SMTP falhou, tentando SendGrid API...');
+            result = await this._sendWithSendGridAPI({ to, subject, html });
         }
         
-        // Fallback para SMTP
-        return this._sendWithSMTP({ to, subject, html });
+        return result;
     }
 
     async _sendWithSendGridAPI({ to, subject, html }) {
