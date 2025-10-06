@@ -30,7 +30,7 @@ class EmailService {
 
         try {
             console.log('📧 [INIT] Criando transporter Gmail...');
-            this.transporter = nodemailer.createTransporter({
+            this.transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
                     user: this.fromEmail,
