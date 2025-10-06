@@ -188,13 +188,17 @@ async function main() {
   const amanha = new Date(hoje);
   amanha.setDate(amanha.getDate() + 1);
   
+  const depoisAmanha = new Date(amanha);
+  depoisAmanha.setDate(depoisAmanha.getDate() + 1);
+  
   await prisma.bloqueioHorario.create({
     data: {
-      dataBloqueio: amanha,
-      horaInicio: '12:00',
-      horaFim: '14:00',
+      dataInicio: amanha,
+      dataFim: amanha,
+      horarioInicio: '12:00',
+      horarioFim: '14:00',
       motivo: 'Manutenção preventiva no sistema',
-      cdId: cds[0].id
+      cdId: cds[2].id // Lagoa Nova
     }
   });
 
