@@ -2609,7 +2609,7 @@ app.post('/api/test-email/:email', async (req, res) => {
   try {
     const emailService = require('./emailService');
     
-    const result = await emailService.sendEmail({
+    const result = await emailService._send({
       to: email,
       subject: 'Teste de Email - BrisaLOG',
       html: `
