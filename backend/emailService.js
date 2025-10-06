@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
 require('dotenv').config();
 
@@ -17,7 +18,44 @@ const templateEntregaSemAgendamento = require('./emails/entregaSemAgendamento');
 class EmailService {
     constructor() {
         this.transporter = null;
-        this.initializeTransporter();
+        this.useSendGridAPI = false;
+        this.initializeEmailService();
+    }
+
+    initializeEmailService() {
+        try {
+            // Log para depuração das variáveis de ambiente
+            console.log('EMAIL_USER:', process.env.EMAIL_USER);
+            console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '[PROVIDED]' : '[MISSING]');
+            console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
+            
+            // Se for SendGrid, tentar API primeiro
+            if (process.env.EMAIL_HOST === 'smtp.sendgrid.net' || process.env.EMAIL_SERVICE === 'SendGrid') {
+                this.initializeSendGridAPI();
+            } else {
+                this.initializeTransporter();
+            }
+        } catch (error) {
+            console.error('❌ Erro ao inicializar serviço de e-mail:', error.message);
+            console.log('📧 Sistema continuará funcionando sem emails');
+        }
+    }
+
+    initializeSendGridAPI() {
+        try {
+            if (!process.env.EMAIL_PASS) {
+                throw new Error('SendGrid API Key não encontrada');
+            }
+            
+            sgMail.setApiKey(process.env.EMAIL_PASS);
+            this.useSendGridAPI = true;
+            console.log('✅ SendGrid API configurada com sucesso');
+            
+        } catch (error) {
+            console.error('❌ Erro ao configurar SendGrid API:', error.message);
+            console.log('🔄 Tentando SMTP como fallback...');
+            this.initializeTransporter();
+        }
     }
 
     initializeTransporter() {
@@ -211,6 +249,40 @@ class EmailService {
 
     // Utilitário de envio
     async _send({ to, subject, html }) {
+        // Se estiver usando SendGrid API
+        if (this.useSendGridAPI) {
+            return this._sendWithSendGridAPI({ to, subject, html });
+        }
+        
+        // Fallback para SMTP
+        return this._sendWithSMTP({ to, subject, html });
+    }
+
+    async _sendWithSendGridAPI({ to, subject, html }) {
+        try {
+            console.log(`📧 Enviando email via SendGrid API para: ${to}`);
+            
+            const msg = {
+                to: to,
+                from: {
+                    email: 'wanderson.goncalves@grupobrisanet.com.br',
+                    name: 'BrisaLOG Portal'
+                },
+                subject: subject,
+                html: html
+            };
+
+            const result = await sgMail.send(msg);
+            console.log(`✅ Email enviado com sucesso via API. Status: ${result[0].statusCode}`);
+            return { success: true, messageId: result[0].headers['x-message-id'] };
+            
+        } catch (error) {
+            console.error(`❌ Erro ao enviar email via API para ${to}:`, error.message);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async _sendWithSMTP({ to, subject, html }) {
         // Verificar se o transporter foi inicializado
         if (!this.transporter) {
             console.log('📧 Email não enviado: transporter não inicializado');
@@ -234,12 +306,12 @@ class EmailService {
         };
 
         try {
-            console.log(`📧 Enviando email para: ${to}`);
+            console.log(`📧 Enviando email via SMTP para: ${to}`);
             const result = await this.transporter.sendMail(mailOptions);
-            console.log(`✅ Email enviado com sucesso. ID: ${result.messageId}`);
+            console.log(`✅ Email enviado com sucesso via SMTP. ID: ${result.messageId}`);
             return { success: true, messageId: result.messageId };
         } catch (error) {
-            console.error(`❌ Erro ao enviar email para ${to}:`, error.message);
+            console.error(`❌ Erro ao enviar email via SMTP para ${to}:`, error.message);
             return { success: false, error: error.message };
         }
     }
