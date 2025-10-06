@@ -2613,15 +2613,11 @@ app.post('/api/test-email/:email', async (req, res) => {
     console.log('🔧 [DEBUG] SendGrid API Key exists:', !!process.env.SENDGRID_API_KEY);
     console.log('🔧 [DEBUG] From email:', process.env.FROM_EMAIL);
     
+    // Versão super simples do email
     const result = await emailService._send({
       to: email,
-      subject: 'Teste de Email - BrisaLOG',
-      html: `
-        <h2>🧪 Teste de Email</h2>
-        <p>Este é um email de teste do sistema BrisaLOG.</p>
-        <p><strong>Enviado em:</strong> ${new Date().toLocaleString('pt-BR')}</p>
-        <p>Se você recebeu este email, o sistema de envio está funcionando corretamente!</p>
-      `
+      subject: 'Teste BrisaLOG - Simples',
+      html: '<h1>Teste de Email</h1><p>Se você recebeu este email, está funcionando!</p>'
     });
     
     console.log('✅ [TEST EMAIL] Resultado:', result);

@@ -262,29 +262,12 @@ class EmailService {
         try {
             console.log(`📧 Enviando email via SendGrid API para: ${to}`);
             
+            // Versão simplificada sem configurações extras
             const msg = {
                 to: to,
-                from: {
-                    email: 'wanderson.goncalves@grupobrisanet.com.br',
-                    name: 'BrisaLOG Portal'
-                },
+                from: 'wanderson.goncalves@grupobrisanet.com.br',
                 subject: subject,
-                html: html,
-                // Configurações para melhorar entregabilidade
-                tracking_settings: {
-                    click_tracking: { enable: false },
-                    open_tracking: { enable: true },
-                    subscription_tracking: { enable: false }
-                },
-                mail_settings: {
-                    sandbox_mode: { enable: false }
-                    // Removido spam_check para evitar erro de post_to_url
-                },
-                // Adicionar reply-to para melhorar reputação
-                reply_to: {
-                    email: 'wanderson.goncalves@grupobrisanet.com.br',
-                    name: 'BrisaLOG Portal'
-                }
+                html: html
             };
 
             console.log('📋 Dados do email:', JSON.stringify(msg, null, 2));
