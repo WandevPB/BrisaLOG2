@@ -628,6 +628,9 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     
     // Para agendamentos públicos, o CD deve vir nos dados do formulário
     const cdInfo = agendamentoData.entrega?.cd || agendamentoData.entrega?.cdDestino;
+    console.log('🔍 [POST /api/agendamentos] cdInfo recebido:', cdInfo);
+    console.log('🔍 [POST /api/agendamentos] agendamentoData.entrega:', agendamentoData.entrega);
+    
     if (!cdInfo) {
       console.log('❌ [POST /api/agendamentos] CD não especificado nos dados');
       return res.status(400).json({ error: 'CD de destino deve ser especificado' });
@@ -638,25 +641,38 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     if (typeof cdInfo === 'number') {
       cdId = cdInfo;
     } else {
-      // Mapear nomes do frontend para nomes do banco
+      console.log('🔍 [POST /api/agendamentos] Buscando CD por nome:', cdInfo);
+      
+      // Mapear nomes do frontend para nomes do banco (case-insensitive)
       const cdMap = {
-        'Bahia': 'bahia',
-        'Pernambuco': 'pernambuco', 
-        'Lagoa Nova': 'lagoa-nova'
+        'Bahia': 'Bahia',
+        'bahia': 'Bahia',
+        'BAHIA': 'Bahia',
+        'Pernambuco': 'Pernambuco',
+        'pernambuco': 'Pernambuco', 
+        'PERNAMBUCO': 'Pernambuco',
+        'Lagoa Nova': 'Lagoa Nova',
+        'lagoa nova': 'Lagoa Nova',
+        'LAGOA NOVA': 'Lagoa Nova',
+        'LagoaNova': 'Lagoa Nova',
+        'lagoanова': 'Lagoa Nova'
       };
       
-      const cdNome = cdMap[cdInfo] || cdInfo.toLowerCase();
+      const cdNome = cdMap[cdInfo] || cdInfo;
+      console.log('🔍 [POST /api/agendamentos] Nome do CD mapeado:', cdNome);
       
       const cd = await prisma.cd.findFirst({
         where: {
           OR: [
-            { nome: { contains: cdNome } },
-            { usuario: { contains: cdNome } },
-            { nome: cdNome },
-            { usuario: cdNome }
+            { nome: { equals: cdNome, mode: 'insensitive' } },
+            { usuario: { equals: cdNome, mode: 'insensitive' } },
+            { nome: { contains: cdNome, mode: 'insensitive' } },
+            { usuario: { contains: cdNome, mode: 'insensitive' } }
           ]
         }
       });
+      
+      console.log('🔍 [POST /api/agendamentos] CD encontrado:', cd);
       
       if (!cd) {
         console.log('❌ [POST /api/agendamentos] CD não encontrado:', cdInfo);
