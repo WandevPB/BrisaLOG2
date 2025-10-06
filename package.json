@@ -5,6 +5,7 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
+    "start:prod": "npm run db:setup && node backend/server.js",
     "dev": "nodemon backend/server.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -12,6 +13,7 @@
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force && npm run db:seed",
+    "db:setup": "prisma generate && prisma db push && node prisma/seed.js",
     "init-project": "npm install && npm run db:generate && npm run db:push && npm run db:seed",
     "build": "npm run db:generate",
     "deploy": "npm run db:push && npm run db:seed && npm start",
