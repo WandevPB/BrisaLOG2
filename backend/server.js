@@ -2559,6 +2559,48 @@ app.get('/api/cds', authenticateToken, async (req, res) => {
 
 app.use(errorHandler);
 
+// Endpoint temporário para forçar seed (remover após primeira execução)
+app.post('/api/force-seed', async (req, res) => {
+  console.log('🌱 [FORCE SEED] Executando seed forçado...');
+  
+  try {
+    // Verificar quantos CDs existem
+    const cdCount = await prisma.cd.count();
+    console.log(`🔍 [FORCE SEED] CDs existentes: ${cdCount}`);
+    
+    if (cdCount > 0) {
+      console.log('✅ [FORCE SEED] CDs já existem, não executando seed');
+      return res.json({ message: 'CDs já existem', count: cdCount });
+    }
+    
+    // Executar seed
+    console.log('🌱 [FORCE SEED] Executando seed...');
+    execSync('node prisma/seed.js', { 
+      stdio: 'inherit',
+      cwd: process.cwd()
+    });
+    
+    // Verificar se foram criados
+    const newCdCount = await prisma.cd.count();
+    const cds = await prisma.cd.findMany({
+      select: { id: true, nome: true, usuario: true, ativo: true }
+    });
+    
+    console.log('✅ [FORCE SEED] Seed executado com sucesso!');
+    console.log(`📊 [FORCE SEED] CDs criados: ${newCdCount}`);
+    
+    res.json({ 
+      message: 'Seed executado com sucesso',
+      cdsCreated: newCdCount,
+      cds: cds
+    });
+    
+  } catch (error) {
+    console.error('❌ [FORCE SEED] Erro:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Rota de health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
