@@ -1,4 +1,6 @@
+const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+require('dotenv').config();
 
 // Importar templates
 const templateConfirmado = require('./emails/confirmado');
@@ -11,9 +13,49 @@ const templateEntregaSemAgendamento = require('./emails/entregaSemAgendamento');
 
 class EmailService {
     constructor() {
+        this.transporter = null;
         this.fromEmail = process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br';
-        console.log('📧 [UNIFIED] Email Service Otimizado - Resend como principal');
-        console.log('📧 [UNIFIED] FROM_EMAIL:', this.fromEmail);
+        this.initializeEmailService();
+    }
+
+    initializeEmailService() {
+        console.log('📧 [INIT] Inicializando Email Service unificado com Gmail...');
+        console.log('📧 [INIT] GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
+        console.log('📧 [INIT] FROM_EMAIL:', this.fromEmail);
+        
+        if (!process.env.GMAIL_APP_PASSWORD) {
+            console.error('❌ [INIT] GMAIL_APP_PASSWORD não configurada');
+            return;
+        }
+
+        try {
+            console.log('📧 [INIT] Criando transporter Gmail...');
+            this.transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: this.fromEmail,
+                    pass: process.env.GMAIL_APP_PASSWORD
+                },
+                tls: {
+                    rejectUnauthorized: false
+                }
+            });
+            
+            console.log('✅ [INIT] Transporter Gmail criado com sucesso!');
+            
+            // Verificar conexão
+            this.transporter.verify((error, success) => {
+                if (error) {
+                    console.error('❌ [INIT] Erro na verificação do transporter:', error);
+                } else {
+                    console.log('✅ [INIT] Gmail SMTP verificado e pronto para uso!');
+                }
+            });
+            
+        } catch (error) {
+            console.error('❌ [INIT] Erro ao criar transporter Gmail:', error);
+            this.transporter = null;
+        }
     }
 
     // E-mail de confirmação de agendamento
@@ -123,9 +165,9 @@ class EmailService {
             </div>
         `;
 
-        // Enviar para sua equipe (usando Resend)
+        // Enviar para equipe interna
         return this._send({
-            to: 'wandevpb@gmail.com', // Seu email (sempre funciona com Resend)
+            to: 'wandevpb@gmail.com', // Email da equipe
             subject: `[BrisaLOG] Novo Agendamento - ${fornecedor.nome} - ${agendamento.codigo}`,
             html
         });
@@ -150,12 +192,6 @@ class EmailService {
                         <p style="margin: 8px 0;"><strong>Status:</strong> <span style="color: #059669; font-weight: bold;">Agendado</span></p>
                     </div>
                     
-                    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
-                        <p style="margin: 0; color: #92400e; font-size: 14px;">
-                            <strong>📝 Nota:</strong> Este email está sendo enviado para a equipe interna para notificação. O fornecedor ${fornecedor.nome} (${fornecedor.email}) foi registrado no agendamento ${agendamento.codigo}.
-                        </p>
-                    </div>
-                    
                     <div style="text-align: center; margin: 30px 0;">
                         <a href="https://brisalog2-production.up.railway.app/consultar-status.html?codigo=${agendamento.codigo}" 
                            style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
@@ -172,10 +208,10 @@ class EmailService {
             </div>
         `;
 
-        // Enviar para sua equipe (usando Resend) com informações do fornecedor
+        // Enviar para o fornecedor (SEM RESTRIÇÕES!)
         return this._send({
-            to: 'wandevpb@gmail.com', // Seu email (sempre funciona)
-            subject: `[BrisaLOG] Agendamento Registrado - ${fornecedor.nome} - ${agendamento.codigo}`,
+            to: fornecedor.email,
+            subject: `[BrisaLOG] Confirmação de Agendamento - ${fornecedor.nome} - ${agendamento.codigo}`,
             html
         });
     }
@@ -252,50 +288,79 @@ class EmailService {
         </html>`;
 
         return this._send({
-            to: 'wandevpb@gmail.com', // Sempre para você
-            subject: `[BrisaLOG] Recuperação de Senha - ${nomeUsuario}`,
+            to: email,
+            subject: '[BrisaLOG] Recuperação de Senha',
             html
         });
     }
 
-    // Utilitário de envio simplificado (Resend como principal)
+    // Utilitário de envio unificado
     async _send({ to, subject, html }) {
-        console.log(`📧 [UNIFIED] Enviando email para: ${to} (via Resend otimizado)`);
+        console.log(`📧 [UNIFIED] Enviando email para: ${to}`);
         
+        // Tentar SMTP primeiro
+        if (this.transporter) {
+            const smtpResult = await this._sendWithSMTP({ to, subject, html });
+            if (smtpResult.success) {
+                return smtpResult;
+            }
+            console.log('📧 [UNIFIED] SMTP falhou, tentando Gmail API...');
+        }
+        
+        // Se SMTP falhar, tentar SendGrid HTTPS
         try {
-            // Usar Resend diretamente (sempre funciona para seu email)
-            const resendEmailService = require('./resendEmailFinal');
-            const result = await resendEmailService.sendEmail({ 
-                to: 'wandevpb@gmail.com', // Sempre enviar para você
-                subject: `${subject} | Original: ${to}`, // Incluir destinatário original no subject
-                html: html + `
-                    <div style="background: #f3f4f6; border-top: 2px solid #6b7280; padding: 15px; margin-top: 20px;">
-                        <p style="margin: 0; color: #6b7280; font-size: 12px;">
-                            <strong>📧 Info de Entrega:</strong> Este email deveria ser enviado para <strong>${to}</strong>, mas está sendo redirecionado para você por limitações do serviço.
-                        </p>
-                    </div>
-                `
-            });
-            
-            if (result.success) {
-                console.log('✅ [UNIFIED] Email enviado via Resend para:', 'wandevpb@gmail.com');
-                return {
-                    success: true,
-                    messageId: result.messageId,
-                    method: 'RESEND_OPTIMIZED',
-                    originalRecipient: to,
-                    actualRecipient: 'wandevpb@gmail.com'
-                };
+            const sendgridHTTPSService = require('./sendgridHTTPSService');
+            const httpsResult = await sendgridHTTPSService.sendEmail({ to, subject, html });
+            if (httpsResult.success) {
+                console.log('✅ [UNIFIED] Email enviado via SendGrid HTTPS como fallback');
+                return httpsResult;
             }
         } catch (error) {
-            console.error('❌ [UNIFIED] Resend falhou:', error.message);
+            console.error('❌ [UNIFIED] SendGrid HTTPS também falhou:', error.message);
         }
         
         return { 
             success: false, 
-            error: 'Resend não funcionou',
-            method: 'RESEND_FAILED'
+            error: 'Todos os métodos de envio falharam',
+            method: 'UNIFIED_FAILED'
         };
+    }
+
+    async _sendWithSMTP({ to, subject, html }) {
+        if (!this.transporter) {
+            console.error('❌ Transporter não inicializado');
+            return { success: false, error: 'Transporter não inicializado' };
+        }
+
+        const mailOptions = {
+            from: {
+                name: 'BrisaLOG Portal',
+                address: this.fromEmail
+            },
+            to: to,
+            subject: subject,
+            html: html,
+            text: html.replace(/<[^>]*>/g, '') // Versão texto simples
+        };
+
+        try {
+            console.log(`📧 [GMAIL SMTP] Enviando email para: ${to}`);
+            const result = await this.transporter.sendMail(mailOptions);
+            console.log(`✅ [GMAIL SMTP] Email enviado! ID: ${result.messageId}`);
+            
+            return { 
+                success: true, 
+                messageId: result.messageId,
+                method: 'GMAIL_SMTP'
+            };
+        } catch (error) {
+            console.error(`❌ [GMAIL SMTP] Erro ao enviar email:`, error.message);
+            return { 
+                success: false, 
+                error: error.message,
+                method: 'GMAIL_SMTP'
+            };
+        }
     }
 }
 
