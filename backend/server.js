@@ -2607,28 +2607,21 @@ app.post('/api/test-email/:email', async (req, res) => {
   const email = req.params.email;
   
   try {
-    const emailService = require('./emailService');
+    // Usar Railway Email Service
+    const railwayEmailService = require('./railwayEmailService');
     
-    // Debug das configurações
-    console.log('🔧 [DEBUG] SendGrid API Key exists:', !!process.env.SENDGRID_API_KEY);
-    console.log('🔧 [DEBUG] From email:', process.env.FROM_EMAIL);
-    
-    // Versão super simples do email
-    const result = await emailService._send({
+    const result = await railwayEmailService.sendEmail({
       to: email,
-      subject: 'Teste BrisaLOG - Simples',
-      html: '<h1>Teste de Email</h1><p>Se você recebeu este email, está funcionando!</p>'
+      subject: 'Teste Railway - BrisaLOG',
+      html: '<h1>🚂 Teste Railway Email</h1><p>Se você recebeu este email, o Railway Email está funcionando!</p>'
     });
     
     console.log('✅ [TEST EMAIL] Resultado:', result);
     res.json({ 
       success: true, 
       result: result,
-      message: 'Email de teste enviado com sucesso',
-      debug: {
-        hasApiKey: !!process.env.SENDGRID_API_KEY,
-        fromEmail: process.env.FROM_EMAIL
-      }
+      message: 'Email de teste enviado via Railway',
+      service: 'Railway SMTP'
     });
     
   } catch (error) {
