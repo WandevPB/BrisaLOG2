@@ -2607,17 +2607,27 @@ app.post('/api/test-email/:email', async (req, res) => {
   const email = req.params.email;
   
   try {
-    const railwayEmailService = require('./railwayEmailService');
+    // Usar Resend que é compatível com Railway
+    const resendEmailService = require('./resendEmailService');
     
-    // Primeiro verificar a conexão
-    console.log('🔧 Verificando conexão SMTP...');
-    const connectionTest = await railwayEmailService.verifyConnection();
-    console.log('🔧 Resultado da verificação:', connectionTest);
+    console.log('� Verificando Resend...');
+    const connectionTest = await resendEmailService.verifyConnection();
+    console.log('� Resultado da verificação:', connectionTest);
     
-    const result = await railwayEmailService.sendEmail({
+    const result = await resendEmailService.sendEmail({
       to: email,
-      subject: 'Teste Railway SMTP - BrisaLOG',
-      html: '<h1>🚂 Teste Railway SMTP</h1><p>Este email foi enviado via Railway SMTP direto!</p>'
+      subject: 'Teste Resend - BrisaLOG Railway',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #2563eb;">🎉 Resend + Railway Funcionando!</h1>
+          <p>Este email foi enviado através do <strong>Resend</strong> no <strong>Railway</strong>!</p>
+          <p>✅ Sistema BrisaLOG totalmente funcional</p>
+          <hr>
+          <p style="color: #666; font-size: 12px;">
+            Enviado em: ${new Date().toLocaleString('pt-BR')}
+          </p>
+        </div>
+      `
     });
     
     console.log('✅ [TEST EMAIL] Resultado:', result);
@@ -2625,12 +2635,9 @@ app.post('/api/test-email/:email', async (req, res) => {
       success: true, 
       result: result,
       connectionTest: connectionTest,
-      message: 'Teste via Railway SMTP',
-      service: 'Railway SMTP',
-      debug: {
-        fromEmail: process.env.FROM_EMAIL,
-        hasPassword: !!process.env.GMAIL_APP_PASSWORD
-      }
+      message: 'Teste via Resend API',
+      service: 'Resend',
+      info: 'Resend é compatível com Railway - sem bloqueios SMTP'
     });
     
   } catch (error) {
@@ -2638,7 +2645,7 @@ app.post('/api/test-email/:email', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: error.message,
-      stack: error.stack
+      service: 'Resend'
     });
   }
 });
