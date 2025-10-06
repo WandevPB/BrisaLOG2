@@ -9,21 +9,26 @@ class RailwayEmailService {
     initializeTransporter() {
         console.log('🚂 Inicializando Railway Email Service...');
         
+        if (!process.env.GMAIL_APP_PASSWORD) {
+            console.error('❌ GMAIL_APP_PASSWORD não configurada');
+            return;
+        }
+
         // Configuração simples para Railway
         this.transporter = nodemailer.createTransporter({
             host: 'smtp.gmail.com',
             port: 587,
             secure: false,
             auth: {
-                user: 'wanderson.goncalves@grupobrisanet.com.br',
-                pass: process.env.GMAIL_APP_PASSWORD // Vamos definir essa variável
+                user: process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br',
+                pass: process.env.GMAIL_APP_PASSWORD
             },
             tls: {
                 rejectUnauthorized: false
             }
         });
 
-        console.log('✅ Railway SMTP configurado');
+        console.log('✅ Railway SMTP configurado com Gmail');
     }
 
     async sendEmail({ to, subject, html, text }) {
