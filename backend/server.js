@@ -874,36 +874,47 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       }
     });
 
-    // Enviar email apropriado
+    // Enviar emails automáticos
     try {
-      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const resendEmailService = require('./resendEmailFinal');
       
-      if (isEntregaPeloCD) {
-        // Email especial para entrega sem agendamento
-        await emailService.sendEntregaSemAgendamentoEmail({
-          to: fornecedor.email,
-          fornecedorNome: fornecedor.nome,
-          agendamentoCodigo: codigo,
-          cdNome: cd.nome,
-          dataEntrega: formatDateBr(agendamentoData.entrega.dataEntrega),
-          horarioEntrega: agendamentoData.entrega.horarioEntrega,
-          agendamentoUrl: baseUrl
-        });
-        console.log('📧 Email de entrega sem agendamento enviado para:', fornecedor.email);
+      // Email para a equipe interna (novo agendamento)
+      const emailInternoResult = await resendEmailService.sendNovoAgendamentoEmail({
+        agendamento: {
+          codigo: codigo,
+          dataHora: agendamento.dataEntrega,
+          observacoes: observacoesFinal,
+          cd: cd
+        },
+        fornecedor: fornecedor
+      });
+      
+      if (emailInternoResult.success) {
+        console.log('✅ Email interno enviado:', emailInternoResult.messageId);
       } else {
-        // Email normal de confirmação de agendamento
-        const consultaUrl = `${baseUrl}/consultar-status.html?codigo=${codigo}`;
-        await emailService.sendConfirmadoEmail({
-          to: fornecedor.email,
-          fornecedorNome: fornecedor.nome,
-          agendamentoCodigo: codigo,
-          cdNome: cd.nome,
-          consultaUrl
-        });
-        console.log('📧 Email de confirmação de agendamento enviado para:', fornecedor.email);
+        console.error('❌ Erro no email interno:', emailInternoResult.error);
       }
+      
+      // Email de confirmação para o fornecedor
+      if (fornecedor.email && !isEntregaPeloCD) {
+        const emailFornecedorResult = await resendEmailService.sendConfirmacaoAgendamento({
+          agendamento: {
+            codigo: codigo,
+            dataHora: agendamento.dataEntrega,
+            cd: cd
+          },
+          fornecedor: fornecedor
+        });
+        
+        if (emailFornecedorResult.success) {
+          console.log('✅ Email de confirmação enviado para fornecedor:', emailFornecedorResult.messageId);
+        } else {
+          console.error('❌ Erro no email de confirmação:', emailFornecedorResult.error);
+        }
+      }
+      
     } catch (emailError) {
-      console.error('Erro ao enviar email:', emailError);
+      console.error('❌ Erro geral no envio de emails:', emailError);
     }
 
     const mensagemSucesso = isEntregaPeloCD ? 
