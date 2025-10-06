@@ -287,13 +287,15 @@ class EmailService {
                 }
             };
 
+            console.log('📋 Dados do email:', JSON.stringify(msg, null, 2));
             const result = await sgMail.send(msg);
             console.log(`✅ Email enviado com sucesso via API. Status: ${result[0].statusCode}`);
             return { success: true, messageId: result[0].headers['x-message-id'] };
             
         } catch (error) {
             console.error(`❌ Erro ao enviar email via API para ${to}:`, error.message);
-            return { success: false, error: error.message };
+            console.error('📋 Detalhes do erro:', error.response ? error.response.body : 'Sem detalhes');
+            return { success: false, error: error.message, details: error.response ? error.response.body : null };
         }
     }
 
