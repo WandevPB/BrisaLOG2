@@ -2763,13 +2763,19 @@ app.post('/api/test-gmail/:email', async (req, res) => {
     const emailService = require('./resendEmailFinal');
     
     const result = await emailService.sendNovoAgendamentoEmail({
-      numero: 'TEST-001',
-      fornecedor: 'Fornecedor Teste',
-      dataAgendamento: new Date().toLocaleDateString('pt-BR'),
-      horario: '14:00',
-      responsavel: 'João Silva',
-      observacoes: 'Teste de email via Gmail SMTP',
-      emails: [email]
+      agendamento: {
+        codigo: 'TEST-001',
+        dataHora: new Date(),
+        observacoes: 'Teste de email via Gmail SMTP',
+        cd: {
+          nome: 'CD Teste',
+          endereco: 'Endereço Teste'
+        }
+      },
+      fornecedor: {
+        nome: 'Fornecedor Teste',
+        email: email
+      }
     });
     
     console.log('✅ [GMAIL TEST] Resultado:', result);
