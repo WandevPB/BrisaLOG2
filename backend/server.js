@@ -609,10 +609,17 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
 // Criar agendamento (sem autenticação para fornecedores)
 app.post('/api/agendamentos', upload.any(), async (req, res) => {
   console.log('🎯 [POST /api/agendamentos] ROTA INICIADA - Agendamento público (fornecedor)');
+  console.log('🎯 [POST /api/agendamentos] Timestamp:', new Date().toISOString());
+  console.log('🎯 [POST /api/agendamentos] Headers:', req.headers);
   
   try {
     console.log('🔍 [POST /api/agendamentos] req.body:', req.body);
     console.log('🔍 [POST /api/agendamentos] req.files:', req.files);
+    
+    // Testar conexão com banco
+    console.log('🔍 [POST /api/agendamentos] Testando conexão com banco...');
+    await prisma.$queryRaw`SELECT 1 as test`;
+    console.log('✅ [POST /api/agendamentos] Conexão com banco OK');
     
     // Tentar fazer o parse do JSON
     let agendamentoData;
@@ -894,9 +901,18 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro ao criar agendamento:', error);
-    console.error('Stack trace:', error.stack);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('❌ [POST /api/agendamentos] ERRO GERAL:', error);
+    console.error('❌ [POST /api/agendamentos] Stack trace:', error.stack);
+    console.error('❌ [POST /api/agendamentos] Message:', error.message);
+    console.error('❌ [POST /api/agendamentos] Code:', error.code);
+    
+    // Retornar erro detalhado para debug
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      details: error.message,
+      code: error.code || 'UNKNOWN_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
