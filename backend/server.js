@@ -17,9 +17,9 @@ async function initializeDatabase() {
       console.log('🗄️ Criando estrutura do banco de dados...');
       
       try {
-        // Executar prisma db push para criar as tabelas
+        // Executar prisma db push para criar as tabelas (sem force-reset para preservar dados)
         console.log('📋 Executando: prisma db push...');
-        execSync('npx prisma db push --force-reset', { 
+        execSync('npx prisma db push', { 
           stdio: 'inherit',
           cwd: process.cwd()
         });

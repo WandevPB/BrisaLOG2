@@ -10,12 +10,18 @@ async function main() {
   const existingCds = await prisma.cd.count();
   
   if (existingCds > 0) {
-    console.log('✅ CDs já existem no banco. Não será feito reset.');
+    console.log('✅ CDs já existem no banco. Seed não será executado para preservar dados existentes.');
     console.log(`📊 Total de CDs existentes: ${existingCds}`);
+    
+    // Listar os CDs existentes
+    const cds = await prisma.cd.findMany({
+      select: { id: true, nome: true, usuario: true, ativo: true }
+    });
+    console.log('🏢 CDs ativos:', cds.filter(cd => cd.ativo).map(cd => cd.nome).join(', '));
     return;
   }
 
-  console.log('🔧 Criando CDs iniciais...');
+  console.log('🔧 Criando CDs iniciais (primeira execução)...');
 
   // Criar CDs apenas se não existirem
   const senhaHash = await bcrypt.hash('Brisanet123', 10);
