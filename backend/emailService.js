@@ -26,7 +26,7 @@ class EmailService {
             console.log('EMAIL_USER:', process.env.EMAIL_USER);
             console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '[PROVIDED]' : '[MISSING]');
             
-            this.transporter = nodemailer.createTransporter({
+            this.transporter = nodemailer.createTransport({
                 service: process.env.EMAIL_SERVICE || 'gmail',
                 host: process.env.EMAIL_HOST || 'smtp.gmail.com',
                 port: parseInt(process.env.EMAIL_PORT) || 587,
