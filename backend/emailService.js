@@ -307,16 +307,16 @@ class EmailService {
             console.log('📧 [UNIFIED] SMTP falhou, tentando Gmail API...');
         }
         
-        // Se SMTP falhar, tentar Gmail API
+        // Se SMTP falhar, tentar SendGrid HTTPS
         try {
-            const gmailAPIService = require('./gmailAPIService');
-            const apiResult = await gmailAPIService.sendEmail({ to, subject, html });
-            if (apiResult.success) {
-                console.log('✅ [UNIFIED] Email enviado via Gmail API como fallback');
-                return apiResult;
+            const sendgridHTTPSService = require('./sendgridHTTPSService');
+            const httpsResult = await sendgridHTTPSService.sendEmail({ to, subject, html });
+            if (httpsResult.success) {
+                console.log('✅ [UNIFIED] Email enviado via SendGrid HTTPS como fallback');
+                return httpsResult;
             }
         } catch (error) {
-            console.error('❌ [UNIFIED] Gmail API também falhou:', error.message);
+            console.error('❌ [UNIFIED] SendGrid HTTPS também falhou:', error.message);
         }
         
         return { 

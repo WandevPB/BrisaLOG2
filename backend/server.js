@@ -2844,6 +2844,53 @@ app.get('/api/debug-env', (req, res) => {
   });
 });
 
+// Endpoint para testar SendGrid via HTTPS
+app.post('/api/test-sendgrid-https/:email', async (req, res) => {
+  console.log('📧 [SENDGRID HTTPS TEST] Testando SendGrid via HTTPS...');
+  const { email } = req.params;
+  
+  try {
+    const sendgridHTTPSService = require('./sendgridHTTPSService');
+    
+    const result = await sendgridHTTPSService.sendEmail({
+      to: email,
+      subject: 'Teste SendGrid HTTPS - BrisaLOG',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #2563eb;">✅ SendGrid HTTPS Funcionando!</h1>
+            <p>Este email foi enviado via <strong>SendGrid API com HTTPS nativo</strong> no <strong>Railway</strong>!</p>
+            <p><strong>Método:</strong> SendGrid API REST</p>
+            <p><strong>Protocolo:</strong> HTTPS (Porta 443)</p>
+            <p><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #065f46;">🎉 <strong>Sucesso!</strong> Emails funcionando sem limitações via SendGrid HTTPS!</p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+    
+    console.log('✅ [SENDGRID HTTPS TEST] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Teste via SendGrid HTTPS',
+      service: 'SendGrid HTTPS',
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ [SENDGRID HTTPS TEST] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      service: 'SendGrid HTTPS',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Endpoint para testar Gmail API diretamente
 app.post('/api/test-gmail-api/:email', async (req, res) => {
   console.log('📧 [GMAIL API TEST] Testando Gmail API diretamente...');
