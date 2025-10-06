@@ -2665,22 +2665,38 @@ app.post('/api/test-resend/:email', async (req, res) => {
       });
     }
 
-    const { Resend } = require('resend');
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    
-    const result = await resend.emails.send({
-      from: 'BrisaLOG <onboarding@resend.dev>',
-      to: [email],
-      subject: 'Teste Resend Railway',
-      html: '<h1>Funciona!</h1><p>Email enviado via Resend + Railway</p>'
+    // Usar fetch direto para o Resend API
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'BrisaLOG <onboarding@resend.dev>',
+        to: [email],
+        subject: 'Teste Resend Railway - Fetch',
+        html: '<h1>✅ Funciona!</h1><p>Email enviado via Resend + Railway usando fetch direto</p>'
+      })
     });
     
-    console.log('✅ [RESEND] Sucesso:', result);
-    res.json({ 
-      success: true, 
-      messageId: result.data?.id || result.id,
-      fullResult: result
-    });
+    const result = await response.json();
+    
+    if (response.ok) {
+      console.log('✅ [RESEND] Sucesso:', result);
+      res.json({ 
+        success: true, 
+        messageId: result.id,
+        status: response.status
+      });
+    } else {
+      console.error('❌ [RESEND] Erro API:', result);
+      res.status(response.status).json({ 
+        success: false, 
+        error: result.message || 'Erro na API Resend',
+        details: result
+      });
+    }
     
   } catch (error) {
     console.error('❌ [RESEND] Erro:', error);
