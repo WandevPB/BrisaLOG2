@@ -8,6 +8,8 @@ class ResendEmailService {
 
     initializeResend() {
         console.log('📨 Inicializando Resend Email Service...');
+        console.log('📨 RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
+        console.log('📨 RESEND_API_KEY length:', process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.length : 0);
         
         if (!process.env.RESEND_API_KEY) {
             console.error('❌ RESEND_API_KEY não configurada');
