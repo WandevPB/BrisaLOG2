@@ -13,13 +13,13 @@ async function initializeDatabase() {
     console.log('✅ Banco de dados já inicializado!');
     
   } catch (error) {
-    if (error.code === 'P2021' || error.message.includes('does not exist')) {
+    if (error.code === 'P2021' || error.message.includes('does not exist') || error.code === 'P1001') {
       console.log('🗄️ Criando estrutura do banco de dados...');
       
       try {
-        // Executar prisma db push para criar as tabelas (sem force-reset para preservar dados)
-        console.log('📋 Executando: prisma db push...');
-        execSync('npx prisma db push', { 
+        // Para PostgreSQL, usar migrate deploy que é mais apropriado para produção
+        console.log('📋 Executando: prisma migrate deploy...');
+        execSync('npx prisma migrate deploy', { 
           stdio: 'inherit',
           cwd: process.cwd()
         });
