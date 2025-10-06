@@ -1,6 +1,48 @@
 require('dotenv').config({ path: './backend/.env' });
 const { PrismaClient } = require('@prisma/client');
+const { execSync } = require('child_process');
 const prisma = new PrismaClient();
+
+// Função para inicializar o banco de dados
+async function initializeDatabase() {
+  try {
+    console.log('🔧 Verificando estrutura do banco de dados...');
+    
+    // Tentar fazer uma query simples para verificar se as tabelas existem
+    await prisma.cd.findFirst();
+    console.log('✅ Banco de dados já inicializado!');
+    
+  } catch (error) {
+    if (error.code === 'P2021' || error.message.includes('does not exist')) {
+      console.log('🗄️ Criando estrutura do banco de dados...');
+      
+      try {
+        // Executar prisma db push para criar as tabelas
+        console.log('📋 Executando: prisma db push...');
+        execSync('npx prisma db push --force-reset', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        
+        console.log('🌱 Executando seed do banco...');
+        execSync('node prisma/seed.js', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        
+        console.log('✅ Banco de dados inicializado com sucesso!');
+        
+      } catch (setupError) {
+        console.error('❌ Erro ao configurar banco de dados:', setupError.message);
+        process.exit(1);
+      }
+    } else {
+      console.error('❌ Erro inesperado no banco de dados:', error.message);
+      throw error;
+    }
+  }
+}
+
 // Atualiza agendamentos antigos para padrão de observação e data/hora de reagendamento
 async function atualizarPendentesReagendamento() {
   const pendentes = await prisma.agendamento.findMany({
@@ -31,8 +73,54 @@ async function atualizarPendentesReagendamento() {
   console.log('Agendamentos pendentes de reagendamento atualizados!');
 }
 
-// Executa atualização ao iniciar o servidor
-atualizarPendentesReagendamento();
+// Função principal de inicialização
+async function startServer() {
+  try {
+    // Primeiro inicializar o banco
+    await initializeDatabase();
+    
+    // Depois executar atualizações
+    await atualizarPendentesReagendamento();
+    
+    console.log('🚀 Servidor pronto para iniciar!');
+    
+    // Inicializar servidor apenas após setup completo
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor BrisaLOG Portal rodando na porta ${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`🔐 API Base URL: http://localhost:${PORT}/api`);
+      console.log('\n📋 Endpoints disponíveis:');
+      console.log('• POST /api/auth/login - Login de CD');
+      console.log('• POST /api/auth/change-password - Alterar senha');
+      console.log('• GET /api/verify-token - Verificar se token é válido');
+      console.log('• POST /api/renew-token - Renovar token de autenticação');
+      console.log('• GET /api/agendamentos - Listar agendamentos');
+      console.log('• POST /api/agendamentos - Criar agendamento');
+      console.log('• GET /api/agendamentos/consultar/:codigo - Consultar agendamento');
+      console.log('• PUT /api/agendamentos/:id/status - Atualizar status');
+      console.log('• POST /api/agendamentos/:id/reagendar - Reagendar');
+      console.log('• POST /api/agendamentos/:codigo/pedidos - Adicionar pedidos');
+      console.log('• POST /api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais - Adicionar NF');
+      console.log('• PUT /api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF - Editar NF');
+      console.log('• GET /api/horarios-disponiveis - Consultar horários disponíveis');
+      console.log('• POST /api/bloqueios-horario - Criar bloqueio de horário');
+      console.log('• GET /api/bloqueios-horario - Listar bloqueios de horário');
+      console.log('• PUT /api/bloqueios-horario/:id - Atualizar bloqueio de horário');
+      console.log('• DELETE /api/bloqueios-horario/:id - Excluir bloqueio de horário');
+      console.log('• DELETE /api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF - Excluir NF');
+      console.log('• GET /api/dashboard/stats - Estatísticas');
+      console.log('• GET /api/files/:filename - Download de arquivos');
+      console.log('• GET /api/kpis - KPIs do dashboard');
+    });
+    
+  } catch (error) {
+    console.error('❌ Erro na inicialização:', error.message);
+    process.exit(1);
+  }
+}
+
+// Executar inicialização
+startServer();
 // Função utilitária para criar Date UTC puro (meia-noite) a partir de 'YYYY-MM-DD'
 function toUTCDateOnly(dateStr) {
   if (!dateStr) return null;
@@ -2374,35 +2462,6 @@ app.use(errorHandler);
 // Rota de health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// Inicializar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor BrisaLOG Portal rodando na porta ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔐 API Base URL: http://localhost:${PORT}/api`);
-  console.log('\n📋 Endpoints disponíveis:');
-  console.log('• POST /api/auth/login - Login de CD');
-  console.log('• POST /api/auth/change-password - Alterar senha');
-  console.log('• GET /api/verify-token - Verificar se token é válido');
-  console.log('• POST /api/renew-token - Renovar token de autenticação');
-  console.log('• GET /api/agendamentos - Listar agendamentos');
-  console.log('• POST /api/agendamentos - Criar agendamento');
-  console.log('• GET /api/agendamentos/consultar/:codigo - Consultar agendamento');
-  console.log('• PUT /api/agendamentos/:id/status - Atualizar status');
-  console.log('• POST /api/agendamentos/:id/reagendar - Reagendar');
-  console.log('• POST /api/agendamentos/:codigo/pedidos - Adicionar pedidos');
-  console.log('• POST /api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais - Adicionar NF');
-  console.log('• PUT /api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF - Editar NF');
-  console.log('• GET /api/horarios-disponiveis - Consultar horários disponíveis');
-  console.log('• POST /api/bloqueios-horario - Criar bloqueio de horário');
-  console.log('• GET /api/bloqueios-horario - Listar bloqueios de horário');
-  console.log('• PUT /api/bloqueios-horario/:id - Atualizar bloqueio de horário');
-  console.log('• DELETE /api/bloqueios-horario/:id - Excluir bloqueio de horário');
-  console.log('• DELETE /api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF - Excluir NF');
-  console.log('• GET /api/dashboard/stats - Estatísticas');
-  console.log('• GET /api/files/:filename - Download de arquivos');
-  console.log('• GET /api/kpis - KPIs do dashboard');
 });
 
 // Graceful shutdown
