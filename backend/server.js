@@ -2601,6 +2601,42 @@ app.post('/api/force-seed', async (req, res) => {
   }
 });
 
+// Endpoint de teste para verificar envio de emails
+app.post('/api/test-email/:email', async (req, res) => {
+  console.log('📧 [TEST EMAIL] Testando envio de email...');
+  const email = req.params.email;
+  
+  try {
+    const emailService = require('./emailService');
+    await emailService.initializeEmailService();
+    
+    const result = await emailService.sendEmail({
+      to: email,
+      subject: 'Teste de Email - BrisaLOG',
+      html: `
+        <h2>🧪 Teste de Email</h2>
+        <p>Este é um email de teste do sistema BrisaLOG.</p>
+        <p><strong>Enviado em:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+        <p>Se você recebeu este email, o sistema de envio está funcionando corretamente!</p>
+      `
+    });
+    
+    console.log('✅ [TEST EMAIL] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Email de teste enviado com sucesso'
+    });
+    
+  } catch (error) {
+    console.error('❌ [TEST EMAIL] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
 // Rota de health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
