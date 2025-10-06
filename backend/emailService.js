@@ -269,7 +269,22 @@ class EmailService {
                     name: 'BrisaLOG Portal'
                 },
                 subject: subject,
-                html: html
+                html: html,
+                // Configurações para melhorar entregabilidade
+                tracking_settings: {
+                    click_tracking: { enable: false },
+                    open_tracking: { enable: true },
+                    subscription_tracking: { enable: false }
+                },
+                mail_settings: {
+                    sandbox_mode: { enable: false },
+                    spam_check: { enable: true, threshold: 1 }
+                },
+                // Adicionar reply-to para melhorar reputação
+                reply_to: {
+                    email: 'wanderson.goncalves@grupobrisanet.com.br',
+                    name: 'BrisaLOG Portal'
+                }
             };
 
             const result = await sgMail.send(msg);
