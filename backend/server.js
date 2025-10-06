@@ -2607,29 +2607,30 @@ app.post('/api/test-email/:email', async (req, res) => {
   const email = req.params.email;
   
   try {
-    // Voltar para SendGrid com configuração simples
-    const sgMail = require('@sendgrid/mail');
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    const railwayEmailService = require('./railwayEmailService');
     
-    const msg = {
+    // Primeiro verificar a conexão
+    console.log('🔧 Verificando conexão SMTP...');
+    const connectionTest = await railwayEmailService.verifyConnection();
+    console.log('🔧 Resultado da verificação:', connectionTest);
+    
+    const result = await railwayEmailService.sendEmail({
       to: email,
-      from: process.env.FROM_EMAIL,
-      subject: 'Teste BrisaLOG - Funcionando!',
-      html: '<h1>✅ Sistema Funcionando!</h1><p>Este email confirma que o BrisaLOG está enviando emails corretamente.</p>'
-    };
+      subject: 'Teste Railway SMTP - BrisaLOG',
+      html: '<h1>🚂 Teste Railway SMTP</h1><p>Este email foi enviado via Railway SMTP direto!</p>'
+    });
     
-    const result = await sgMail.send(msg);
-    
-    console.log('✅ [TEST EMAIL] SendGrid Success:', result[0].statusCode);
+    console.log('✅ [TEST EMAIL] Resultado:', result);
     res.json({ 
       success: true, 
-      result: { 
-        success: true, 
-        statusCode: result[0].statusCode,
-        messageId: result[0].headers['x-message-id']
-      },
-      message: 'Email enviado via SendGrid simples',
-      service: 'SendGrid Direct'
+      result: result,
+      connectionTest: connectionTest,
+      message: 'Teste via Railway SMTP',
+      service: 'Railway SMTP',
+      debug: {
+        fromEmail: process.env.FROM_EMAIL,
+        hasPassword: !!process.env.GMAIL_APP_PASSWORD
+      }
     });
     
   } catch (error) {
@@ -2637,7 +2638,7 @@ app.post('/api/test-email/:email', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: error.message,
-      details: error.response ? error.response.body : null
+      stack: error.stack
     });
   }
 });
