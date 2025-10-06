@@ -27,7 +27,7 @@ async function sendNovoAgendamentoEmail() {
         </div>
         <div class="content">
           <p>Olá <b>Fornecedor Exemplo</b>,</p>
-          <p>Seu pedido de agendamento <b>AGD123456</b> foi recebido pelo CD <b>CENTRAL</b> e está em análise.</p>
+          <p>Seu pedido de agendamento <b>AGD123456</b> foi recebido pelo CD <b>Lagoa Nova</b> e está em análise.</p>
           <div class="info-box">
             <strong>Data da entrega:</strong> 2025-09-30<br>
             <strong>Horário:</strong> 10:00<br>

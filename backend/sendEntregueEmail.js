@@ -5,7 +5,7 @@ const emailService = require('./emailService');
   const fornecedorEmail = 'wandevpb@gmail.com';
   const fornecedorNome = 'Fornecedor Exemplo';
   const agendamentoCodigo = 'AGD000125';
-  const cdNome = 'CENTRAL';
+  const cdNome = 'Lagoa Nova';
   const consultaUrl = 'https://brisanetlog.com.br/consultar-status.html';
 
   // Email de ENTREGA

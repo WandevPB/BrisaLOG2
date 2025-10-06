@@ -4,8 +4,8 @@ async function updateUsuarioLagoaNova() {
   const prisma = new PrismaClient();
   try {
     const updated = await prisma.cd.updateMany({
-      where: { usuario: 'lagoa_nova' },
-      data: { usuario: 'central' }
+      where: { usuario: 'central' },
+      data: { usuario: 'lagoa_nova' }
     });
     console.log(`Usuários atualizados: ${updated.count}`);
   } catch (err) {

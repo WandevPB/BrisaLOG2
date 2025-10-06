@@ -1,11 +1,11 @@
 const { PrismaClient } = require('@prisma/client');
 
-async function updateLagoaNovaToCentral() {
+async function updateCentralToLagoaNova() {
   const prisma = new PrismaClient();
   try {
     const updated = await prisma.cd.updateMany({
-      where: { nome: 'Lagoa Nova' },
-      data: { nome: 'CENTRAL' }
+      where: { nome: 'CENTRAL' },
+      data: { nome: 'Lagoa Nova' }
     });
     console.log(`Registros atualizados: ${updated.count}`);
   } catch (err) {
@@ -15,4 +15,4 @@ async function updateLagoaNovaToCentral() {
   }
 }
 
-updateLagoaNovaToCentral();
+updateCentralToLagoaNova();

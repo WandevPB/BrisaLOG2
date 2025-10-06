@@ -13,7 +13,7 @@ async function sendAllTestEmails() {
         </div>
         <div style="background: #fff; border-radius: 10px; padding: 30px; margin-top: 20px;">
           <p>Olá <b>Fornecedor Exemplo</b>,</p>
-          <p>Seu pedido de agendamento <b>AGD123456</b> foi recebido pelo CD <b>CENTRAL</b> e está em análise.</p>
+          <p>Seu pedido de agendamento <b>AGD123456</b> foi recebido pelo CD <b>Lagoa Nova</b> e está em análise.</p>
           <p>Você será notificado sobre qualquer atualização.</p>
           <div style="margin: 30px 0; text-align: center;">
             <a href="https://brisalog.com/consultar" style="background: #FF6B35; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;">Consultar Agendamento</a>
@@ -59,7 +59,7 @@ async function sendAllTestEmails() {
         </div>
         <div style="background: #fff; border-radius: 10px; padding: 30px; margin-top: 20px;">
           <p>Olá <b>Fornecedor Exemplo</b>,</p>
-          <p>O agendamento <b>AGD123456</b> foi marcado como <b>Entregue</b> pelo CD <b>CENTRAL</b>.</p>
+          <p>O agendamento <b>AGD123456</b> foi marcado como <b>Entregue</b> pelo CD <b>Lagoa Nova</b>.</p>
           <p>Data da entrega: <b>26/09/2025</b></p>
         </div>
         <div style="text-align: center; color: #888; font-size: 12px; margin-top: 30px;">Este é um e-mail automático do BrisaLOG Portal.</div>
@@ -79,7 +79,7 @@ async function sendAllTestEmails() {
         </div>
         <div style="background: #fff; border-radius: 10px; padding: 30px; margin-top: 20px;">
           <p>Olá <b>Fornecedor Exemplo</b>,</p>
-          <p>O agendamento <b>AGD123456</b> foi marcado como <b>Não Realizado</b> pelo CD <b>CENTRAL</b>.</p>
+          <p>O agendamento <b>AGD123456</b> foi marcado como <b>Não Realizado</b> pelo CD <b>Lagoa Nova</b>.</p>
         </div>
         <div style="text-align: center; color: #888; font-size: 12px; margin-top: 30px;">Este é um e-mail automático do BrisaLOG Portal.</div>
       </div>
@@ -98,7 +98,7 @@ async function sendAllTestEmails() {
         </div>
         <div style="background: #fff; border-radius: 10px; padding: 30px; margin-top: 20px;">
           <p>Olá <b>Fornecedor Exemplo</b>,</p>
-          <p>O agendamento <b>AGD123456</b> foi <b>cancelado</b> pelo CD <b>CENTRAL</b>.</p>
+          <p>O agendamento <b>AGD123456</b> foi <b>cancelado</b> pelo CD <b>Lagoa Nova</b>.</p>
         </div>
         <div style="text-align: center; color: #888; font-size: 12px; margin-top: 30px;">Este é um e-mail automático do BrisaLOG Portal.</div>
       </div>
