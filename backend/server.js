@@ -2754,6 +2754,21 @@ app.post('/api/test-resend/:email', async (req, res) => {
   }
 });
 
+// Debug das variáveis de ambiente
+app.get('/api/debug-env', (req, res) => {
+  console.log('🔍 [ENV DEBUG] Verificando variáveis de ambiente...');
+  
+  res.json({
+    GMAIL_APP_PASSWORD: !!process.env.GMAIL_APP_PASSWORD,
+    FROM_EMAIL: process.env.FROM_EMAIL,
+    RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+    NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
+    DATABASE_URL: !!process.env.DATABASE_URL,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Endpoint para testar Gmail SMTP
 app.post('/api/test-gmail/:email', async (req, res) => {
   console.log('📧 [GMAIL TEST] Testando Gmail SMTP...');
