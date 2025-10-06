@@ -1,3 +1,13 @@
+// Função para obter a URL base da API
+function getApiBaseUrl() {
+    // Se estamos em produção (Railway), usar a URL atual
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        return window.location.origin;
+    }
+    // Se estamos em desenvolvimento, usar localhost:3000
+    return 'http://localhost:3000';
+}
+
 // Funções globais para navegação dos steps
 function nextStep() {
     if (window.agendamentoForm) {
