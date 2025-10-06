@@ -2754,6 +2754,43 @@ app.post('/api/test-resend/:email', async (req, res) => {
   }
 });
 
+// Endpoint para testar Gmail SMTP
+app.post('/api/test-gmail/:email', async (req, res) => {
+  console.log('📧 [GMAIL TEST] Testando Gmail SMTP...');
+  const email = req.params.email;
+  
+  try {
+    const emailService = require('./resendEmailFinal');
+    
+    const result = await emailService.sendNovoAgendamentoEmail({
+      numero: 'TEST-001',
+      fornecedor: 'Fornecedor Teste',
+      dataAgendamento: new Date().toLocaleDateString('pt-BR'),
+      horario: '14:00',
+      responsavel: 'João Silva',
+      observacoes: 'Teste de email via Gmail SMTP',
+      emails: [email]
+    });
+    
+    console.log('✅ [GMAIL TEST] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Teste via Gmail SMTP',
+      service: 'Gmail',
+      info: 'Email enviado via Gmail SMTP usando app password'
+    });
+    
+  } catch (error) {
+    console.error('❌ [GMAIL TEST] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      service: 'Gmail'
+    });
+  }
+});
+
 // Rota de health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

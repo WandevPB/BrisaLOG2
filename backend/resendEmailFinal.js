@@ -1,85 +1,72 @@
-const https = require('https');
+const nodemailer = require('nodemailer');
 
-class ResendEmailService {
+class EmailService {
     constructor() {
-        this.apiKey = process.env.RESEND_API_KEY;
+        this.transporter = null;
         this.fromEmail = process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br';
+        this.initializeTransporter();
+    }
+
+    initializeTransporter() {
+        console.log('📧 Inicializando Email Service com Gmail...');
+        
+        if (!process.env.GMAIL_APP_PASSWORD) {
+            console.error('❌ GMAIL_APP_PASSWORD não configurada');
+            return;
+        }
+
+        try {
+            this.transporter = nodemailer.createTransporter({
+                service: 'gmail',
+                auth: {
+                    user: this.fromEmail,
+                    pass: process.env.GMAIL_APP_PASSWORD
+                },
+                tls: {
+                    rejectUnauthorized: false
+                }
+            });
+            console.log('✅ Gmail SMTP configurado com sucesso');
+        } catch (error) {
+            console.error('❌ Erro ao configurar Gmail:', error.message);
+        }
     }
 
     async sendEmail({ to, subject, html, text }) {
-        return new Promise((resolve, reject) => {
-            if (!this.apiKey) {
-                console.error('❌ RESEND_API_KEY não configurada');
-                return resolve({ success: false, error: 'RESEND_API_KEY não configurada' });
-            }
+        if (!this.transporter) {
+            console.error('❌ Transporter não inicializado');
+            return { success: false, error: 'Transporter não inicializado' };
+        }
 
-            const postData = JSON.stringify({
-                from: `BrisaLOG Portal <onboarding@resend.dev>`,
-                to: Array.isArray(to) ? to : [to],
-                subject: subject,
-                html: html,
-                text: text || html.replace(/<[^>]*>/g, '')
-            });
+        const mailOptions = {
+            from: {
+                name: 'BrisaLOG Portal',
+                address: this.fromEmail
+            },
+            to: to,
+            subject: subject,
+            html: html,
+            text: text || html.replace(/<[^>]*>/g, '')
+        };
 
-            const options = {
-                hostname: 'api.resend.com',
-                port: 443,
-                path: '/emails',
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.apiKey}`,
-                    'Content-Type': 'application/json',
-                    'Content-Length': Buffer.byteLength(postData)
-                }
+        try {
+            console.log(`📧 [GMAIL] Enviando email para: ${to}`);
+            const result = await this.transporter.sendMail(mailOptions);
+            console.log(`✅ [GMAIL] Email enviado! ID: ${result.messageId}`);
+            
+            return { 
+                success: true, 
+                messageId: result.messageId,
+                method: 'GMAIL_SMTP'
             };
-
-            const request = https.request(options, (response) => {
-                let data = '';
-                
-                response.on('data', (chunk) => {
-                    data += chunk;
-                });
-                
-                response.on('end', () => {
-                    try {
-                        const result = JSON.parse(data);
-                        
-                        if (response.statusCode === 200) {
-                            console.log(`✅ [RESEND] Email enviado para ${to}: ${result.id}`);
-                            resolve({ 
-                                success: true, 
-                                messageId: result.id,
-                                method: 'RESEND_API'
-                            });
-                        } else {
-                            console.error('❌ [RESEND] Erro API:', result);
-                            resolve({ 
-                                success: false, 
-                                error: result.message || 'Erro na API Resend',
-                                details: result
-                            });
-                        }
-                    } catch (parseError) {
-                        console.error('❌ [RESEND] Erro parse:', parseError);
-                        resolve({ 
-                            success: false, 
-                            error: 'Erro ao processar resposta'
-                        });
-                    }
-                });
-            });
-
-            request.on('error', (error) => {
-                console.error('❌ [RESEND] Erro request:', error);
-                resolve({ 
-                    success: false, 
-                    error: error.message 
-                });
-            });
-
-            request.write(postData);
-            request.end();
-        });
+        } catch (error) {
+            console.error(`❌ [GMAIL] Erro ao enviar email:`, error.message);
+            return { 
+                success: false, 
+                error: error.message,
+                method: 'GMAIL_SMTP'
+            };
+        }
     }
 
     // Email para novo agendamento
@@ -95,8 +82,9 @@ class ResendEmailService {
                     <div style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 20px; margin-bottom: 20px;">
                         <h2 style="color: #1e40af; margin: 0 0 15px 0;">Dados do Agendamento</h2>
                         <p style="margin: 8px 0;"><strong>Código:</strong> ${agendamento.codigo}</p>
-                        <p style="margin: 8px 0;"><strong>Fornecedor:</strong> ${fornecedor.nomeFantasia}</p>
-                        <p style="margin: 8px 0;"><strong>CNPJ:</strong> ${fornecedor.cnpj}</p>
+                        <p style="margin: 8px 0;"><strong>Fornecedor:</strong> ${fornecedor.nome}</p>
+                        <p style="margin: 8px 0;"><strong>Email Fornecedor:</strong> ${fornecedor.email}</p>
+                        <p style="margin: 8px 0;"><strong>CNPJ:</strong> ${fornecedor.documento}</p>
                         <p style="margin: 8px 0;"><strong>Data/Hora:</strong> ${new Date(agendamento.dataHora).toLocaleString('pt-BR')}</p>
                         <p style="margin: 8px 0;"><strong>CD:</strong> ${agendamento.cd?.nome || 'N/A'}</p>
                         ${agendamento.observacoes ? `<p style="margin: 8px 0;"><strong>Observações:</strong> ${agendamento.observacoes}</p>` : ''}
@@ -118,9 +106,10 @@ class ResendEmailService {
             </div>
         `;
 
+        // TEMPORÁRIO: Enviar para seu email verificado até configurar domínio
         return this.sendEmail({
-            to: this.fromEmail,
-            subject: `[BrisaLOG] Novo Agendamento - ${fornecedor.nomeFantasia} - ${agendamento.codigo}`,
+            to: 'wandevpb@gmail.com',
+            subject: `[BrisaLOG] Novo Agendamento - ${fornecedor.nome} - ${agendamento.codigo}`,
             html
         });
     }
@@ -131,12 +120,14 @@ class ResendEmailService {
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff;">
                 <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center;">
                     <h1 style="color: white; margin: 0; font-size: 28px;">✅ Agendamento Confirmado</h1>
-                    <p style="color: #d1fae5; margin: 10px 0 0 0;">Seu agendamento foi realizado com sucesso!</p>
+                    <p style="color: #d1fae5; margin: 10px 0 0 0;">Agendamento realizado para: ${fornecedor.nome}</p>
                 </div>
                 
                 <div style="padding: 30px;">
                     <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 20px; margin-bottom: 20px;">
                         <h2 style="color: #065f46; margin: 0 0 15px 0;">Detalhes do Agendamento</h2>
+                        <p style="margin: 8px 0;"><strong>Fornecedor:</strong> ${fornecedor.nome}</p>
+                        <p style="margin: 8px 0;"><strong>Email Original:</strong> ${fornecedor.email}</p>
                         <p style="margin: 8px 0;"><strong>Código de Acompanhamento:</strong> <span style="background: #fbbf24; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: bold;">${agendamento.codigo}</span></p>
                         <p style="margin: 8px 0;"><strong>Data/Hora:</strong> ${new Date(agendamento.dataHora).toLocaleString('pt-BR')}</p>
                         <p style="margin: 8px 0;"><strong>CD de Destino:</strong> ${agendamento.cd?.nome || 'N/A'}</p>
@@ -145,7 +136,7 @@ class ResendEmailService {
                     
                     <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
                         <p style="margin: 0; color: #92400e; font-size: 14px;">
-                            <strong>📝 Importante:</strong> Guarde este código para consultar o status do seu agendamento.
+                            <strong>📝 Importante:</strong> Este email foi enviado para você pois estamos em fase de testes. O fornecedor deve ser notificado pelo código: ${agendamento.codigo}
                         </p>
                     </div>
                     
@@ -165,12 +156,13 @@ class ResendEmailService {
             </div>
         `;
 
+        // TEMPORÁRIO: Enviar para seu email verificado até configurar domínio
         return this.sendEmail({
-            to: fornecedor.email,
-            subject: `[BrisaLOG] Agendamento Confirmado - Código: ${agendamento.codigo}`,
+            to: 'wandevpb@gmail.com',
+            subject: `[BrisaLOG] Confirmação de Agendamento - ${fornecedor.nome} - ${agendamento.codigo}`,
             html
         });
     }
 }
 
-module.exports = new ResendEmailService();
+module.exports = new EmailService();
