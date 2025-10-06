@@ -2844,6 +2844,106 @@ app.get('/api/debug-env', (req, res) => {
   });
 });
 
+// Endpoint especial para testar email da Brisanet (força fallbacks)
+app.post('/api/test-brisanet-email', async (req, res) => {
+  console.log('📧 [BRISANET TEST] Testando email para Brisanet...');
+  const targetEmail = 'wanderson.goncalves@grupobrisanet.com.br';
+  
+  try {
+    console.log('📧 [BRISANET TEST] Tentando múltiplos métodos...');
+    
+    // Método 1: Tentar SendGrid HTTPS
+    try {
+      const sendgridHTTPSService = require('./sendgridHTTPSService');
+      const sgResult = await sendgridHTTPSService.sendEmail({
+        to: targetEmail,
+        subject: 'Teste Email Brisanet - BrisaLOG',
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+            <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <h1 style="color: #2563eb;">✅ Email para Brisanet Funcionando!</h1>
+              <p>Este email foi enviado via <strong>SendGrid HTTPS</strong> para <strong>${targetEmail}</strong>!</p>
+              <p><strong>Método:</strong> SendGrid API REST</p>
+              <p><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+              <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0; color: #065f46;">🎉 <strong>Sucesso!</strong> Sistema pode enviar emails para domínio Brisanet!</p>
+              </div>
+            </div>
+          </div>
+        `
+      });
+      
+      if (sgResult.success) {
+        console.log('✅ [BRISANET TEST] SendGrid funcionou!');
+        return res.json({ 
+          success: true, 
+          result: sgResult,
+          message: 'Email enviado via SendGrid HTTPS para Brisanet',
+          service: 'SendGrid HTTPS',
+          targetEmail: targetEmail
+        });
+      }
+    } catch (sgError) {
+      console.log('❌ [BRISANET TEST] SendGrid falhou:', sgError.message);
+    }
+    
+    // Método 2: Tentar via emailService padrão (que tem fallbacks)
+    try {
+      const emailService = require('./emailService');
+      const result = await emailService._send({
+        to: targetEmail,
+        subject: 'Teste Sistema BrisaLOG - Email Direto',
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+            <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <h1 style="color: #2563eb;">📧 Teste de Email Direto</h1>
+              <p>Este email foi enviado diretamente para <strong>${targetEmail}</strong>!</p>
+              <p><strong>Sistema:</strong> BrisaLOG Portal</p>
+              <p><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+              <div style="background: #fff3e0; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0; color: #92400e;">🔥 <strong>Teste:</strong> Verificando se conseguimos enviar para email da Brisanet!</p>
+              </div>
+            </div>
+          </div>
+        `
+      });
+      
+      if (result.success) {
+        console.log('✅ [BRISANET TEST] EmailService funcionou!');
+        return res.json({ 
+          success: true, 
+          result: result,
+          message: 'Email enviado via EmailService para Brisanet',
+          service: result.method || 'EmailService',
+          targetEmail: targetEmail
+        });
+      }
+    } catch (esError) {
+      console.log('❌ [BRISANET TEST] EmailService falhou:', esError.message);
+    }
+    
+    // Se tudo falhar
+    res.status(500).json({ 
+      success: false, 
+      error: 'Todos os métodos falharam para email Brisanet',
+      targetEmail: targetEmail,
+      availableMethods: {
+        sendgrid: !!process.env.EMAIL_PASS,
+        resend: !!process.env.RESEND_API_KEY,
+        gmail: !!process.env.GMAIL_APP_PASSWORD
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ [BRISANET TEST] Erro geral:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      targetEmail: targetEmail
+    });
+  }
+});
+
 // Endpoint para testar SendGrid via HTTPS
 app.post('/api/test-sendgrid-https/:email', async (req, res) => {
   console.log('📧 [SENDGRID HTTPS TEST] Testando SendGrid via HTTPS...');
