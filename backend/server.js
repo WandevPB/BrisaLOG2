@@ -2844,6 +2844,53 @@ app.get('/api/debug-env', (req, res) => {
   });
 });
 
+// Endpoint para testar Gmail API diretamente
+app.post('/api/test-gmail-api/:email', async (req, res) => {
+  console.log('📧 [GMAIL API TEST] Testando Gmail API diretamente...');
+  const { email } = req.params;
+  
+  try {
+    const gmailAPIService = require('./gmailAPIService');
+    
+    const result = await gmailAPIService.sendEmail({
+      to: email,
+      subject: 'Teste Gmail API HTTPS - BrisaLOG',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #2563eb;">✅ Gmail API HTTPS Funcionando!</h1>
+            <p>Este email foi enviado via <strong>Gmail API com HTTPS nativo</strong> no <strong>Railway</strong>!</p>
+            <p><strong>Método:</strong> Gmail API REST</p>
+            <p><strong>Protocolo:</strong> HTTPS (Porta 443)</p>
+            <p><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #065f46;">🎉 <strong>Sucesso!</strong> O Railway permite conexões HTTPS para APIs externas!</p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+    
+    console.log('✅ [GMAIL API TEST] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Teste via Gmail API HTTPS',
+      service: 'Gmail API',
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ [GMAIL API TEST] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      service: 'Gmail API',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Endpoint para testar Gmail SMTP
 app.post('/api/test-gmail/:email', async (req, res) => {
   console.log('📧 [GMAIL TEST] Testando Gmail SMTP...');

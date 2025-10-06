@@ -296,6 +296,37 @@ class EmailService {
 
     // Utilitário de envio unificado
     async _send({ to, subject, html }) {
+        console.log(`📧 [UNIFIED] Enviando email para: ${to}`);
+        
+        // Tentar SMTP primeiro
+        if (this.transporter) {
+            const smtpResult = await this._sendWithSMTP({ to, subject, html });
+            if (smtpResult.success) {
+                return smtpResult;
+            }
+            console.log('📧 [UNIFIED] SMTP falhou, tentando Gmail API...');
+        }
+        
+        // Se SMTP falhar, tentar Gmail API
+        try {
+            const gmailAPIService = require('./gmailAPIService');
+            const apiResult = await gmailAPIService.sendEmail({ to, subject, html });
+            if (apiResult.success) {
+                console.log('✅ [UNIFIED] Email enviado via Gmail API como fallback');
+                return apiResult;
+            }
+        } catch (error) {
+            console.error('❌ [UNIFIED] Gmail API também falhou:', error.message);
+        }
+        
+        return { 
+            success: false, 
+            error: 'Todos os métodos de envio falharam',
+            method: 'UNIFIED_FAILED'
+        };
+    }
+
+    async _sendWithSMTP({ to, subject, html }) {
         if (!this.transporter) {
             console.error('❌ Transporter não inicializado');
             return { success: false, error: 'Transporter não inicializado' };
@@ -313,9 +344,9 @@ class EmailService {
         };
 
         try {
-            console.log(`📧 [GMAIL] Enviando email para: ${to}`);
+            console.log(`📧 [GMAIL SMTP] Enviando email para: ${to}`);
             const result = await this.transporter.sendMail(mailOptions);
-            console.log(`✅ [GMAIL] Email enviado! ID: ${result.messageId}`);
+            console.log(`✅ [GMAIL SMTP] Email enviado! ID: ${result.messageId}`);
             
             return { 
                 success: true, 
@@ -323,7 +354,7 @@ class EmailService {
                 method: 'GMAIL_SMTP'
             };
         } catch (error) {
-            console.error(`❌ [GMAIL] Erro ao enviar email:`, error.message);
+            console.error(`❌ [GMAIL SMTP] Erro ao enviar email:`, error.message);
             return { 
                 success: false, 
                 error: error.message,
