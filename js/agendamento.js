@@ -683,7 +683,7 @@ class AgendamentoForm {
             let response;
             try {
                 // Fazer a requisição para criar o agendamento sem necessidade de token
-                response = await fetch('http://localhost:3000/api/agendamentos', {
+                response = await fetch(`${getApiBaseUrl()}/api/agendamentos`, {
                     method: 'POST',
                     body: formData
                 });
@@ -801,7 +801,7 @@ class AgendamentoForm {
             console.log('Carregando horários disponíveis para:', { date, cdDestino });
             
             // Fazer requisição para a API de horários disponíveis sem necessidade de autenticação
-            const response = await fetch(`http://localhost:3000/api/horarios-disponiveis?date=${date}&cd=${cdDestino}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/horarios-disponiveis?date=${date}&cd=${cdDestino}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'

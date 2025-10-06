@@ -1,7 +1,8 @@
         // Função global para visualizar PDF
         function viewPDF(filename) {
             if (!filename) return;
-            window.open('http://localhost:3000/uploads/' + filename, '_blank');
+            const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:3000' : window.location.origin;
+            window.open(baseUrl + '/uploads/' + filename, '_blank');
         }
 <!DOCTYPE html>
 <html lang="pt-BR">

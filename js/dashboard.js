@@ -757,7 +757,7 @@ class CDDashboard {
             console.log('🔑 Token encontrado:', !!token);
             
             // Adicionar timestamp para evitar cache
-            const url = `http://localhost:3000/api/agendamentos?t=${Date.now()}`;
+            const url = `${getApiBaseUrl()}/api/agendamentos?t=${Date.now()}`;
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
@@ -2898,7 +2898,7 @@ async function handleBloqueioSubmit(e) {
     try {
         dashboard.showLoading(true);
         const token = sessionStorage.getItem('token');
-        const response = await fetch('http://localhost:3000/api/bloqueios-horario', {
+        const response = await fetch(`${getApiBaseUrl()}/api/bloqueios-horario`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -3075,7 +3075,7 @@ async function carregarBloqueios() {
         }
         
         console.log('Fazendo requisição para carregar bloqueios...');
-        const response = await fetch('http://localhost:3000/api/bloqueios-horario', {
+        const response = await fetch(`${getApiBaseUrl()}/api/bloqueios-horario`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -3372,7 +3372,7 @@ async function handleEditarBloqueio(e) {
         dashboard.showLoading(true);
         
         const token = sessionStorage.getItem('token');
-        const response = await fetch(`http://localhost:3000/api/bloqueios-horario/${id}`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/bloqueios-horario/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -3408,7 +3408,7 @@ async function excluirBloqueio(id, dataFormatada) {
         dashboard.showLoading(true);
         
         const token = sessionStorage.getItem('token');
-        const response = await fetch(`http://localhost:3000/api/bloqueios-horario/${id}`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/bloqueios-horario/${id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -4142,7 +4142,7 @@ async function carregarTodasEntregas() {
     
     try {
         const token = sessionStorage.getItem('token');
-        const response = await fetch('http://localhost:3000/api/agendamentos', {
+        const response = await fetch(`${getApiBaseUrl()}/api/agendamentos`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
