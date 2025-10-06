@@ -5,6 +5,8 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Iniciando seed do banco de dados...');
+  console.log('🌍 NODE_ENV:', process.env.NODE_ENV);
+  console.log('🗄️ DATABASE_URL configurada:', process.env.DATABASE_URL ? 'SIM' : 'NÃO');
 
   // Verificar se já existem CDs
   const existingCds = await prisma.cd.count();
@@ -17,7 +19,8 @@ async function main() {
     const cds = await prisma.cd.findMany({
       select: { id: true, nome: true, usuario: true, ativo: true }
     });
-    console.log('🏢 CDs ativos:', cds.filter(cd => cd.ativo).map(cd => cd.nome).join(', '));
+    console.log('🏢 CDs ativos:', cds.filter(cd => cd.ativo).map(cd => `${cd.nome} (ID: ${cd.id})`).join(', '));
+    console.log('📋 Todos os CDs:', cds.map(cd => `${cd.nome} (${cd.usuario}) - Ativo: ${cd.ativo}`));
     return;
   }
 

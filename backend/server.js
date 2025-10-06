@@ -50,11 +50,19 @@ async function initializeDatabase() {
         await prisma.$disconnect();
         await prisma.$connect();
         
-        console.log('🌱 Executando seed do banco...');
-        execSync('node prisma/seed.js', { 
-          stdio: 'inherit',
-          cwd: process.cwd()
-        });
+        // Verificar se existem CDs antes de executar seed
+        const cdCount = await prisma.cd.count();
+        console.log(`🔍 Total de CDs encontrados: ${cdCount}`);
+        
+        if (cdCount === 0) {
+          console.log('🌱 Nenhum CD encontrado, executando seed...');
+          execSync('node prisma/seed.js', { 
+            stdio: 'inherit',
+            cwd: process.cwd()
+          });
+        } else {
+          console.log('✅ CDs já existem, pulando seed');
+        }
         
         console.log('✅ Banco de dados inicializado com sucesso!');
         
@@ -681,9 +689,18 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       
       console.log('🔍 [POST /api/agendamentos] CD encontrado:', cd);
       
+      // Se não encontrou, listar todos os CDs para debug
+      if (!cd) {
+        console.log('🔍 [POST /api/agendamentos] Listando todos os CDs no banco:');
+        const todosCds = await prisma.cd.findMany({
+          select: { id: true, nome: true, usuario: true, ativo: true }
+        });
+        console.log('📋 [POST /api/agendamentos] CDs existentes:', todosCds);
+      }
+      
       if (!cd) {
         console.log('❌ [POST /api/agendamentos] CD não encontrado:', cdInfo);
-        return res.status(400).json({ error: `CD não encontrado: ${cdInfo}` });
+        return res.status(400).json({ error: `CD não encontrado: ${cdInfo}. CDs disponíveis devem ser verificados.` });
       }
       cdId = cd.id;
     }
