@@ -15,7 +15,7 @@ class RailwayEmailService {
         }
 
         // Configuração simples para Railway
-        this.transporter = nodemailer.createTransporter({
+        this.transporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
             port: 587,
             secure: false,
