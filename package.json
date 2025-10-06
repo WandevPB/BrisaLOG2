@@ -13,8 +13,9 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force && npm run db:seed",
     "init-project": "npm install && npm run db:generate && npm run db:push && npm run db:seed",
-    "build": "echo 'Frontend já compilado com Tailwind CDN'",
-    "deploy": "npm run db:push && npm start"
+    "build": "npm run db:generate",
+    "deploy": "npm run db:push && npm run db:seed && npm start",
+    "railway:deploy": "npm run db:generate && npm run db:push && npm run db:seed"
   },
   "keywords": [
     "nodejs",
