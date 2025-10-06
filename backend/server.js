@@ -2607,9 +2607,7 @@ app.post('/api/test-email/:email', async (req, res) => {
   const email = req.params.email;
   
   try {
-    const { EmailService } = require('./emailService');
-    const emailService = new EmailService();
-    await emailService.initializeEmailService();
+    const emailService = require('./emailService');
     
     const result = await emailService.sendEmail({
       to: email,
