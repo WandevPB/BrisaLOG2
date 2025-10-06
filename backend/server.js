@@ -2678,7 +2678,8 @@ app.post('/api/test-resend/:email', async (req, res) => {
     console.log('✅ [RESEND] Sucesso:', result);
     res.json({ 
       success: true, 
-      messageId: result.data?.id || result.id
+      messageId: result.data?.id || result.id,
+      fullResult: result
     });
     
   } catch (error) {
