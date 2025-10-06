@@ -7,22 +7,41 @@ const prisma = new PrismaClient();
 async function initializeDatabase() {
   try {
     console.log('🔧 Verificando estrutura do banco de dados...');
+    console.log('📡 DATABASE_URL configurada:', process.env.DATABASE_URL ? 'SIM' : 'NÃO');
+    console.log('🌍 NODE_ENV:', process.env.NODE_ENV);
+    
+    // Tentar conectar ao banco primeiro
+    await prisma.$connect();
+    console.log('✅ Conexão com banco estabelecida!');
     
     // Tentar fazer uma query simples para verificar se as tabelas existem
     await prisma.cd.findFirst();
     console.log('✅ Banco de dados já inicializado!');
     
   } catch (error) {
-    if (error.code === 'P2021' || error.message.includes('does not exist') || error.code === 'P1001') {
+    console.log('❗ Erro detectado:', error.code, error.message);
+    
+    if (error.code === 'P2021' || error.message.includes('does not exist') || error.code === 'P1001' || error.code === 'P1017') {
       console.log('🗄️ Criando estrutura do banco de dados...');
       
       try {
+        // Gerar o cliente Prisma primeiro
+        console.log('🔧 Gerando cliente Prisma...');
+        execSync('npx prisma generate', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        
         // Para PostgreSQL, usar migrate deploy que é mais apropriado para produção
         console.log('📋 Executando: prisma migrate deploy...');
         execSync('npx prisma migrate deploy', { 
           stdio: 'inherit',
           cwd: process.cwd()
         });
+        
+        // Reconectar após as migrações
+        await prisma.$disconnect();
+        await prisma.$connect();
         
         console.log('🌱 Executando seed do banco...');
         execSync('node prisma/seed.js', { 
@@ -34,11 +53,35 @@ async function initializeDatabase() {
         
       } catch (setupError) {
         console.error('❌ Erro ao configurar banco de dados:', setupError.message);
+        console.error('🔍 Detalhes do erro:', setupError);
+        
+        // Se o erro for de conexão, pode ser que o PostgreSQL não esteja configurado
+        if (setupError.message.includes('connect') || setupError.message.includes('ENOTFOUND') || setupError.message.includes('getaddrinfo')) {
+          console.log('');
+          console.log('🚨 ATENÇÃO: Parece que o PostgreSQL não está configurado no Railway!');
+          console.log('');
+          console.log('📋 Para resolver:');
+          console.log('1. Acesse seu projeto no Railway');
+          console.log('2. Clique em "Add Plugin" ou "New"');
+          console.log('3. Selecione "PostgreSQL"');
+          console.log('4. O Railway irá configurar automaticamente a DATABASE_URL');
+          console.log('5. Refaça o deploy após adicionar o PostgreSQL');
+          console.log('');
+        }
+        
         process.exit(1);
       }
     } else {
       console.error('❌ Erro inesperado no banco de dados:', error.message);
-      throw error;
+      console.error('🔍 Código do erro:', error.code);
+      console.error('🔍 Detalhes completos:', error);
+      
+      // Tentar continuar mesmo com erro se for ambiente de desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ Continuando em modo desenvolvimento...');
+      } else {
+        process.exit(1);
+      }
     }
   }
 }
