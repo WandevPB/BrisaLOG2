@@ -2609,6 +2609,10 @@ app.post('/api/test-email/:email', async (req, res) => {
   try {
     const emailService = require('./emailService');
     
+    // Debug das configurações
+    console.log('🔧 [DEBUG] SendGrid API Key exists:', !!process.env.SENDGRID_API_KEY);
+    console.log('🔧 [DEBUG] From email:', process.env.FROM_EMAIL);
+    
     const result = await emailService._send({
       to: email,
       subject: 'Teste de Email - BrisaLOG',
@@ -2624,7 +2628,11 @@ app.post('/api/test-email/:email', async (req, res) => {
     res.json({ 
       success: true, 
       result: result,
-      message: 'Email de teste enviado com sucesso'
+      message: 'Email de teste enviado com sucesso',
+      debug: {
+        hasApiKey: !!process.env.SENDGRID_API_KEY,
+        fromEmail: process.env.FROM_EMAIL
+      }
     });
     
   } catch (error) {
