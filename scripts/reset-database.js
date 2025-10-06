@@ -3,21 +3,22 @@ const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log('🌱 Iniciando seed do banco de dados...');
+async function resetDatabase() {
+  console.log('🗑️ RESETANDO BANCO DE DADOS...');
+  console.log('⚠️ Esta operação irá apagar TODOS os dados!');
 
-  // Verificar se já existem CDs
-  const existingCds = await prisma.cd.count();
-  
-  if (existingCds > 0) {
-    console.log('✅ CDs já existem no banco. Não será feito reset.');
-    console.log(`📊 Total de CDs existentes: ${existingCds}`);
-    return;
-  }
+  // Limpar dados existentes
+  await prisma.respostaReagendamento.deleteMany();
+  await prisma.bloqueioHorario.deleteMany();
+  await prisma.historicoAcao.deleteMany();
+  await prisma.notaFiscal.deleteMany();
+  await prisma.agendamento.deleteMany();
+  await prisma.fornecedor.deleteMany();
+  await prisma.cd.deleteMany();
 
-  console.log('🔧 Criando CDs iniciais...');
+  console.log('🧹 Dados removidos com sucesso!');
 
-  // Criar CDs apenas se não existirem
+  // Criar CDs
   const senhaHash = await bcrypt.hash('Brisanet123', 10);
   
   const cds = await Promise.all([
@@ -51,23 +52,16 @@ async function main() {
   ]);
 
   console.log('✅ CDs criados:', cds.map(cd => cd.nome));
-
-  console.log('🎉 Seed concluído com sucesso!');
-  
-  // Mostrar resumo
-  const totalCds = await prisma.cd.count();
-  
-  console.log('\n📊 Resumo dos dados criados:');
-  console.log(`• CDs: ${totalCds}`);
+  console.log('🎉 Reset concluído com sucesso!');
   console.log('\n🔑 Credenciais de login:');
   console.log('• Usuário: Bahia | Senha: Brisanet123');
   console.log('• Usuário: Pernambuco | Senha: Brisanet123');
   console.log('• Usuário: LagoaNova | Senha: Brisanet123');
 }
 
-main()
+resetDatabase()
   .catch((e) => {
-    console.error('❌ Erro durante o seed:', e);
+    console.error('❌ Erro durante o reset:', e);
     process.exit(1);
   })
   .finally(async () => {
