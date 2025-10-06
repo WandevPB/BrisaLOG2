@@ -82,6 +82,11 @@ async function startServer() {
     // Depois executar atualizações
     await atualizarPendentesReagendamento();
     
+    // Corrigir agendamentos existentes se necessário
+    if (process.env.CORRIGIR_AGENDAMENTOS === 'true') {
+      await corrigirAgendamentosExistentes();
+    }
+    
     console.log('🚀 Servidor pronto para iniciar!');
     
     // Inicializar servidor apenas após setup completo
@@ -226,10 +231,6 @@ async function corrigirAgendamentosExistentes() {
     }
   }
   console.log('Correção retroativa de datas concluída!');
-}
-
-if (process.env.CORRIGIR_AGENDAMENTOS === 'true') {
-  corrigirAgendamentosExistentes();
 }
 
 // ...restante do código do servidor...

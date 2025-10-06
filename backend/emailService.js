@@ -25,7 +25,8 @@ class EmailService {
             // Log para depuração das variáveis de ambiente
             console.log('EMAIL_USER:', process.env.EMAIL_USER);
             console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '[PROVIDED]' : '[MISSING]');
-            this.transporter = nodemailer.createTransport({
+            
+            this.transporter = nodemailer.createTransporter({
                 service: process.env.EMAIL_SERVICE || 'gmail',
                 host: process.env.EMAIL_HOST || 'smtp.gmail.com',
                 port: parseInt(process.env.EMAIL_PORT) || 587,
@@ -33,18 +34,39 @@ class EmailService {
                 auth: {
                     user: process.env.EMAIL_USER,
                     pass: process.env.EMAIL_PASS
-                }
+                },
+                // Configurações de timeout e retry
+                connectionTimeout: parseInt(process.env.EMAIL_TIMEOUT) || 10000,
+                greetingTimeout: 5000,
+                socketTimeout: 10000,
+                // Configurações TLS
+                tls: {
+                    ciphers: 'SSLv3',
+                    rejectUnauthorized: false
+                },
+                // Pool de conexões
+                pool: true,
+                maxConnections: 5,
+                maxMessages: 10
             });
 
+            // Verificação com timeout
+            const verifyTimeout = setTimeout(() => {
+                console.log('⚠️ Verificação de email timeout - prosseguindo sem verificação');
+            }, 5000);
+
             this.transporter.verify((error, success) => {
+                clearTimeout(verifyTimeout);
                 if (error) {
                     console.error('❌ Erro na configuração de e-mail:', error.message);
+                    console.log('📧 Sistema continuará funcionando sem emails');
                 } else {
                     console.log('✅ Servidor de e-mail configurado com sucesso');
                 }
             });
         } catch (error) {
             console.error('❌ Erro ao inicializar serviço de e-mail:', error.message);
+            console.log('📧 Sistema continuará funcionando sem emails');
         }
     }
 
@@ -198,6 +220,18 @@ class EmailService {
 
     // Utilitário de envio
     async _send({ to, subject, html }) {
+        // Verificar se o transporter foi inicializado
+        if (!this.transporter) {
+            console.log('📧 Email não enviado: transporter não inicializado');
+            return { success: false, error: 'Transporter não inicializado' };
+        }
+
+        // Verificar se as credenciais estão configuradas
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            console.log('📧 Email não enviado: credenciais não configuradas');
+            return { success: false, error: 'Credenciais de email não configuradas' };
+        }
+
         const mailOptions = {
             from: {
                 name: 'BrisaLOG Portal',
@@ -207,10 +241,14 @@ class EmailService {
             subject,
             html
         };
+
         try {
+            console.log(`📧 Enviando email para: ${to}`);
             const result = await this.transporter.sendMail(mailOptions);
+            console.log(`✅ Email enviado com sucesso. ID: ${result.messageId}`);
             return { success: true, messageId: result.messageId };
         } catch (error) {
+            console.error(`❌ Erro ao enviar email para ${to}:`, error.message);
             return { success: false, error: error.message };
         }
     }
