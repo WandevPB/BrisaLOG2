@@ -8,14 +8,17 @@ class EmailService {
     }
 
     initializeTransporter() {
-        console.log('📧 Inicializando Email Service com Gmail...');
+        console.log('📧 [INIT] Inicializando Email Service com Gmail...');
+        console.log('📧 [INIT] GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
+        console.log('📧 [INIT] FROM_EMAIL:', process.env.FROM_EMAIL);
         
         if (!process.env.GMAIL_APP_PASSWORD) {
-            console.error('❌ GMAIL_APP_PASSWORD não configurada');
+            console.error('❌ [INIT] GMAIL_APP_PASSWORD não configurada');
             return;
         }
 
         try {
+            console.log('📧 [INIT] Criando transporter nodemailer...');
             this.transporter = nodemailer.createTransporter({
                 service: 'gmail',
                 auth: {
@@ -26,9 +29,21 @@ class EmailService {
                     rejectUnauthorized: false
                 }
             });
-            console.log('✅ Gmail SMTP configurado com sucesso');
+            
+            console.log('✅ [INIT] Transporter criado com sucesso!');
+            
+            // Verificar conexão
+            this.transporter.verify((error, success) => {
+                if (error) {
+                    console.error('❌ [INIT] Erro na verificação do transporter:', error);
+                } else {
+                    console.log('✅ [INIT] Transporter verificado com sucesso!');
+                }
+            });
+            
         } catch (error) {
-            console.error('❌ Erro ao configurar Gmail:', error.message);
+            console.error('❌ [INIT] Erro ao criar transporter:', error);
+            this.transporter = null;
         }
     }
 
