@@ -277,8 +277,8 @@ class EmailService {
                     subscription_tracking: { enable: false }
                 },
                 mail_settings: {
-                    sandbox_mode: { enable: false },
-                    spam_check: { enable: true, threshold: 1 }
+                    sandbox_mode: { enable: false }
+                    // Removido spam_check para evitar erro de post_to_url
                 },
                 // Adicionar reply-to para melhorar reputação
                 reply_to: {
