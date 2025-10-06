@@ -32,6 +32,13 @@ async function initializeDatabase() {
           cwd: process.cwd()
         });
         
+        // Resetar migrações problemáticas se necessário
+        console.log('🔄 Resetando migrações antigas...');
+        execSync('node scripts/reset-migrations.js', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        
         // Para PostgreSQL, usar migrate deploy que é mais apropriado para produção
         console.log('📋 Executando: prisma migrate deploy...');
         execSync('npx prisma migrate deploy', { 
