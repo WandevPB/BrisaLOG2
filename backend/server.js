@@ -876,10 +876,8 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
 
     // Enviar emails automáticos
     try {
-      const resendEmailService = require('./resendEmailFinal');
-      
       // Email para a equipe interna (novo agendamento)
-      const emailInternoResult = await resendEmailService.sendNovoAgendamentoEmail({
+      const emailInternoResult = await emailService.sendNovoAgendamentoEmail({
         agendamento: {
           codigo: codigo,
           dataHora: agendamento.dataEntrega,
@@ -897,7 +895,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       
       // Email de confirmação para o fornecedor
       if (fornecedor.email && !isEntregaPeloCD) {
-        const emailFornecedorResult = await resendEmailService.sendConfirmacaoAgendamento({
+        const emailFornecedorResult = await emailService.sendConfirmacaoAgendamento({
           agendamento: {
             codigo: codigo,
             dataHora: agendamento.dataEntrega,
@@ -2754,6 +2752,83 @@ app.post('/api/test-resend/:email', async (req, res) => {
   }
 });
 
+// Endpoint simples para testar criação direta do transporter
+app.post('/api/test-gmail-direct/:email', async (req, res) => {
+  console.log('📧 [DIRECT] Teste direto do Gmail SMTP...');
+  const email = req.params.email;
+  
+  try {
+    const nodemailer = require('nodemailer');
+    
+    console.log('📧 [DIRECT] Criando transporter direto...');
+    console.log('📧 [DIRECT] GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
+    console.log('📧 [DIRECT] FROM_EMAIL:', process.env.FROM_EMAIL);
+    
+    const transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br',
+        pass: process.env.GMAIL_APP_PASSWORD
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+    
+    console.log('📧 [DIRECT] Transporter criado, testando verificação...');
+    
+    // Testar conexão
+    const verified = await new Promise((resolve, reject) => {
+      transporter.verify((error, success) => {
+        if (error) {
+          console.error('❌ [DIRECT] Erro na verificação:', error);
+          reject(error);
+        } else {
+          console.log('✅ [DIRECT] Verificação bem-sucedida');
+          resolve(success);
+        }
+      });
+    });
+    
+    console.log('📧 [DIRECT] Enviando email de teste...');
+    
+    const info = await transporter.sendMail({
+      from: process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br',
+      to: email,
+      subject: 'Teste Gmail SMTP Direto - BrisaLOG',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #2563eb;">✅ Gmail SMTP Funcionando!</h1>
+          <p>Este email foi enviado diretamente via <strong>Gmail SMTP</strong> no <strong>Railway</strong>!</p>
+          <p>🎉 Sistema BrisaLOG com email totalmente funcional</p>
+          <hr>
+          <p style="color: #666; font-size: 12px;">
+            Enviado em: ${new Date().toLocaleString('pt-BR')}
+          </p>
+        </div>
+      `
+    });
+    
+    console.log('✅ [DIRECT] Email enviado:', info.messageId);
+    
+    res.json({
+      success: true,
+      messageId: info.messageId,
+      verified: verified,
+      service: 'Gmail Direct',
+      message: 'Email enviado com sucesso via Gmail SMTP direto'
+    });
+    
+  } catch (error) {
+    console.error('❌ [DIRECT] Erro:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      service: 'Gmail Direct'
+    });
+  }
+});
+
 // Debug das variáveis de ambiente
 app.get('/api/debug-env', (req, res) => {
   console.log('🔍 [ENV DEBUG] Verificando variáveis de ambiente...');
@@ -2795,7 +2870,7 @@ app.post('/api/test-gmail/:email', async (req, res) => {
       });
     }
     
-    const emailService = require('./resendEmailFinal');
+    const emailService = require('./emailService');
     
     const result = await emailService.sendNovoAgendamentoEmail({
       agendamento: {

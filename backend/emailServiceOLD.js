@@ -1,6 +1,10 @@
 const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
 require('dotenv').config();
+
+
+const path = require('path');
 
 // Importar templates
 const templateConfirmado = require('./emails/confirmado');
@@ -14,47 +18,84 @@ const templateEntregaSemAgendamento = require('./emails/entregaSemAgendamento');
 class EmailService {
     constructor() {
         this.transporter = null;
-        this.fromEmail = process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br';
+        this.useSendGridAPI = false;
         this.initializeEmailService();
     }
 
     initializeEmailService() {
-        console.log('📧 [INIT] Inicializando Email Service unificado com Gmail...');
-        console.log('📧 [INIT] GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
-        console.log('📧 [INIT] FROM_EMAIL:', this.fromEmail);
-        
-        if (!process.env.GMAIL_APP_PASSWORD) {
-            console.error('❌ [INIT] GMAIL_APP_PASSWORD não configurada');
-            return;
-        }
-
         try {
-            console.log('📧 [INIT] Criando transporter Gmail...');
-            this.transporter = nodemailer.createTransporter({
-                service: 'gmail',
-                auth: {
-                    user: this.fromEmail,
-                    pass: process.env.GMAIL_APP_PASSWORD
-                },
-                tls: {
-                    rejectUnauthorized: false
-                }
-            });
+            // Log para depuração das variáveis de ambiente
+            console.log('EMAIL_USER:', process.env.EMAIL_USER);
+            console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '[PROVIDED]' : '[MISSING]');
+            console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
             
-            console.log('✅ [INIT] Transporter Gmail criado com sucesso!');
+            // Se for SendGrid, tentar API primeiro
+            if (process.env.EMAIL_HOST === 'smtp.sendgrid.net' || process.env.EMAIL_SERVICE === 'SendGrid') {
+                this.initializeSendGridAPI();
+            } else {
+                this.initializeTransporter();
+            }
+        } catch (error) {
+            console.error('❌ Erro ao inicializar serviço de e-mail:', error.message);
+            console.log('📧 Sistema continuará funcionando sem emails');
+        }
+    }
+
+    initializeSendGridAPI() {
+        try {
+            if (!process.env.EMAIL_PASS) {
+                throw new Error('SendGrid API Key não encontrada');
+            }
             
-            // Verificar conexão
-            this.transporter.verify((error, success) => {
-                if (error) {
-                    console.error('❌ [INIT] Erro na verificação do transporter:', error);
-                } else {
-                    console.log('✅ [INIT] Gmail SMTP verificado e pronto para uso!');
-                }
-            });
+            sgMail.setApiKey(process.env.EMAIL_PASS);
+            this.useSendGridAPI = true;
+            console.log('✅ SendGrid API configurada com sucesso');
             
         } catch (error) {
-            console.error('❌ [INIT] Erro ao criar transporter Gmail:', error);
-            this.transporter = null;
+            console.error('❌ Erro ao configurar SendGrid API:', error.message);
+            console.log('🔄 Tentando SMTP como fallback...');
+            this.initializeTransporter();
+        }
+    }
+
+    initializeTransporter() {
+        try {
+            // Log para depuração das variáveis de ambiente
+            console.log('EMAIL_USER:', process.env.EMAIL_USER);
+            console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '[PROVIDED]' : '[MISSING]');
+            console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
+            
+            this.transporter = nodemailer.createTransport({
+                host: process.env.EMAIL_HOST || 'smtp.sendgrid.net',
+                port: parseInt(process.env.EMAIL_PORT) || 587,
+                secure: process.env.EMAIL_SECURE === 'true',
+                auth: {
+                    user: process.env.EMAIL_USER || 'apikey',
+                    pass: process.env.EMAIL_PASS
+                },
+                // Configurações de timeout e retry
+                connectionTimeout: parseInt(process.env.EMAIL_TIMEOUT) || 10000,
+                greetingTimeout: 5000,
+                socketTimeout: 10000
+            });
+
+            // Verificação com timeout
+            const verifyTimeout = setTimeout(() => {
+                console.log('⚠️ Verificação de email timeout - prosseguindo sem verificação');
+            }, 5000);
+
+            this.transporter.verify((error, success) => {
+                clearTimeout(verifyTimeout);
+                if (error) {
+                    console.error('❌ Erro na configuração de e-mail:', error.message);
+                    console.log('📧 Sistema continuará funcionando sem emails');
+                } else {
+                    console.log('✅ Servidor de e-mail configurado com sucesso');
+                }
+            });
+        } catch (error) {
+            console.error('❌ Erro ao inicializar serviço de e-mail:', error.message);
+            console.log('📧 Sistema continuará funcionando sem emails');
         }
     }
 
@@ -128,94 +169,6 @@ class EmailService {
         });
     }
 
-    // Método para novo agendamento
-    async sendNovoAgendamentoEmail({ agendamento, fornecedor }) {
-        const html = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-                    <h1 style="color: white; margin: 0; font-size: 28px;">🆕 Novo Agendamento</h1>
-                    <p style="color: #e2e8f0; margin: 10px 0 0 0;">Sistema BrisaLOG Portal</p>
-                </div>
-                
-                <div style="padding: 30px;">
-                    <div style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 20px; margin-bottom: 20px;">
-                        <h2 style="color: #1e40af; margin: 0 0 15px 0;">Dados do Agendamento</h2>
-                        <p style="margin: 8px 0;"><strong>Código:</strong> ${agendamento.codigo}</p>
-                        <p style="margin: 8px 0;"><strong>Fornecedor:</strong> ${fornecedor.nome}</p>
-                        <p style="margin: 8px 0;"><strong>Email Fornecedor:</strong> ${fornecedor.email}</p>
-                        <p style="margin: 8px 0;"><strong>CNPJ:</strong> ${fornecedor.documento}</p>
-                        <p style="margin: 8px 0;"><strong>Data/Hora:</strong> ${new Date(agendamento.dataHora).toLocaleString('pt-BR')}</p>
-                        <p style="margin: 8px 0;"><strong>CD:</strong> ${agendamento.cd?.nome || 'N/A'}</p>
-                        ${agendamento.observacoes ? `<p style="margin: 8px 0;"><strong>Observações:</strong> ${agendamento.observacoes}</p>` : ''}
-                    </div>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="https://brisalog2-production.up.railway.app/consultar-status.html?codigo=${agendamento.codigo}" 
-                           style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                            Consultar Status do Agendamento
-                        </a>
-                    </div>
-                </div>
-                
-                <div style="background: #f1f5f9; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
-                    <p style="margin: 0; color: #64748b; font-size: 14px;">
-                        © 2025 BrisaLOG Portal - Sistema de Agendamento de Entregas
-                    </p>
-                </div>
-            </div>
-        `;
-
-        // Enviar para equipe interna
-        return this._send({
-            to: 'wandevpb@gmail.com', // Email da equipe
-            subject: `[BrisaLOG] Novo Agendamento - ${fornecedor.nome} - ${agendamento.codigo}`,
-            html
-        });
-    }
-
-    // Método para confirmação de agendamento ao fornecedor
-    async sendConfirmacaoAgendamento({ agendamento, fornecedor }) {
-        const html = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff;">
-                <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center;">
-                    <h1 style="color: white; margin: 0; font-size: 28px;">✅ Agendamento Confirmado</h1>
-                    <p style="color: #d1fae5; margin: 10px 0 0 0;">Agendamento realizado para: ${fornecedor.nome}</p>
-                </div>
-                
-                <div style="padding: 30px;">
-                    <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 20px; margin-bottom: 20px;">
-                        <h2 style="color: #065f46; margin: 0 0 15px 0;">Detalhes do Agendamento</h2>
-                        <p style="margin: 8px 0;"><strong>Fornecedor:</strong> ${fornecedor.nome}</p>
-                        <p style="margin: 8px 0;"><strong>Código de Acompanhamento:</strong> <span style="background: #fbbf24; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: bold;">${agendamento.codigo}</span></p>
-                        <p style="margin: 8px 0;"><strong>Data/Hora:</strong> ${new Date(agendamento.dataHora).toLocaleString('pt-BR')}</p>
-                        <p style="margin: 8px 0;"><strong>CD de Destino:</strong> ${agendamento.cd?.nome || 'N/A'}</p>
-                        <p style="margin: 8px 0;"><strong>Status:</strong> <span style="color: #059669; font-weight: bold;">Agendado</span></p>
-                    </div>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="https://brisalog2-production.up.railway.app/consultar-status.html?codigo=${agendamento.codigo}" 
-                           style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                            Consultar Status do Agendamento
-                        </a>
-                    </div>
-                </div>
-                
-                <div style="background: #f1f5f9; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
-                    <p style="margin: 0; color: #64748b; font-size: 14px;">
-                        © 2025 BrisaLOG Portal - Sistema de Agendamento de Entregas
-                    </p>
-                </div>
-            </div>
-        `;
-
-        // Enviar para o fornecedor (SEM RESTRIÇÕES!)
-        return this._send({
-            to: fornecedor.email,
-            subject: `[BrisaLOG] Confirmação de Agendamento - ${fornecedor.nome} - ${agendamento.codigo}`,
-            html
-        });
-    }
-
     // Gerar token de reset de senha
     generateResetToken() {
         return crypto.randomBytes(32).toString('hex');
@@ -223,7 +176,7 @@ class EmailService {
 
     // E-mail de recuperação de senha
     async sendPasswordResetEmail(email, token, nomeUsuario) {
-        const resetUrl = `${process.env.FRONTEND_URL || 'https://brisalog2-production.up.railway.app'}/redefinir-senha.html?token=${token}&email=${encodeURIComponent(email)}`;
+        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/redefinir-senha.html?token=${token}&email=${encodeURIComponent(email)}`;
         
         const html = `
         <!DOCTYPE html>
@@ -294,41 +247,76 @@ class EmailService {
         });
     }
 
-    // Utilitário de envio unificado
+    // Utilitário de envio
     async _send({ to, subject, html }) {
+        console.log(`📧 Iniciando envio de email para: ${to}`);
+        
+        // Tentar SMTP primeiro devido a problemas na entrega da API
+        let result = await this._sendWithSMTP({ to, subject, html });
+        
+        if (!result.success && this.useSendGridAPI) {
+            console.log('📧 SMTP falhou, tentando SendGrid API...');
+            result = await this._sendWithSendGridAPI({ to, subject, html });
+        }
+        
+        return result;
+    }
+
+    async _sendWithSendGridAPI({ to, subject, html }) {
+        try {
+            console.log(`📧 Enviando email via SendGrid API para: ${to}`);
+            
+            // Versão simplificada sem configurações extras
+            const msg = {
+                to: to,
+                from: 'wanderson.goncalves@grupobrisanet.com.br',
+                subject: subject,
+                html: html
+            };
+
+            console.log('📋 Dados do email:', JSON.stringify(msg, null, 2));
+            const result = await sgMail.send(msg);
+            console.log(`✅ Email enviado com sucesso via API. Status: ${result[0].statusCode}`);
+            return { success: true, messageId: result[0].headers['x-message-id'] };
+            
+        } catch (error) {
+            console.error(`❌ Erro ao enviar email via API para ${to}:`, error.message);
+            console.error('📋 Detalhes do erro:', error.response ? error.response.body : 'Sem detalhes');
+            return { success: false, error: error.message, details: error.response ? error.response.body : null };
+        }
+    }
+
+    async _sendWithSMTP({ to, subject, html }) {
+        // Verificar se o transporter foi inicializado
         if (!this.transporter) {
-            console.error('❌ Transporter não inicializado');
+            console.log('📧 Email não enviado: transporter não inicializado');
             return { success: false, error: 'Transporter não inicializado' };
+        }
+
+        // Verificar se as credenciais estão configuradas
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            console.log('📧 Email não enviado: credenciais não configuradas');
+            return { success: false, error: 'Credenciais de email não configuradas' };
         }
 
         const mailOptions = {
             from: {
                 name: 'BrisaLOG Portal',
-                address: this.fromEmail
+                address: process.env.EMAIL_USER
             },
-            to: to,
-            subject: subject,
-            html: html,
-            text: html.replace(/<[^>]*>/g, '') // Versão texto simples
+            to,
+            subject,
+            html
         };
 
         try {
-            console.log(`📧 [GMAIL] Enviando email para: ${to}`);
+            console.log(`📧 Enviando email via SMTP para: ${to}`);
             const result = await this.transporter.sendMail(mailOptions);
-            console.log(`✅ [GMAIL] Email enviado! ID: ${result.messageId}`);
-            
-            return { 
-                success: true, 
-                messageId: result.messageId,
-                method: 'GMAIL_SMTP'
-            };
+            console.log(`✅ Email enviado com sucesso via SMTP. ID: ${result.messageId}`);
+            return { success: true, messageId: result.messageId };
         } catch (error) {
-            console.error(`❌ [GMAIL] Erro ao enviar email:`, error.message);
-            return { 
-                success: false, 
-                error: error.message,
-                method: 'GMAIL_SMTP'
-            };
+            console.error(`❌ Erro ao enviar email via SMTP para ${to}:`, error.message);
+            return { success: false, error: error.message };
         }
     }
 }
