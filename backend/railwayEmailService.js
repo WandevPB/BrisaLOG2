@@ -14,21 +14,20 @@ class RailwayEmailService {
             return;
         }
 
-        // Configuração simples para Railway
+        // Configuração otimizada para Railway
         this.transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false,
+            service: 'gmail', // Usar service em vez de host/port
             auth: {
                 user: process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br',
                 pass: process.env.GMAIL_APP_PASSWORD
             },
-            tls: {
-                rejectUnauthorized: false
-            }
+            pool: true,
+            maxConnections: 5,
+            maxMessages: 100,
+            rateLimit: 14 // emails por segundo
         });
 
-        console.log('✅ Railway SMTP configurado com Gmail');
+        console.log('✅ Railway SMTP configurado com Gmail service');
     }
 
     async sendEmail({ to, subject, html, text }) {
