@@ -2665,41 +2665,77 @@ app.post('/api/test-resend/:email', async (req, res) => {
       });
     }
 
-    // Usar fetch direto para o Resend API
-    const response = await fetch('https://api.resend.com/emails', {
+    // Usar https nativo do Node.js
+    const https = require('https');
+    
+    const postData = JSON.stringify({
+      from: 'BrisaLOG <onboarding@resend.dev>',
+      to: [email],
+      subject: 'Teste Resend Railway - HTTPS',
+      html: '<h1>🎉 Funciona!</h1><p>Email enviado via Resend + Railway usando HTTPS nativo</p>'
+    });
+
+    const options = {
+      hostname: 'api.resend.com',
+      port: 443,
+      path: '/emails',
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: 'BrisaLOG <onboarding@resend.dev>',
-        to: [email],
-        subject: 'Teste Resend Railway - Fetch',
-        html: '<h1>✅ Funciona!</h1><p>Email enviado via Resend + Railway usando fetch direto</p>'
-      })
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const request = https.request(options, (response) => {
+      let data = '';
+      
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      response.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          
+          if (response.statusCode === 200) {
+            console.log('✅ [RESEND] Sucesso:', result);
+            res.json({ 
+              success: true, 
+              messageId: result.id,
+              status: response.statusCode
+            });
+          } else {
+            console.error('❌ [RESEND] Erro API:', result);
+            res.status(response.statusCode).json({ 
+              success: false, 
+              error: result.message || 'Erro na API Resend',
+              details: result
+            });
+          }
+        } catch (parseError) {
+          console.error('❌ [RESEND] Erro parse:', parseError);
+          res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao processar resposta'
+          });
+        }
+      });
     });
-    
-    const result = await response.json();
-    
-    if (response.ok) {
-      console.log('✅ [RESEND] Sucesso:', result);
-      res.json({ 
-        success: true, 
-        messageId: result.id,
-        status: response.status
-      });
-    } else {
-      console.error('❌ [RESEND] Erro API:', result);
-      res.status(response.status).json({ 
+
+    request.on('error', (error) => {
+      console.error('❌ [RESEND] Erro request:', error);
+      res.status(500).json({ 
         success: false, 
-        error: result.message || 'Erro na API Resend',
-        details: result
+        error: error.message 
       });
-    }
+    });
+
+    request.write(postData);
+    request.end();
     
   } catch (error) {
-    console.error('❌ [RESEND] Erro:', error);
+    console.error('❌ [RESEND] Erro geral:', error);
     res.status(500).json({ 
       success: false, 
       error: error.message 
