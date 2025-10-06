@@ -2607,38 +2607,37 @@ app.post('/api/test-email/:email', async (req, res) => {
   const email = req.params.email;
   
   try {
-    // Debug das variáveis
-    console.log('🔧 FROM_EMAIL:', process.env.FROM_EMAIL);
-    console.log('🔧 GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
-    console.log('🔧 GMAIL_APP_PASSWORD length:', process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.length : 0);
+    // Voltar para SendGrid com configuração simples
+    const sgMail = require('@sendgrid/mail');
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     
-    // Usar Railway Email Service
-    const railwayEmailService = require('./railwayEmailService');
-    
-    const result = await railwayEmailService.sendEmail({
+    const msg = {
       to: email,
-      subject: 'Teste Railway - BrisaLOG',
-      html: '<h1>🚂 Teste Railway Email</h1><p>Se você recebeu este email, o Railway Email está funcionando!</p>'
-    });
+      from: process.env.FROM_EMAIL,
+      subject: 'Teste BrisaLOG - Funcionando!',
+      html: '<h1>✅ Sistema Funcionando!</h1><p>Este email confirma que o BrisaLOG está enviando emails corretamente.</p>'
+    };
     
-    console.log('✅ [TEST EMAIL] Resultado:', result);
+    const result = await sgMail.send(msg);
+    
+    console.log('✅ [TEST EMAIL] SendGrid Success:', result[0].statusCode);
     res.json({ 
       success: true, 
-      result: result,
-      message: 'Email de teste enviado via Railway',
-      service: 'Railway SMTP',
-      debug: {
-        hasFromEmail: !!process.env.FROM_EMAIL,
-        hasGmailPassword: !!process.env.GMAIL_APP_PASSWORD,
-        passwordLength: process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.length : 0
-      }
+      result: { 
+        success: true, 
+        statusCode: result[0].statusCode,
+        messageId: result[0].headers['x-message-id']
+      },
+      message: 'Email enviado via SendGrid simples',
+      service: 'SendGrid Direct'
     });
     
   } catch (error) {
     console.error('❌ [TEST EMAIL] Erro:', error);
     res.status(500).json({ 
       success: false, 
-      error: error.message 
+      error: error.message,
+      details: error.response ? error.response.body : null
     });
   }
 });
