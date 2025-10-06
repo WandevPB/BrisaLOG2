@@ -2760,6 +2760,26 @@ app.post('/api/test-gmail/:email', async (req, res) => {
   const email = req.params.email;
   
   try {
+    // Verificar variáveis de ambiente necessárias
+    console.log('🔍 [GMAIL TEST] Verificando variáveis de ambiente...');
+    console.log('GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
+    console.log('FROM_EMAIL:', process.env.FROM_EMAIL);
+    console.log('RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
+    
+    if (!process.env.GMAIL_APP_PASSWORD) {
+      return res.json({
+        success: false,
+        error: 'GMAIL_APP_PASSWORD não configurada no Railway',
+        service: 'Gmail',
+        info: 'Variável de ambiente necessária para Gmail SMTP não encontrada',
+        availableVars: {
+          RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+          FROM_EMAIL: !!process.env.FROM_EMAIL,
+          NODE_ENV: process.env.NODE_ENV
+        }
+      });
+    }
+    
     const emailService = require('./resendEmailFinal');
     
     const result = await emailService.sendNovoAgendamentoEmail({
