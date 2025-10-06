@@ -25,29 +25,20 @@ class EmailService {
             // Log para depuração das variáveis de ambiente
             console.log('EMAIL_USER:', process.env.EMAIL_USER);
             console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '[PROVIDED]' : '[MISSING]');
+            console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
             
             this.transporter = nodemailer.createTransport({
-                service: process.env.EMAIL_SERVICE || 'gmail',
-                host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+                host: process.env.EMAIL_HOST || 'smtp.sendgrid.net',
                 port: parseInt(process.env.EMAIL_PORT) || 587,
                 secure: process.env.EMAIL_SECURE === 'true',
                 auth: {
-                    user: process.env.EMAIL_USER,
+                    user: process.env.EMAIL_USER || 'apikey',
                     pass: process.env.EMAIL_PASS
                 },
                 // Configurações de timeout e retry
                 connectionTimeout: parseInt(process.env.EMAIL_TIMEOUT) || 10000,
                 greetingTimeout: 5000,
-                socketTimeout: 10000,
-                // Configurações TLS
-                tls: {
-                    ciphers: 'SSLv3',
-                    rejectUnauthorized: false
-                },
-                // Pool de conexões
-                pool: true,
-                maxConnections: 5,
-                maxMessages: 10
+                socketTimeout: 10000
             });
 
             // Verificação com timeout

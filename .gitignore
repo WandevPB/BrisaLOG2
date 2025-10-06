@@ -108,6 +108,10 @@ build/
 # PM2
 ecosystem.config.js
 
+# Test scripts (não devem ser commitados)
+scripts/test-email.js
+scripts/test-*.js
+
 # Docker
 Dockerfile
 docker-compose.yml
