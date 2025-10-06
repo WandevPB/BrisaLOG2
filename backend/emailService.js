@@ -12,6 +12,7 @@ const templateNaoVeio = require('./emails/naoVeio');
 const templateReagendamento = require('./emails/reagendamento');
 const templateRespostaReagendamento = require('./emails/respostaReagendamento');
 const templateCanceladoFornecedor = require('./emails/canceladoFornecedor');
+const templateEntregaSemAgendamento = require('./emails/entregaSemAgendamento');
 
 class EmailService {
     constructor() {
@@ -103,6 +104,94 @@ class EmailService {
         return this._send({
             to,
             subject: '[BrisaLOG] Solicitação Cancelada',
+            html
+        });
+    }
+
+    // E-mail de entrega sem agendamento (registrada pelo CD)
+    async sendEntregaSemAgendamentoEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, dataEntrega, horarioEntrega, consultaUrl, agendamentoUrl }) {
+        const html = templateEntregaSemAgendamento({ fornecedorNome, agendamentoCodigo, cdNome, dataEntrega, horarioEntrega, consultaUrl, agendamentoUrl });
+        return this._send({
+            to,
+            subject: '[BrisaLOG] Entrega Registrada - Use o Agendamento!',
+            html
+        });
+    }
+
+    // Gerar token de reset de senha
+    generateResetToken() {
+        return crypto.randomBytes(32).toString('hex');
+    }
+
+    // E-mail de recuperação de senha
+    async sendPasswordResetEmail(email, token, nomeUsuario) {
+        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/redefinir-senha.html?token=${token}&email=${encodeURIComponent(email)}`;
+        
+        const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Recuperação de Senha - BrisaLOG</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #ff7f00 0%, #ff4500 100%); color: white; text-align: center; padding: 30px;">
+                    <h1 style="margin: 0; font-size: 28px;">🔐 BrisaLOG Portal</h1>
+                    <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Recuperação de Senha</p>
+                </div>
+                
+                <!-- Content -->
+                <div style="padding: 40px 30px;">
+                    <h2 style="color: #333; margin-bottom: 20px;">Olá, ${nomeUsuario}!</h2>
+                    
+                    <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+                        Você solicitou a recuperação de senha para sua conta no BrisaLOG Portal.
+                    </p>
+                    
+                    <p style="color: #666; line-height: 1.6; margin-bottom: 30px;">
+                        Clique no botão abaixo para redefinir sua senha:
+                    </p>
+                    
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <a href="${resetUrl}" 
+                           style="background: linear-gradient(135deg, #ff7f00 0%, #ff4500 100%); 
+                                  color: white; 
+                                  text-decoration: none; 
+                                  padding: 12px 30px; 
+                                  border-radius: 25px; 
+                                  font-weight: bold; 
+                                  display: inline-block;
+                                  box-shadow: 0 4px 15px rgba(255, 127, 0, 0.4);">
+                            🔐 Redefinir Senha
+                        </a>
+                    </div>
+                    
+                    <div style="background-color: #fff3e0; border-left: 4px solid #ff8f00; padding: 15px; margin-bottom: 20px;">
+                        <p style="margin: 0; color: #e65100; font-size: 14px;">
+                            <strong>⚠️ Importante:</strong> Este link expira em 1 hora por segurança.
+                        </p>
+                    </div>
+                    
+                    <p style="color: #999; font-size: 12px; line-height: 1.5;">
+                        Se você não solicitou esta recuperação, ignore este e-mail. Sua senha permanecerá inalterada.
+                    </p>
+                </div>
+                
+                <!-- Footer -->
+                <div style="background-color: #f8f9fa; text-align: center; padding: 20px; border-top: 1px solid #dee2e6;">
+                    <p style="margin: 0; color: #6c757d; font-size: 12px;">
+                        © 2025 BrisaLOG Portal - Sistema de Agendamento de Entregas
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>`;
+
+        return this._send({
+            to: email,
+            subject: '[BrisaLOG] Recuperação de Senha',
             html
         });
     }

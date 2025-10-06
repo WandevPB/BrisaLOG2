@@ -238,15 +238,8 @@
                     <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
                 </div>
 
-                <div>
-                    <label class="block text-gray-dark font-semibold mb-2">Repetir Confirmação da Senha</label>
-                    <input type="password" id="repetir-confirmacao-senha" required
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                        placeholder="Digite novamente para confirmar">
-                    <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                </div>
+                <div class="text-xs text-gray-500">.
 
-                <div class="text-xs text-gray-500">
                     <p>A senha deve conter:</p>
                     <ul class="list-disc list-inside mt-1">
                         <li>Pelo menos 8 caracteres</li>
@@ -338,12 +331,6 @@
                     if (value !== novaSenha) {
                         isValid = false;
                         message = 'As senhas não coincidem.';
-                    }
-                } else if (field.id === 'repetir-confirmacao-senha' && value) {
-                    const confirmarSenha = document.getElementById('confirmar-senha').value;
-                    if (value !== confirmarSenha) {
-                        isValid = false;
-                        message = 'A confirmação das senhas não coincidem.';
                     }
                 }
 
@@ -461,13 +448,13 @@
                 const emailRecuperacao = document.getElementById('email-recuperacao').value;
                 const novaSenha = document.getElementById('nova-senha').value;
                 const confirmarSenha = document.getElementById('confirmar-senha').value;
-                const repetirConfirmacao = document.getElementById('repetir-confirmacao-senha').value;
+
 
                 // Validar campos
                 if (!this.validateField(document.getElementById('email-recuperacao')) ||
                     !this.validateField(document.getElementById('nova-senha')) ||
                     !this.validateField(document.getElementById('confirmar-senha')) ||
-                    !this.validateField(document.getElementById('repetir-confirmacao-senha'))) {
+                    !this.validateField(document.getElementById('confirmar-senha'))) {
                     return;
                 }
 

@@ -1,3 +1,138 @@
+// Função global para verificar token expirado
+function handleTokenExpired(response) {
+    if (response.status === 403) {
+        console.log('🔒 Token expirado, redirecionando para login...');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+        return true;
+    }
+    return false;
+}
+
+// Função utilitária para converter datas do backend para timezone local
+function parseLocalDate(dateInput) {
+    if (!dateInput) return null;
+    
+    if (typeof dateInput === 'string') {
+        if (dateInput.includes('T')) {
+            // Formato ISO (ex: '2025-10-06T00:00:00.000Z') - extrair apenas YYYY-MM-DD
+            const dateOnly = dateInput.split('T')[0];
+            const [ano, mes, dia] = dateOnly.split('-').map(Number);
+            return new Date(ano, mes - 1, dia); // mes - 1 porque Date usa 0-11 para meses
+        } else if (dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            // Formato YYYY-MM-DD simples
+            const [ano, mes, dia] = dateInput.split('-').map(Number);
+            return new Date(ano, mes - 1, dia);
+        }
+    }
+    
+    // Fallback para outros casos
+    return new Date(dateInput);
+}
+
+// Funções globais de máscara para formatação automática
+function maskPhone(value) {
+    // Remove tudo que não é dígito
+    value = value.replace(/\D/g, '');
+    
+    // Limita a 11 dígitos máximo
+    value = value.substring(0, 11);
+    
+    // Aplica a máscara (83) 00000-0000
+    if (value.length <= 10) {
+        value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    } else {
+        value = value.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+    }
+    
+    return value;
+}
+
+function maskCPF(value) {
+    // Remove tudo que não é dígito
+    value = value.replace(/\D/g, '');
+    
+    // Limita a 11 dígitos máximo
+    value = value.substring(0, 11);
+    
+    // Aplica a máscara 000.000.000-00
+    value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+    
+    return value;
+}
+
+function maskCNPJ(value) {
+    // Remove tudo que não é dígito
+    value = value.replace(/\D/g, '');
+    
+    // Limita a 14 dígitos máximo
+    value = value.substring(0, 14);
+    
+    // Aplica a máscara 00.000.000/0000-00
+    value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+    
+    return value;
+}
+
+function maskDocument(input) {
+    let value = input.value.replace(/\D/g, '');
+    
+    // Limita a 14 dígitos máximo (CNPJ)
+    value = value.substring(0, 14);
+    
+    if (value.length <= 11) {
+        // CPF
+        input.value = maskCPF(input.value);
+    } else {
+        // CNPJ
+        input.value = maskCNPJ(input.value);
+    }
+}
+
+// Função para aplicar máscaras em um elemento pai
+function applyMasksToContainer(container) {
+    // Telefone
+    const phoneInputs = container.querySelectorAll('input[type="tel"], input[name*="telefone"], input[id*="telefone"]');
+    phoneInputs.forEach(input => {
+        // Definir maxlength se não estiver definido
+        if (!input.getAttribute('maxlength')) {
+            input.setAttribute('maxlength', '15');
+        }
+        
+        input.addEventListener('input', function(e) {
+            e.target.value = maskPhone(e.target.value);
+        });
+    });
+
+    // Documento (CPF/CNPJ)
+    const documentInputs = container.querySelectorAll('input[name*="cnpj"], input[id*="cnpj"], input[name*="documento"], input[id*="documento"]');
+    documentInputs.forEach(input => {
+        // Definir maxlength se não estiver definido
+        if (!input.getAttribute('maxlength')) {
+            input.setAttribute('maxlength', '18');
+        }
+        
+        input.addEventListener('input', function(e) {
+            maskDocument(e.target);
+        });
+    });
+}
+
+// Função global para visualizar PDF
+function viewPDF(filename) {
+    if (!filename) {
+        console.log('Nenhum arquivo para visualizar');
+        return;
+    }
+    
+    // Construir URL do arquivo usando a rota da API
+    const fileUrl = `/api/files/${filename}`;
+    console.log('Abrindo PDF:', fileUrl);
+    
+    // Abrir em nova aba
+    window.open(fileUrl, '_blank');
+}
 // Garantir função global para o botão do bloqueio
 window.submitBloqueioButton = function() {
     try {
@@ -16,6 +151,7 @@ window.submitBloqueioButton = function() {
         console.error('[Frontend] Erro em submitBloqueioButton:', err);
     }
 };
+
 // Modal DASHBOARD KPIs removido - será refeito do zero conforme solicitado
 // Funções globais para compatibilidade com HTML (onclick)
 window.openConsultaModal = function() { dashboard.openConsultaModal(); };
@@ -35,6 +171,7 @@ window.closeTodayDeliveriesModal = function() { dashboard.closeTodayDeliveriesMo
 window.closeStatusModal = function() { dashboard.closeStatusModal(); };
 window.closeEditarBloqueioModal = function() { dashboard.closeEditarBloqueioModal(); };
 window.fecharModalEntregas = function() { dashboard.fecharModalEntregas(); };
+
 // Dashboard.js - Sistema de Dashboard para CDs
 
 // Função para mostrar notificações ao usuário
@@ -106,28 +243,86 @@ function showNotification(message, type = 'info') {
 }
 
 class CDDashboard {
+    constructor() {
+        this.agendamentos = [];
+        this.filteredAgendamentos = [];
+        this.currentView = 'cards';
+        this.currentAgendamentoId = null;
+        this.cdId = null; // CORREÇÃO: Inicializar cdId
+        
+        // Propriedades de paginação
+        this.currentPage = 1;
+        this.itemsPerPage = 10;
+        this.totalPages = 1;
+        
+        this.init();
+    }
+
     toggleUserMenu() {
         const userMenu = document.getElementById('user-menu');
         if (userMenu) {
             userMenu.classList.toggle('hidden');
         }
     }
-    // Define a data mínima dos campos de data para hoje
+
+    // Configura todos os campos de data para aceitar apenas dias úteis
     setMinDate() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date();
+        
+        // Função para verificar se é dia útil
+        const isWeekday = (date) => {
+            const day = date.getDay();
+            return day !== 0 && day !== 6; // 0 = domingo, 6 = sábado
+        };
+        
+        // Função para encontrar próximo dia útil
+        const getNextWeekday = (date) => {
+            const nextDay = new Date(date);
+            while (!isWeekday(nextDay)) {
+                nextDay.setDate(nextDay.getDate() + 1);
+            }
+            return nextDay;
+        };
+        
+        // Se hoje não for dia útil, usar próximo dia útil
+        const minDate = isWeekday(today) ? today : getNextWeekday(today);
+        const minDateString = minDate.toISOString().split('T')[0];
+        
         const dateInputs = document.querySelectorAll('input[type="date"]');
         dateInputs.forEach(input => {
-            input.min = today;
+            input.min = minDateString;
+            
+            // Adicionar validação para impedir seleção de fins de semana
+            if (!input.hasAttribute('data-weekday-validator')) {
+                input.addEventListener('change', function() {
+                    const selectedDate = new Date(this.value + 'T00:00:00');
+                    if (!isWeekday(selectedDate)) {
+                        alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
+                        const nextWeekday = getNextWeekday(selectedDate);
+                        this.value = nextWeekday.toISOString().split('T')[0];
+                    }
+                });
+                input.setAttribute('data-weekday-validator', 'true');
+            }
+            
+            // Definir valor padrão como próximo dia útil se estiver vazio
+            if (!input.value) {
+                const defaultDate = getNextWeekday(new Date());
+                input.value = defaultDate.toISOString().split('T')[0];
+            }
         });
     }
+
     // Modal KPIs
     openKpisModal() {
         document.getElementById('dashboard-kpis-modal')?.classList.remove('hidden');
         this.loadKpis();
     }
+
     closeKpisModal() {
         document.getElementById('dashboard-kpis-modal')?.classList.add('hidden');
     }
+
     async loadKpis() {
         const loading = document.getElementById('kpis-loading');
         const content = document.getElementById('kpis-content');
@@ -148,6 +343,7 @@ class CDDashboard {
             content.innerHTML = `<div class='text-center text-red-600 font-bold'>Erro ao carregar KPIs</div>`;
         }
     }
+
     renderKpisContent(kpis) {
         // KPIs principais
         return `
@@ -194,6 +390,7 @@ class CDDashboard {
         </div>
         `;
     }
+
     renderKpisCharts(kpis) {
         // Pizza status
         if (window.kpiStatusPizza) window.kpiStatusPizza.destroy();
@@ -272,108 +469,125 @@ class CDDashboard {
             }
         });
     }
-    constructor() {
-        this.agendamentos = [];
-        this.filteredAgendamentos = [];
-        this.currentView = 'cards';
-        this.currentAgendamentoId = null;
-        
-        // Propriedades de paginação
-        this.currentPage = 1;
-        this.itemsPerPage = 10;
-        this.totalPages = 1;
-        
-        this.init();
-    }
+
     // Funções globais para abrir/fechar modais do dashboard
     openConsultaModal() {
         document.getElementById('consulta-modal')?.classList.remove('hidden');
     }
+
     closeConsultaModal() {
         document.getElementById('consulta-modal')?.classList.add('hidden');
     }
+
     openRegistrarEntregaModal() {
-        document.getElementById('registrar-entrega-modal')?.classList.remove('hidden');
+        const modal = document.getElementById('registrar-entrega-modal');
+        modal.classList.remove('hidden');
+        
+        // Reset do formulário
+        entregaCurrentStep = 1;
+        entregaPedidos = [];
+        entregaCurrentPedido = 0;
+        
+        // Mostrar apenas o primeiro step
+        mostrarStepEntrega(1);
+        
+        // Configurar data atual
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('entrega-data').value = hoje;
+        
+        // Configurar horário atual
+        const agora = new Date();
+        const horaAtual = agora.getHours().toString().padStart(2, '0') + ':00';
+        const selectHorario = document.getElementById('entrega-horario');
+        if (selectHorario) {
+            selectHorario.value = horaAtual;
+        }
+        
+        // Configurar o submit do formulário
+        document.getElementById('registrar-entrega-form').onsubmit = handleRegistrarEntrega;
     }
+
     closeRegistrarEntregaModal() {
         document.getElementById('registrar-entrega-modal')?.classList.add('hidden');
     }
+
     openBloqueioModal() {
         document.getElementById('bloqueio-modal')?.classList.remove('hidden');
     }
+
     closeBloqueioModal() {
         document.getElementById('bloqueio-modal')?.classList.add('hidden');
     }
+
     openGerenciarBloqueiosModal() {
         document.getElementById('gerenciar-bloqueios-modal')?.classList.remove('hidden');
     }
+
     closeGerenciarBloqueiosModal() {
         document.getElementById('gerenciar-bloqueios-modal')?.classList.add('hidden');
     }
+
     openEntregasModal() {
         document.getElementById('modal-entregas')?.classList.remove('hidden');
     }
+
     closeEntregasModal() {
         document.getElementById('modal-entregas')?.classList.add('hidden');
     }
+
     closeDetailModal() {
         document.getElementById('detail-modal')?.classList.add('hidden');
     }
+
     closeSuggestDateModal() {
         document.getElementById('suggest-date-modal')?.classList.add('hidden');
     }
+
     closeAllStatusModal() {
         document.getElementById('all-status-modal')?.classList.add('hidden');
     }
+
     closeTodayDeliveriesModal() {
         document.getElementById('today-deliveries-modal')?.classList.add('hidden');
     }
+
     closeStatusModal() {
         document.getElementById('status-modal')?.classList.add('hidden');
     }
+
     closeEditarBloqueioModal() {
         document.getElementById('editar-bloqueio-modal')?.classList.add('hidden');
     }
+
     fecharModalEntregas() {
         document.getElementById('modal-entregas-entregues')?.classList.add('hidden');
     }
 
+    // CORREÇÃO: Método getCDFromToken adicionado
+    getCDFromToken() {
+        try {
+            const token = sessionStorage.getItem('token');
+            if (!token) return null;
+            
+            if (token.includes('.')) {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.cdId || payload.id || null;
+            }
+            return null;
+        } catch (error) {
+            console.error('Erro ao decodificar token:', error);
+            return null;
+        }
+    }
+
     // Função para formatar datas de forma segura
     formatDate(dateString) {
-        // LOG para depuração: valor bruto recebido do backend
-        if (typeof dateString === 'string') {
-            console.log('[DASHBOARD] Valor bruto de agendamento.dataEntrega:', dateString);
-        }
-        if (!dateString) {
-            return 'Data não informada';
-        }
-        
-        try {
-            let date;
-            
-            // Se a data já está no formato correto (YYYY-MM-DD)
-            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                date = new Date(dateString + 'T00:00:00');
-            }
-            // Se a data está em formato ISO completo
-            else if (dateString.includes('T')) {
-                date = new Date(dateString);
-            }
-            // Outros formatos
-            else {
-                date = new Date(dateString);
-            }
-            
-            // Verificar se a data é válida
-            if (isNaN(date.getTime())) {
-                return 'Data inválida';
-            }
-            
-            return date.toLocaleDateString('pt-BR');
-        } catch (error) {
-            console.error('Erro ao formatar data:', error, 'Data:', dateString);
-            return 'Data inválida';
-        }
+    // Extrai 'YYYY-MM-DD' de ISO ou já recebe 'YYYY-MM-DD', retorna 'DD/MM/YYYY'
+    if (!dateString) return '';
+    const [isoDate] = dateString.split('T');
+    if (!isoDate || isoDate.length < 10) return '';
+    const [ano, mes, dia] = isoDate.split('-');
+    return `${dia}/${mes}/${ano}`;
     }
 
     // Função para formatar data e hora de forma segura
@@ -506,6 +720,7 @@ class CDDashboard {
         }
     }
 
+    // CORREÇÃO: Método loadUserInfo completo e correto
     loadUserInfo() {
         const usuario = sessionStorage.getItem('usuario');
         // Preencher nome do usuário no menu
@@ -531,11 +746,7 @@ class CDDashboard {
             }
             cdNomeEl.textContent = nome;
         }
-    // (Removida chave de fechamento extra aqui)
-
-// ...existing code...
     }
-    // ...existing code...
 
     async loadAgendamentos() {
         console.log('🔄 Recarregando agendamentos...');
@@ -561,6 +772,12 @@ class CDDashboard {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('❌ Erro na resposta:', errorText);
+                
+                // Verificar se é token expirado
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                
                 throw new Error(`Erro HTTP: ${response.status}`);
             }
 
@@ -568,8 +785,8 @@ class CDDashboard {
             console.log('📊 Dados recebidos:', data);
             this.agendamentos = data.data || [];
             this.filteredAgendamentos = [...this.agendamentos];
-        this.showLoading(false);
-        this.renderAgendamentos();
+            this.showLoading(false);
+            this.renderAgendamentos();
         } catch (error) {
             console.error('Erro ao carregar agendamentos:', error);
             this.showNotification('Erro ao carregar agendamentos.', 'error');
@@ -730,19 +947,17 @@ class CDDashboard {
     renderColumnCard(agendamento) {
         const statusClass = `status-${agendamento.status}`;
         const statusIcon = this.getStatusIcon(agendamento.status);
-        const dataEntrega = this.createSafeDate(agendamento.dataEntrega);
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        
-        const isToday = dataEntrega.getTime() === hoje.getTime();
-        
-        const daysDiff = Math.ceil((dataEntrega - hoje) / (1000 * 60 * 60 * 24));
+        const hojeStr = new Date().toISOString().split('T')[0];
+        const dataEntregaStr = (agendamento.dataEntrega || '').split('T')[0];
+        const isToday = hojeStr === dataEntregaStr;
+        // Calcula diferença de dias apenas por string (YYYY-MM-DD)
+        const hojeDate = new Date(hojeStr);
+        const entregaDate = new Date(dataEntregaStr);
+        const daysDiff = Math.floor((entregaDate - hojeDate) / (1000 * 60 * 60 * 24));
         let priorityClass = '';
         let urgentClass = '';
-        
         if (agendamento.status === 'confirmado') {
             if (isToday) {
-                // Removido a classe que pintava o card para entrega hoje
                 urgentClass = '';
             } else if (daysDiff <= 1) {
                 priorityClass = 'priority-high';
@@ -752,7 +967,9 @@ class CDDashboard {
                 priorityClass = 'priority-low';
             }
         } else if (agendamento.status === 'pendente') {
-            const daysSinceCreated = Math.ceil((hoje - this.createSafeDate(agendamento.dataCriacao)) / (1000 * 60 * 60 * 24));
+            const dataCriacaoStr = (agendamento.dataCriacao || '').split('T')[0];
+            const dataCriacaoDate = new Date(dataCriacaoStr);
+            const daysSinceCreated = Math.floor((hojeDate - dataCriacaoDate) / (1000 * 60 * 60 * 24));
             if (daysSinceCreated >= 3) {
                 priorityClass = 'priority-high';
             } else if (daysSinceCreated >= 1) {
@@ -846,10 +1063,13 @@ class CDDashboard {
     }
 
     getPriorityIndicator(agendamento, daysDiff) {
-        const hoje = new Date();
-        const dataCriacao = this.createSafeDate(agendamento.dataCriacao);
-        const daysSinceCreated = Math.ceil((hoje - dataCriacao) / (1000 * 60 * 60 * 24));
-
+        const hojeStr = new Date().toISOString().split('T')[0];
+        const amanhaStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+        const dataEntregaStr = (agendamento.dataEntrega || '').split('T')[0];
+        const dataCriacaoStr = (agendamento.dataCriacao || '').split('T')[0];
+        const hojeDate = new Date(hojeStr);
+        const dataCriacaoDate = new Date(dataCriacaoStr);
+        const daysSinceCreated = Math.floor((hojeDate - dataCriacaoDate) / (1000 * 60 * 60 * 24));
         if (agendamento.status === 'pendente' && daysSinceCreated >= 3) {
             return `
                 <div class="mt-2 text-xs text-red-600 font-semibold flex items-center">
@@ -857,32 +1077,29 @@ class CDDashboard {
                     Há ${daysSinceCreated} dias
                 </div>
             `;
-        } else if (agendamento.status === 'confirmado' && daysDiff <= 1 && daysDiff >= 0) {
-            return `
-                <div class="mt-2 text-xs text-yellow-600 font-semibold flex items-center">
-                    <i class="fas fa-clock mr-1"></i>
-                    ${daysDiff === 0 ? 'Hoje' : 'Amanhã'}
-                </div>
-            `;
+        } else if (agendamento.status === 'confirmado') {
+            if (dataEntregaStr === hojeStr) {
+                return `
+                    <div class="mt-2 text-xs text-yellow-600 font-semibold flex items-center">
+                        <i class="fas fa-clock mr-1"></i>
+                        Hoje
+                    </div>
+                `;
+            } else if (dataEntregaStr === amanhaStr) {
+                return `
+                    <div class="mt-2 text-xs text-yellow-600 font-semibold flex items-center">
+                        <i class="fas fa-clock mr-1"></i>
+                        Amanhã
+                    </div>
+                `;
+            }
         }
         return '';
     }
 
     checkTodayDeliveries() {
-        // Função mantida mas sem exibir o alerta no topo, já que a informação é exibida nos cards
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        
-        const entregasHoje = this.filteredAgendamentos.filter(agendamento => {
-            const dataEntrega = this.createSafeDate(agendamento.dataEntrega);
-            return agendamento.status === 'confirmado' && dataEntrega.getTime() === hoje.getTime();
-        });
-
-        // Alerta no topo removido conforme solicitado
-        const alertDiv = document.getElementById('today-alert');
-        if (alertDiv) {
-            alertDiv.classList.add('hidden');
-        }
+        const hojeStr = new Date().toISOString().split('T')[0];
+        this.todayDeliveries = this.agendamentos.filter(a => ((a.dataEntrega || '').split('T')[0] === hojeStr));
     }
 
     showAllStatus(status) {
@@ -1048,8 +1265,6 @@ class CDDashboard {
             </div>
         `;
     }
-
-    // Métodos de modal removidos para novo modal
 
     renderList() {
         if (this.filteredAgendamentos.length === 0) {
@@ -1834,8 +2049,6 @@ class CDDashboard {
         `;
     }
 
-    // Métodos de modal removidos para novo modal
-
     async updateAgendamentoStatus(id, newStatus) {
         try {
             const token = sessionStorage.getItem('token');
@@ -1867,6 +2080,11 @@ class CDDashboard {
                 this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)}`, 'success');
                 
             } else {
+                // Verificar se é token expirado
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                
                 const errorData = await response.json().catch(() => ({}));
                 console.error('Erro na resposta:', response.status, errorData);
                 throw new Error(errorData.error || `Erro HTTP ${response.status}`);
@@ -1959,18 +2177,12 @@ class CDDashboard {
                     }
                 }
                 
-                // Tentar obter do token
+                // Tentar obter do token usando o novo método
                 if (!cdId) {
-                    const token = sessionStorage.getItem('token');
-                    if (token && token.includes('.')) {
-                        try {
-                            const payload = JSON.parse(atob(token.split('.')[1]));
-                            cdId = payload.id;
-                            this.cdId = cdId; // Salvar na instância
-                            console.log('CD ID recuperado do token JWT:', cdId);
-                        } catch (error) {
-                            console.error('Erro ao decodificar token:', error);
-                        }
+                    cdId = this.getCDFromToken();
+                    if (cdId) {
+                        this.cdId = cdId; // Salvar na instância
+                        console.log('CD ID recuperado do token:', cdId);
                     }
                 }
                 
@@ -2023,6 +2235,10 @@ class CDDashboard {
             });
             
             if (!response.ok) {
+                // Verificar se é token expirado
+                if (handleTokenExpired(response)) {
+                    return;
+                }
                 throw new Error(`Erro ao buscar horários: ${response.status}`);
             }
             
@@ -2093,8 +2309,6 @@ class CDDashboard {
         }
     }
 
-    // Métodos de modal removidos para novo modal
-
     async handleSuggestDate() {
         const novaData = document.getElementById('nova-data').value;
         const novoHorario = document.getElementById('novo-horario').value;
@@ -2113,8 +2327,7 @@ class CDDashboard {
             });
 
             const token = sessionStorage.getItem('token');
-            
-            // Fazer chamada real para a API de reagendamento
+            // Envia a string 'YYYY-MM-DD' pura, sem manipulação
             const response = await fetch(`/api/agendamentos/${this.currentAgendamentoId}/reagendar`, {
                 method: 'POST',
                 headers: {
@@ -2122,9 +2335,9 @@ class CDDashboard {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    novaData: novaData,
-                    novoHorario: novoHorario,
-                    motivo: motivo
+                    novaData,
+                    novoHorario,
+                    motivo
                 })
             });
 
@@ -2143,6 +2356,11 @@ class CDDashboard {
                 
                 this.showNotification('Sugestão de nova data enviada ao fornecedor.', 'success');
             } else {
+                // Verificar se é token expirado
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                
                 let errorData;
                 try {
                     errorData = JSON.parse(responseText);
@@ -2159,8 +2377,17 @@ class CDDashboard {
     }
 
     viewPDF(filename) {
-        this.showNotification(`Abrindo arquivo: ${filename}`, 'info');
-        // Em um sistema real, abriria o PDF em uma nova aba ou modal
+        if (!filename) {
+            console.log('Nenhum arquivo para visualizar');
+            return;
+        }
+        
+        // Construir URL do arquivo usando a rota da API
+        const fileUrl = `/api/files/${filename}`;
+        console.log('Abrindo PDF:', fileUrl);
+        
+        // Abrir em nova aba
+        window.open(fileUrl, '_blank');
     }
 
     // --- CONTROLES DE VISUALIZAÇÃO E FILTROS ---
@@ -2370,10 +2597,6 @@ class CDDashboard {
         
         document.getElementById('status-modal').classList.remove('hidden');
     }
-
-    // --- MÉTODOS PARA CONTROLE DE MODAL (ENCAPSULADOS) ---
-
-    // Métodos de modal removidos para novo modal
 }
 
 // --- FIM DA CLASSE ---
@@ -2383,6 +2606,9 @@ class CDDashboard {
 let dashboard;
 document.addEventListener('DOMContentLoaded', () => {
     dashboard = new CDDashboard();
+    
+    // Aplicar máscaras aos inputs da página
+    applyMasksToContainer(document);
 });
 
 // Funções globais que delegam para a instância do dashboard
@@ -2409,8 +2635,6 @@ function showAllStatus(status) {
 function showTodayDeliveries() {
     dashboard.showTodayDeliveries();
 }
-
-// Função global removida para novo modal
 
 function closeTodayDeliveriesModal() {
     dashboard.closeTodayDeliveriesModal();
@@ -2444,12 +2668,44 @@ function logout() {
     }
 }
 
+// CORREÇÃO: Removida a função duplicada submitBloqueioButton da linha ~700
+// A função já está definida no início do arquivo (linha ~28)
+
 // Registrar funções globais no objeto window para acesso a partir do HTML
 function openDashboardKPIModal() {
     if (window.dashboard && typeof window.dashboard.openKpisModal === 'function') {
         window.dashboard.openKpisModal();
     }
 }
+
+// CORREÇÃO: Adicionadas declarações de funções faltantes
+function closeDashboardKPIModal() {
+    if (window.dashboard && typeof window.dashboard.closeKpisModal === 'function') {
+        window.dashboard.closeKpisModal();
+    }
+}
+
+function aplicarFiltroPeriodoKPI() {
+    // Implementação básica - pode ser expandida conforme necessário
+    console.log('Aplicar filtro período KPI');
+}
+
+function exportarDadosKPI() {
+    // Implementação básica - pode ser expandida conforme necessário
+    console.log('Exportar dados KPI');
+}
+
+function imprimirRelatorioKPI() {
+    // Implementação básica - pode ser expandida conforme necessário
+    console.log('Imprimir relatório KPI');
+}
+
+function carregarDadosKPI() {
+    if (window.dashboard && typeof window.dashboard.loadKpis === 'function') {
+        window.dashboard.loadKpis();
+    }
+}
+
 window.openDashboardKPIModal = openDashboardKPIModal;
 window.closeDashboardKPIModal = closeDashboardKPIModal;
 window.aplicarFiltroPeriodoKPI = aplicarFiltroPeriodoKPI;
@@ -2550,28 +2806,6 @@ function setupBloqueioEventListeners() {
             }
         }
     });
-
-// Função chamada pelo botão para garantir que não haverá submit nativo
-window.submitBloqueioButton = function() {
-    try {
-        const form = document.getElementById('bloqueio-form');
-        if (!form) {
-            console.error('[Frontend] submitBloqueioButton: formulário não encontrado');
-            return;
-        }
-
-        // Criar um evento que será passado ao handler
-        const fakeEvent = {
-            preventDefault: () => {},
-            target: form
-        };
-
-        console.log('[Frontend] submitBloqueioButton chamado — executando handleBloqueioSubmit');
-        handleBloqueioSubmit(fakeEvent);
-    } catch (err) {
-        console.error('[Frontend] Erro em submitBloqueioButton:', err);
-    }
-}
 }
 
 function updateBloqueioPreview() {
@@ -2630,61 +2864,64 @@ async function handleBloqueioSubmit(e) {
     console.debug('[Frontend] handleBloqueioSubmit invoked');
     
     const formData = new FormData(e.target);
-    const data = {
-        dataBloqueio: formData.get('dataBloqueio'),
-        horaInicio: formData.get('horaInicio'),
-        horaFim: formData.get('horaFim'),
-        motivo: formData.get('motivoBloqueio') === 'outros' ? formData.get('motivoCustom') : formData.get('motivoBloqueio')
-    };
-    
+    const dataBloqueio = formData.get('dataBloqueio');
+    const horaInicio = formData.get('horaInicio');
+    const horaFim = formData.get('horaFim');
+    const motivo = formData.get('motivoBloqueio') === 'outros' ? formData.get('motivoCustom') : formData.get('motivoBloqueio');
     // Validações
-    if (!data.dataBloqueio || !data.horaInicio || !data.horaFim || !data.motivo) {
+    if (!dataBloqueio || !horaInicio || !horaFim || !motivo) {
         dashboard.showNotification('Todos os campos são obrigatórios', 'error');
         return;
     }
-    
+    // Validação de data futura (pode usar Date para comparar, mas envia string)
     const hoje = new Date();
-    const dataBloqueio = new Date(data.dataBloqueio + 'T00:00:00');
+    hoje.setHours(0, 0, 0, 0); // Zerar horas para comparação apenas de data
     
-    if (dataBloqueio <= hoje) {
+    // Criar data no fuso horário local para evitar problemas de UTC
+    const [ano, mes, dia] = dataBloqueio.split('-').map(Number);
+    const dataBloqueioDate = new Date(ano, mes - 1, dia); // mes - 1 porque Date usa 0-11 para meses
+    
+    console.log('📅 [Bloqueio] Data selecionada:', dataBloqueio);
+    console.log('📅 [Bloqueio] Data criada:', dataBloqueioDate);
+    console.log('📅 [Bloqueio] Dia da semana:', dataBloqueioDate.getDay(), '(0=Domingo, 1=Segunda, etc.)');
+    
+    if (dataBloqueioDate <= hoje) {
         dashboard.showNotification('A data do bloqueio deve ser futura', 'error');
         return;
     }
-    
-    // Verificar se é dia útil
-    if (dataBloqueio.getDay() === 0 || dataBloqueio.getDay() === 6) {
+    // Verificar se é dia útil (1=Segunda a 5=Sexta)
+    const diaSemana = dataBloqueioDate.getDay();
+    if (diaSemana === 0 || diaSemana === 6) {
         dashboard.showNotification('Bloqueios só podem ser feitos em dias úteis', 'error');
         return;
     }
-    
     try {
         dashboard.showLoading(true);
-        
         const token = sessionStorage.getItem('token');
-        console.debug('[Frontend] Criando bloqueio - token presente?', !!token, 'payload:', data);
         const response = await fetch('http://localhost:3000/api/bloqueios-horario', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({
+                dataBloqueio,
+                horaInicio,
+                horaFim,
+                motivo
+            })
         });
-        
         const result = await response.json();
-        
         if (response.ok) {
             dashboard.showNotification('Bloqueio de horário criado com sucesso!', 'success');
             closeBloqueioModal();
-            // Recarregar lista de bloqueios no modal de gerenciamento
             if (typeof carregarBloqueios === 'function') {
                 carregarBloqueios();
             }
-            dashboard.loadAgendamentos(); // Recarregar dados
+            dashboard.loadAgendamentos();
         } else {
             dashboard.showNotification(result.error || 'Erro ao criar bloqueio', 'error');
         }
-        
     } catch (error) {
         console.error('Erro ao criar bloqueio:', error);
         dashboard.showNotification('Erro ao criar bloqueio de horário', 'error');
@@ -2992,17 +3229,16 @@ function aplicarFiltrosBloqueios(bloqueios) {
 function renderizarListaBloqueios(bloqueios) {
     const listaEl = document.getElementById('bloqueios-lista');
     const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0); // Zerar horas para comparação apenas de data
     
     listaEl.innerHTML = bloqueios.map(bloqueio => {
-        // Garantir que temos uma data válida, convertendo para formato ISO se necessário
-        // Usar dataInicio em vez de dataBloqueio
-        let dataInicioStr = bloqueio.dataInicio;
-        if (dataInicioStr && !dataInicioStr.includes('T')) {
-            dataInicioStr = `${dataInicioStr}T00:00:00`;
+        // Criar data no fuso horário local para evitar problemas de UTC
+        let dataInicio;
+        if (bloqueio.dataInicio) {
+            dataInicio = parseLocalDate(bloqueio.dataInicio);
         }
         
-        const dataInicio = new Date(dataInicioStr);
-        const isValidDate = !isNaN(dataInicio.getTime());
+        const isValidDate = dataInicio && !isNaN(dataInicio.getTime());
         
         const isExpirado = isValidDate && dataInicio < hoje;
         const isProximo = isValidDate && !isExpirado && dataInicio <= new Date(hoje.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -3553,8 +3789,26 @@ function atualizarNotaFiscalEntrega(pedidoIndex, nfIndex, campo, valor) {
     entregaPedidos[pedidoIndex].notasFiscais[nfIndex][campo] = valor;
 }
 
+// CORREÇÃO: Melhor validação de upload de arquivos
 function atualizarArquivoNotaFiscalEntrega(pedidoIndex, nfIndex, input) {
-    entregaPedidos[pedidoIndex].notasFiscais[nfIndex].arquivo = input.files[0];
+    const file = input.files[0];
+    if (!file) return;
+    
+    // Validar tipo
+    if (file.type !== 'application/pdf') {
+        dashboard.showNotification('Apenas arquivos PDF são permitidos', 'error');
+        input.value = '';
+        return;
+    }
+    
+    // Validar tamanho (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+        dashboard.showNotification('Arquivo muito grande (máx. 5MB)', 'error');
+        input.value = '';
+        return;
+    }
+    
+    entregaPedidos[pedidoIndex].notasFiscais[nfIndex].arquivo = file;
 }
 
 function removerNotaFiscalEntrega(pedidoIndex, nfIndex) {
@@ -3614,7 +3868,7 @@ function gerarResumoEntrega() {
             <div>
                 <h4 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Dados da Entrega</h4>
                 <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><strong>Data:</strong> ${new Date(dadosBasicos.data).toLocaleDateString('pt-BR')}</div>
+                    <div><strong>Data:</strong> ${parseLocalDate(dadosBasicos.data).toLocaleDateString('pt-BR')}</div>
                     <div><strong>Horário:</strong> ${dadosBasicos.horario}</div>
                     <div><strong>Fornecedor:</strong> ${dadosBasicos.fornecedor}</div>
                     <div><strong>CNPJ:</strong> ${dadosBasicos.cnpj}</div>
@@ -3664,8 +3918,25 @@ function gerarResumoEntrega() {
 async function handleRegistrarEntrega(e) {
     e.preventDefault();
     
-    if (!validarStepEntrega(2)) {
+    // Verificar dados básicos primeiro (step 1)
+    if (!validarStepEntrega(1)) {
         return;
+    }
+    
+    // Se não há pedidos, criar um pedido básico para registro de entrega
+    if (entregaPedidos.length === 0) {
+        entregaPedidos = [
+            {
+                numero: 'ENTREGA-' + Date.now(),
+                notasFiscais: [
+                    {
+                        numero: 'NF-' + Date.now(),
+                        valor: 0
+                    }
+                ]
+            }
+        ];
+        console.log('📦 [Frontend] Criado pedido básico para entrega:', entregaPedidos);
     }
     
     // Verificar se há token de autenticação
@@ -3734,65 +4005,10 @@ async function handleRegistrarEntrega(e) {
         
         console.log('🚀 [Frontend] Enviando requisição para /api/agendamentos');
         
-        // Verificar se o token está válido antes de fazer a requisição
-        const checkTokenResponse = await fetch('/api/verify-token', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        // Se o token não for válido, renovar o token
-        if (!checkTokenResponse.ok) {
-            console.log('🔑 Token expirado ou inválido, tentando renovar...');
-            const cdId = dashboard.getCDFromToken();
-            
-            if (!cdId) {
-                dashboard.showNotification('Não foi possível identificar o CD. Faça login novamente.', 'error');
-                setTimeout(() => {
-                    window.location.href = '/login.html';
-                }, 2000);
-                return;
-            }
-            
-            // Tentar renovar o token
-            const renewTokenResponse = await fetch('/api/renew-token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ cdId })
-            });
-            
-            if (renewTokenResponse.ok) {
-                const renewData = await renewTokenResponse.json();
-                if (renewData.token) {
-                    // Atualizar o token na sessão
-                    sessionStorage.setItem('token', renewData.token);
-                    console.log('🔑 Token renovado com sucesso!');
-                } else {
-                    dashboard.showNotification('Erro ao renovar sessão. Faça login novamente.', 'error');
-                    setTimeout(() => {
-                        window.location.href = '/login.html';
-                    }, 2000);
-                    return;
-                }
-            } else {
-                dashboard.showNotification('Erro ao renovar sessão. Faça login novamente.', 'error');
-                setTimeout(() => {
-                    window.location.href = '/login.html';
-                }, 2000);
-                return;
-            }
-        }
-        
-        // Obter o token atualizado
-        const currentToken = sessionStorage.getItem('token');
-        
         const response = await fetch('/api/agendamentos', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${currentToken}`
+                'Authorization': `Bearer ${token}`
             },
             body: formData
         });
@@ -3823,22 +4039,7 @@ async function handleRegistrarEntrega(e) {
         }
     } catch (error) {
         console.error('❌ [Frontend] Erro na requisição:', error);
-        dashboard.showNotification('Erro ao registrar entrega. Verifique sua conexão ou faça login novamente.', 'error');
-        // Registrar detalhes do erro no console para depuração
-        console.error('Detalhes do erro:', {
-            message: error.message,
-            stack: error.stack,
-            name: error.name
-        });
-        
-        // Se for erro de rede, sugerir verificar conexão
-        if (error.name === 'NetworkError' || error.message.includes('NetworkError')) {
-            dashboard.showNotification('Erro de conexão. Verifique sua internet e tente novamente.', 'error');
-        }
-        // Se for erro de CORS, pode ser um problema de configuração
-        else if (error.name === 'TypeError' && error.message.includes('CORS')) {
-            dashboard.showNotification('Erro de conexão com o servidor. Informe o suporte.', 'error');
-        }
+        dashboard.showNotification('Erro de conexão. Tente novamente.', 'error');
     } finally {
         dashboard.showLoading(false);
     }
@@ -3937,8 +4138,6 @@ function configurarFiltrosEntregas() {
 }
 
 async function carregarTodasEntregas() {
-            // Log para debug: mostrar todos os status recebidos
-            console.log('Status dos agendamentos recebidos:', agendamentos.map(a => a.status));
     mostrarLoadingEntregas(true);
     
     try {
@@ -3952,19 +4151,24 @@ async function carregarTodasEntregas() {
         const result = await response.json();
 
         if (response.ok) {
-            // Garante que sempre use o array correto
+            // CORREÇÃO: Melhor filtro com validação
             const agendamentos = Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : (result.agendamentos || []));
+            
             window.entregasData = agendamentos.filter(agendamento => {
+                if (!agendamento || typeof agendamento !== 'object') return false;
+                
                 const rawStatus = agendamento.status;
                 if (!rawStatus) {
                     console.log('[Filtro Entregas] Ignorado (status vazio):', agendamento.codigo, '| status:', rawStatus);
                     return false;
                 }
+                
                 const status = String(rawStatus).trim().toLowerCase();
                 const match = status === 'entregue';
                 console.log('[Filtro Entregas] codigo:', agendamento.codigo, '| status original:', rawStatus, '| status filtrado:', status, '| match:', match);
                 return match;
             });
+            
             window.entregasFiltradas = [...window.entregasData];
             
             console.log('🔍 DEBUG:', {
@@ -4108,7 +4312,7 @@ function aplicarFiltrosEntregas() {
     }
     
     // Ordenar por data mais recente
-    entregasFiltradas.sort((a, b) => new Date(b.dataEntrega) - new Date(a.dataEntrega));
+    entregasFiltradas.sort((a, b) => parseLocalDate(b.dataEntrega) - parseLocalDate(a.dataEntrega));
     
     window.entregasFiltradas = entregasFiltradas;
     window.paginaAtual = 1;
@@ -4148,7 +4352,7 @@ function renderizarEntregas() {
 }
 
 function criarCardEntrega(entrega) {
-    const dataFormatada = new Date(entrega.dataEntrega).toLocaleDateString('pt-BR');
+    const dataFormatada = parseLocalDate(entrega.dataEntrega).toLocaleDateString('pt-BR');
     const tempoRelativo = calcularTempoRelativo(entrega.dataEntrega);
     
     return `

@@ -6,26 +6,19 @@ const prisma = new PrismaClient();
   let count = 0;
   for (const ag of ags) {
     if (ag.dataEntrega) {
-      const dt = new Date(ag.dataEntrega);
-      // Se estiver em UTC (03:00:00.000Z), ajusta para 00:00 UTC (meia-noite Brasília)
-      if (dt.getUTCHours() === 3 && dt.getUTCMinutes() === 0 && dt.getUTCSeconds() === 0) {
-        dt.setUTCHours(0);
+      // Extrai a data no formato 'YYYY-MM-DD'
+      const iso = ag.dataEntrega.toISOString().split('T')[0];
+      const [ano, mes, dia] = iso.split('-').map(Number);
+      // Cria a data como meia-noite UTC do dia correto
+      const dataUTC = new Date(Date.UTC(ano, mes - 1, dia));
+      // Só atualiza se for diferente
+      if (ag.dataEntrega.getTime() !== dataUTC.getTime()) {
         await prisma.agendamento.update({
           where: { id: ag.id },
-          data: { dataEntrega: dt }
+          data: { dataEntrega: dataUTC }
         });
         count++;
-        console.log(`Corrigido agendamento id ${ag.id}: ${ag.dataEntrega} => ${dt.toISOString()}`);
-      }
-      // Se estiver em UTC (06:00:00.000Z), ajusta para 03:00 UTC (meia-noite Brasília)
-      else if (dt.getUTCHours() === 6 && dt.getUTCMinutes() === 0 && dt.getUTCSeconds() === 0) {
-        dt.setUTCHours(3);
-        await prisma.agendamento.update({
-          where: { id: ag.id },
-          data: { dataEntrega: dt }
-        });
-        count++;
-        console.log(`Corrigido agendamento id ${ag.id}: ${ag.dataEntrega} => ${dt.toISOString()}`);
+        console.log(`Corrigido agendamento id ${ag.id}: ${ag.dataEntrega.toISOString()} => ${dataUTC.toISOString()}`);
       }
     }
   }

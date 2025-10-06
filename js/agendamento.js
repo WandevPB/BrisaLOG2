@@ -205,10 +205,11 @@ class AgendamentoForm {
                 };
                 break;
             case 2:
+                // Garante que dataEntrega é string pura 'YYYY-MM-DD'
                 this.formData.entrega = {
                     cdDestino: document.getElementById('cd-destino').value,
                     tipoCarga: document.getElementById('tipo-carga').value,
-                    dataEntrega: document.getElementById('data-entrega').value,
+                    dataEntrega: document.getElementById('data-entrega').value, // string pura
                     horarioEntrega: document.getElementById('horario-entrega').value,
                     observacoes: document.getElementById('observacoes').value
                 };
@@ -606,7 +607,7 @@ class AgendamentoForm {
                     <div class="space-y-2">
                         <p><strong>Destino:</strong> ${cdNames[this.formData.entrega.cdDestino]}</p>
                         <p><strong>Tipo de Carga:</strong> ${tipoCargas[this.formData.entrega.tipoCarga]}</p>
-                        <p><strong>Data:</strong> ${new Date(this.formData.entrega.dataEntrega + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                        <p><strong>Data:</strong> ${(() => { const [a,m,d]=this.formData.entrega.dataEntrega.split('-'); return `${d}/${m}/${a}`; })()}</p>
                         <p><strong>Horário:</strong> ${this.formData.entrega.horarioEntrega}</p>
                         ${this.formData.entrega.observacoes ? `<p><strong>Observações:</strong> ${this.formData.entrega.observacoes}</p>` : ''}
                     </div>

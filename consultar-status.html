@@ -1,3 +1,8 @@
+        // Função global para visualizar PDF
+        function viewPDF(filename) {
+            if (!filename) return;
+            window.open('http://localhost:3000/uploads/' + filename, '_blank');
+        }
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,27 +13,14 @@
     <script>
         // Função utilitária para formatar datas ISO ou YYYY-MM-DD no padrão brasileiro sem bug de fuso
             // Função igual à do dashboard para formatar datas de forma robusta
+            // Formata datas YYYY-MM-DD ou ISO para DD/MM/YYYY sem criar objeto Date (evita bug de fuso)
             function formatDateBrFromISO(dateString) {
-                if (!dateString) {
-                    return 'Data não informada';
-                }
-                try {
-                    let date;
-                    if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                        date = new Date(dateString + 'T00:00:00');
-                    } else if (dateString.includes('T')) {
-                        date = new Date(dateString);
-                    } else {
-                        date = new Date(dateString);
-                    }
-                    if (isNaN(date.getTime())) {
-                        return 'Data inválida';
-                    }
-                    return date.toLocaleDateString('pt-BR');
-                } catch (error) {
-                    console.error('Erro ao formatar data:', error, 'Data:', dateString);
-                    return 'Data inválida';
-                }
+                if (!dateString) return 'Data não informada';
+                // Extrai apenas a parte da data (YYYY-MM-DD)
+                const [isoDate] = dateString.split('T');
+                if (!isoDate || isoDate.length < 10) return 'Data inválida';
+                const [ano, mes, dia] = isoDate.split('-');
+                return `${dia}/${mes}/${ano}`;
             }
         tailwind.config = {
             theme: {
@@ -348,10 +340,37 @@
         document.body.classList.remove('overflow-hidden');
     }
     document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('form-contra-proposta').addEventListener('submit', function(e) {
+        document.getElementById('form-contra-proposta').addEventListener('submit', async function(e) {
             e.preventDefault();
-            fecharContraProposta();
-            consultaPage.showNotification('Sugestão enviada! (simulação)', 'success');
+            const novaData = document.getElementById('nova-data').value; // string pura
+            const novoHorario = document.getElementById('novo-horario').value;
+            const motivo = document.getElementById('motivo-contra-proposta').value;
+            if (!novaData || !novoHorario) {
+                consultaPage.showNotification('Preencha a data e o horário.', 'error');
+                return;
+            }
+            try {
+                // Exemplo de envio real para backend (ajuste a URL se necessário)
+                const response = await fetch(`/api/agendamentos/${codigoContraProposta}/responder-reagendamento`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resposta: 'contra_proposta',
+                        novaData,
+                        novoHorario,
+                        comentario: motivo
+                    })
+                });
+                if (response.ok) {
+                    fecharContraProposta();
+                    consultaPage.showNotification('Sugestão enviada com sucesso!', 'success');
+                } else {
+                    const data = await response.json();
+                    consultaPage.showNotification(data.error || 'Erro ao enviar sugestão.', 'error');
+                }
+            } catch (error) {
+                consultaPage.showNotification('Erro ao enviar sugestão.', 'error');
+            }
         });
     });
         class ConsultaStatusPage {
@@ -740,7 +759,7 @@
                                                                     <td class="p-2 font-mono">${nf.numero}</td>
                                                                     <td class="p-2 text-right font-semibold">R$ ${nf.valor}</td>
                                                                     <td class="p-2 text-center">
-                                                                        <button class="text-orange-primary hover:text-orange-secondary text-sm">
+                                                                        <button class="text-orange-primary hover:text-orange-secondary text-sm" onclick="viewPDF(nf.arquivo)">
                                                                             <i class="fas fa-file-pdf mr-1"></i>${nf.arquivo || 'PDF'}
                                                                         </button>
                                                                     </td>

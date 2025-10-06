@@ -1201,6 +1201,62 @@
                                     </label>
                                     <input type="date" id="entrega-data" name="dataEntrega" required
                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
+                                    <script>
+                                    // Função para verificar se a data é um dia útil (segunda a sexta) - Dashboard
+                                    function isWeekdayDashboard(dateString) {
+                                        const date = new Date(dateString + 'T00:00:00');
+                                        const day = date.getDay();
+                                        return day !== 0 && day !== 6; // 0 = domingo, 6 = sábado
+                                    }
+                                    
+                                    // Função para encontrar o próximo dia útil - Dashboard
+                                    function getNextWeekdayDashboard(date) {
+                                        const nextDay = new Date(date);
+                                        nextDay.setDate(nextDay.getDate() + 1);
+                                        while (nextDay.getDay() === 0 || nextDay.getDay() === 6) {
+                                            nextDay.setDate(nextDay.getDate() + 1);
+                                        }
+                                        return nextDay;
+                                    }
+                                    
+                                    // Configurar campo de data do dashboard
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        var input = document.getElementById('entrega-data');
+                                        if (input) {
+                                            var today = new Date();
+                                            
+                                            // Se hoje for fim de semana, definir para próximo dia útil
+                                            if (today.getDay() === 0 || today.getDay() === 6) {
+                                                today = getNextWeekdayDashboard(today);
+                                            }
+                                            
+                                            var yyyy = today.getFullYear();
+                                            var mm = String(today.getMonth() + 1).padStart(2, '0');
+                                            var dd = String(today.getDate()).padStart(2, '0');
+                                            var minDate = yyyy + '-' + mm + '-' + dd;
+                                            input.setAttribute('min', minDate);
+                                            
+                                            // Definir valor padrão como próximo dia útil
+                                            var nextWeekday = getNextWeekdayDashboard(new Date());
+                                            var nextWeekdayStr = nextWeekday.getFullYear() + '-' + 
+                                                String(nextWeekday.getMonth() + 1).padStart(2, '0') + '-' + 
+                                                String(nextWeekday.getDate()).padStart(2, '0');
+                                            input.value = nextWeekdayStr;
+                                            
+                                            // Validação em tempo real para impedir seleção de fins de semana
+                                            input.addEventListener('change', function() {
+                                                if (!isWeekdayDashboard(this.value)) {
+                                                    alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
+                                                    var nextWeekday = getNextWeekdayDashboard(new Date(this.value + 'T00:00:00'));
+                                                    var nextWeekdayStr = nextWeekday.getFullYear() + '-' + 
+                                                        String(nextWeekday.getMonth() + 1).padStart(2, '0') + '-' + 
+                                                        String(nextWeekday.getDate()).padStart(2, '0');
+                                                    this.value = nextWeekdayStr;
+                                                }
+                                            });
+                                        }
+                                    });
+                                    </script>
                                 </div>
 
                                 <!-- Horário da Entrega -->
@@ -1242,7 +1298,7 @@
                                         CNPJ do Fornecedor *
                                     </label>
                                     <input type="text" id="entrega-cnpj-fornecedor" name="cnpjFornecedor" required
-                                           placeholder="00.000.000/0000-00"
+                                           placeholder="00.000.000/0000-00" maxlength="18"
                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
                                 </div>
                             </div>
@@ -1265,7 +1321,7 @@
                                         Telefone do Fornecedor *
                                     </label>
                                     <input type="tel" id="entrega-telefone-fornecedor" name="telefoneFornecedor" required
-                                           placeholder="(11) 99999-9999"
+                                           placeholder="(83) 00000-0000" maxlength="15"
                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
                                 </div>
                             </div>
@@ -1532,8 +1588,85 @@
     }
     window.openSuggestDateModal = openSuggestDateModal;
     window.closeSuggestDateModal = closeSuggestDateModal;
+
+    // Funções de máscara para formatação automática
+    function maskPhone(value) {
+        // Remove tudo que não é dígito
+        value = value.replace(/\D/g, '');
+        
+        // Limita a 11 dígitos máximo
+        value = value.substring(0, 11);
+        
+        // Aplica a máscara (83) 00000-0000
+        if (value.length <= 10) {
+            value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        } else {
+            value = value.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+        }
+        
+        return value;
+    }
+
+    function maskCPF(value) {
+        // Remove tudo que não é dígito
+        value = value.replace(/\D/g, '');
+        
+        // Limita a 11 dígitos máximo
+        value = value.substring(0, 11);
+        
+        // Aplica a máscara 000.000.000-00
+        value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+        
+        return value;
+    }
+
+    function maskCNPJ(value) {
+        // Remove tudo que não é dígito
+        value = value.replace(/\D/g, '');
+        
+        // Limita a 14 dígitos máximo
+        value = value.substring(0, 14);
+        
+        // Aplica a máscara 00.000.000/0000-00
+        value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+        
+        return value;
+    }
+
+    function maskDocument(input) {
+        let value = input.value.replace(/\D/g, '');
+        
+        // Limita a 14 dígitos máximo (CNPJ)
+        value = value.substring(0, 14);
+        
+        if (value.length <= 11) {
+            // CPF
+            input.value = maskCPF(input.value);
+        } else {
+            // CNPJ
+            input.value = maskCNPJ(input.value);
+        }
+    }
+
+    // Aplicar máscaras aos inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        // Telefone
+        const phoneInput = document.getElementById('entrega-telefone-fornecedor');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                e.target.value = maskPhone(e.target.value);
+            });
+        }
+
+        // CNPJ
+        const cnpjInput = document.getElementById('entrega-cnpj-fornecedor');
+        if (cnpjInput) {
+            cnpjInput.addEventListener('input', function(e) {
+                maskDocument(e.target);
+            });
+        }
+    });
     </script>
 <script>console.log('dashboard.js carregado:', !!window.submitBloqueioButton);</script>
 </body>
 </html>
-d

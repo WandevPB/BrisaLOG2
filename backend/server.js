@@ -1,3 +1,4 @@
+require('dotenv').config({ path: './backend/.env' });
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 // Atualiza agendamentos antigos para padrão de observação e data/hora de reagendamento
@@ -22,7 +23,7 @@ async function atualizarPendentesReagendamento() {
       where: { id: ag.id },
       data: {
         observacoes: 'Pendente (reagendamento)',
-        dataEntrega: novaData,
+          dataEntrega: toUTCDateOnly(novaData),
         horarioEntrega: novoHorario
       }
     });
@@ -32,12 +33,75 @@ async function atualizarPendentesReagendamento() {
 
 // Executa atualização ao iniciar o servidor
 atualizarPendentesReagendamento();
-// Função utilitária para criar Date no fuso de Brasília (UTC-3)
-function toBrasiliaDate(dateStr) {
-  // dateStr: 'YYYY-MM-DD'
-  const [year, month, day] = dateStr.split('-').map(Number);
-  // Cria como UTC-3 (Brasília)
-  return new Date(Date.UTC(year, month - 1, day, 3, 0, 0));
+// Função utilitária para criar Date UTC puro (meia-noite) a partir de 'YYYY-MM-DD'
+function toUTCDateOnly(dateStr) {
+  if (!dateStr) return null;
+  if (typeof dateStr === 'string') {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts.map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day));
+      if (!isNaN(date)) return date;
+    }
+    // fallback: try parsing as ISO
+    const date = new Date(dateStr);
+    if (!isNaN(date)) return date;
+    return null;
+  } else if (dateStr instanceof Date && !isNaN(dateStr)) {
+    return dateStr;
+  }
+  return null;
+}
+
+// Nova função para criar datas no timezone local
+function toLocalDateOnly(dateStr) {
+  if (!dateStr) return null;
+  if (typeof dateStr === 'string') {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts.map(Number);
+      // Cria data no timezone local (Brasil)
+      const date = new Date(year, month - 1, day, 0, 0, 0, 0);
+      if (!isNaN(date)) return date;
+    }
+    // fallback: try parsing as ISO but convert to local
+    const date = new Date(dateStr);
+    if (!isNaN(date)) {
+      // Se veio como ISO, converter para local midnight
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+    }
+    return null;
+  } else if (dateStr instanceof Date && !isNaN(dateStr)) {
+    return dateStr;
+  }
+  return null;
+}
+
+// Função para formatar data como DD/MM/YYYY a partir de string YYYY-MM-DD
+function formatDateBr(dateStr) {
+  console.log(`🔍 [formatDateBr] Input: ${dateStr} (tipo: ${typeof dateStr})`);
+  
+  if (!dateStr) return 'N/A';
+  
+  // Se for um objeto Date, converter para string primeiro
+  if (dateStr instanceof Date) {
+    dateStr = dateStr.toISOString().slice(0, 10);
+    console.log(`🔍 [formatDateBr] Convertido de Date para string: ${dateStr}`);
+  }
+  
+  if (typeof dateStr === 'string' && dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    console.log(`🔍 [formatDateBr] Parts: [${parts.join(', ')}]`);
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      const resultado = `${day}/${month}/${year}`;
+      console.log(`🔍 [formatDateBr] Resultado: ${resultado}`);
+      return resultado;
+    }
+  }
+  
+  console.log(`🔍 [formatDateBr] Retornando valor original: ${dateStr}`);
+  return dateStr;
 }
 
 // Força correção retroativa ao iniciar o servidor
@@ -58,17 +122,15 @@ const emailService = require('./emailService');
 async function corrigirAgendamentosExistentes() {
   const agendamentos = await prisma.agendamento.findMany();
   for (const ag of agendamentos) {
-    if (ag.dataEntrega && ag.dataEntrega.getHours() === 0 && ag.dataEntrega.getMinutes() === 0) {
-      const corrigida = new Date(ag.dataEntrega);
-      corrigida.setHours(3);
+    if (ag.dataEntrega) {
+      const corrigida = toUTCDateOnly(ag.dataEntrega instanceof Date ? ag.dataEntrega.toISOString().slice(0,10) : ag.dataEntrega);
       await prisma.agendamento.update({
         where: { id: ag.id },
         data: { dataEntrega: corrigida }
       });
     }
-    if (ag.dataSugestaoCD && ag.dataSugestaoCD.getHours() === 0 && ag.dataSugestaoCD.getMinutes() === 0) {
-      const corrigida = new Date(ag.dataSugestaoCD);
-      corrigida.setHours(3);
+    if (ag.dataSugestaoCD) {
+      const corrigida = toUTCDateOnly(ag.dataSugestaoCD instanceof Date ? ag.dataSugestaoCD.toISOString().slice(0,10) : ag.dataSugestaoCD);
       await prisma.agendamento.update({
         where: { id: ag.id },
         data: { dataSugestaoCD: corrigida }
@@ -129,21 +191,27 @@ const upload = multer({
 
 // Middleware de autenticação
 const authenticateToken = (req, res, next) => {
+  console.log(`🔐 [AUTH] Executando autenticação para ${req.method} ${req.path}`);
+  console.log('🔐 [AUTH] Headers recebidos:', Object.keys(req.headers));
+  
   const authHeader = req.headers['authorization'];
+  console.log('🔐 [AUTH] Authorization header:', authHeader ? 'PRESENTE' : 'AUSENTE');
+  
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    console.log('Autenticação falhou: Token não fornecido');
+    console.log('❌ [AUTH] Token não fornecido');
     return res.status(401).json({ error: 'Token de acesso requerido' });
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
-    console.log('Autenticação bem-sucedida para usuário ID:', decoded.id);
+    console.log('✅ [AUTH] Autenticação bem-sucedida para usuário ID:', decoded.id);
+    console.log('🔍 [AUTH] Token decodificado completo:', decoded);
     next();
   } catch (err) {
-    console.error('Erro na verificação do token:', err.message);
+    console.error('❌ [AUTH] Erro na verificação do token:', err.message);
     
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expirado. Faça login novamente.' });
@@ -258,6 +326,70 @@ app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
   }
 });
 
+// Verificar se o token é válido
+app.get('/api/verify-token', authenticateToken, async (req, res) => {
+  try {
+    // Se chegou até aqui, o token é válido (middleware authenticateToken já validou)
+    res.json({ 
+      success: true, 
+      valid: true,
+      user: {
+        id: req.user.id,
+        usuario: req.user.usuario,
+        nome: req.user.nome
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao verificar token:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Renovar token
+app.post('/api/renew-token', async (req, res) => {
+  try {
+    const { cdId } = req.body;
+
+    if (!cdId) {
+      return res.status(400).json({ error: 'ID do CD é obrigatório' });
+    }
+
+    // Buscar CD para garantir que ainda existe e está ativo
+    const cd = await prisma.cd.findUnique({
+      where: { id: cdId }
+    });
+
+    if (!cd || !cd.ativo) {
+      return res.status(401).json({ error: 'CD não encontrado ou inativo' });
+    }
+
+    // Gerar novo token JWT
+    const token = jwt.sign(
+      { 
+        id: cd.id, 
+        usuario: cd.usuario, 
+        nome: cd.nome 
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      success: true,
+      token: token,
+      cd: {
+        id: cd.id,
+        nome: cd.nome,
+        usuario: cd.usuario
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao renovar token:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // ============================================================================
 // ROTAS DE AGENDAMENTOS
 // ============================================================================
@@ -335,40 +467,140 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
   }
 });
 
-// Criar agendamento
+// Criar agendamento (sem autenticação para fornecedores)
 app.post('/api/agendamentos', upload.any(), async (req, res) => {
+  console.log('🎯 [POST /api/agendamentos] ROTA INICIADA - Agendamento público (fornecedor)');
+  
   try {
-    const agendamentoData = JSON.parse(req.body.agendamento);
+    console.log('🔍 [POST /api/agendamentos] req.body:', req.body);
+    console.log('🔍 [POST /api/agendamentos] req.files:', req.files);
+    
+    // Tentar fazer o parse do JSON
+    let agendamentoData;
+    try {
+      agendamentoData = JSON.parse(req.body.agendamento);
+      console.log('✅ [POST /api/agendamentos] JSON parseado com sucesso');
+    } catch (parseError) {
+      console.log('❌ [POST /api/agendamentos] Erro ao fazer parse do JSON:', parseError.message);
+      return res.status(400).json({ error: 'Dados JSON inválidos' });
+    }
+    
     const arquivos = req.files || [];
+    
+    // Para agendamentos públicos, o CD deve vir nos dados do formulário
+    const cdInfo = agendamentoData.entrega?.cd || agendamentoData.entrega?.cdDestino;
+    if (!cdInfo) {
+      console.log('❌ [POST /api/agendamentos] CD não especificado nos dados');
+      return res.status(400).json({ error: 'CD de destino deve ser especificado' });
+    }
+    
+    // Buscar CD por nome ou ID
+    let cdId;
+    if (typeof cdInfo === 'number') {
+      cdId = cdInfo;
+    } else {
+      // Mapear nomes do frontend para nomes do banco
+      const cdMap = {
+        'Bahia': 'bahia',
+        'Pernambuco': 'pernambuco', 
+        'Lagoa Nova': 'lagoa-nova'
+      };
+      
+      const cdNome = cdMap[cdInfo] || cdInfo.toLowerCase();
+      
+      const cd = await prisma.cd.findFirst({
+        where: {
+          OR: [
+            { nome: { contains: cdNome } },
+            { usuario: { contains: cdNome } },
+            { nome: cdNome },
+            { usuario: cdNome }
+          ]
+        }
+      });
+      
+      if (!cd) {
+        console.log('❌ [POST /api/agendamentos] CD não encontrado:', cdInfo);
+        return res.status(400).json({ error: `CD não encontrado: ${cdInfo}` });
+      }
+      cdId = cd.id;
+    }
+
+    console.log('� [POST /api/agendamentos] Criando agendamento:', agendamentoData);
+    console.log('🔍 [POST /api/agendamentos] CD ID determinado:', cdId);
+
+    // Validar se o cdId foi extraído corretamente
+    if (!cdId) {
+      console.error('❌ [POST /api/agendamentos] CD ID não encontrado no token');
+      return res.status(400).json({ error: 'ID do CD não encontrado no token de autenticação' });
+    }
 
     // Validações básicas
     if (!agendamentoData.fornecedor || !agendamentoData.entrega || !agendamentoData.pedidos) {
       return res.status(400).json({ error: 'Dados incompletos' });
     }
 
-    // Buscar ou criar fornecedor
-    let fornecedor = await prisma.fornecedor.findUnique({
-      where: { email: agendamentoData.fornecedor.email }
-    });
-
-    if (!fornecedor) {
-      fornecedor = await prisma.fornecedor.create({
-        data: {
-          nome: agendamentoData.fornecedor.nomeEmpresa,
-          email: agendamentoData.fornecedor.email,
-          telefone: agendamentoData.fornecedor.telefone,
-          documento: agendamentoData.fornecedor.documento
-        }
-      });
-    }
-
-    // Buscar CD
+    // Buscar CD do usuário autenticado
     const cd = await prisma.cd.findUnique({
-      where: { nome: agendamentoData.entrega.cdDestino }
+      where: { id: cdId }
     });
 
     if (!cd) {
       return res.status(400).json({ error: 'Centro de distribuição não encontrado' });
+    }
+
+    // Buscar ou criar fornecedor
+    console.log('🔍 [POST /api/agendamentos] Buscando fornecedor com CNPJ:', agendamentoData.fornecedor.documento);
+    let fornecedor = await prisma.fornecedor.findUnique({
+      where: { documento: agendamentoData.fornecedor.documento }
+    });
+
+    if (!fornecedor) {
+      console.log('➕ [POST /api/agendamentos] Fornecedor não encontrado pelo CNPJ, verificando por email...');
+      
+      // Verificar se já existe fornecedor com este email
+      const fornecedorExistente = await prisma.fornecedor.findUnique({
+        where: { email: agendamentoData.fornecedor.email }
+      });
+      
+      if (fornecedorExistente) {
+        console.log('🔄 [POST /api/agendamentos] Encontrado fornecedor com mesmo email, atualizando dados...');
+        // Atualizar o fornecedor existente com os novos dados
+        fornecedor = await prisma.fornecedor.update({
+          where: { email: agendamentoData.fornecedor.email },
+          data: {
+            nome: agendamentoData.fornecedor.nomeEmpresa,
+            telefone: agendamentoData.fornecedor.telefone,
+            documento: agendamentoData.fornecedor.documento
+          }
+        });
+        console.log('✅ [POST /api/agendamentos] Fornecedor atualizado:', fornecedor);
+      } else {
+        console.log('➕ [POST /api/agendamentos] Criando novo fornecedor:', agendamentoData.fornecedor);
+        fornecedor = await prisma.fornecedor.create({
+          data: {
+            nome: agendamentoData.fornecedor.nomeEmpresa,
+            email: agendamentoData.fornecedor.email,
+            telefone: agendamentoData.fornecedor.telefone,
+            documento: agendamentoData.fornecedor.documento
+          }
+        });
+        console.log('✅ [POST /api/agendamentos] Novo fornecedor criado:', fornecedor);
+      }
+    } else {
+      console.log('📋 [POST /api/agendamentos] Fornecedor existente encontrado pelo CNPJ:', fornecedor);
+      console.log('🔄 [POST /api/agendamentos] Dados do formulário:', agendamentoData.fornecedor);
+      // Atualizar dados do fornecedor existente com os dados mais recentes
+      console.log('🔄 [POST /api/agendamentos] Atualizando dados do fornecedor...');
+      fornecedor = await prisma.fornecedor.update({
+        where: { documento: agendamentoData.fornecedor.documento },
+        data: {
+          nome: agendamentoData.fornecedor.nomeEmpresa,
+          email: agendamentoData.fornecedor.email,
+          telefone: agendamentoData.fornecedor.telefone
+        }
+      });
+      console.log('✅ [POST /api/agendamentos] Fornecedor atualizado:', fornecedor);
     }
 
     // Gerar código único
@@ -378,30 +610,45 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     const proximoNumero = ultimoAgendamento ? ultimoAgendamento.id + 1 : 1;
     const codigo = `AGD${String(proximoNumero).padStart(6, '0')}`;
 
-
-
-    // Bloqueio de agendamento duplicado para mesmo CD, data e horário
-    const existe = await prisma.agendamento.findFirst({
-      where: {
-        cdId: cd.id,
-        dataEntrega: toBrasiliaDate(agendamentoData.entrega.dataEntrega),
-        horarioEntrega: agendamentoData.entrega.horarioEntrega,
-        status: { in: ['pendente', 'confirmado'] }
+    // Bloqueio de agendamento duplicado para mesmo CD, data e horário (apenas para agendamentos pendentes/confirmados)
+    // Converte dataEntrega para data local
+    const dataEntregaLocal = toLocalDateOnly(agendamentoData.entrega.dataEntrega);
+    
+    // Só verificar duplicação se for agendamento normal (não entrega pelo CD)
+    const statusFinal = agendamentoData.status || 'pendente';
+    const isEntregaPeloCD = agendamentoData.incluidoPeloCD || agendamentoData.tipoRegistro === 'fora_agendamento';
+    
+    if (!isEntregaPeloCD) {
+      const existe = await prisma.agendamento.findFirst({
+        where: {
+          cdId: cd.id,
+          dataEntrega: dataEntregaLocal,
+          horarioEntrega: agendamentoData.entrega.horarioEntrega,
+          status: { in: ['pendente', 'confirmado'] }
+        }
+      });
+      if (existe) {
+        return res.status(400).json({ error: 'Já existe agendamento para este CD, data e horário.' });
       }
-    });
-    if (existe) {
-      return res.status(400).json({ error: 'Já existe agendamento para este CD, data e horário.' });
+    }
+
+    // Preparar observações especiais para entrega pelo CD
+    let observacoesFinal = agendamentoData.entrega.observacoes || '';
+    if (isEntregaPeloCD) {
+      const observacaoEspecial = 'ENTREGUE SEM AGENDAMENTO - Registro incluído pelo CD';
+      observacoesFinal = observacoesFinal ? `${observacaoEspecial} | ${observacoesFinal}` : observacaoEspecial;
     }
 
     // Criar agendamento
     const agendamento = await prisma.agendamento.create({
       data: {
         codigo: codigo,
-        dataEntrega: toBrasiliaDate(agendamentoData.entrega.dataEntrega),
+        dataEntrega: dataEntregaLocal,
         horarioEntrega: agendamentoData.entrega.horarioEntrega,
         tipoCarga: agendamentoData.entrega.tipoCarga,
-        observacoes: agendamentoData.entrega.observacoes || null,
-        status: 'pendente',
+        observacoes: observacoesFinal,
+        status: statusFinal,
+        tipoRegistro: agendamentoData.tipoRegistro || 'agendamento',
         cdId: cd.id,
         fornecedorId: fornecedor.id
       }
@@ -425,7 +672,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
             numeroPedido: pedido.numero,
             numeroNF: nf.numero,
             serie: nf.serie || null,
-            valor: nf.valor || null,
+            valor: nf.valor ? String(nf.valor) : null,
             arquivoPath: arquivo ? arquivo.filename : null,
             agendamentoId: agendamento.id
           }
@@ -434,33 +681,61 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     }
 
     // Criar histórico
+    const acaoHistorico = isEntregaPeloCD ? 'entrega_registrada_cd' : 'agendamento_criado';
+    const descricaoHistorico = isEntregaPeloCD ? 
+      'Entrega registrada pelo CD (fora do agendamento)' : 
+      'Agendamento criado pelo fornecedor';
+      
     await prisma.historicoAcao.create({
       data: {
-        acao: 'agendamento_criado',
-        descricao: 'Agendamento criado pelo fornecedor',
+        acao: acaoHistorico,
+        descricao: descricaoHistorico,
         agendamentoId: agendamento.id,
         cdId: cd.id
       }
     });
 
-    // Enviar email de confirmação de criação para o fornecedor
+    // Enviar email apropriado
     try {
-      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${codigo}`;
-      await emailService.sendConfirmadoEmail({
-        to: fornecedor.email,
-        fornecedorNome: fornecedor.nome,
-        agendamentoCodigo: codigo,
-        cdNome: cd.nome,
-        consultaUrl
-      });
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      
+      if (isEntregaPeloCD) {
+        // Email especial para entrega sem agendamento
+        await emailService.sendEntregaSemAgendamentoEmail({
+          to: fornecedor.email,
+          fornecedorNome: fornecedor.nome,
+          agendamentoCodigo: codigo,
+          cdNome: cd.nome,
+          dataEntrega: formatDateBr(agendamentoData.entrega.dataEntrega),
+          horarioEntrega: agendamentoData.entrega.horarioEntrega,
+          agendamentoUrl: baseUrl
+        });
+        console.log('📧 Email de entrega sem agendamento enviado para:', fornecedor.email);
+      } else {
+        // Email normal de confirmação de agendamento
+        const consultaUrl = `${baseUrl}/consultar-status.html?codigo=${codigo}`;
+        await emailService.sendConfirmadoEmail({
+          to: fornecedor.email,
+          fornecedorNome: fornecedor.nome,
+          agendamentoCodigo: codigo,
+          cdNome: cd.nome,
+          consultaUrl
+        });
+        console.log('📧 Email de confirmação de agendamento enviado para:', fornecedor.email);
+      }
     } catch (emailError) {
-      console.error('Erro ao enviar email de confirmação de agendamento:', emailError);
+      console.error('Erro ao enviar email:', emailError);
     }
+
+    const mensagemSucesso = isEntregaPeloCD ? 
+      'Entrega registrada com sucesso com status ENTREGUE!' :
+      'Agendamento criado com sucesso';
 
     res.json({
       success: true,
       codigo: codigo,
-      message: 'Agendamento criado com sucesso'
+      message: mensagemSucesso,
+      status: statusFinal
     });
 
   } catch (error) {
@@ -529,7 +804,8 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
         }
         pedido.notasFiscais.push({
           numero: nf.numeroNF,
-          valor: nf.valor || '0,00'
+          valor: nf.valor || '0,00',
+          arquivo: nf.arquivoPath
         });
         return pedidos;
       }, []),
@@ -537,7 +813,8 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
         numeroPedido: nf.numeroPedido,
         numeroNF: nf.numeroNF,
         serie: nf.serie,
-        valor: nf.valor
+        valor: nf.valor,
+        arquivo: nf.arquivoPath
       })),
       historico: agendamento.historicoAcoes.map(acao => ({
         acao: acao.acao,
@@ -722,7 +999,7 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
       where: { id: parseInt(id) },
       data: {
         status: 'reagendamento',
-        dataSugestaoCD: toBrasiliaDate(novaData),
+        dataSugestaoCD: toUTCDateOnly(novaData),
         horarioSugestaoCD: novoHorario,
         motivoNaoVeio: motivo || null,
         observacoes: motivo ? `${agendamento.observacoes || ''} | Reagendamento: ${motivo}`.trim() : agendamento.observacoes
@@ -741,7 +1018,7 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
     await prisma.historicoAcao.create({
       data: {
         acao: 'reagendamento_sugerido',
-        descricao: `Nova data sugerida: ${new Date(novaData).toLocaleDateString('pt-BR')} às ${novoHorario}`,
+        descricao: `Nova data sugerida: ${formatDateBr(novaData)} às ${novoHorario}`,
         dataAnterior: agendamento.dataEntrega,
         dataNova: new Date(novaData + 'T00:00:00'),
         agendamentoId: parseInt(id),
@@ -763,7 +1040,7 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
         agendamentoCodigo: agendamento.codigo,
         cdNome: agendamento.cd.nome,
         dataOriginal: agendamento.dataEntrega,
-        novaDataSugerida: new Date(novaData + 'T00:00:00'),
+        novaDataSugerida: toUTCDateOnly(novaData),
         novoHorario,
         motivo,
         consultaUrl
@@ -899,7 +1176,7 @@ app.post('/api/agendamentos/:codigo/responder-reagendamento', async (req, res) =
       data: {
         resposta: resposta,
         comentario: comentario || null,
-        novaData: novaData ? toBrasiliaDate(novaData) : null,
+  novaData: toUTCDateOnly(novaData),
         novoHorario: novoHorario || null,
         agendamentoId: agendamento.id
       }
@@ -921,11 +1198,11 @@ app.post('/api/agendamentos/:codigo/responder-reagendamento', async (req, res) =
       // Se fizer contra-proposta, status permanece 'pendente', mas marca como pendente (reagendamento)
       updateData = {
         status: 'pendente',
-        dataEntrega: novaData ? toBrasiliaDate(novaData) : agendamento.dataEntrega,
+  dataEntrega: novaData ? toUTCDateOnly(novaData) : agendamento.dataEntrega,
         horarioEntrega: novoHorario || agendamento.horarioEntrega,
         dataSugestaoCD: null,
         horarioSugestaoCD: null,
-        observacoes: 'Pendente (reagendamento)' + (comentario ? ` | Fornecedor sugeriu: ${toBrasiliaDate(novaData).toLocaleDateString('pt-BR')} às ${novoHorario}${comentario ? ' - ' + comentario : ''}` : '')
+  observacoes: 'Pendente (reagendamento)' + (comentario ? ` | Fornecedor sugeriu: ${formatDateBr(novaData)} às ${novoHorario}${comentario ? ' - ' + comentario : ''}` : '')
       };
     }
 
@@ -937,9 +1214,15 @@ app.post('/api/agendamentos/:codigo/responder-reagendamento', async (req, res) =
     // Criar histórico
     let descricaoHistorico = '';
     if (resposta === 'aceito') {
-      descricaoHistorico = `Fornecedor aceitou o reagendamento. Nova data: ${new Date(updateData.dataEntrega).toLocaleDateString('pt-BR')} às ${updateData.horarioEntrega}`;
+      const dataFormatada = agendamento.dataSugestaoCD ? 
+        formatDateBr(agendamento.dataSugestaoCD.toISOString().slice(0,10)) : 
+        formatDateBr(agendamento.dataEntrega.toISOString().slice(0,10));
+      descricaoHistorico = `Fornecedor aceitou o reagendamento. Nova data: ${dataFormatada} às ${updateData.horarioEntrega}`;
     } else if (resposta === 'contra_proposta') {
-      descricaoHistorico = `Fornecedor sugeriu nova data: ${new Date(novaData).toLocaleDateString('pt-BR')} às ${novoHorario}${comentario ? ' - ' + comentario : ''}`;
+      console.log(`🔍 [DEBUG] Formatando data no histórico - novaData original: ${novaData}`);
+      const dataFormatada = formatDateBr(novaData);
+      console.log(`🔍 [DEBUG] Data formatada: ${dataFormatada}`);
+      descricaoHistorico = `[TESTE] Fornecedor sugeriu nova data: ${dataFormatada} às ${novoHorario}${comentario ? ' - ' + comentario : ''}`;
     }
 
     await prisma.historicoAcao.create({
@@ -947,7 +1230,7 @@ app.post('/api/agendamentos/:codigo/responder-reagendamento', async (req, res) =
         acao: `reagendamento_${resposta}`,
         descricao: descricaoHistorico,
         dataAnterior: resposta === 'aceito' ? agendamento.dataSugestaoCD : agendamento.dataEntrega,
-        dataNova: resposta === 'aceito' ? updateData.dataEntrega : (novaData ? toBrasiliaDate(novaData) : null),
+  dataNova: resposta === 'aceito' ? updateData.dataEntrega : (novaData ? toUTCDateOnly(novaData) : null),
         agendamentoId: agendamento.id,
         cdId: agendamento.cdId
       }
@@ -1070,7 +1353,7 @@ app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
     await prisma.agendamento.update({
       where: { id: agendamento.id },
       data: {
-        dataEntrega: toBrasiliaDate(novaData),
+        dataEntrega: toUTCDateOnly(novaData),
         horarioEntrega: novoHorario,
         status: 'pendente',
         observacoes: motivo ? `${agendamento.observacoes || ''} | Reagendado pelo fornecedor: ${motivo}`.trim() : agendamento.observacoes
@@ -1081,7 +1364,7 @@ app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
     await prisma.historicoAcao.create({
       data: {
         acao: 'reagendamento_fornecedor',
-        descricao: `Fornecedor reagendou para: ${new Date(novaData).toLocaleDateString('pt-BR')} às ${novoHorario}`,
+        descricao: `Fornecedor reagendou para: ${formatDateBr(novaData)} às ${novoHorario}`,
         dataAnterior: agendamento.dataEntrega,
         dataNova: new Date(novaData + 'T00:00:00'),
         agendamentoId: agendamento.id,
@@ -1197,7 +1480,7 @@ app.post('/api/agendamentos/:id/sugerir-data-cd', authenticateToken, async (req,
     await prisma.historicoAcao.create({
       data: {
         acao: 'sugestao_data_cd',
-        descricao: `CD sugeriu nova data: ${new Date(novaData).toLocaleDateString('pt-BR')} às ${novoHorario}`,
+        descricao: `CD sugeriu nova data: ${formatDateBr(novaData)} às ${novoHorario}`,
         dataAnterior: agendamento.dataEntrega,
         dataNova: new Date(novaData + 'T00:00:00'),
         agendamentoId: parseInt(id),
@@ -1562,8 +1845,8 @@ app.post('/api/bloqueios-horario', authenticateToken, async (req, res) => {
     // Mapear para os novos campos do modelo
     const bloqueio = await prisma.bloqueioHorario.create({
       data: {
-  dataInicio: new Date(dataBloqueio + 'T03:00:00'),
-  dataFim: new Date(dataBloqueio + 'T03:00:00'), // Mesmo dia para início e fim
+        dataInicio: toLocalDateOnly(dataBloqueio),
+        dataFim: toLocalDateOnly(dataBloqueio), // Mesmo dia para início e fim
         horarioInicio: horaInicio,
         horarioFim: horaFim,
         motivo,
@@ -1627,8 +1910,8 @@ app.put('/api/bloqueios-horario/:id', authenticateToken, async (req, res) => {
         cdId 
       },
       data: {
-        dataInicio: new Date(dataBloqueio),
-        dataFim: new Date(dataBloqueio), // Mesmo dia para início e fim
+        dataInicio: toLocalDateOnly(dataBloqueio),
+        dataFim: toLocalDateOnly(dataBloqueio), // Mesmo dia para início e fim
         horarioInicio: horaInicio,
         horarioFim: horaFim,
         motivo
@@ -1687,8 +1970,12 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
       return res.status(400).json({ error: 'Formato de data inválido. Use YYYY-MM-DD' });
     }
 
-    // Converter data para Date object
-    const selectedDate = new Date(date + 'T00:00:00');
+    // Converter data para Date object no fuso horário local
+    const [ano, mes, dia] = date.split('-').map(Number);
+    const selectedDate = new Date(ano, mes - 1, dia); // mes - 1 porque Date usa 0-11 para meses
+    
+    console.log(`📅 [GET /api/horarios-disponiveis] Data convertida: ${selectedDate} (dia da semana: ${selectedDate.getDay()})`);
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -1697,8 +1984,10 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
       return res.status(400).json({ error: 'Não é possível consultar horários para datas passadas' });
     }
 
-    // Verificar se não é fim de semana
+    // Verificar se não é fim de semana (0=Domingo, 6=Sábado)
     const dayOfWeek = selectedDate.getDay();
+    console.log(`📅 [GET /api/horarios-disponiveis] Dia da semana: ${dayOfWeek} (0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab)`);
+    
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       return res.status(400).json({ 
         error: 'Agendamentos não são permitidos aos finais de semana',
@@ -1735,12 +2024,17 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
       }
     }
 
-    // Buscar agendamentos existentes para a data
+    // Buscar agendamentos existentes para a data (criar data local diretamente)
+    const inicioDia = new Date(ano, mes - 1, dia, 0, 0, 0, 0);
+    const fimDia = new Date(ano, mes - 1, dia, 23, 59, 59, 999);
+    
+    console.log(`📊 [GET /api/horarios-disponiveis] Buscando entre ${inicioDia} e ${fimDia}`);
+    
     const agendamentosExistentes = await prisma.agendamento.findMany({
       where: {
         dataEntrega: {
-          gte: new Date(date + 'T00:00:00'),
-          lt: new Date(date + 'T23:59:59')
+          gte: inicioDia,
+          lte: fimDia
         },
         ...(cdId && { cdId }),
         status: {
@@ -1748,18 +2042,52 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
         }
       },
       select: {
-        horarioEntrega: true
+        id: true,
+        codigo: true,
+        dataEntrega: true,
+        horarioEntrega: true,
+        status: true
       }
     });
+    
+    console.log(`🔍 [DEBUG] Query executada com critérios:
+       - dataEntrega >= ${inicioDia}
+       - dataEntrega <= ${fimDia}
+       - cdId: ${cdId || 'não especificado'}
+       - status: not cancelado`);
+    
+    if (agendamentosExistentes.length > 0) {
+      console.log(`🔍 [DEBUG] Agendamentos encontrados na data:`);
+      agendamentosExistentes.forEach(ag => {
+        console.log(`   - ${ag.codigo}: ${ag.dataEntrega} às ${ag.horarioEntrega} (${ag.status})`);
+      });
+    } else {
+      console.log(`🔍 [DEBUG] NENHUM agendamento encontrado para os critérios acima`);
+    }
 
     // Buscar bloqueios de horário para a data
+    console.log(`🔍 [DEBUG] Buscando bloqueios com critérios:`);
+    console.log(`   - dataInicio <= ${fimDia}`);
+    console.log(`   - dataFim >= ${inicioDia}`);
+    console.log(`   - ativo: true`);
+    console.log(`   - cdId: ${cdId} (se fornecido)`);
+    
+    // Debug: mostrar todos os bloqueios existentes
+    const todosBloqueios = await prisma.bloqueioHorario.findMany({
+      where: { ativo: true }
+    });
+    console.log(`🔍 [DEBUG] Total de bloqueios ativos no banco: ${todosBloqueios.length}`);
+    todosBloqueios.forEach(b => {
+      console.log(`   - ID: ${b.id}, CD: ${b.cdId}, Data: ${b.dataInicio} até ${b.dataFim}, Horário: ${b.horarioInicio}-${b.horarioFim}`);
+    });
+    
     const bloqueiosExistentes = await prisma.bloqueioHorario.findMany({
       where: {
         dataInicio: {
-          lte: new Date(date + 'T23:59:59')
+          lte: fimDia
         },
         dataFim: {
-          gte: new Date(date + 'T00:00:00')
+          gte: inicioDia
         },
         ativo: true,
         ...(cdId && { cdId })
@@ -1767,6 +2095,22 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
     });
 
     console.log(`📊 [GET /api/horarios-disponiveis] Encontrados ${agendamentosExistentes.length} agendamentos e ${bloqueiosExistentes.length} bloqueios`);
+    
+    // Log dos agendamentos encontrados
+    if (agendamentosExistentes.length > 0) {
+      console.log('📅 [DEBUG] Agendamentos encontrados:');
+      agendamentosExistentes.forEach(ag => {
+        console.log(`   - Horário: ${ag.horarioEntrega}`);
+      });
+    }
+    
+    // Log dos bloqueios encontrados
+    if (bloqueiosExistentes.length > 0) {
+      console.log('🚫 [DEBUG] Bloqueios encontrados:');
+      bloqueiosExistentes.forEach(bloqueio => {
+        console.log(`   - ID: ${bloqueio.id}, Horário: ${bloqueio.horarioInicio} às ${bloqueio.horarioFim}, Data: ${bloqueio.dataInicio}`);
+      });
+    }
 
     // Horários padrão do CD conforme regra de negócio:
     // Das 08:00 às 11:00 e das 13:00 às 16:00
@@ -1783,16 +2127,47 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
 
     // Função para verificar se um horário está bloqueado
     const isHorarioBloqueado = (horario) => {
-      return bloqueiosExistentes.some(bloqueio => {
+      const bloqueado = bloqueiosExistentes.some(bloqueio => {
         // Comparar horários inteiros (ex: 08:00, 09:00)
-        return horario === bloqueio.horarioInicio || horario === bloqueio.horarioFim ||
-          (horario >= bloqueio.horarioInicio && horario < bloqueio.horarioFim);
+        const inicio = bloqueio.horarioInicio;
+        const fim = bloqueio.horarioFim;
+        
+        console.log(`🔍 [DEBUG] Verificando horário ${horario} contra bloqueio ${inicio}-${fim}`);
+        
+        // Converter horários para minutos para comparação precisa
+        const horarioMinutos = timeToMinutes(horario);
+        const inicioMinutos = timeToMinutes(inicio);
+        const fimMinutos = timeToMinutes(fim);
+        
+        console.log(`🔍 [DEBUG] Horário em minutos: ${horario}=${horarioMinutos}, Bloqueio: ${inicio}=${inicioMinutos} até ${fim}=${fimMinutos}`);
+        
+        // Se o bloqueio vai de 08:00 às 17:00, bloquear todos os horários nesse intervalo
+        const isBlocked = horarioMinutos >= inicioMinutos && horarioMinutos <= fimMinutos;
+        
+        if (isBlocked) {
+          console.log(`🚫 [DEBUG] Horário ${horario} BLOQUEADO por bloqueio ${inicio}-${fim}`);
+        }
+        
+        return isBlocked;
       });
+      
+      return bloqueado;
     };
+
+    // Função auxiliar para converter horário em minutos
+    function timeToMinutes(timeStr) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      return hours * 60 + (minutes || 0);
+    }
 
     // Função para contar agendamentos por horário
     const getAgendamentosPorHorario = (horario) => {
-      return agendamentosExistentes.filter(ag => ag.horarioEntrega === horario).length;
+      const agendamentos = agendamentosExistentes.filter(ag => ag.horarioEntrega === horario);
+      console.log(`🔍 [DEBUG] Horário ${horario}: ${agendamentos.length} agendamentos encontrados`);
+      if (agendamentos.length > 0) {
+        console.log(`   Agendamentos no horário ${horario}:`, agendamentos.map(ag => `ID: ${ag.id || 'N/A'}`).join(', '));
+      }
+      return agendamentos.length;
     };
 
     // Processar horários disponíveis
@@ -1800,6 +2175,8 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
       const isBloqueado = isHorarioBloqueado(horario.valor);
       const agendamentosCount = getAgendamentosPorHorario(horario.valor);
       const maxAgendamentosPorHorario = 1; // Limite configurável (agora 1)
+      
+      console.log(`📊 [DEBUG] Horário ${horario.valor}: Bloqueado=${isBloqueado}, Agendamentos=${agendamentosCount}, Disponível=${!isBloqueado && agendamentosCount < maxAgendamentosPorHorario}`);
       
       return {
         ...horario,
@@ -1848,8 +2225,14 @@ app.get('/api/kpis', authenticateToken, async (req, res) => {
     // Filtrar por período quando informado (assume formato YYYY-MM-DD)
     if (start || end) {
       where.dataEntrega = {};
-      if (start) where.dataEntrega.gte = new Date(start + 'T00:00:00');
-      if (end) where.dataEntrega.lte = new Date(end + 'T23:59:59');
+      if (start) {
+        const [y,m,d] = start.split('-').map(Number);
+        where.dataEntrega.gte = new Date(y, m-1, d, 0, 0, 0, 0);
+      }
+      if (end) {
+        const [y,m,d] = end.split('-').map(Number);
+        where.dataEntrega.lte = new Date(y, m-1, d, 23, 59, 59, 999);
+      }
     }
 
     // Buscar agendamentos com fornecedor
@@ -2001,6 +2384,8 @@ app.listen(PORT, () => {
   console.log('\n📋 Endpoints disponíveis:');
   console.log('• POST /api/auth/login - Login de CD');
   console.log('• POST /api/auth/change-password - Alterar senha');
+  console.log('• GET /api/verify-token - Verificar se token é válido');
+  console.log('• POST /api/renew-token - Renovar token de autenticação');
   console.log('• GET /api/agendamentos - Listar agendamentos');
   console.log('• POST /api/agendamentos - Criar agendamento');
   console.log('• GET /api/agendamentos/consultar/:codigo - Consultar agendamento');

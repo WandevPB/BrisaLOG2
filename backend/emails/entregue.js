@@ -1,5 +1,5 @@
 // Template: Entrega Realizada
-module.exports = function({ fornecedorNome, agendamentoCodigo, cdNome, consultaUrl }) {
+module.exports = function({ fornecedorNome, agendamentoCodigo, cdNome, baseUrl }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%); color: white; border-radius: 10px; padding: 30px 20px; text-align: center;">
@@ -13,9 +13,9 @@ module.exports = function({ fornecedorNome, agendamentoCodigo, cdNome, consultaU
           <strong>📦 Código do Agendamento:</strong> <span style="font-size: 18px; color: #FF6B35;">${agendamentoCodigo}</span>
         </div>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${consultaUrl}" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🔍 Consultar Status do Agendamento</a>
+          <a href="${baseUrl}" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🌐 Acessar Portal BrisaLOG</a>
         </div>
-        <p style="font-size: 15px; color: #666;">Para consultar, acesse o link acima e informe o código: <b>${agendamentoCodigo}</b></p>
+        <p style="font-size: 15px; color: #666;">Acesse o portal para consultar o status dos seus agendamentos.</p>
       </div>
       <div style="text-align: center; margin-top: 40px; color: #999; font-size: 13px;">
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
