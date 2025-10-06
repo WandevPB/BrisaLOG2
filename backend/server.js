@@ -2607,6 +2607,11 @@ app.post('/api/test-email/:email', async (req, res) => {
   const email = req.params.email;
   
   try {
+    // Debug das variáveis
+    console.log('🔧 FROM_EMAIL:', process.env.FROM_EMAIL);
+    console.log('🔧 GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
+    console.log('🔧 GMAIL_APP_PASSWORD length:', process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.length : 0);
+    
     // Usar Railway Email Service
     const railwayEmailService = require('./railwayEmailService');
     
@@ -2621,7 +2626,12 @@ app.post('/api/test-email/:email', async (req, res) => {
       success: true, 
       result: result,
       message: 'Email de teste enviado via Railway',
-      service: 'Railway SMTP'
+      service: 'Railway SMTP',
+      debug: {
+        hasFromEmail: !!process.env.FROM_EMAIL,
+        hasGmailPassword: !!process.env.GMAIL_APP_PASSWORD,
+        passwordLength: process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.length : 0
+      }
     });
     
   } catch (error) {
