@@ -258,79 +258,30 @@ class EmailService {
         });
     }
 
-    // Utilitário de envio híbrido (notificação garantida + tentativa direta)
+    // Utilitário de envio otimizado para produção
     async _send({ to, subject, html }) {
-        console.log(`📧 [HYBRID] Enviando email para: ${to}`);
+        console.log(`📧 [PRODUCTION] Enviando email para: ${to}`);
         
-        const results = {
-            notification: { success: false },
-            direct: { success: false }
-        };
-        
-        // PARTE 1: NOTIFICAÇÃO GARANTIDA (sempre para você)
         try {
-            const resendEmailService = require('./resendEmailFinal');
-            const notificationResult = await resendEmailService.sendEmail({ 
-                to: 'wandevpb@gmail.com',
-                subject: `[NOTIFICAÇÃO] ${subject} | Para: ${to}`,
-                html: `
-                    <div style="background: #1e40af; color: white; padding: 15px; text-align: center; margin-bottom: 20px;">
-                        <h2 style="margin: 0;">📬 Notificação de Email - BrisaLOG</h2>
-                        <p style="margin: 5px 0;">Este email deveria ser enviado para: <strong>${to}</strong></p>
-                    </div>
-                    ${html}
-                    <div style="background: #f3f4f6; border-top: 2px solid #6b7280; padding: 15px; margin-top: 20px;">
-                        <h3 style="color: #374151; margin-top: 0;">📋 Informações da Entrega:</h3>
-                        <p style="margin: 5px 0; color: #6b7280;"><strong>Destinatário Original:</strong> ${to}</p>
-                        <p style="margin: 5px 0; color: #6b7280;"><strong>Assunto Original:</strong> ${subject}</p>
-                        <p style="margin: 5px 0; color: #6b7280;"><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
-                        <p style="margin: 5px 0; color: #6b7280;"><strong>Status:</strong> Notificação enviada para administrador</p>
-                    </div>
-                `
-            });
+            // Usar serviço de produção otimizado
+            const resendProductionService = require('./resendProductionService');
+            const result = await resendProductionService.sendEmail({ to, subject, html });
             
-            results.notification = notificationResult;
-            if (notificationResult.success) {
-                console.log('✅ [HYBRID] Notificação enviada para administrador');
+            if (result.success) {
+                console.log(`✅ [PRODUCTION] Email enviado! Para: ${result.sentTo} (Original: ${result.originalTo})`);
+                return result;
+            } else {
+                console.error(`❌ [PRODUCTION] Falha no envio:`, result.error);
+                return result;
             }
         } catch (error) {
-            console.error('❌ [HYBRID] Falha na notificação:', error.message);
+            console.error('❌ [PRODUCTION] Erro no serviço:', error.message);
+            return { 
+                success: false, 
+                error: error.message,
+                method: 'PRODUCTION_ERROR'
+            };
         }
-        
-        // PARTE 2: TENTATIVA DIRETA (melhor esforço)
-        if (to !== 'wandevpb@gmail.com' && to.includes('@grupobrisanet.com.br')) {
-            try {
-                console.log(`📧 [HYBRID] Tentando envio direto para: ${to}`);
-                
-                // Tentar SendGrid se disponível
-                if (process.env.EMAIL_PASS) {
-                    const sendgridHTTPSService = require('./sendgridHTTPSService');
-                    const directResult = await sendgridHTTPSService.sendEmail({ to, subject, html });
-                    results.direct = directResult;
-                    
-                    if (directResult.success) {
-                        console.log('✅ [HYBRID] Envio direto via SendGrid bem-sucedido!');
-                    }
-                }
-            } catch (error) {
-                console.error('❌ [HYBRID] Falha no envio direto:', error.message);
-                results.direct = { success: false, error: error.message };
-            }
-        }
-        
-        // Retornar resultado consolidado
-        const overallSuccess = results.notification.success;
-        return {
-            success: overallSuccess,
-            messageId: results.notification.messageId || 'hybrid-' + Date.now(),
-            method: 'HYBRID_NOTIFICATION',
-            details: {
-                notification: results.notification,
-                direct: results.direct,
-                originalRecipient: to,
-                guaranteedDelivery: 'wandevpb@gmail.com'
-            }
-        };
     }
 }
 

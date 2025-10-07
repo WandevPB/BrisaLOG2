@@ -2844,6 +2844,72 @@ app.get('/api/debug-env', (req, res) => {
   });
 });
 
+// Endpoint para demonstrar sistema com domínio
+app.post('/api/demo-with-domain/:email', async (req, res) => {
+  console.log('📧 [DOMAIN DEMO] Demonstrando sistema com domínio...');
+  const { email } = req.params;
+  
+  try {
+    const resendProductionService = require('./resendProductionService');
+    
+    const result = await resendProductionService.sendEmail({
+      to: email,
+      subject: 'DEMO: Como funcionará com domínio verificado',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #10b981;">🚀 Sistema com Domínio Funcionando!</h1>
+            
+            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+              <h3 style="color: #065f46; margin-top: 0;">✅ Com Domínio Verificado:</h3>
+              <p style="margin: 5px 0; color: #065f46;">• Emails enviados diretamente para fornecedores</p>
+              <p style="margin: 5px 0; color: #065f46;">• Sem limitações de destinatário</p>
+              <p style="margin: 5px 0; color: #065f46;">• Entregabilidade profissional</p>
+              <p style="margin: 5px 0; color: #065f46;">• Remetente: noreply@seudominio.com</p>
+            </div>
+            
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+              <h3 style="color: #92400e; margin-top: 0;">🛠️ Para Configurar:</h3>
+              <ol style="color: #92400e; margin: 10px 0;">
+                <li>Compre domínio (ex: brisalog.com.br)</li>
+                <li>Configure DNS no Resend</li>
+                <li>Aguarde verificação (24-48h)</li>
+                <li>Configure: DOMAIN_VERIFIED=true</li>
+                <li>Configure: FROM_EMAIL_VERIFIED=noreply@seudominio.com</li>
+              </ol>
+              <p style="color: #92400e; margin: 5px 0;"><strong>Custo:</strong> ~R$5-40/mês</p>
+            </div>
+            
+            <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
+              <h3 style="color: #1e40af; margin-top: 0;">📧 Destinatário:</h3>
+              <p style="margin: 5px 0; color: #1e40af;"><strong>Este email seria para:</strong> ${email}</p>
+              <p style="margin: 5px 0; color: #1e40af;"><strong>Modo atual:</strong> ${process.env.DOMAIN_VERIFIED === 'true' ? 'PRODUÇÃO' : 'FALLBACK'}</p>
+              <p style="margin: 5px 0; color: #1e40af;"><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+    
+    console.log('✅ [DOMAIN DEMO] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Demo de sistema com domínio',
+      currentMode: process.env.DOMAIN_VERIFIED === 'true' ? 'PRODUCTION' : 'FALLBACK',
+      guideUrl: 'Consulte o arquivo GUIA_DOMINIO.md',
+      estimatedCost: 'R$5-40/mês para funcionalidade completa'
+    });
+    
+  } catch (error) {
+    console.error('❌ [DOMAIN DEMO] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message
+    });
+  }
+});
+
 // Teste específico para email Brisanet com sistema híbrido
 app.post('/api/test-hybrid-brisanet', async (req, res) => {
   console.log('📧 [HYBRID BRISANET] Testando sistema híbrido...');
