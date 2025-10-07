@@ -2844,6 +2844,62 @@ app.get('/api/debug-env', (req, res) => {
   });
 });
 
+// Teste específico para email Brisanet com sistema híbrido
+app.post('/api/test-hybrid-brisanet', async (req, res) => {
+  console.log('📧 [HYBRID BRISANET] Testando sistema híbrido...');
+  
+  try {
+    const emailService = require('./emailService');
+    
+    const result = await emailService._send({
+      to: 'wanderson.goncalves@grupobrisanet.com.br',
+      subject: 'Teste Sistema Híbrido - BrisaLOG',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #10b981;">🔄 Sistema Híbrido Funcionando!</h1>
+            <p>Este é um teste do sistema híbrido de emails do BrisaLOG Portal.</p>
+            
+            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+              <h3 style="color: #065f46; margin-top: 0;">📋 Como Funciona:</h3>
+              <p style="margin: 5px 0; color: #065f46;">1. <strong>Notificação Garantida:</strong> Enviada para wandevpb@gmail.com</p>
+              <p style="margin: 5px 0; color: #065f46;">2. <strong>Tentativa Direta:</strong> Tenta enviar para email original</p>
+              <p style="margin: 5px 0; color: #065f46;">3. <strong>Resultado:</strong> Pelo menos uma entrega garantida</p>
+            </div>
+            
+            <div style="background: #fff3e0; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e;">
+                <strong>🎯 Teste:</strong> Este email deveria chegar em wanderson.goncalves@grupobrisanet.com.br
+                mas você também receberá uma notificação em wandevpb@gmail.com
+              </p>
+            </div>
+            
+            <p><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+          </div>
+        </div>
+      `
+    });
+    
+    console.log('✅ [HYBRID BRISANET] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Sistema híbrido testado - verificar ambos os emails',
+      targetEmail: 'wanderson.goncalves@grupobrisanet.com.br',
+      notificationEmail: 'wandevpb@gmail.com',
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ [HYBRID BRISANET] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Endpoint especial para testar email da Brisanet (força fallbacks)
 app.post('/api/test-brisanet-email', async (req, res) => {
   console.log('📧 [BRISANET TEST] Testando email para Brisanet...');
