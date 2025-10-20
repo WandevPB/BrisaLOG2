@@ -2231,8 +2231,8 @@ class CDDashboard {
             
             console.log('Carregando horários disponíveis para data:', novaData, 'CD ID:', cdId);
             
-            // Chamar API para obter horários disponíveis
-            const response = await fetch(`/api/horarios-disponiveis?date=${novaData}&cd=${cdId}`, {
+            // Chamar API para obter horários disponíveis (usar base URL para produção)
+            const response = await fetch(`${getApiBaseUrl()}/api/horarios-disponiveis?date=${novaData}&cd=${cdId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
