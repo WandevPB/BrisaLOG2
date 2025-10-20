@@ -2557,7 +2557,7 @@ app.get('/api/kpis', authenticateToken, async (req, res) => {
 });
 
 // Rota para listar CDs (para select)
-app.get('/api/cds', authenticateToken, async (req, res) => {
+app.get('/api/cds', async (req, res) => {
   try {
     const cds = await prisma.cd.findMany({ select: { id: true, nome: true } });
     res.json(cds);
