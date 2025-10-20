@@ -2066,18 +2066,7 @@ class CDDashboard {
             this.showNotification(`Erro ao atualizar status: ${error.message}`, 'error');
         }
     }
-    constructor() {
-        this.agendamentos = [];
-        this.filteredAgendamentos = [];
-        this.currentView = 'cards';
-        this.currentAgendamentoId = null;
-        this.cdId = null; // CORREÇÃO: Inicializar cdId
-        // Propriedades de paginação
-        this.currentPage = 1;
-        this.itemsPerPage = 10;
-        this.totalPages = 1;
-        this.init();
-    }
+    // ...existing code...
 
         toggleUserMenu() {
             const userMenu = document.getElementById('user-menu');
