@@ -151,7 +151,7 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log(`🚀 Servidor BrisaLOG Portal rodando na porta ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
-      console.log(`🔐 API Base URL: http://localhost:${PORT}/api`);
+  console.log(`🔐 API Base URL: https://brisalog-back.onrender.com/api`);
       console.log('\n📋 Endpoints disponíveis:');
       console.log('• POST /api/auth/login - Login de CD');
       console.log('• POST /api/auth/change-password - Alterar senha');
