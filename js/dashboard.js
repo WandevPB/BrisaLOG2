@@ -4,17 +4,6 @@ function getApiBaseUrl() {
     return 'https://brisalog-back.onrender.com';
 }
 
-// Função global para verificar token expirado
-function handleTokenExpired(response) {
-    if (response.status === 403) {
-        console.log('🔒 Token expirado, redirecionando para login...');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login.html';
-        return true;
-    }
-    return false;
-}
 
 // Função utilitária para converter datas do backend para timezone local
 function parseLocalDate(dateInput) {
@@ -160,6 +149,12 @@ window.submitBloqueioButton = function() {
 
 // Modal DASHBOARD KPIs removido - será refeito do zero conforme solicitado
 // Funções globais para compatibilidade com HTML (onclick)
+
+// Assegure que as funções globais estejam no escopo global, fora de qualquer bloco/class
+
+// --- Funções globais para compatibilidade com HTML (onclick) ---
+// --- Funções globais para compatibilidade com HTML (onclick) ---
+// (Deve estar no final do arquivo, após todas as funções e classes)
 window.openConsultaModal = function() { dashboard.openConsultaModal(); };
 window.closeConsultaModal = function() { dashboard.closeConsultaModal(); };
 window.openRegistrarEntregaModal = function() { dashboard.openRegistrarEntregaModal(); };
@@ -247,7 +242,6 @@ function showNotification(message, type = 'info') {
         }, 300);
     }, 5000);
 }
-
 class CDDashboard {
     constructor() {
         this.agendamentos = [];
@@ -524,6 +518,7 @@ class CDDashboard {
     closeBloqueioModal() {
         document.getElementById('bloqueio-modal')?.classList.add('hidden');
     }
+// ...existing code...
 
     openGerenciarBloqueiosModal() {
         document.getElementById('gerenciar-bloqueios-modal')?.classList.remove('hidden');
@@ -1150,7 +1145,7 @@ class CDDashboard {
         // Verificar se a entrega foi incluída pelo CD
         const incluidoPeloCD = agendamento.incluidoPeloCD;
         const cdIndicator = incluidoPeloCD ? 
-            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-3 flex items-center">
+            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-2 flex items-center">
                 <i class="fas fa-exclamation-circle mr-1"></i>
                 ENTREGA INCLUÍDA PELO CD
             </div>` : '';
@@ -1209,7 +1204,7 @@ class CDDashboard {
         // Verificar se a entrega foi incluída pelo CD
         const incluidoPeloCD = agendamento.incluidoPeloCD;
         const cdIndicator = incluidoPeloCD ? 
-            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-3 border border-yellow-400 flex items-center">
+            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-2 border border-yellow-400 flex items-center">
                 <i class="fas fa-exclamation-circle mr-1"></i>
                 ENTREGA INCLUÍDA PELO CD
             </div>` : '';
@@ -2023,7 +2018,7 @@ class CDDashboard {
         } else if (agendamento.status === 'reagendamento') {
             return `
                 <div class="w-full bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
-                    <i class="fas fa-clock text-yellow-600 text-lg mb-1"></i>
+                    <i class="fas fa-hourglass-half text-yellow-600 text-lg mb-1"></i>
                     <p class="text-yellow-800 font-medium text-sm">Aguardando resposta do fornecedor</p>
                     <p class="text-yellow-700 text-xs">Nova data foi sugerida e notificação enviada</p>
                 </div>
@@ -2057,812 +2052,697 @@ class CDDashboard {
 
     async updateAgendamentoStatus(id, newStatus) {
         try {
-            const token = sessionStorage.getItem('token');
-            
-            console.log('Atualizando status:', { id, newStatus, token: token ? 'presente' : 'ausente' });
-            
-            const response = await fetch(`/api/agendamentos/${id}/status`, {
+            console.log('Atualizando status:', { id, newStatus });
+            const result = await apiRequest(`/api/agendamentos/${id}/status`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify({ status: newStatus })
             });
-
-            console.log('Response status:', response.status, response.statusText);
-            
-            if (response.ok) {
-                const result = await response.json();
-                console.log('Status atualizado com sucesso:', result);
-                
-                // Recarregar dados do dashboard
-                await this.loadAgendamentos();
-                
-                // Fechar modal se estiver aberto
-                this.closeDetailModal();
-                
-                // Mostrar notificação de sucesso
-                this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)}`, 'success');
-                
-            } else {
-                // Verificar se é token expirado
-                if (handleTokenExpired(response)) {
-                    return;
-                }
-                
-                const errorData = await response.json().catch(() => ({}));
-                console.error('Erro na resposta:', response.status, errorData);
-                throw new Error(errorData.error || `Erro HTTP ${response.status}`);
-            }
+            console.log('Status atualizado com sucesso:', result);
+            await this.loadAgendamentos();
+            this.closeDetailModal();
+            this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)}`, 'success');
         } catch (error) {
             console.error('Erro ao atualizar status:', error);
             this.showNotification(`Erro ao atualizar status: ${error.message}`, 'error');
         }
     }
+    constructor() {
+        this.agendamentos = [];
+        this.filteredAgendamentos = [];
+        this.currentView = 'cards';
+        this.currentAgendamentoId = null;
+        this.cdId = null; // CORREÇÃO: Inicializar cdId
+        // Propriedades de paginação
+        this.currentPage = 1;
+        this.itemsPerPage = 10;
+        this.totalPages = 1;
+        this.init();
+    }
 
-    async cancelAgendamento(id) {
-        const motivo = prompt('Digite o motivo do cancelamento (obrigatório):');
-        
-        if (!motivo || motivo.trim() === '') {
-            this.showNotification('Motivo do cancelamento é obrigatório.', 'warning');
-            return;
+        toggleUserMenu() {
+            const userMenu = document.getElementById('user-menu');
+            if (userMenu) {
+                userMenu.classList.toggle('hidden');
+            }
         }
 
-        if (!confirm('Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.')) {
-            return;
-        }
-
-        try {
-            const token = sessionStorage.getItem('token');
+        // Configura todos os campos de data para aceitar apenas dias úteis
+        setMinDate() {
+            const today = new Date();
             
-            const response = await fetch(`/api/agendamentos/${id}/cancelar`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+            // Função para verificar se é dia útil
+            const isWeekday = (date) => {
+                const day = date.getDay();
+                return day !== 0 && day !== 6; // 0 = domingo, 6 = sábado
+            };
+            
+            // Função para encontrar próximo dia útil
+            const getNextWeekday = (date) => {
+                const nextDay = new Date(date);
+                while (!isWeekday(nextDay)) {
+                    nextDay.setDate(nextDay.getDate() + 1);
+                }
+                return nextDay;
+            };
+            
+            // Se hoje não for dia útil, usar próximo dia útil
+            const minDate = isWeekday(today) ? today : getNextWeekday(today);
+            const minDateString = minDate.toISOString().split('T')[0];
+            
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                input.min = minDateString;
+                
+                // Adicionar validação para impedir seleção de fins de semana
+                if (!input.hasAttribute('data-weekday-validator')) {
+                    input.addEventListener('change', function() {
+                        const selectedDate = new Date(this.value + 'T00:00:00');
+                        if (!isWeekday(selectedDate)) {
+                            alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
+                            const nextWeekday = getNextWeekday(selectedDate);
+                            this.value = nextWeekday.toISOString().split('T')[0];
+                        }
+                    });
+                    input.setAttribute('data-weekday-validator', 'true');
+                }
+                
+                // Definir valor padrão como próximo dia útil se estiver vazio
+                if (!input.value) {
+                    const defaultDate = getNextWeekday(new Date());
+                    input.value = defaultDate.toISOString().split('T')[0];
+                }
+            });
+        }
+
+        // Modal KPIs
+        openKpisModal() {
+            document.getElementById('dashboard-kpis-modal')?.classList.remove('hidden');
+            this.loadKpis();
+        }
+
+        closeKpisModal() {
+            document.getElementById('dashboard-kpis-modal')?.classList.add('hidden');
+        }
+
+        async loadKpis() {
+            const loading = document.getElementById('kpis-loading');
+            const content = document.getElementById('kpis-content');
+            loading.classList.remove('hidden');
+            content.innerHTML = '';
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch('/api/kpis', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Erro ao buscar KPIs');
+                const kpis = await res.json();
+                loading.classList.add('hidden');
+                content.innerHTML = this.renderKpisContent(kpis);
+                this.renderKpisCharts(kpis);
+            } catch (e) {
+                loading.classList.add('hidden');
+                content.innerHTML = `<div class='text-center text-red-600 font-bold'>Erro ao carregar KPIs</div>`;
+            }
+        }
+
+        renderKpisContent(kpis) {
+            // KPIs principais
+            return `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div class="bg-gradient-to-br from-orange-primary to-orange-accent text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                    <div class="text-4xl font-bold mb-2">${kpis.totalAgendamentos ?? '-'}</div>
+                    <div class="text-lg font-semibold">Total de Agendamentos</div>
+                </div>
+                <div class="bg-gradient-to-br from-green-500 to-green-400 text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                    <div class="text-4xl font-bold mb-2">${kpis.percentEntregues ?? '-'}</div>
+                    <div class="text-lg font-semibold">% Entregues</div>
+                </div>
+                <div class="bg-gradient-to-br from-red-500 to-orange-primary text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                    <div class="text-4xl font-bold mb-2">${kpis.percentNaoVeio ?? '-'}</div>
+                    <div class="text-lg font-semibold">% Não Veio</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="font-bold text-orange-primary text-lg flex items-center"><i class="fas fa-chart-pie mr-2"></i>Status dos Agendamentos</div>
+                        <button onclick="dashboard.loadKpis()" class="bg-orange-primary text-white px-3 py-1 rounded hover:bg-orange-secondary"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                    <canvas id="kpi-status-pizza" height="180"></canvas>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                    <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-chart-line mr-2"></i>Agendamentos por Dia</div>
+                    <canvas id="kpi-agendamentos-linha" height="180"></canvas>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                    <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-stopwatch mr-2"></i>Tempo Médio de Permanência</div>
+                    <div class="text-3xl font-bold text-gray-700">${kpis.tempoMedioPermanencia ?? '-'}</div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                    <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-users mr-2"></i>Top 5 Fornecedores Não Veio</div>
+                    <canvas id="kpi-top-fornecedores" height="180"></canvas>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col mb-8">
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-chart-bar mr-2"></i>Não Veio por Dia</div>
+                <canvas id="kpi-nao-veio-linha" height="180"></canvas>
+            </div>
+            `;
+        }
+
+        renderKpisCharts(kpis) {
+            // Pizza status
+            if (window.kpiStatusPizza) window.kpiStatusPizza.destroy();
+            window.kpiStatusPizza = new Chart(document.getElementById('kpi-status-pizza').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: kpis.statusLabels,
+                    datasets: [{
+                        data: kpis.statusValores,
+                        backgroundColor: [
+                            '#FF6B35','#10B981','#3B82F6','#EF4444','#8B5CF6'
+                        ],
+                    }]
                 },
-                body: JSON.stringify({ motivo: motivo.trim() })
+                options: {
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#FF6B35', font: { weight: 'bold' } } }
+                    }
+                }
+            });
+            // Linha agendamentos por dia
+            if (window.kpiAgendLinha) window.kpiAgendLinha.destroy();
+            window.kpiAgendLinha = new Chart(document.getElementById('kpi-agendamentos-linha').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: kpis.agendamentosLabels,
+                    datasets: [{
+                        label: 'Agendamentos',
+                        data: kpis.agendamentosValores,
+                        borderColor: '#FF6B35',
+                        backgroundColor: 'rgba(255,107,53,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
+                }
+            });
+            // Top fornecedores não veio
+            if (window.kpiTopForn) window.kpiTopForn.destroy();
+            window.kpiTopForn = new Chart(document.getElementById('kpi-top-fornecedores').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: kpis.topFornecedoresLabels,
+                    datasets: [{
+                        label: 'Não Veio',
+                        data: kpis.topFornecedoresValores,
+                        backgroundColor: '#EF4444',
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
+                }
+            });
+            // Linha não veio por dia
+            if (window.kpiNaoVeioLinha) window.kpiNaoVeioLinha.destroy();
+            window.kpiNaoVeioLinha = new Chart(document.getElementById('kpi-nao-veio-linha').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: kpis.agendamentosLabels,
+                    datasets: [{
+                        label: 'Não Veio',
+                        data: kpis.naoVeioPorDia,
+                        borderColor: '#EF4444',
+                        backgroundColor: 'rgba(239,68,68,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#EF4444' } } }
+                }
+            });
+        }
+
+        // Funções globais para abrir/fechar modais do dashboard
+        openConsultaModal() {
+            document.getElementById('consulta-modal')?.classList.remove('hidden');
+        }
+
+        closeConsultaModal() {
+            document.getElementById('consulta-modal')?.classList.add('hidden');
+        }
+
+        openRegistrarEntregaModal() {
+            const modal = document.getElementById('registrar-entrega-modal');
+            modal.classList.remove('hidden');
+            
+            // Reset do formulário
+            entregaCurrentStep = 1;
+            entregaPedidos = [];
+            entregaCurrentPedido = 0;
+            
+            // Mostrar apenas o primeiro step
+            mostrarStepEntrega(1);
+            
+            // Configurar data atual
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('entrega-data').value = hoje;
+            
+            // Configurar horário atual
+            const agora = new Date();
+            const horaAtual = agora.getHours().toString().padStart(2, '0') + ':00';
+            const selectHorario = document.getElementById('entrega-horario');
+            if (selectHorario) {
+                selectHorario.value = horaAtual;
+            }
+            
+            // Configurar o submit do formulário
+            document.getElementById('registrar-entrega-form').onsubmit = handleRegistrarEntrega;
+        }
+
+        closeRegistrarEntregaModal() {
+            document.getElementById('registrar-entrega-modal')?.classList.add('hidden');
+        }
+
+        openBloqueioModal() {
+            document.getElementById('bloqueio-modal')?.classList.remove('hidden');
+        }
+
+        closeBloqueioModal() {
+            document.getElementById('bloqueio-modal')?.classList.add('hidden');
+        }
+
+        openGerenciarBloqueiosModal() {
+            document.getElementById('gerenciar-bloqueios-modal')?.classList.remove('hidden');
+        }
+
+        closeGerenciarBloqueiosModal() {
+            document.getElementById('gerenciar-bloqueios-modal')?.classList.add('hidden');
+        }
+
+        openEntregasModal() {
+            document.getElementById('modal-entregas')?.classList.remove('hidden');
+        }
+
+        closeEntregasModal() {
+            document.getElementById('modal-entregas')?.classList.add('hidden');
+        }
+
+        closeDetailModal() {
+            document.getElementById('detail-modal')?.classList.add('hidden');
+        }
+
+        closeSuggestDateModal() {
+            document.getElementById('suggest-date-modal')?.classList.add('hidden');
+        }
+
+        closeAllStatusModal() {
+            document.getElementById('all-status-modal')?.classList.add('hidden');
+        }
+
+        closeTodayDeliveriesModal() {
+            document.getElementById('today-deliveries-modal')?.classList.add('hidden');
+        }
+
+        closeStatusModal() {
+            document.getElementById('status-modal')?.classList.add('hidden');
+        }
+
+        closeEditarBloqueioModal() {
+            document.getElementById('editar-bloqueio-modal')?.classList.add('hidden');
+        }
+
+        fecharModalEntregas() {
+            document.getElementById('modal-entregas-entregues')?.classList.add('hidden');
+        }
+
+        // CORREÇÃO: Método getCDFromToken adicionado
+        getCDFromToken() {
+            try {
+                const token = sessionStorage.getItem('token');
+                if (!token) return null;
+                
+                if (token.includes('.')) {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    return payload.cdId || payload.id || null;
+                }
+                return null;
+            } catch (error) {
+                console.error('Erro ao decodificar token:', error);
+                return null;
+            }
+        }
+
+        // Função para formatar datas de forma segura
+        formatDate(dateString) {
+        // Extrai 'YYYY-MM-DD' de ISO ou já recebe 'YYYY-MM-DD', retorna 'DD/MM/YYYY'
+        if (!dateString) return '';
+        const [isoDate] = dateString.split('T');
+        if (!isoDate || isoDate.length < 10) return '';
+        const [ano, mes, dia] = isoDate.split('-');
+        return `${dia}/${mes}/${ano}`;
+        }
+
+        // Função para formatar data e hora de forma segura
+        formatDateTime(dateString) {
+            if (!dateString) {
+                return 'Data/Hora não informada';
+            }
+            
+            try {
+                const date = new Date(dateString);
+                
+                // Verificar se a data é válida
+                if (isNaN(date.getTime())) {
+                    return 'Data/Hora inválida';
+                }
+                
+                return date.toLocaleString('pt-BR');
+            } catch (error) {
+                console.error('Erro ao formatar data/hora:', error, 'Data:', dateString);
+                return 'Data/Hora inválida';
+            }
+        }
+
+        // Função para criar objeto Date de forma segura
+        createSafeDate(dateString) {
+            if (!dateString) {
+                return new Date();
+            }
+            
+            try {
+                let date;
+                
+                if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    date = new Date(dateString + 'T00:00:00');
+                } else {
+                    date = new Date(dateString);
+                }
+                
+                return isNaN(date.getTime()) ? new Date() : date;
+            } catch (error) {
+                console.error('Erro ao criar data:', error, 'Data:', dateString);
+                return new Date();
+            }
+        }
+
+        init() {
+            this.checkAuthentication();
+            this.setupEventListeners();
+            // Botão KPIs
+            const kpisBtn = document.getElementById('dashboard-kpis-button');
+            if (kpisBtn) {
+                kpisBtn.onclick = () => this.openKpisModal();
+            }
+            this.loadUserInfo();
+            this.loadAgendamentos();
+            this.setMinDate();
+        }
+
+        checkAuthentication() {
+            const token = sessionStorage.getItem('token');
+            const usuario = sessionStorage.getItem('usuario');
+            
+            if (!token || !usuario) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                if (token.includes('.')) { // Token JWT
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    if (payload.exp && payload.exp * 1000 < Date.now()) {
+                        sessionStorage.clear();
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                } else { // Token simples
+                    const payload = JSON.parse(atob(token));
+                    if (payload.exp && payload.exp < Date.now()) {
+                        sessionStorage.clear();
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('Token não pôde ser decodificado, mantendo sessão:', error);
+            }
+        }
+
+        setupEventListeners() {
+            // User menu toggle
+            document.getElementById('user-menu-button').addEventListener('click', this.toggleUserMenu);
+            
+            // Close user menu when clicking outside (LÓGICA CORRIGIDA)
+            document.addEventListener('click', (e) => {
+                const userMenu = document.getElementById('user-menu');
+                const userMenuButton = document.getElementById('user-menu-button');
+                
+                // Só fecha se o clique for fora do botão E fora do menu
+                if (!userMenuButton.contains(e.target) && !userMenu.contains(e.target)) {
+                    userMenu.classList.add('hidden');
+                }
             });
 
-            if (response.ok) {
-                await this.loadAgendamentos();
-                this.closeDetailModal();
-                this.showNotification('Agendamento cancelado com sucesso.', 'success');
-            } else {
-                throw new Error('Erro ao cancelar agendamento');
-            }
-        } catch (error) {
-            console.error('Erro ao cancelar agendamento:', error);
-            this.showNotification('Erro ao cancelar agendamento.', 'error');
-        }
-    }
+            // Suggest date form
+            document.getElementById('suggest-date-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleSuggestDate();
+            });
+            
+            // Atualizar horários disponíveis quando a data mudar
+            document.getElementById('nova-data').addEventListener('change', () => {
+                this.carregarHorariosDisponiveis();
+            });
 
-    async suggestNewDate(id) {
-        this.currentAgendamentoId = id;
-        document.getElementById('suggest-date-form').reset();
-        this.setMinDate();
-        
-        // Configurar data mínima como hoje
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('nova-data').min = today;
-        document.getElementById('nova-data').value = today;
-        
-        // Carregar horários disponíveis para o CD logado
-        await this.carregarHorariosDisponiveis();
-        
-        document.getElementById('suggest-date-modal').classList.remove('hidden');
-    }
-    
-    // Função para carregar horários disponíveis do CD logado
-    async carregarHorariosDisponiveis() {
-        try {
-            const novaData = document.getElementById('nova-data').value;
-            const horarioSelect = document.getElementById('novo-horario');
-            
-            // Limpar opções existentes
-            horarioSelect.innerHTML = '<option value="">Carregando horários...</option>';
-            
-            // Obter ID do CD logado
-            let cdId = this.cdId;
-            
-            // Se não tiver o cdId na instância, tentar recuperar do sessionStorage
-            if (!cdId) {
-                console.log('this.cdId não encontrado, tentando recuperar de outras fontes');
-                
-                // Tentar obter do cdInfo
-                const cdInfo = sessionStorage.getItem('cdInfo');
+            // Close modals when clicking outside
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-backdrop')) {
+                    this.closeDetailModal();
+                    this.closeSuggestDateModal();
+                }
+            });
+
+            // Setup consulta form
+            const consultaForm = document.getElementById('consulta-form');
+            if (consultaForm) {
+                consultaForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.consultarAgendamento(); // Chama o método da classe
+                });
+            }
+        }
+
+        // CORREÇÃO: Método loadUserInfo completo e correto
+        loadUserInfo() {
+            const usuario = sessionStorage.getItem('usuario');
+            // Preencher nome do usuário no menu
+            const usuarioNomeEl = document.getElementById('usuario-nome');
+            if (usuarioNomeEl && usuario) {
+                usuarioNomeEl.textContent = usuario;
+            }
+            const cd = sessionStorage.getItem('cd');
+            const cdInfo = sessionStorage.getItem('cdInfo');
+            // Preencher o nome do CD no header
+            const cdNomeEl = document.getElementById('cd-nome');
+            if (cdNomeEl) {
+                let nome = 'Não identificado';
                 if (cdInfo) {
                     try {
-                        const cdInfoObj = JSON.parse(cdInfo);
-                        cdId = cdInfoObj.id;
-                        this.cdId = cdId; // Salvar na instância
-                        console.log('CD ID recuperado do cdInfo:', cdId);
-                    } catch (error) {
-                        console.error('Erro ao parsear cdInfo:', error);
+                        const cdObj = JSON.parse(cdInfo);
+                        if (cdObj && cdObj.nome) {
+                            nome = cdObj.nome;
+                        }
+                    } catch (e) {
+                        // Se der erro, mantém o padrão
                     }
                 }
-                
-                // Tentar obter do token usando o novo método
-                if (!cdId) {
-                    cdId = this.getCDFromToken();
-                    if (cdId) {
-                        this.cdId = cdId; // Salvar na instância
-                        console.log('CD ID recuperado do token:', cdId);
-                    }
-                }
-                
-                // Tentar obter diretamente do sessionStorage
-                if (!cdId) {
-                    cdId = sessionStorage.getItem('cdId');
-                    if (cdId) {
-                        this.cdId = cdId; // Salvar na instância
-                        console.log('CD ID recuperado diretamente do sessionStorage:', cdId);
-                    }
-                }
+                cdNomeEl.textContent = nome;
             }
+        }
+
+        async loadAgendamentos() {
+            console.log('🔄 Recarregando agendamentos...');
+            this.showLoading(true);
             
-            // Se ainda não tiver o cdId, usar um valor padrão ou avisar o usuário
-            if (!cdId) {
-                console.error('CD ID não encontrado em nenhuma fonte');
+            try {
+                const token = sessionStorage.getItem('token');
+                console.log('🔑 Token encontrado:', !!token);
                 
-                // Usar horários padrão
-                horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
-                const horariosDefault = [
-                    { valor: '08:00', label: '08:00' },
-                    { valor: '09:00', label: '09:00' },
-                    { valor: '10:00', label: '10:00' },
-                    { valor: '11:00', label: '11:00' },
-                    { valor: '13:00', label: '13:00' },
-                    { valor: '14:00', label: '14:00' },
-                    { valor: '15:00', label: '15:00' },
-                    { valor: '16:00', label: '16:00' }
-                ];
-                
-                horariosDefault.forEach(horario => {
-                    const option = document.createElement('option');
-                    option.value = horario.valor;
-                    option.textContent = horario.label;
-                    horarioSelect.appendChild(option);
+                // Adicionar timestamp para evitar cache
+                const url = `${getApiBaseUrl()}/api/agendamentos?t=${Date.now()}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    }
                 });
+
+                console.log('📡 Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Erro na resposta:', errorText);
+                    
+                    // Verificar se é token expirado
+                    if (handleTokenExpired(response)) {
+                        return;
+                    }
+                    
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('📊 Dados recebidos:', data);
+                this.agendamentos = data.data || [];
+                this.filteredAgendamentos = [...this.agendamentos];
+                this.showLoading(false);
+                this.renderAgendamentos();
+            } catch (error) {
+                console.error('Erro ao carregar agendamentos:', error);
+                this.showNotification('Erro ao carregar agendamentos.', 'error');
+                this.showLoading(false);
+                return;
+            }
+
+            // Calcula as estatísticas para todos os cards
+            const stats = {
+                total: this.agendamentos.length,
+                pendente: this.agendamentos.filter(a => a.status === 'pendente').length,
+                confirmado: this.agendamentos.filter(a => a.status === 'confirmado').length,
+                entregue: this.agendamentos.filter(a => a.status === 'entregue').length,
+                'nao-veio': this.agendamentos.filter(a => a.status === 'nao-veio').length
+            };
+
+            Object.keys(stats).forEach(key => {
+                const element = document.getElementById(`stat-${key}`);
+                if (element) {
+                    this.animateNumber(element, parseInt(element.textContent), stats[key]);
+                }
+            });
+        }
+
+        animateNumber(element, start, end) {
+            const duration = 1000;
+            const startTime = Date.now();
+            
+            const updateNumber = () => {
+                const now = Date.now();
+                const progress = Math.min((now - startTime) / duration, 1);
+                const current = Math.floor(start + (end - start) * progress);
                 
+                element.textContent = current;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                }
+            };
+            
+            updateNumber();
+        }
+
+        renderAgendamentos() {
+            if (this.currentView === 'cards') {
+                this.renderKanbanColumns();
+            } else {
+                this.renderList();
+            }
+        }
+
+        renderKanbanColumns() {
+            const agendamentosPorStatus = {
+                'pendente': [],
+                'confirmado': [],
+                'entregue': [],
+                'nao-veio': [],
+                'reagendamento': []
+            };
+
+            this.filteredAgendamentos.forEach(agendamento => {
+                let status = agendamento.status;
+                
+                // Mapear status que não têm coluna específica para status existentes
+                if (status === 'aguardando_resposta_fornecedor') {
+                    status = 'reagendamento'; // Mapear para reagendamento
+                }
+                
+                if (agendamentosPorStatus[status]) {
+                    agendamentosPorStatus[status].push(agendamento);
+                }
+            });
+
+            Object.keys(agendamentosPorStatus).forEach(status => {
+                agendamentosPorStatus[status] = this.sortByPriority(agendamentosPorStatus[status], status);
+            });
+
+            Object.keys(agendamentosPorStatus).forEach(status => {
+                this.renderColumn(status, agendamentosPorStatus[status]);
+            });
+
+            this.checkTodayDeliveries();
+            this.hideEmptyState();
+        }
+
+        sortByPriority(agendamentos, status) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+
+            return agendamentos.sort((a, b) => {
+                const dataA = this.createSafeDate(a.dataEntrega);
+                const dataB = this.createSafeDate(b.dataEntrega);
+
+                if (status === 'pendente') {
+                    return this.createSafeDate(a.dataCriacao) - this.createSafeDate(b.dataCriacao);
+                } else if (status === 'confirmado') {
+                    const diffA = Math.abs(dataA - hoje);
+                    const diffB = Math.abs(dataB - hoje);
+                    return diffA - diffB;
+                } else {
+                    return dataA - dataB;
+                }
+            });
+        }
+
+        renderColumn(status, agendamentos) {
+            // Status válidos que têm colunas no dashboard
+            const statusValidos = ['pendente', 'confirmado', 'entregue', 'nao-veio', 'reagendamento'];
+            
+            if (!statusValidos.includes(status)) {
+                console.warn(`Status '${status}' não tem coluna correspondente no dashboard`);
                 return;
             }
             
-            console.log('Carregando horários disponíveis para data:', novaData, 'CD ID:', cdId);
-            
-            // Chamar API para obter horários disponíveis (usar base URL para produção)
-            const response = await fetch(`${getApiBaseUrl()}/api/horarios-disponiveis?date=${novaData}&cd=${cdId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-                }
-            });
-            
-            if (!response.ok) {
-                // Verificar se é token expirado
-                if (handleTokenExpired(response)) {
-                    return;
-                }
-                throw new Error(`Erro ao buscar horários: ${response.status}`);
+            const container = document.getElementById(`column-${status}`);
+            const badge = document.getElementById(`badge-${status}`);
+            const moreButton = document.getElementById(`more-${status}`);
+
+            if (!badge) {
+                console.error(`Badge element not found: badge-${status}`);
+                return;
             }
-            
-            const data = await response.json();
-            console.log('Horários disponíveis recebidos:', data);
-            
-            // Limpar opções existentes novamente
-            horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
-            
-            // Adicionar horários à lista
-            if (data.horarios && Array.isArray(data.horarios)) {
-                data.horarios.forEach(horario => {
-                    const option = document.createElement('option');
-                    option.value = horario.valor;
-                    option.textContent = horario.label;
-                    
-                    // Desabilitar horários indisponíveis
-                    if (horario.disponivel === false) {
-                        option.disabled = true;
-                        option.textContent += ` (${horario.motivo || 'Indisponível'})`;
-                    }
-                    
-                    horarioSelect.appendChild(option);
-                });
-            } else {
-                // Horários padrão caso a API não retorne dados
-                const horariosDefault = [
-                    { valor: '08:00', label: '08:00' },
-                    { valor: '09:00', label: '09:00' },
-                    { valor: '10:00', label: '10:00' },
-                    { valor: '11:00', label: '11:00' },
-                    { valor: '13:00', label: '13:00' },
-                    { valor: '14:00', label: '14:00' },
-                    { valor: '15:00', label: '15:00' },
-                    { valor: '16:00', label: '16:00' }
-                ];
-                
-                horariosDefault.forEach(horario => {
-                    const option = document.createElement('option');
-                    option.value = horario.valor;
-                    option.textContent = horario.label;
-                    horarioSelect.appendChild(option);
-                });
+
+            if (!container) {
+                console.error(`Container element not found: column-${status}`);
+                return;
             }
-        } catch (error) {
-            console.error('Erro ao carregar horários disponíveis:', error);
-            
-            // Em caso de erro, carregar horários padrão
-            const horarioSelect = document.getElementById('novo-horario');
-            horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
-            const horariosDefault = [
-                { valor: '08:00', label: '08:00' },
-                { valor: '09:00', label: '09:00' },
-                { valor: '10:00', label: '10:00' },
-                { valor: '11:00', label: '11:00' },
-                { valor: '13:00', label: '13:00' },
-                { valor: '14:00', label: '14:00' },
-                { valor: '15:00', label: '15:00' },
-                { valor: '16:00', label: '16:00' }
-            ];
-            
-            horariosDefault.forEach(horario => {
-                const option = document.createElement('option');
-                option.value = horario.valor;
-                option.textContent = horario.label;
-                horarioSelect.appendChild(option);
-            });
+
+
+
+            badge.textContent = agendamentos.length;
+            const visibleAgendamentos = agendamentos.slice(0, 3);
+            // ... (restante do método renderColumn)
         }
-    }
-
-    async handleSuggestDate() {
-        const novaData = document.getElementById('nova-data').value;
-        const novoHorario = document.getElementById('novo-horario').value;
-        const motivo = document.getElementById('motivo-reagendamento').value;
-
-        if (!novaData || !novoHorario) {
-            this.showNotification('Preencha todos os campos obrigatórios.', 'error');
-            return;
-        }
-
-        try {
-            console.log(`🔄 Sugerindo nova data para agendamento ${this.currentAgendamentoId}:`, {
-                novaData,
-                novoHorario,
-                motivo
-            });
-
-            const token = sessionStorage.getItem('token');
-            // Envia a string 'YYYY-MM-DD' pura, sem manipulação
-            const response = await fetch(`/api/agendamentos/${this.currentAgendamentoId}/reagendar`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    novaData,
-                    novoHorario,
-                    motivo
-                })
-            });
-
-            console.log('📡 Response status:', response.status);
-            const responseText = await response.text();
-            console.log('📋 Response body:', responseText);
-
-            if (response.ok) {
-                console.log('✅ Reagendamento sugerido com sucesso');
-                
-                // Recarregar dados do dashboard para pegar os dados atualizados do banco
-                await this.loadAgendamentos();
-                
-                this.closeSuggestDateModal();
-                this.closeDetailModal();
-                
-                this.showNotification('Sugestão de nova data enviada ao fornecedor.', 'success');
-            } else {
-                // Verificar se é token expirado
-                if (handleTokenExpired(response)) {
-                    return;
-                }
-                
-                let errorData;
-                try {
-                    errorData = JSON.parse(responseText);
-                } catch {
-                    errorData = { error: responseText };
-                }
-                console.error('❌ Erro na resposta:', errorData);
-                throw new Error(errorData.error || 'Erro ao enviar sugestão');
-            }
-        } catch (error) {
-            console.error('❌ Erro ao enviar sugestão:', error);
-            this.showNotification('Erro ao enviar sugestão: ' + error.message, 'error');
-        }
-    }
-
-    viewPDF(filename) {
-        if (!filename) {
-            console.log('Nenhum arquivo para visualizar');
-            return;
-        }
-        
-        // Construir URL do arquivo usando a rota da API
-        const fileUrl = `/api/files/${filename}`;
-        console.log('Abrindo PDF:', fileUrl);
-        
-        // Abrir em nova aba
-        window.open(fileUrl, '_blank');
-    }
-
-    // --- CONTROLES DE VISUALIZAÇÃO E FILTROS ---
-
-    changeView(view) {
-        this.currentView = view;
-        
-        document.getElementById('view-cards').className = view === 'cards' ? 
-            'px-4 py-2 rounded-md bg-orange-primary text-white transition-all' :
-            'px-4 py-2 rounded-md text-gray-600 hover:bg-white transition-all';
-            
-        document.getElementById('view-list').className = view === 'list' ? 
-            'px-4 py-2 rounded-md bg-orange-primary text-white transition-all' :
-            'px-4 py-2 rounded-md text-gray-600 hover:bg-white transition-all';
-        
-        document.getElementById('cards-view').classList.toggle('hidden', view !== 'cards');
-        document.getElementById('list-view').classList.toggle('hidden', view !== 'list');
-        
-        this.renderAgendamentos();
-    }
-
-    applyFilters() {
-        const statusFilter = document.getElementById('filter-status').value;
-        const searchText = document.getElementById('search-input').value.toLowerCase();
-        
-        this.filteredAgendamentos = this.agendamentos.filter(agendamento => {
-            const matchesStatus = !statusFilter || agendamento.status === statusFilter;
-            const matchesSearch = !searchText || 
-                agendamento.codigo.toLowerCase().includes(searchText) ||
-                agendamento.fornecedor.nome.toLowerCase().includes(searchText) ||
-                agendamento.fornecedor.email.toLowerCase().includes(searchText);
-                
-            return matchesStatus && matchesSearch;
-        });
-        
-        // Resetar para primeira página quando aplicar filtros
-        this.currentPage = 1;
-        
-        this.renderAgendamentos();
-    }
-
-    async exportData(format) {
-        try {
-            this.showNotification(`Exportando dados em formato ${format.toUpperCase()}...`, 'info');
-            
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Simular exportação
-            
-            const data = this.filteredAgendamentos.map(a => ({
-                'Código': a.codigo,
-                'Fornecedor': a.fornecedor.nome,
-                'Email': a.fornecedor.email,
-                'Telefone': a.fornecedor.telefone,
-                'Data': this.formatDate(a.dataEntrega),
-                'Horário': a.horarioEntrega,
-                'Status': this.getStatusText(a.status),
-                'Tipo de Carga': this.getTipoCargaText(a.tipoCarga),
-                'Observações': a.observacoes || ''
-            }));
-            
-            if (format === 'excel') {
-                this.downloadCSV(data, 'agendamentos.csv');
-            } else {
-                this.showNotification('Funcionalidade de export PDF será implementada.', 'info');
-            }
-            
-        } catch (error) {
-            this.showNotification('Erro ao exportar dados.', 'error');
-        }
-    }
-
-    downloadCSV(data, filename) {
-        if (data.length === 0) {
-            this.showNotification('Não há dados para exportar.', 'warning');
-            return;
-        }
-        const headers = Object.keys(data[0]);
-        const csvContent = [
-            headers.join(','),
-            ...data.map(row => headers.map(header => `"${row[header]}"`).join(','))
-        ].join('\n');
-        
-        const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // BOM para Excel
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        this.showNotification('Arquivo CSV baixado com sucesso!', 'success');
-    }
-
-    // --- CONTROLES DE ESTADO (LOADING, EMPTY) E NOTIFICAÇÕES ---
-
-    showLoading(show) {
-        const loadingState = document.getElementById('loading-state');
-        const container = document.getElementById('agendamentos-container');
-        
-        if (show) {
-            loadingState.classList.remove('hidden');
-            container.classList.add('hidden');
-        } else {
-            loadingState.classList.add('hidden');
-            container.classList.remove('hidden');
-        }
-    }
-
-    showEmptyState() {
-        document.getElementById('empty-state').classList.remove('hidden');
-        document.getElementById('cards-view').classList.add('hidden');
-        document.getElementById('list-view').classList.add('hidden');
-    }
-
-    hideEmptyState() {
-        document.getElementById('empty-state').classList.add('hidden');
-        if (this.filteredAgendamentos.length > 0) {
-            document.getElementById('cards-view').classList.toggle('hidden', this.currentView !== 'cards');
-            document.getElementById('list-view').classList.toggle('hidden', this.currentView !== 'list');
-        } else {
-            this.showEmptyState();
-        }
-    }
-    
-    showNotification(message, type = 'info') {
-        const colors = {
-            success: 'bg-green-500', error: 'bg-red-500',
-            warning: 'bg-yellow-500', info: 'bg-blue-500'
-        };
-        const icons = {
-            success: 'fa-check-circle', error: 'fa-exclamation-circle',
-            warning: 'fa-exclamation-triangle', info: 'fa-info-circle'
-        };
-        
-        const notification = document.createElement('div');
-        notification.className = `notification ${colors[type]} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3`;
-        notification.innerHTML = `
-            <i class="fas ${icons[type]}"></i>
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()" class="ml-4 hover:bg-white hover:bg-opacity-20 rounded p-1">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        
-        document.getElementById('notification-container').appendChild(notification);
-        
-        setTimeout(() => notification.classList.add('show'), 100);
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 500);
-        }, 5000); // Notificação some após 5 segundos
-    }
-
-    // --- MODAL DE CONSULTA PÚBLICA ---
-
-    async consultarAgendamento() {
-        const codigo = document.getElementById('codigo-consulta').value.trim();
-        
-        if (!codigo) {
-            this.showNotification('Digite o código do agendamento', 'error');
-            return;
-        }
-
-        try {
-            // Buscar agendamento pelos dados carregados do banco de dados
-            const agendamento = this.agendamentos.find(a => a.codigo.toLowerCase() === codigo.toLowerCase());
-            
-            if (agendamento) {
-                this.closeConsultaModal();
-                this.showStatusModal(agendamento);
-            } else {
-                this.showNotification('Agendamento não encontrado', 'error');
-            }
-        } catch (error) {
-            console.error('Erro ao consultar agendamento:', error);
-            this.showNotification('Erro ao consultar agendamento', 'error');
-        }
-    }
-
-    showStatusModal(agendamento) {
-        const statusContent = document.getElementById('status-content');
-        const statusClass = this.getStatusClass(agendamento.status);
-        const statusIcon = this.getStatusIcon(agendamento.status);
-        const statusText = this.getStatusText(agendamento.status);
-    
-        statusContent.innerHTML = `
-            <div class="space-y-6">
-                <div class="bg-gradient-to-r from-orange-primary to-orange-secondary rounded-xl p-6 text-white text-center">
-                    <h3 class="text-2xl font-bold mb-2">Status do Agendamento</h3>
-                    <p class="text-lg"><strong>Código:</strong> ${agendamento.codigo}</p>
-                </div>
-                <div class="text-center">
-                    <span class="px-4 py-2 rounded-full text-white text-lg font-semibold ${statusClass}">
-                        <i class="${statusIcon} mr-2"></i>${statusText}
-                    </span>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-6 space-y-3">
-                    <p><strong>Fornecedor:</strong> ${agendamento.fornecedor.nome}</p>
-                    <p><strong>Data Programada:</strong> ${this.formatDate(agendamento.dataEntrega)}</p>
-                    <p><strong>Horário:</strong> ${agendamento.horarioEntrega}</p>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('status-modal').classList.remove('hidden');
-    }
-}
-
-// --- FIM DA CLASSE ---
-
-// --- INICIALIZAÇÃO E FUNÇÕES GLOBAIS ---
-
-let dashboard;
-document.addEventListener('DOMContentLoaded', () => {
-    dashboard = new CDDashboard();
-    
-    // Aplicar máscaras aos inputs da página
-    applyMasksToContainer(document);
-});
-
-// Funções globais que delegam para a instância do dashboard
-function refreshData() {
-    dashboard.loadAgendamentos();
-}
-
-function changeView(view) {
-    dashboard.changeView(view);
-}
-
-function applyFilters() {
-    dashboard.applyFilters();
-}
-
-function exportData(format) {
-    dashboard.exportData(format);
-}
-
-function showAllStatus(status) {
-    dashboard.showAllStatus(status);
-}
-
-function showTodayDeliveries() {
-    dashboard.showTodayDeliveries();
-}
-
-function closeTodayDeliveriesModal() {
-    dashboard.closeTodayDeliveriesModal();
-}
-
-function openConsultaModal() {
-    dashboard.openConsultaModal();
-}
-
-function closeConsultaModal() {
-    dashboard.closeConsultaModal();
-}
-
-function closeStatusModal() {
-    dashboard.closeStatusModal();
-}
-
-function closeDetailModal() {
-    dashboard.closeDetailModal();
-}
-
-function closeSuggestDateModal() {
-    dashboard.closeSuggestDateModal();
-}
-
-function logout() {
-    if (confirm('Tem certeza que deseja sair?')) {
-        sessionStorage.clear();
-        localStorage.removeItem('rememberedUser');
-        window.location.href = 'login.html';
-    }
-}
-
-// CORREÇÃO: Removida a função duplicada submitBloqueioButton da linha ~700
-// A função já está definida no início do arquivo (linha ~28)
-
-// Registrar funções globais no objeto window para acesso a partir do HTML
-function openDashboardKPIModal() {
-    if (window.dashboard && typeof window.dashboard.openKpisModal === 'function') {
-        window.dashboard.openKpisModal();
-    }
-}
-
-// CORREÇÃO: Adicionadas declarações de funções faltantes
-function closeDashboardKPIModal() {
-    if (window.dashboard && typeof window.dashboard.closeKpisModal === 'function') {
-        window.dashboard.closeKpisModal();
-    }
-}
-
-function aplicarFiltroPeriodoKPI() {
-    // Implementação básica - pode ser expandida conforme necessário
-    console.log('Aplicar filtro período KPI');
-}
-
-function exportarDadosKPI() {
-    // Implementação básica - pode ser expandida conforme necessário
-    console.log('Exportar dados KPI');
-}
-
-function imprimirRelatorioKPI() {
-    // Implementação básica - pode ser expandida conforme necessário
-    console.log('Imprimir relatório KPI');
-}
-
-function carregarDadosKPI() {
-    if (window.dashboard && typeof window.dashboard.loadKpis === 'function') {
-        window.dashboard.loadKpis();
-    }
-}
-
-window.openDashboardKPIModal = openDashboardKPIModal;
-window.closeDashboardKPIModal = closeDashboardKPIModal;
-window.aplicarFiltroPeriodoKPI = aplicarFiltroPeriodoKPI;
-window.exportarDadosKPI = exportarDadosKPI;
-window.imprimirRelatorioKPI = imprimirRelatorioKPI;
-window.carregarDadosKPI = carregarDadosKPI;
-window.refreshData = refreshData;
-window.logout = logout;
-window.changeView = changeView;
-window.applyFilters = applyFilters;
-window.exportData = exportData;
-window.showAllStatus = showAllStatus;
-window.showTodayDeliveries = showTodayDeliveries;
-window.closeAllStatusModal = closeAllStatusModal;
-window.closeTodayDeliveriesModal = closeTodayDeliveriesModal;
-window.openConsultaModal = openConsultaModal;
-window.closeConsultaModal = closeConsultaModal;
-window.closeStatusModal = closeStatusModal;
-window.closeDetailModal = closeDetailModal;
-window.closeSuggestDateModal = closeSuggestDateModal;
-
-// ============================================================================
-// FUNÇÕES DE BLOQUEIO DE HORÁRIO
-// ============================================================================
-
-function openBloqueioModal() {
-    const modal = document.getElementById('bloqueio-modal');
-    modal.classList.remove('hidden');
-    
-    // Configurar data mínima (amanhã)
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    document.getElementById('data-bloqueio').min = tomorrowStr;
-    document.getElementById('data-bloqueio').value = tomorrowStr;
-    
-    // Reset do formulário
-    document.getElementById('bloqueio-form').reset();
-    document.getElementById('data-bloqueio').value = tomorrowStr;
-    
-    // Event listeners
-    setupBloqueioEventListeners();
-}
-
-function closeBloqueioModal() {
-    const modal = document.getElementById('bloqueio-modal');
-    modal.classList.add('hidden');
-    
-    // Limpar formulário
-    document.getElementById('bloqueio-form').reset();
-    document.getElementById('motivo-outros').classList.add('hidden');
-    document.getElementById('preview-bloqueio').innerHTML = '<p>Selecione os dados acima para ver a prévia</p>';
-}
-
-function setupBloqueioEventListeners() {
-    const form = document.getElementById('bloqueio-form');
-    const motivoSelect = document.getElementById('motivo-bloqueio');
-    const motivoOutros = document.getElementById('motivo-outros');
-    
-    // Mostrar/ocultar campo "outros"
-    motivoSelect.addEventListener('change', (e) => {
-        if (e.target.value === 'outros') {
-            motivoOutros.classList.remove('hidden');
-        } else {
-            motivoOutros.classList.add('hidden');
-        }
-        updateBloqueioPreview();
-    });
-    
-    // Atualizar preview quando campos mudarem
-    const previewFields = ['data-bloqueio', 'hora-inicio', 'hora-fim', 'motivo-bloqueio', 'motivo-custom'];
-    previewFields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-            field.addEventListener('change', updateBloqueioPreview);
-            field.addEventListener('input', updateBloqueioPreview);
-        }
-    });
-    
-    // Validação de horários
-    document.getElementById('hora-inicio').addEventListener('change', validateHorarios);
-    document.getElementById('hora-fim').addEventListener('change', validateHorarios);
-    
-    // Submit do formulário
-    // Usar onsubmit para evitar múltiplos listeners caso o modal seja reaberto várias vezes
-    form.onsubmit = function(e) {
-        console.log('[Frontend] bloqueio-form submit triggered (onsubmit bind)');
-        return handleBloqueioSubmit(e);
-    };
-
-    // Prevenir que a tecla Enter dispare um submit nativo (exceto em textarea)
-    form.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
-            if (tag !== 'textarea') {
-                e.preventDefault();
-                console.log('[Frontend] Enter pressed in bloqueio-form - prevented native submit');
-            }
-        }
-    });
-}
-
-function updateBloqueioPreview() {
-    const data = document.getElementById('data-bloqueio').value;
-    const horaInicio = document.getElementById('hora-inicio').value;
-    const horaFim = document.getElementById('hora-fim').value;
-    const motivo = document.getElementById('motivo-bloqueio').value;
-    const motivoCustom = document.getElementById('motivo-custom').value;
-    
-    const preview = document.getElementById('preview-bloqueio');
-    
-    if (!data || !horaInicio || !horaFim || !motivo) {
-        preview.innerHTML = '<p class="text-gray-500">Selecione os dados acima para ver a prévia</p>';
-        return;
-    }
-    
-    const dataFormatada = new Date(data + 'T00:00:00').toLocaleDateString('pt-BR');
-    const motivoTexto = motivo === 'outros' ? motivoCustom : 
-                       document.querySelector(`#motivo-bloqueio option[value="${motivo}"]`).textContent;
-    
-    preview.innerHTML = `
-        <div class="bg-red-50 border border-red-200 rounded-lg p-3">
-            <h5 class="font-semibold text-red-800 mb-2">
-                <i class="fas fa-ban mr-2"></i>Bloqueio Programado
-            </h5>
-            <div class="text-red-700 space-y-1">
-                <p><strong>Data:</strong> ${dataFormatada}</p>
-                <p><strong>Período:</strong> ${horaInicio} às ${horaFim}</p>
-                <p><strong>Motivo:</strong> ${motivoTexto}</p>
-            </div>
-            <div class="mt-2 text-sm text-red-600">
-                <i class="fas fa-exclamation-triangle mr-1"></i>
-                Nenhum agendamento será permitido neste período.
-            </div>
-        </div>
-    `;
-}
-
-function validateHorarios() {
-    const horaInicio = document.getElementById('hora-inicio').value;
-    const horaFim = document.getElementById('hora-fim').value;
-    
-    if (horaInicio && horaFim) {
-        const inicio = parseInt(horaInicio.replace(':', ''));
-        const fim = parseInt(horaFim.replace(':', ''));
-        
-        if (fim <= inicio) {
-            dashboard.showNotification('O horário de fim deve ser posterior ao horário de início', 'error');
-            document.getElementById('hora-fim').value = '';
-        }
-    }
+    // Fim da classe CDDashboard
 }
 
 async function handleBloqueioSubmit(e) {
@@ -4517,3 +4397,22 @@ function irParaPagina(pagina) {
     renderizarEntregas();
     atualizarPaginacao();
 }
+
+// Funções globais para compatibilidade com HTML (onclick)
+window.openConsultaModal = function() { dashboard.openConsultaModal(); };
+window.closeConsultaModal = function() { dashboard.closeConsultaModal(); };
+window.openRegistrarEntregaModal = function() { dashboard.openRegistrarEntregaModal(); };
+window.closeRegistrarEntregaModal = function() { dashboard.closeRegistrarEntregaModal(); };
+window.openBloqueioModal = function() { dashboard.openBloqueioModal(); };
+window.closeBloqueioModal = function() { dashboard.closeBloqueioModal(); };
+window.openGerenciarBloqueiosModal = function() { dashboard.openGerenciarBloqueiosModal(); };
+window.closeGerenciarBloqueiosModal = function() { dashboard.closeGerenciarBloqueiosModal(); };
+window.openEntregasModal = function() { dashboard.openEntregasModal(); };
+window.closeEntregasModal = function() { dashboard.closeEntregasModal(); };
+window.closeDetailModal = function() { dashboard.closeDetailModal(); };
+window.closeSuggestDateModal = function() { dashboard.closeSuggestDateModal(); };
+window.closeAllStatusModal = function() { dashboard.closeAllStatusModal(); };
+window.closeTodayDeliveriesModal = function() { dashboard.closeTodayDeliveriesModal(); };
+window.closeStatusModal = function() { dashboard.closeStatusModal(); };
+window.closeEditarBloqueioModal = function() { dashboard.closeEditarBloqueioModal(); };
+window.fecharModalEntregas = function() { dashboard.fecharModalEntregas(); };
