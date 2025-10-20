@@ -78,8 +78,7 @@ async function atualizarPendentesReagendamento() {
 // Função principal de inicialização
 async function startServer() {
   try {
-    // Primeiro inicializar o banco
-    await initializeDatabase();
+  // Inicialização do banco removida (initializeDatabase não existe)
     
     // Depois executar atualizações
     await atualizarPendentesReagendamento();
