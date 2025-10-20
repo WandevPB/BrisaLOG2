@@ -15,7 +15,7 @@ class EmailService {
         this.fromName = process.env.EMAIL_NAME || 'BrisaLOG Portal';
         
         // Configurar transporter para Gmail SMTP
-        this.transporter = nodemailer.createTransporter({
+        this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST || 'smtp.gmail.com',
             port: parseInt(process.env.SMTP_PORT) || 587,
             secure: false, // true para 465, false para outros
