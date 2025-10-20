@@ -1,6 +1,6 @@
         // Função global para obter URL base da API
         function getApiBaseUrl() {
-            return 'https://brisalog-back.onrender.com';
+            return API_BASE_URL;
         }
 
         // Função global para visualizar PDF
@@ -15,6 +15,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consultar Status - BrisaLOG Agenda</title>
+    <script src="config.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         // Função utilitária para formatar datas ISO ou YYYY-MM-DD no padrão brasileiro sem bug de fuso

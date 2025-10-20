@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redefinir Senha - BrisaLOG Portal</title>
+    <script src="config.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -426,7 +427,7 @@
                     }
 
                     // Fazer requisição para a API
-                    const response = await fetch('/api/auth/reset-password', {
+                    const response = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
