@@ -297,7 +297,16 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 
 // Middlewares
-app.use(cors());
+const allowedOrigins = [
+  'https://brisalog2.onrender.com',
+  'http://localhost:5500'
+];
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'uploads')));
 
