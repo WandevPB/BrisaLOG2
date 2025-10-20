@@ -1,53 +1,14 @@
 // Endpoint temporário para debug da base PostgreSQL
+
+// Endpoint temporário para debug da base PostgreSQL
 app.get('/api/debug/cds', async (req, res) => {
-
-  // Endpoint temporário para debug da base PostgreSQL
-  app.get('/api/debug/cds', async (req, res) => {
-    try {
-      const cds = await prisma.cd.findMany();
-      res.json({ success: true, total: cds.length, cds });
-    } catch (err) {
-      res.status(500).json({ success: false, error: err.message });
-    }
-  });
-
-  // ============================================================================
-  // MIDDLEWARE DE ERROR E INICIALIZAÇÃO
-  // ============================================================================
-
-  app.use(errorHandler);
-
-  // ============================================================================
-  // HEALTH CHECK
-  // ============================================================================
-
-  // Health check endpoint
-  app.get('/health', (req, res) => {
-    res.json({
-      status: 'OK',
-      timestamp: new Date().toISOString(),
-      service: 'BrisaLOG Backend',
-      version: '2.0.0',
-      environment: process.env.NODE_ENV || 'development'
-    });
-  });
-
-  // Root endpoint
-  app.get('/', (req, res) => {
-    res.json({
-      message: 'BrisaLOG API está funcionando!',
-      version: '2.0.0',
-      endpoints: {
-        health: '/health',
-        api: '/api',
-        consulta: '/api/agendamentos/consultar/:codigo'
-      }
-    });
-  });
-
-  // ============================================================================
-  // TRATAMENTO DE ROTAS NÃO ENCONTRADAS
-  // ============================================================================
+  try {
+    const cds = await prisma.cd.findMany();
+    res.json({ success: true, total: cds.length, cds });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
   // Middleware para capturar rotas não encontradas
   app.use('*', (req, res) => {
