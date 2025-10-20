@@ -1,35 +1,5 @@
 
 
-  // Middleware para capturar rotas não encontradas
-  app.use('*', (req, res) => {
-    console.log(`❌ [404] Rota não encontrada: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({
-      error: 'Rota não encontrada',
-      method: req.method,
-      url: req.originalUrl,
-      timestamp: new Date().toISOString()
-    });
-  });
-
-  // ============================================================================
-  // TRATAMENTO GLOBAL DE ERROS
-  // ============================================================================
-
-  // Global error handler
-  app.use((err, req, res, next) => {
-    console.error('❌ [GLOBAL ERROR]:', err);
-  
-    // Se já foi enviada uma resposta, delegar para o handler padrão do Express
-    if (res.headersSent) {
-      return next(err);
-    }
-  
-    res.status(500).json({
-      error: 'Erro interno do servidor',
-      message: process.env.NODE_ENV === 'development' ? err.message : 'Algo deu errado',
-      timestamp: new Date().toISOString()
-    });
-  });
 
   // ============================================================================
   // GRACEFUL SHUTDOWN
@@ -277,6 +247,36 @@ app.get('/api/debug/cds', async (req, res) => {
   }
 });
 const PORT = process.env.PORT || 3000;
+// Middleware para capturar rotas não encontradas
+app.use('*', (req, res) => {
+  console.log(`❌ [404] Rota não encontrada: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    error: 'Rota não encontrada',
+    method: req.method,
+    url: req.originalUrl,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ============================================================================
+// TRATAMENTO GLOBAL DE ERROS
+// ============================================================================
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('❌ [GLOBAL ERROR]:', err);
+
+  // Se já foi enviada uma resposta, delegar para o handler padrão do Express
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  res.status(500).json({
+    error: 'Erro interno do servidor',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Algo deu errado',
+    timestamp: new Date().toISOString()
+  });
+});
 const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 
 // Middlewares
