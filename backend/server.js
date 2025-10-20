@@ -1,3 +1,12 @@
+// Endpoint temporário para debug da base PostgreSQL
+app.get('/api/debug/cds', async (req, res) => {
+  try {
+    const cds = await prisma.cd.findMany();
+    res.json({ success: true, total: cds.length, cds });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 require('dotenv').config({ path: './backend/.env' });
 const { PrismaClient } = require('@prisma/client');
 const { execSync } = require('child_process');
