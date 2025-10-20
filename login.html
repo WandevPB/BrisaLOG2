@@ -539,24 +539,25 @@
 
             async loadCDs() {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/api/cds`);
+                    const response = await fetch(`${API_BASE_URL}/api/auth/cds`);
+                    if (!response.ok) {
+                        const text = await response.text();
+                        throw new Error(`Erro ao carregar CDs: ${response.status} - ${text}`);
+                    }
                     const data = await response.json();
-                    
                     if (data.success) {
                         const select = document.getElementById('usuario');
-                        
-                        // Limpar options existentes (exceto o placeholder)
                         while (select.children.length > 1) {
                             select.removeChild(select.lastChild);
                         }
-                        
-                        // Adicionar CDs
                         data.data.forEach(cd => {
                             const option = document.createElement('option');
                             option.value = cd.usuario;
                             option.textContent = cd.nome;
                             select.appendChild(option);
                         });
+                    } else {
+                        throw new Error(data.error || 'Erro desconhecido ao carregar CDs');
                     }
                 } catch (error) {
                     console.error('Erro ao carregar CDs:', error);
