@@ -1,50 +1,106 @@
+require('dotenv').config({ path: './backend/.env' });
+const { PrismaClient } = require('@prisma/client');
+const { execSync } = require('child_process');
+const prisma = new PrismaClient();
 
-
-
-  // ============================================================================
-  // GRACEFUL SHUTDOWN
-  // ============================================================================
-
-  // Graceful shutdown
-  process.on('SIGTERM', async () => {
-    console.log('🔄 SIGTERM recebido, iniciando graceful shutdown...');
-  
-    try {
-      await prisma.$disconnect();
-      console.log('✅ Prisma disconnected');
-      process.exit(0);
-    } catch (error) {
-      console.error('❌ Erro durante shutdown:', error);
-      process.exit(1);
+// Função para inicializar o banco de dados
+async function initializeDatabase() {
+  try {
+    console.log('🔧 Verificando estrutura do banco de dados...');
+    console.log('📡 DATABASE_URL configurada:', process.env.DATABASE_URL ? 'SIM' : 'NÃO');
+    console.log('🌍 NODE_ENV:', process.env.NODE_ENV);
+    
+    // Tentar conectar ao banco primeiro
+    await prisma.$connect();
+    console.log('✅ Conexão com banco estabelecida!');
+    
+    // Tentar fazer uma query simples para verificar se as tabelas existem
+    await prisma.cd.findFirst();
+    console.log('✅ Banco de dados já inicializado!');
+    
+  } catch (error) {
+    console.log('❗ Erro detectado:', error.code, error.message);
+    
+    if (error.code === 'P2021' || error.message.includes('does not exist') || error.code === 'P1001' || error.code === 'P1017') {
+      console.log('🗄️ Criando estrutura do banco de dados...');
+      
+      try {
+        // Gerar o cliente Prisma primeiro
+        console.log('🔧 Gerando cliente Prisma...');
+        execSync('npx prisma generate', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        
+        // Resetar migrações problemáticas se necessário
+        console.log('🔄 Resetando migrações antigas...');
+        execSync('node scripts/reset-migrations.js', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        
+        // Para PostgreSQL, usar migrate deploy que é mais apropriado para produção
+        console.log('📋 Executando: prisma migrate deploy...');
+        execSync('npx prisma migrate deploy', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        
+        // Reconectar após as migrações
+        await prisma.$disconnect();
+        await prisma.$connect();
+        
+        // Verificar se existem CDs antes de executar seed
+        const cdCount = await prisma.cd.count();
+        console.log(`🔍 Total de CDs encontrados: ${cdCount}`);
+        
+        if (cdCount === 0) {
+          console.log('🌱 Nenhum CD encontrado, executando seed...');
+          execSync('node prisma/seed.js', { 
+            stdio: 'inherit',
+            cwd: process.cwd()
+          });
+        } else {
+          console.log('✅ CDs já existem, pulando seed');
+        }
+        
+        console.log('✅ Banco de dados inicializado com sucesso!');
+        
+      } catch (setupError) {
+        console.error('❌ Erro ao configurar banco de dados:', setupError.message);
+        console.error('🔍 Detalhes do erro:', setupError);
+        
+        // Se o erro for de conexão, pode ser que o PostgreSQL não esteja configurado
+        if (setupError.message.includes('connect') || setupError.message.includes('ENOTFOUND') || setupError.message.includes('getaddrinfo')) {
+          console.log('');
+          console.log('🚨 ATENÇÃO: Parece que o PostgreSQL não está configurado no Railway!');
+          console.log('');
+          console.log('📋 Para resolver:');
+          console.log('1. Acesse seu projeto no Railway');
+          console.log('2. Clique em "Add Plugin" ou "New"');
+          console.log('3. Selecione "PostgreSQL"');
+          console.log('4. O Railway irá configurar automaticamente a DATABASE_URL');
+          console.log('5. Refaça o deploy após adicionar o PostgreSQL');
+          console.log('');
+        }
+        
+        process.exit(1);
+      }
+    } else {
+      console.error('❌ Erro inesperado no banco de dados:', error.message);
+      console.error('🔍 Código do erro:', error.code);
+      console.error('🔍 Detalhes completos:', error);
+      
+      // Tentar continuar mesmo com erro se for ambiente de desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ Continuando em modo desenvolvimento...');
+      } else {
+        process.exit(1);
+      }
     }
-  });
+  }
+}
 
-  process.on('SIGINT', async () => {
-    console.log('� SIGINT recebido, iniciando graceful shutdown...');
-  
-    try {
-      await prisma.$disconnect();
-      console.log('✅ Prisma disconnected');
-      process.exit(0);
-    } catch (error) {
-      console.error('❌ Erro durante shutdown:', error);
-      process.exit(1);
-    }
-  });
-
-  // Tratar erros não capturados
-  process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-    // Não fazer exit automaticamente em produção
-    if (process.env.NODE_ENV === 'development') {
-      process.exit(1);
-    }
-  });
-
-  process.on('uncaughtException', (error) => {
-    console.error('❌ Uncaught Exception:', error);
-    process.exit(1);
-  });
 // Atualiza agendamentos antigos para padrão de observação e data/hora de reagendamento
 async function atualizarPendentesReagendamento() {
   const pendentes = await prisma.agendamento.findMany({
@@ -78,7 +134,8 @@ async function atualizarPendentesReagendamento() {
 // Função principal de inicialização
 async function startServer() {
   try {
-  // Inicialização do banco removida (initializeDatabase não existe)
+    // Primeiro inicializar o banco
+    await initializeDatabase();
     
     // Depois executar atualizações
     await atualizarPendentesReagendamento();
@@ -93,8 +150,8 @@ async function startServer() {
     // Inicializar servidor apenas após setup completo
     app.listen(PORT, () => {
       console.log(`🚀 Servidor BrisaLOG Portal rodando na porta ${PORT}`);
-      console.log(`📊 Health check: https://brisalog-back.onrender.com/health`);
-      console.log(`🔐 API Base URL: https://brisalog-back.onrender.com/api`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`🔐 API Base URL: http://localhost:${PORT}/api`);
       console.log('\n📋 Endpoints disponíveis:');
       console.log('• POST /api/auth/login - Login de CD');
       console.log('• POST /api/auth/change-password - Alterar senha');
@@ -236,55 +293,11 @@ async function corrigirAgendamentosExistentes() {
 
 // ...restante do código do servidor...
 const app = express();
-// Endpoint temporário para debug da base PostgreSQL
-app.get('/api/debug/cds', async (req, res) => {
-  try {
-    const cds = await prisma.cd.findMany();
-    res.json({ success: true, total: cds.length, cds });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
 const PORT = process.env.PORT || 3000;
-// Middleware para capturar rotas não encontradas
-app.use('*', (req, res) => {
-  console.log(`❌ [404] Rota não encontrada: ${req.method} ${req.originalUrl}`);
-  res.status(404).json({
-    error: 'Rota não encontrada',
-    method: req.method,
-    url: req.originalUrl,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// ============================================================================
-// TRATAMENTO GLOBAL DE ERROS
-// ============================================================================
-
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('❌ [GLOBAL ERROR]:', err);
-
-  // Se já foi enviada uma resposta, delegar para o handler padrão do Express
-  if (res.headersSent) {
-    return next(err);
-  }
-
-  res.status(500).json({
-    error: 'Erro interno do servidor',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Algo deu errado',
-    timestamp: new Date().toISOString()
-  });
-});
 const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 
 // Middlewares
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'https://brisalog2.onrender.com',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'uploads')));
 
@@ -1089,7 +1102,7 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
 
     // Enviar emails automáticos conforme o novo status
     try {
-      const consultaUrl = `${process.env.FRONTEND_URL || 'https://brisalog2.onrender.com'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
       if (status === 'confirmado') {
         await emailService.sendConfirmadoEmail({
           to: agendamento.fornecedor.email,
@@ -1217,7 +1230,7 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
       console.log(`📧 [POST /api/agendamentos/${id}/reagendar] Enviando email para fornecedor...`);
       const emailService = require('./emailService');
       
-      const consultaUrl = `${process.env.FRONTEND_URL || 'https://brisalog2.onrender.com'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
       const emailResult = await emailService.sendReagendamentoEmail({
         to: agendamento.fornecedor.email,
         fornecedorNome: agendamento.fornecedor.nome,
@@ -1422,7 +1435,7 @@ app.post('/api/agendamentos/:codigo/responder-reagendamento', async (req, res) =
 
     // Enviar email de resposta de reagendamento
     try {
-      const consultaUrl = `${process.env.FRONTEND_URL || 'https://brisalog2.onrender.com'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
       await emailService.sendRespostaReagendamentoEmail({
         to: agendamento.cd.email,
         fornecedorNome: agendamento.fornecedor.nome,
@@ -1604,7 +1617,7 @@ app.post('/api/agendamentos/:codigo/cancelar', async (req, res) => {
 
     // Enviar email de cancelamento para o fornecedor
     try {
-      const consultaUrl = `${process.env.FRONTEND_URL || 'https://brisalog2.onrender.com'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
       await emailService.sendCanceladoFornecedorEmail({
         to: agendamento.fornecedor.email,
         fornecedorNome: agendamento.fornecedor.nome,
@@ -2539,7 +2552,7 @@ app.get('/api/kpis', authenticateToken, async (req, res) => {
 });
 
 // Rota para listar CDs (para select)
-app.get('/api/cds', async (req, res) => {
+app.get('/api/cds', authenticateToken, async (req, res) => {
   try {
     const cds = await prisma.cd.findMany({ select: { id: true, nome: true } });
     res.json(cds);
@@ -2555,111 +2568,672 @@ app.get('/api/cds', async (req, res) => {
 
 app.use(errorHandler);
 
-// ============================================================================
-// HEALTH CHECK
-// ============================================================================
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    service: 'BrisaLOG Backend',
-    version: '2.0.0',
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: 'BrisaLOG API está funcionando!',
-    version: '2.0.0',
-    endpoints: {
-      health: '/health',
-      api: '/api',
-      consulta: '/api/agendamentos/consultar/:codigo'
+// Endpoint temporário para forçar seed (remover após primeira execução)
+app.post('/api/force-seed', async (req, res) => {
+  console.log('🌱 [FORCE SEED] Executando seed forçado...');
+  
+  try {
+    // Verificar quantos CDs existem
+    const cdCount = await prisma.cd.count();
+    console.log(`🔍 [FORCE SEED] CDs existentes: ${cdCount}`);
+    
+    if (cdCount > 0) {
+      console.log('✅ [FORCE SEED] CDs já existem, não executando seed');
+      return res.json({ message: 'CDs já existem', count: cdCount });
     }
-  });
-});
-
-// ============================================================================
-// TRATAMENTO DE ROTAS NÃO ENCONTRADAS
-// ============================================================================
-
-// Middleware para capturar rotas não encontradas
-app.use('*', (req, res) => {
-  console.log(`❌ [404] Rota não encontrada: ${req.method} ${req.originalUrl}`);
-  res.status(404).json({
-    error: 'Rota não encontrada',
-    method: req.method,
-    url: req.originalUrl,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// ============================================================================
-// TRATAMENTO GLOBAL DE ERROS
-// ============================================================================
-
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('❌ [GLOBAL ERROR]:', err);
-  
-  // Se já foi enviada uma resposta, delegar para o handler padrão do Express
-  if (res.headersSent) {
-    return next(err);
+    
+    // Executar seed
+    console.log('🌱 [FORCE SEED] Executando seed...');
+    execSync('node prisma/seed.js', { 
+      stdio: 'inherit',
+      cwd: process.cwd()
+    });
+    
+    // Verificar se foram criados
+    const newCdCount = await prisma.cd.count();
+    const cds = await prisma.cd.findMany({
+      select: { id: true, nome: true, usuario: true, ativo: true }
+    });
+    
+    console.log('✅ [FORCE SEED] Seed executado com sucesso!');
+    console.log(`📊 [FORCE SEED] CDs criados: ${newCdCount}`);
+    
+    res.json({ 
+      message: 'Seed executado com sucesso',
+      cdsCreated: newCdCount,
+      cds: cds
+    });
+    
+  } catch (error) {
+    console.error('❌ [FORCE SEED] Erro:', error);
+    res.status(500).json({ error: error.message });
   }
+});
+
+// Endpoint de teste para verificar envio de emails
+app.post('/api/test-email/:email', async (req, res) => {
+  console.log('📧 [TEST EMAIL] Testando envio de email...');
+  const email = req.params.email;
   
-  res.status(500).json({
-    error: 'Erro interno do servidor',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Algo deu errado',
+  try {
+    // Usar Resend que é compatível com Railway
+    const resendEmailService = require('./resendEmailService');
+    
+    console.log('� Verificando Resend...');
+    const connectionTest = await resendEmailService.verifyConnection();
+    console.log('� Resultado da verificação:', connectionTest);
+    
+    const result = await resendEmailService.sendEmail({
+      to: email,
+      subject: 'Teste Resend - BrisaLOG Railway',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #2563eb;">🎉 Resend + Railway Funcionando!</h1>
+          <p>Este email foi enviado através do <strong>Resend</strong> no <strong>Railway</strong>!</p>
+          <p>✅ Sistema BrisaLOG totalmente funcional</p>
+          <hr>
+          <p style="color: #666; font-size: 12px;">
+            Enviado em: ${new Date().toLocaleString('pt-BR')}
+          </p>
+        </div>
+      `
+    });
+    
+    console.log('✅ [TEST EMAIL] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      connectionTest: connectionTest,
+      message: 'Teste via Resend API',
+      service: 'Resend',
+      info: 'Resend é compatível com Railway - sem bloqueios SMTP'
+    });
+    
+  } catch (error) {
+    console.error('❌ [TEST EMAIL] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      service: 'Resend'
+    });
+  }
+});
+
+// Endpoint simples para testar Resend direto
+app.post('/api/test-resend/:email', async (req, res) => {
+  console.log('📨 [RESEND TEST] Testando Resend direto...');
+  const email = req.params.email;
+  
+  try {
+    console.log('📨 RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
+    
+    if (!process.env.RESEND_API_KEY) {
+      return res.json({
+        success: false,
+        error: 'RESEND_API_KEY não encontrada'
+      });
+    }
+
+    // Usar https nativo do Node.js
+    const https = require('https');
+    
+    const postData = JSON.stringify({
+      from: 'BrisaLOG <onboarding@resend.dev>',
+      to: [email],
+      subject: 'Teste Resend Railway - HTTPS',
+      html: '<h1>🎉 Funciona!</h1><p>Email enviado via Resend + Railway usando HTTPS nativo</p>'
+    });
+
+    const options = {
+      hostname: 'api.resend.com',
+      port: 443,
+      path: '/emails',
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const request = https.request(options, (response) => {
+      let data = '';
+      
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      response.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          
+          if (response.statusCode === 200) {
+            console.log('✅ [RESEND] Sucesso:', result);
+            res.json({ 
+              success: true, 
+              messageId: result.id,
+              status: response.statusCode
+            });
+          } else {
+            console.error('❌ [RESEND] Erro API:', result);
+            res.status(response.statusCode).json({ 
+              success: false, 
+              error: result.message || 'Erro na API Resend',
+              details: result
+            });
+          }
+        } catch (parseError) {
+          console.error('❌ [RESEND] Erro parse:', parseError);
+          res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao processar resposta'
+          });
+        }
+      });
+    });
+
+    request.on('error', (error) => {
+      console.error('❌ [RESEND] Erro request:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    });
+
+    request.write(postData);
+    request.end();
+    
+  } catch (error) {
+    console.error('❌ [RESEND] Erro geral:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Endpoint simples para testar criação direta do transporter
+app.post('/api/test-gmail-direct/:email', async (req, res) => {
+  console.log('📧 [DIRECT] Teste direto do Gmail SMTP...');
+  const email = req.params.email;
+  
+  try {
+    const nodemailer = require('nodemailer');
+    
+    console.log('📧 [DIRECT] Criando transporter direto...');
+    console.log('📧 [DIRECT] GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
+    console.log('📧 [DIRECT] FROM_EMAIL:', process.env.FROM_EMAIL);
+    
+    const transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br',
+        pass: process.env.GMAIL_APP_PASSWORD
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+    
+    console.log('📧 [DIRECT] Transporter criado, testando verificação...');
+    
+    // Testar conexão
+    const verified = await new Promise((resolve, reject) => {
+      transporter.verify((error, success) => {
+        if (error) {
+          console.error('❌ [DIRECT] Erro na verificação:', error);
+          reject(error);
+        } else {
+          console.log('✅ [DIRECT] Verificação bem-sucedida');
+          resolve(success);
+        }
+      });
+    });
+    
+    console.log('📧 [DIRECT] Enviando email de teste...');
+    
+    const info = await transporter.sendMail({
+      from: process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br',
+      to: email,
+      subject: 'Teste Gmail SMTP Direto - BrisaLOG',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #2563eb;">✅ Gmail SMTP Funcionando!</h1>
+          <p>Este email foi enviado diretamente via <strong>Gmail SMTP</strong> no <strong>Railway</strong>!</p>
+          <p>🎉 Sistema BrisaLOG com email totalmente funcional</p>
+          <hr>
+          <p style="color: #666; font-size: 12px;">
+            Enviado em: ${new Date().toLocaleString('pt-BR')}
+          </p>
+        </div>
+      `
+    });
+    
+    console.log('✅ [DIRECT] Email enviado:', info.messageId);
+    
+    res.json({
+      success: true,
+      messageId: info.messageId,
+      verified: verified,
+      service: 'Gmail Direct',
+      message: 'Email enviado com sucesso via Gmail SMTP direto'
+    });
+    
+  } catch (error) {
+    console.error('❌ [DIRECT] Erro:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      service: 'Gmail Direct'
+    });
+  }
+});
+
+// Debug das variáveis de ambiente
+app.get('/api/debug-env', (req, res) => {
+  console.log('🔍 [ENV DEBUG] Verificando variáveis de ambiente...');
+  
+  res.json({
+    GMAIL_APP_PASSWORD: !!process.env.GMAIL_APP_PASSWORD,
+    FROM_EMAIL: process.env.FROM_EMAIL,
+    RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+    NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
+    DATABASE_URL: !!process.env.DATABASE_URL,
     timestamp: new Date().toISOString()
   });
 });
 
-// ============================================================================
-// GRACEFUL SHUTDOWN
-// ============================================================================
+// Endpoint para demonstrar sistema com domínio
+app.post('/api/demo-with-domain/:email', async (req, res) => {
+  console.log('📧 [DOMAIN DEMO] Demonstrando sistema com domínio...');
+  const { email } = req.params;
+  
+  try {
+    const resendProductionService = require('./resendProductionService');
+    
+    const result = await resendProductionService.sendEmail({
+      to: email,
+      subject: 'DEMO: Como funcionará com domínio verificado',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #10b981;">🚀 Sistema com Domínio Funcionando!</h1>
+            
+            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+              <h3 style="color: #065f46; margin-top: 0;">✅ Com Domínio Verificado:</h3>
+              <p style="margin: 5px 0; color: #065f46;">• Emails enviados diretamente para fornecedores</p>
+              <p style="margin: 5px 0; color: #065f46;">• Sem limitações de destinatário</p>
+              <p style="margin: 5px 0; color: #065f46;">• Entregabilidade profissional</p>
+              <p style="margin: 5px 0; color: #065f46;">• Remetente: noreply@seudominio.com</p>
+            </div>
+            
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+              <h3 style="color: #92400e; margin-top: 0;">🛠️ Para Configurar:</h3>
+              <ol style="color: #92400e; margin: 10px 0;">
+                <li>Compre domínio (ex: brisalog.com.br)</li>
+                <li>Configure DNS no Resend</li>
+                <li>Aguarde verificação (24-48h)</li>
+                <li>Configure: DOMAIN_VERIFIED=true</li>
+                <li>Configure: FROM_EMAIL_VERIFIED=noreply@seudominio.com</li>
+              </ol>
+              <p style="color: #92400e; margin: 5px 0;"><strong>Custo:</strong> ~R$5-40/mês</p>
+            </div>
+            
+            <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
+              <h3 style="color: #1e40af; margin-top: 0;">📧 Destinatário:</h3>
+              <p style="margin: 5px 0; color: #1e40af;"><strong>Este email seria para:</strong> ${email}</p>
+              <p style="margin: 5px 0; color: #1e40af;"><strong>Modo atual:</strong> ${process.env.DOMAIN_VERIFIED === 'true' ? 'PRODUÇÃO' : 'FALLBACK'}</p>
+              <p style="margin: 5px 0; color: #1e40af;"><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+    
+    console.log('✅ [DOMAIN DEMO] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Demo de sistema com domínio',
+      currentMode: process.env.DOMAIN_VERIFIED === 'true' ? 'PRODUCTION' : 'FALLBACK',
+      guideUrl: 'Consulte o arquivo GUIA_DOMINIO.md',
+      estimatedCost: 'R$5-40/mês para funcionalidade completa'
+    });
+    
+  } catch (error) {
+    console.error('❌ [DOMAIN DEMO] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message
+    });
+  }
+});
+
+// Teste específico para email Brisanet com sistema híbrido
+app.post('/api/test-hybrid-brisanet', async (req, res) => {
+  console.log('📧 [HYBRID BRISANET] Testando sistema híbrido...');
+  
+  try {
+    const emailService = require('./emailService');
+    
+    const result = await emailService._send({
+      to: 'wanderson.goncalves@grupobrisanet.com.br',
+      subject: 'Teste Sistema Híbrido - BrisaLOG',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #10b981;">🔄 Sistema Híbrido Funcionando!</h1>
+            <p>Este é um teste do sistema híbrido de emails do BrisaLOG Portal.</p>
+            
+            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+              <h3 style="color: #065f46; margin-top: 0;">📋 Como Funciona:</h3>
+              <p style="margin: 5px 0; color: #065f46;">1. <strong>Notificação Garantida:</strong> Enviada para wandevpb@gmail.com</p>
+              <p style="margin: 5px 0; color: #065f46;">2. <strong>Tentativa Direta:</strong> Tenta enviar para email original</p>
+              <p style="margin: 5px 0; color: #065f46;">3. <strong>Resultado:</strong> Pelo menos uma entrega garantida</p>
+            </div>
+            
+            <div style="background: #fff3e0; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e;">
+                <strong>🎯 Teste:</strong> Este email deveria chegar em wanderson.goncalves@grupobrisanet.com.br
+                mas você também receberá uma notificação em wandevpb@gmail.com
+              </p>
+            </div>
+            
+            <p><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+          </div>
+        </div>
+      `
+    });
+    
+    console.log('✅ [HYBRID BRISANET] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Sistema híbrido testado - verificar ambos os emails',
+      targetEmail: 'wanderson.goncalves@grupobrisanet.com.br',
+      notificationEmail: 'wandevpb@gmail.com',
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ [HYBRID BRISANET] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Endpoint especial para testar email da Brisanet (força fallbacks)
+app.post('/api/test-brisanet-email', async (req, res) => {
+  console.log('📧 [BRISANET TEST] Testando email para Brisanet...');
+  const targetEmail = 'wanderson.goncalves@grupobrisanet.com.br';
+  
+  try {
+    console.log('📧 [BRISANET TEST] Tentando múltiplos métodos...');
+    
+    // Método 1: Tentar SendGrid HTTPS
+    try {
+      const sendgridHTTPSService = require('./sendgridHTTPSService');
+      const sgResult = await sendgridHTTPSService.sendEmail({
+        to: targetEmail,
+        subject: 'Teste Email Brisanet - BrisaLOG',
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+            <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <h1 style="color: #2563eb;">✅ Email para Brisanet Funcionando!</h1>
+              <p>Este email foi enviado via <strong>SendGrid HTTPS</strong> para <strong>${targetEmail}</strong>!</p>
+              <p><strong>Método:</strong> SendGrid API REST</p>
+              <p><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+              <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0; color: #065f46;">🎉 <strong>Sucesso!</strong> Sistema pode enviar emails para domínio Brisanet!</p>
+              </div>
+            </div>
+          </div>
+        `
+      });
+      
+      if (sgResult.success) {
+        console.log('✅ [BRISANET TEST] SendGrid funcionou!');
+        return res.json({ 
+          success: true, 
+          result: sgResult,
+          message: 'Email enviado via SendGrid HTTPS para Brisanet',
+          service: 'SendGrid HTTPS',
+          targetEmail: targetEmail
+        });
+      }
+    } catch (sgError) {
+      console.log('❌ [BRISANET TEST] SendGrid falhou:', sgError.message);
+    }
+    
+    // Método 2: Tentar via emailService padrão (que tem fallbacks)
+    try {
+      const emailService = require('./emailService');
+      const result = await emailService._send({
+        to: targetEmail,
+        subject: 'Teste Sistema BrisaLOG - Email Direto',
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+            <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <h1 style="color: #2563eb;">📧 Teste de Email Direto</h1>
+              <p>Este email foi enviado diretamente para <strong>${targetEmail}</strong>!</p>
+              <p><strong>Sistema:</strong> BrisaLOG Portal</p>
+              <p><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+              <div style="background: #fff3e0; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0; color: #92400e;">🔥 <strong>Teste:</strong> Verificando se conseguimos enviar para email da Brisanet!</p>
+              </div>
+            </div>
+          </div>
+        `
+      });
+      
+      if (result.success) {
+        console.log('✅ [BRISANET TEST] EmailService funcionou!');
+        return res.json({ 
+          success: true, 
+          result: result,
+          message: 'Email enviado via EmailService para Brisanet',
+          service: result.method || 'EmailService',
+          targetEmail: targetEmail
+        });
+      }
+    } catch (esError) {
+      console.log('❌ [BRISANET TEST] EmailService falhou:', esError.message);
+    }
+    
+    // Se tudo falhar
+    res.status(500).json({ 
+      success: false, 
+      error: 'Todos os métodos falharam para email Brisanet',
+      targetEmail: targetEmail,
+      availableMethods: {
+        sendgrid: !!process.env.EMAIL_PASS,
+        resend: !!process.env.RESEND_API_KEY,
+        gmail: !!process.env.GMAIL_APP_PASSWORD
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ [BRISANET TEST] Erro geral:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      targetEmail: targetEmail
+    });
+  }
+});
+
+// Endpoint para testar SendGrid via HTTPS
+app.post('/api/test-sendgrid-https/:email', async (req, res) => {
+  console.log('📧 [SENDGRID HTTPS TEST] Testando SendGrid via HTTPS...');
+  const { email } = req.params;
+  
+  try {
+    const sendgridHTTPSService = require('./sendgridHTTPSService');
+    
+    const result = await sendgridHTTPSService.sendEmail({
+      to: email,
+      subject: 'Teste SendGrid HTTPS - BrisaLOG',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #2563eb;">✅ SendGrid HTTPS Funcionando!</h1>
+            <p>Este email foi enviado via <strong>SendGrid API com HTTPS nativo</strong> no <strong>Railway</strong>!</p>
+            <p><strong>Método:</strong> SendGrid API REST</p>
+            <p><strong>Protocolo:</strong> HTTPS (Porta 443)</p>
+            <p><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #065f46;">🎉 <strong>Sucesso!</strong> Emails funcionando sem limitações via SendGrid HTTPS!</p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+    
+    console.log('✅ [SENDGRID HTTPS TEST] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Teste via SendGrid HTTPS',
+      service: 'SendGrid HTTPS',
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ [SENDGRID HTTPS TEST] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      service: 'SendGrid HTTPS',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Endpoint para testar Gmail API diretamente
+app.post('/api/test-gmail-api/:email', async (req, res) => {
+  console.log('📧 [GMAIL API TEST] Testando Gmail API diretamente...');
+  const { email } = req.params;
+  
+  try {
+    const gmailAPIService = require('./gmailAPIService');
+    
+    const result = await gmailAPIService.sendEmail({
+      to: email,
+      subject: 'Teste Gmail API HTTPS - BrisaLOG',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #2563eb;">✅ Gmail API HTTPS Funcionando!</h1>
+            <p>Este email foi enviado via <strong>Gmail API com HTTPS nativo</strong> no <strong>Railway</strong>!</p>
+            <p><strong>Método:</strong> Gmail API REST</p>
+            <p><strong>Protocolo:</strong> HTTPS (Porta 443)</p>
+            <p><strong>Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #065f46;">🎉 <strong>Sucesso!</strong> O Railway permite conexões HTTPS para APIs externas!</p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+    
+    console.log('✅ [GMAIL API TEST] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Teste via Gmail API HTTPS',
+      service: 'Gmail API',
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ [GMAIL API TEST] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      service: 'Gmail API',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Endpoint para testar Gmail SMTP
+app.post('/api/test-gmail/:email', async (req, res) => {
+  console.log('📧 [GMAIL TEST] Testando Gmail SMTP...');
+  const email = req.params.email;
+  
+  try {
+    // Verificar variáveis de ambiente necessárias
+    console.log('🔍 [GMAIL TEST] Verificando variáveis de ambiente...');
+    console.log('GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
+    console.log('FROM_EMAIL:', process.env.FROM_EMAIL);
+    console.log('RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
+    
+    if (!process.env.GMAIL_APP_PASSWORD) {
+      return res.json({
+        success: false,
+        error: 'GMAIL_APP_PASSWORD não configurada no Railway',
+        service: 'Gmail',
+        info: 'Variável de ambiente necessária para Gmail SMTP não encontrada',
+        availableVars: {
+          RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+          FROM_EMAIL: !!process.env.FROM_EMAIL,
+          NODE_ENV: process.env.NODE_ENV
+        }
+      });
+    }
+    
+    const emailService = require('./emailService');
+    
+    const result = await emailService.sendNovoAgendamentoEmail({
+      agendamento: {
+        codigo: 'TEST-001',
+        dataHora: new Date(),
+        observacoes: 'Teste de email via Gmail SMTP',
+        cd: {
+          nome: 'CD Teste',
+          endereco: 'Endereço Teste'
+        }
+      },
+      fornecedor: {
+        nome: 'Fornecedor Teste',
+        email: email
+      }
+    });
+    
+    console.log('✅ [GMAIL TEST] Resultado:', result);
+    res.json({ 
+      success: true, 
+      result: result,
+      message: 'Teste via Gmail SMTP',
+      service: 'Gmail',
+      info: 'Email enviado via Gmail SMTP usando app password'
+    });
+    
+  } catch (error) {
+    console.error('❌ [GMAIL TEST] Erro:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      service: 'Gmail'
+    });
+  }
+});
+
+// Rota de health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('🔄 SIGTERM recebido, iniciando graceful shutdown...');
-  
-  try {
-    await prisma.$disconnect();
-    console.log('✅ Prisma disconnected');
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Erro durante shutdown:', error);
-    process.exit(1);
-  }
-});
-
 process.on('SIGINT', async () => {
-  console.log('🔄 SIGINT recebido, iniciando graceful shutdown...');
-  
-  try {
-    await prisma.$disconnect();
-    console.log('✅ Prisma disconnected');
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Erro durante shutdown:', error);
-    process.exit(1);
-  }
+  console.log('\n🛑 Encerrando servidor...');
+  await prisma.$disconnect();
+  process.exit(0);
 });
+// ...existing code...
 
-// Tratar erros não capturados
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-  // Não fazer exit automaticamente em produção
-  if (process.env.NODE_ENV === 'development') {
-    process.exit(1);
-  }
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
-  process.exit(1);
-});
-
+// ...existing code...
