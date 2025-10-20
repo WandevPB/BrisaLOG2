@@ -1,115 +1,129 @@
 // Endpoint temporário para debug da base PostgreSQL
 app.get('/api/debug/cds', async (req, res) => {
-  try {
-    const cds = await prisma.cd.findMany();
-    res.json({ success: true, total: cds.length, cds });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-require('dotenv').config({ path: './backend/.env' });
-const { PrismaClient } = require('@prisma/client');
-const { execSync } = require('child_process');
-const prisma = new PrismaClient();
 
-// Função para inicializar o banco de dados
-async function initializeDatabase() {
-  try {
-    console.log('🔧 Verificando estrutura do banco de dados...');
-    console.log('📡 DATABASE_URL configurada:', process.env.DATABASE_URL ? 'SIM' : 'NÃO');
-    console.log('🌍 NODE_ENV:', process.env.NODE_ENV);
-    
-    // Tentar conectar ao banco primeiro
-    await prisma.$connect();
-    console.log('✅ Conexão com banco estabelecida!');
-    
-    // Tentar fazer uma query simples para verificar se as tabelas existem
-    await prisma.cd.findFirst();
-    console.log('✅ Banco de dados já inicializado!');
-    
-  } catch (error) {
-    console.log('❗ Erro detectado:', error.code, error.message);
-    
-    if (error.code === 'P2021' || error.message.includes('does not exist') || error.code === 'P1001' || error.code === 'P1017') {
-      console.log('🗄️ Criando estrutura do banco de dados...');
-      
-      try {
-        // Gerar o cliente Prisma primeiro
-        console.log('🔧 Gerando cliente Prisma...');
-        execSync('npx prisma generate', { 
-          stdio: 'inherit',
-          cwd: process.cwd()
-        });
-        
-        // Resetar migrações problemáticas se necessário
-        console.log('🔄 Resetando migrações antigas...');
-        execSync('node scripts/reset-migrations.js', { 
-          stdio: 'inherit',
-          cwd: process.cwd()
-        });
-        
-        // Para PostgreSQL, usar migrate deploy que é mais apropriado para produção
-        console.log('📋 Executando: prisma migrate deploy...');
-        execSync('npx prisma migrate deploy', { 
-          stdio: 'inherit',
-          cwd: process.cwd()
-        });
-        
-        // Reconectar após as migrações
-        await prisma.$disconnect();
-        await prisma.$connect();
-        
-        // Verificar se existem CDs antes de executar seed
-        const cdCount = await prisma.cd.count();
-        console.log(`🔍 Total de CDs encontrados: ${cdCount}`);
-        
-        if (cdCount === 0) {
-          console.log('🌱 Nenhum CD encontrado, executando seed...');
-          execSync('node prisma/seed.js', { 
-            stdio: 'inherit',
-            cwd: process.cwd()
-          });
-        } else {
-          console.log('✅ CDs já existem, pulando seed');
-        }
-        
-        console.log('✅ Banco de dados inicializado com sucesso!');
-        
-      } catch (setupError) {
-        console.error('❌ Erro ao configurar banco de dados:', setupError.message);
-        console.error('🔍 Detalhes do erro:', setupError);
-        
-        // Se o erro for de conexão, pode ser que o PostgreSQL não esteja configurado
-        if (setupError.message.includes('connect') || setupError.message.includes('ENOTFOUND') || setupError.message.includes('getaddrinfo')) {
-          console.log('');
-          console.log('🚨 ATENÇÃO: Parece que o PostgreSQL não está configurado no Railway!');
-          console.log('');
-          console.log('📋 Para resolver:');
-          console.log('1. Acesse seu projeto no Railway');
-          console.log('2. Clique em "Add Plugin" ou "New"');
-          console.log('3. Selecione "PostgreSQL"');
-          console.log('4. O Railway irá configurar automaticamente a DATABASE_URL');
-          console.log('5. Refaça o deploy após adicionar o PostgreSQL');
-          console.log('');
-        }
-        
-        process.exit(1);
-      }
-    } else {
-      console.error('❌ Erro inesperado no banco de dados:', error.message);
-      console.error('🔍 Código do erro:', error.code);
-      console.error('🔍 Detalhes completos:', error);
-      
-      // Tentar continuar mesmo com erro se for ambiente de desenvolvimento
-      if (process.env.NODE_ENV === 'development') {
-        console.log('⚠️ Continuando em modo desenvolvimento...');
-      } else {
-        process.exit(1);
-      }
+  // Endpoint temporário para debug da base PostgreSQL
+  app.get('/api/debug/cds', async (req, res) => {
+    try {
+      const cds = await prisma.cd.findMany();
+      res.json({ success: true, total: cds.length, cds });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
     }
-  }
-}
+  });
 
+  // ============================================================================
+  // MIDDLEWARE DE ERROR E INICIALIZAÇÃO
+  // ============================================================================
+
+  app.use(errorHandler);
+
+  // ============================================================================
+  // HEALTH CHECK
+  // ============================================================================
+
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      service: 'BrisaLOG Backend',
+      version: '2.0.0',
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  // Root endpoint
+  app.get('/', (req, res) => {
+    res.json({
+      message: 'BrisaLOG API está funcionando!',
+      version: '2.0.0',
+      endpoints: {
+        health: '/health',
+        api: '/api',
+        consulta: '/api/agendamentos/consultar/:codigo'
+      }
+    });
+  });
+
+  // ============================================================================
+  // TRATAMENTO DE ROTAS NÃO ENCONTRADAS
+  // ============================================================================
+
+  // Middleware para capturar rotas não encontradas
+  app.use('*', (req, res) => {
+    console.log(`❌ [404] Rota não encontrada: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({
+      error: 'Rota não encontrada',
+      method: req.method,
+      url: req.originalUrl,
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // ============================================================================
+  // TRATAMENTO GLOBAL DE ERROS
+  // ============================================================================
+
+  // Global error handler
+  app.use((err, req, res, next) => {
+    console.error('❌ [GLOBAL ERROR]:', err);
+  
+    // Se já foi enviada uma resposta, delegar para o handler padrão do Express
+    if (res.headersSent) {
+      return next(err);
+    }
+  
+    res.status(500).json({
+      error: 'Erro interno do servidor',
+      message: process.env.NODE_ENV === 'development' ? err.message : 'Algo deu errado',
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // ============================================================================
+  // GRACEFUL SHUTDOWN
+  // ============================================================================
+
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('🔄 SIGTERM recebido, iniciando graceful shutdown...');
+  
+    try {
+      await prisma.$disconnect();
+      console.log('✅ Prisma disconnected');
+      process.exit(0);
+    } catch (error) {
+      console.error('❌ Erro durante shutdown:', error);
+      process.exit(1);
+    }
+  });
+
+  process.on('SIGINT', async () => {
+    console.log('� SIGINT recebido, iniciando graceful shutdown...');
+  
+    try {
+      await prisma.$disconnect();
+      console.log('✅ Prisma disconnected');
+      process.exit(0);
+    } catch (error) {
+      console.error('❌ Erro durante shutdown:', error);
+      process.exit(1);
+    }
+  });
+
+  // Tratar erros não capturados
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    // Não fazer exit automaticamente em produção
+    if (process.env.NODE_ENV === 'development') {
+      process.exit(1);
+    }
+  });
+
+  process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    process.exit(1);
+  });
 // Atualiza agendamentos antigos para padrão de observação e data/hora de reagendamento
 async function atualizarPendentesReagendamento() {
   const pendentes = await prisma.agendamento.findMany({
