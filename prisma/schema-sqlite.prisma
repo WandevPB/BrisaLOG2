@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Cd {
+  id                Int               @id @default(autoincrement())
+  nome              String            @unique
+  usuario           String            @unique
+  senha             String
+  emailRecuperacao  String?
+  primeiroLogin     Boolean           @default(true)
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  ativo             Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  agendamentos      Agendamento[]
+  bloqueiosHorarios BloqueioHorario[]
+  historicoAcoes    HistoricoAcao[]
+
+  @@map("cds")
+}
+
+model Fornecedor {
+  id           Int           @id @default(autoincrement())
+  nome         String
+  email        String        @unique
+  telefone     String
+  documento    String        @unique
+  ativo        Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  agendamentos Agendamento[]
+
+  @@map("fornecedores")
+}
+
+model Agendamento {
+  id                     Int                     @id @default(autoincrement())
+  codigo                 String                  @unique
+  dataEntrega            DateTime
+  horarioEntrega         String
+  tipoCarga              String
+  status                 String                  @default("pendente")
+  tipoRegistro           String                  @default("agendamento")
+  observacoes            String?
+  dataSugestaoCD         DateTime?
+  horarioSugestaoCD      String?
+  motivoNaoVeio          String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  cdId                   Int
+  fornecedorId           Int
+  fornecedor             Fornecedor              @relation(fields: [fornecedorId], references: [id])
+  cd                     Cd                      @relation(fields: [cdId], references: [id])
+  historicoAcoes         HistoricoAcao[]
+  notasFiscais           NotaFiscal[]
+  respostasReagendamento RespostaReagendamento[]
+
+  @@map("agendamentos")
+}
+
+model NotaFiscal {
+  id            Int         @id @default(autoincrement())
+  numeroPedido  String
+  numeroNF      String
+  serie         String?
+  valor         String?
+  arquivoPath   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  agendamentoId Int
+  agendamento   Agendamento @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+
+  @@map("notas_fiscais")
+}
+
+model HistoricoAcao {
+  id            Int         @id @default(autoincrement())
+  acao          String
+  descricao     String
+  dataAnterior  DateTime?
+  dataNova      DateTime?
+  createdAt     DateTime    @default(now())
+  agendamentoId Int
+  cdId          Int
+  cd            Cd          @relation(fields: [cdId], references: [id])
+  agendamento   Agendamento @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+
+  @@map("historico_acoes")
+}
+
+model BloqueioHorario {
+  id            Int      @id @default(autoincrement())
+  dataInicio    DateTime
+  dataFim       DateTime
+  horarioInicio String
+  horarioFim    String
+  motivo        String
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  cdId          Int
+  cd            Cd       @relation(fields: [cdId], references: [id])
+
+  @@map("bloqueios_horarios")
+}
+
+model RespostaReagendamento {
+  id            Int         @id @default(autoincrement())
+  resposta      String
+  comentario    String?
+  novaData      DateTime?
+  novoHorario   String?
+  createdAt     DateTime    @default(now())
+  agendamentoId Int
+  agendamento   Agendamento @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+
+  @@map("respostas_reagendamento")
+}

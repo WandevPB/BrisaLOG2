@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard CD - BrisaLOG Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'orange-primary': '#FF6B35',
+                        'orange-secondary': '#FF8C42',
+                        'orange-accent': '#FF9F66',
+                        'orange-light': '#FFA885',
+                        'gray-dark': '#2D3748',
+                        'gray-medium': '#4A5568',
+                        'gray-light': '#E2E8F0'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-3d {
+            transform: perspective(1000px) rotateX(5deg);
+            transition: all 0.3s ease;
+            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.1), 0 10px 20px rgba(255, 107, 53, 0.1);
+        }
+        .card-3d:hover {
+            transform: perspective(1000px) rotateX(0deg) translateY(-5px);
+            box-shadow: 0 30px 60px rgba(255, 107, 53, 0.2), 0 15px 30px rgba(255, 107, 53, 0.15);
+        }
+        .btn-3d {
+            transform: perspective(1000px) translateZ(0);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(255, 107, 53, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        .btn-3d:hover {
+            transform: perspective(1000px) translateZ(10px) translateY(-2px);
+            box-shadow: 0 15px 35px rgba(255, 107, 53, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        .status-pendente { background: linear-gradient(135deg, #FF6B35, #FF8C42); }
+        .status-confirmado { background: linear-gradient(135deg, #10B981, #059669); }
+        .status-entregue { background: linear-gradient(135deg, #3B82F6, #1D4ED8); }
+        .status-nao-veio { background: linear-gradient(135deg, #EF4444, #DC2626); }
+        .status-reagendamento { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: linear-gradient(135deg, #10B981, #059669);
+        }
+        
+        .notification.error {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+        }
+        
+        .notification.warning {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+        }
+        
+        .notification.info {
+            background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+        }
+        
+        /* Estilos específicos para o modal de registrar entrega */
+        .entrega-form-step {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .step-entrega {
+            transition: all 0.3s ease;
+        }
+        
+        .tab-pedido-entrega:hover {
+            background-color: #f97316;
+            color: white;
+        }
+        
+        .nota-fiscal-entrega {
+            transition: all 0.3s ease;
+        }
+        
+        .nota-fiscal-entrega:hover {
+            background-color: #f9fafb;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .table-row:hover {
+            background-color: #f9fafb;
+            transform: translateX(4px);
+            transition: all 0.2s ease;
+        }
+        
+        /* Regras para cartões urgentes removidas conforme solicitado */
+        
+        .column-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .column-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .priority-high {
+            border-left: 4px solid #DC2626;
+        }
+        
+        .priority-medium {
+            border-left: 4px solid #F59E0B;
+        }
+        
+        .priority-low {
+            border-left: 4px solid #10B981;
+        }
+
+/* Melhorias para modais fullscreen e responsividade - agora respeitando a classe hidden do Tailwind */
+.modal-backdrop:not(.hidden),
+.fixed.inset-0.bg-black.bg-opacity-50.flex.items-center.justify-center:not(.hidden) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh;
+    min-width: 100vw;
+}
+
+.modal-backdrop.hidden,
+.fixed.inset-0.bg-black.bg-opacity-50.flex.items-center.justify-center.hidden {
+    display: none !important;
+}
+
+
+.modal-backdrop:not(.hidden) > div,
+.fixed.inset-0.bg-black.bg-opacity-50.flex.items-center.justify-center:not(.hidden) > div {
+    max-width: 90vw;
+    width: 100%;
+    max-width: 600px;
+    max-height: 98vh;
+    height: auto;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .modal-backdrop:not(.hidden) > div,
+    .fixed.inset-0.bg-black.bg-opacity-50.flex.items-center.justify-center:not(.hidden) > div {
+        max-width: 700px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .modal-backdrop:not(.hidden) > div,
+    .fixed.inset-0.bg-black.bg-opacity-50.flex.items-center.justify-center:not(.hidden) > div {
+        max-width: 900px;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-backdrop:not(.hidden) > div,
+    .fixed.inset-0.bg-black.bg-opacity-50.flex.items-center.justify-center:not(.hidden) > div {
+        max-width: 100vw !important;
+        width: 100vw !important;
+        min-width: 0 !important;
+        border-radius: 0 !important;
+    }
+}
+
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-lg sticky top-0 z-40">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4 flex-nowrap overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style="white-space:nowrap; height:56px;">
+                    <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-3 rounded-xl">
+                        <i class="fas fa-tachometer-alt text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-dark">Dashboard CD</h1>
+                        <p class="text-gray-medium text-sm" id="cd-nome">Carregando...</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button onclick="openConsultaModal()" class="bg-blue-500 text-white px-4 h-14 flex items-center rounded-lg hover:bg-blue-600 transition-all btn-3d" title="Consultar Agendamento">
+                        <i class="fas fa-search mr-2"></i>
+                        Consultar
+                    </button>
+                    <button onclick="openRegistrarEntregaModal()" class="bg-orange-500 text-white px-4 h-14 flex items-center rounded-lg hover:bg-orange-600 transition-all btn-3d" title="Registrar Entrega Fora do Agendamento">
+                        <i class="fas fa-truck mr-2"></i>
+                        Registrar Entrega
+                    </button>
+                    <button onclick="openBloqueioModal()" class="bg-red-500 text-white px-4 h-14 flex items-center rounded-lg hover:bg-red-600 transition-all btn-3d" title="Bloquear Horários">
+                        <i class="fas fa-ban mr-2"></i>
+                        Bloquear Horário
+                    </button>
+                    <button onclick="openGerenciarBloqueiosModal()" class="bg-purple-500 text-white px-4 h-14 flex items-center rounded-lg hover:bg-purple-600 transition-all btn-3d" title="Gerenciar Bloqueios">
+                        <i class="fas fa-cogs mr-2"></i>
+                        Gerenciar Bloqueios
+                    </button>
+                    <button id="dashboard-kpis-button" class="bg-teal-500 text-white px-4 h-14 flex items-center rounded-lg hover:bg-teal-600 transition-all btn-3d" title="Dashboard KPIs">
+                        <i class="fas fa-chart-pie mr-2"></i>
+                        DASHBOARD KPIS
+                    </button>
+                    <button onclick="refreshData()" class="bg-orange-primary text-white px-4 h-14 flex items-center rounded-lg hover:bg-orange-secondary transition-all btn-3d">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Atualizar
+                    </button>
+                    <div class="relative">
+                        <button id="user-menu-button" class="flex items-center space-x-2 text-gray-dark hover:text-orange-primary transition-colors">
+                            <div class="bg-orange-primary text-white w-10 h-10 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border">
+                            <div class="px-4 py-2 text-gray-700 font-semibold border-b flex items-center">
+                                <i class="fas fa-user mr-2"></i>
+                                <span id="usuario-nome">Usuário</span>
+                            </div>
+                            <button onclick="logout()" class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Sair
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Stats Cards -->
+    <section class="container mx-auto px-6 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div class="bg-white rounded-2xl p-6 card-3d">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-medium text-sm font-semibold">TOTAL</p>
+                        <p class="text-3xl font-bold text-gray-dark" id="stat-total">0</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-gray-500 to-gray-600 p-3 rounded-xl">
+                        <i class="fas fa-clipboard-list text-white text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 card-3d">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-medium text-sm font-semibold">PENDENTE</p>
+                        <p class="text-3xl font-bold text-orange-primary" id="stat-pendente">0</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-3 rounded-xl">
+                        <i class="fas fa-clock text-white text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 card-3d">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-medium text-sm font-semibold">CONFIRMADO</p>
+                        <p class="text-3xl font-bold text-green-500" id="stat-confirmado">0</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-xl">
+                        <i class="fas fa-check-circle text-white text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 card-3d">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-medium text-sm font-semibold">ENTREGUE</p>
+                        <p class="text-3xl font-bold text-blue-500" id="stat-entregue">0</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl">
+                        <i class="fas fa-truck text-white text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 card-3d">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-medium text-sm font-semibold">NÃO VEIO</p>
+                        <p class="text-3xl font-bold text-red-500" id="stat-nao-veio">0</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-red-500 to-red-600 p-3 rounded-xl">
+                        <i class="fas fa-times-circle text-white text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls and Filters -->
+        <div class="bg-white rounded-2xl p-6 mb-8 card-3d">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+                <div class="flex flex-wrap items-center space-x-4 space-y-2 lg:space-y-0">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-gray-dark font-semibold">Visualização:</label>
+                        <div class="bg-gray-100 rounded-lg p-1 flex">
+                            <button id="view-cards" onclick="changeView('cards')" class="px-4 py-2 rounded-md bg-orange-primary text-white transition-all">
+                                <i class="fas fa-th-large mr-2"></i>Cards
+                            </button>
+                            <button id="view-list" onclick="changeView('list')" class="px-4 py-2 rounded-md text-gray-600 hover:bg-white transition-all">
+                                <i class="fas fa-list mr-2"></i>Lista
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <label class="text-gray-dark font-semibold">Status:</label>
+                        <select id="filter-status" onchange="applyFilters()" class="px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary">
+                            <option value="">Todos</option>
+                            <option value="pendente">Pendente</option>
+                            <option value="confirmado">Confirmado</option>
+                            <option value="entregue">Entregue</option>
+                            <option value="nao-veio">Não Veio</option>
+                            <option value="reagendamento">Reagendamento</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <label class="text-gray-dark font-semibold">Buscar:</label>
+                        <input type="text" id="search-input" onkeyup="applyFilters()" placeholder="Fornecedor, código..."
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary w-64">
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <button onclick="exportData('excel')" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all btn-3d">
+                        <i class="fas fa-file-excel mr-2"></i>Excel
+                    </button>
+                    <button onclick="exportData('pdf')" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all btn-3d">
+                        <i class="fas fa-file-pdf mr-2"></i>PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agendamentos Container -->
+        <div id="agendamentos-container">
+            <!-- Cards View -->
+            <div id="cards-view" class="space-y-6">
+                <!-- Kanban Board por Status -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-6">
+                    <!-- Coluna Pendente -->
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-orange-primary">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-dark flex items-center">
+                                <i class="fas fa-clock text-orange-primary mr-2"></i>
+                                Pendente
+                            </h3>
+                            <span id="badge-pendente" class="bg-orange-primary text-white px-3 py-1 rounded-full text-sm font-semibold">0</span>
+                        </div>
+                        <div id="column-pendente" class="space-y-4 min-h-96">
+                            <!-- Cards pendentes aqui -->
+                        </div>
+                        <div id="more-pendente" class="hidden mt-4 text-center">
+                            <button onclick="dashboard.showAllStatus('pendente')" class="text-orange-primary hover:text-orange-secondary font-semibold">
+                                <i class="fas fa-plus mr-1"></i>Ver todos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Confirmado -->
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-green-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-dark flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Confirmado
+                            </h3>
+                            <span id="badge-confirmado" class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">0</span>
+                        </div>
+                        <div id="column-confirmado" class="space-y-4 min-h-96">
+                            <!-- Cards confirmados aqui -->
+                        </div>
+                        <div id="more-confirmado" class="hidden mt-4 text-center">
+                            <button onclick="dashboard.showAllStatus('confirmado')" class="text-green-500 hover:text-green-600 font-semibold">
+                                <i class="fas fa-plus mr-1"></i>Ver todos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Entregue -->
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-blue-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-dark flex items-center">
+                                <i class="fas fa-truck text-blue-500 mr-2"></i>
+                                Entregue
+                            </h3>
+                            <span id="badge-entregue" class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">0</span>
+                        </div>
+                        <div id="column-entregue" class="space-y-4 min-h-96">
+                            <!-- Cards entregues aqui -->
+                        </div>
+                        <div id="more-entregue" class="mt-4 text-center">
+                            <button onclick="dashboard.showAllStatus('entregue')" class="text-blue-500 hover:text-blue-600 font-semibold">
+                                <i class="fas fa-plus mr-1"></i>Ver todos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Não Veio -->
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-red-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-dark flex items-center">
+                                <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                                Não Veio
+                            </h3>
+                            <span id="badge-nao-veio" class="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">0</span>
+                        </div>
+                        <div id="column-nao-veio" class="space-y-4 min-h-96">
+                            <!-- Cards não veio aqui -->
+                        </div>
+                        <div id="more-nao-veio" class="hidden mt-4 text-center">
+                            <button onclick="dashboard.showAllStatus('nao-veio')" class="text-red-500 hover:text-red-600 font-semibold">
+                                <i class="fas fa-plus mr-1"></i>Ver todos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Reagendamento -->
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-purple-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-dark flex items-center">
+                                <i class="fas fa-calendar-alt text-purple-500 mr-2"></i>
+                                Reagendamento
+                            </h3>
+                            <span id="badge-reagendamento" class="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold">0</span>
+                        </div>
+                        <div id="column-reagendamento" class="space-y-4 min-h-96">
+                            <!-- Cards reagendamento aqui -->
+                        </div>
+                        <div id="more-reagendamento" class="hidden mt-4 text-center">
+                            <button onclick="dashboard.showAllStatus('reagendamento')" class="text-purple-500 hover:text-purple-600 font-semibold">
+                                <i class="fas fa-plus mr-1"></i>Ver todos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerta para entregas de hoje -->
+                <div id="today-alert" class="hidden bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-6 text-white shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="bg-white bg-opacity-20 p-3 rounded-xl mr-4">
+                                <i class="fas fa-exclamation-triangle text-white text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold">Entregas para Hoje!</h3>
+                                <p id="today-count" class="text-yellow-100">Você tem entregas confirmadas para hoje</p>
+                            </div>
+                        </div>
+                        <button onclick="dashboard.showTodayDeliveries()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-6 py-3 rounded-lg font-semibold transition-all">
+                            <i class="fas fa-eye mr-2"></i>Ver Entregas
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div id="list-view" class="hidden bg-white rounded-2xl overflow-hidden shadow-lg">
+                <!-- Cabeçalho da Lista -->
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-4">
+                            <h3 class="text-lg font-semibold text-gray-dark">
+                                <i class="fas fa-list mr-2 text-orange-primary"></i>
+                                Lista de Agendamentos
+                            </h3>
+                            <span id="list-total-items" class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                                0 itens
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center space-x-2">
+                                <label class="text-sm font-medium text-gray-700">Itens por página:</label>
+                                <select id="items-per-page" onchange="dashboard.changeItemsPerPage(this.value)" 
+                                    class="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:border-orange-primary">
+                                    <option value="5">5</option>
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabela -->
+                <div class="w-full">
+                    <table class="w-full table-fixed">
+                        <thead class="bg-gray-100 border-b border-gray-200">
+                            <tr>
+                                <th class="w-24 px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                                    onclick="dashboard.sortTable('codigo')">
+                                    <div class="flex items-center space-x-1">
+                                        <span>Código</span>
+                                        <i class="fas fa-sort text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="w-40 px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                                    onclick="dashboard.sortTable('fornecedor')">
+                                    <div class="flex items-center space-x-1">
+                                        <span>Fornecedor</span>
+                                        <i class="fas fa-sort text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="w-28 px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                                    onclick="dashboard.sortTable('dataEntrega')">
+                                    <div class="flex items-center space-x-1">
+                                        <span>Data</span>
+                                        <i class="fas fa-sort text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="w-24 px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                                    Horário
+                                </th>
+                                <th class="w-32 px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                                    onclick="dashboard.sortTable('status')">
+                                    <div class="flex items-center space-x-1">
+                                        <span>Status</span>
+                                        <i class="fas fa-sort text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="w-24 px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                                    Ações
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="list-tbody" class="bg-white divide-y divide-gray-200">
+                            <!-- List items serão inseridos aqui dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <!-- Informações da Página -->
+                        <div class="flex items-center text-sm text-gray-700">
+                            <span>Mostrando</span>
+                            <span id="page-start" class="mx-1 font-medium">0</span>
+                            <span>até</span>
+                            <span id="page-end" class="mx-1 font-medium">0</span>
+                            <span>de</span>
+                            <span id="page-total" class="mx-1 font-medium">0</span>
+                            <span>resultados</span>
+                        </div>
+
+                        <!-- Controles de Navegação -->
+                        <div class="flex items-center space-x-2">
+                            <!-- Primeira Página -->
+                            <button id="first-page-btn" onclick="dashboard.goToPage(1)" 
+                                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                                <i class="fas fa-angle-double-left"></i>
+                            </button>
+
+                            <!-- Página Anterior -->
+                            <button id="prev-page-btn" onclick="dashboard.previousPage()" 
+                                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border-t border-b border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                                <i class="fas fa-angle-left"></i>
+                            </button>
+
+                            <!-- Números das Páginas -->
+                            <div id="page-numbers" class="flex space-x-1">
+                                <!-- Números serão inseridos dinamicamente -->
+                            </div>
+
+                            <!-- Próxima Página -->
+                            <button id="next-page-btn" onclick="dashboard.nextPage()" 
+                                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border-t border-b border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                                <i class="fas fa-angle-right"></i>
+                            </button>
+
+                            <!-- Última Página -->
+                            <button id="last-page-btn" onclick="dashboard.goToPage(dashboard.totalPages)" 
+                                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                                <i class="fas fa-angle-double-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="text-center py-12">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-primary mx-auto mb-4"></div>
+            <p class="text-gray-medium">Carregando agendamentos...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-12">
+            <div class="bg-orange-100 p-6 rounded-full inline-block mb-4">
+                <i class="fas fa-inbox text-orange-primary text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-dark mb-2">Nenhum agendamento encontrado</h3>
+            <p class="text-gray-medium">Não há agendamentos que correspondam aos filtros aplicados.</p>
+        </div>
+    </section>
+
+    <!-- Agendamento Detail Modal -->
+    <div id="detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal-backdrop p-4">
+        <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-3d">
+            <div class="flex-shrink-0 bg-gradient-to-r from-orange-primary to-orange-secondary px-6 py-4 flex justify-between items-center rounded-t-2xl">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <i class="fas fa-info-circle mr-3"></i>
+                    Detalhes do Agendamento
+                </h2>
+                <button onclick="closeDetailModal()" class="text-white hover:text-orange-200 transition-colors duration-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="detail-content" class="flex-1 overflow-y-auto p-6">
+                <!-- Conteúdo será inserido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Suggest Date Modal -->
+    <div id="suggest-date-modal" style="z-index:2147483647;" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-2xl max-w-md w-full mx-4">
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-gray-dark mb-4">Sugerir Nova Data</h2>
+                <form id="suggest-date-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">Nova Data</label>
+                            <input type="date" id="nova-data" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary">
+                        </div>
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">Horário</label>
+                            <select id="novo-horario" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary">
+                                <option value="">Selecione o horário</option>
+                                <option value="08:00">08:00</option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">Motivo (opcional)</label>
+                            <textarea id="motivo-reagendamento" rows="3"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary"
+                                placeholder="Explique o motivo do reagendamento..."></textarea>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-4 mt-6">
+                        <button type="button" onclick="closeSuggestDateModal()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-all">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-3d bg-orange-primary text-white px-6 py-2 rounded-lg hover:bg-orange-secondary transition-all">
+                            Enviar Sugestão
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Status Modal -->
+    <div id="all-status-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-2xl max-w-4xl w-full mx-4 max-h-90vh overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+                <h2 id="all-status-title" class="text-2xl font-bold text-gray-dark">Todos os Agendamentos</h2>
+                <button onclick="closeAllStatusModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="all-status-content" class="p-6">
+                <div id="all-status-list" class="space-y-4">
+                    <!-- Conteúdo será inserido dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today Deliveries Modal -->
+    <div id="today-deliveries-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-2xl max-w-4xl w-full mx-4 max-h-90vh overflow-y-auto">
+            <div class="sticky top-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-4 flex justify-between items-center">
+                <h2 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-3"></i>
+                    Entregas para Hoje
+                </h2>
+                <button onclick="closeTodayDeliveriesModal()" class="text-white hover:text-yellow-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="today-deliveries-content" class="p-6">
+                <div id="today-deliveries-list" class="space-y-4">
+                    <!-- Conteúdo será inserido dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Consulta por Código -->
+    <div id="consulta-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl max-w-md w-full mx-4 shadow-3d">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-4 rounded-2xl inline-block mb-4">
+                        <i class="fas fa-search text-white text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-dark mb-2">Consultar Agendamento</h2>
+                    <p class="text-gray-medium">Digite o código do agendamento</p>
+                </div>
+
+                <form id="consulta-form" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-dark font-semibold mb-2">Código do Agendamento</label>
+                        <input type="text" id="codigo-consulta" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                            placeholder="AGD123456">
+                    </div>
+
+                    <div class="flex justify-end space-x-4 mt-6">
+                        <button type="button" onclick="closeConsultaModal()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-all">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-3d bg-orange-primary text-white px-6 py-2 rounded-lg hover:bg-orange-secondary transition-all">
+                            <i class="fas fa-search mr-2"></i>
+                            Consultar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Status do Agendamento (Consulta) -->
+    <div id="status-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-90vh overflow-y-auto shadow-3d">
+            <div class="sticky top-0 bg-gradient-to-r from-orange-primary to-orange-secondary px-6 py-4 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-white flex items-center">
+                    <i class="fas fa-search mr-3"></i>
+                    Status do Agendamento
+                </h2>
+                <button onclick="closeStatusModal()" class="text-white hover:text-orange-200 transition-colors duration-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="status-content" class="p-6">
+                <!-- Conteúdo será inserido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Bloqueio de Horário -->
+    <div id="bloqueio-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl max-w-2xl w-full mx-4 max-h-90vh overflow-y-auto shadow-3d">
+            <div class="sticky top-0 bg-gradient-to-r from-red-500 to-red-600 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-white flex items-center">
+                    <i class="fas fa-ban mr-3"></i>
+                    Bloquear Horários
+                </h2>
+                <button onclick="closeBloqueioModal()" class="text-white hover:text-red-200 transition-colors duration-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <form id="bloqueio-form" class="space-y-6">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
+                            <div>
+                                <h3 class="text-yellow-800 font-semibold">Bloqueio de Horários</h3>
+                                <p class="text-yellow-700 text-sm mt-1">
+                                    Use esta funcionalidade para bloquear períodos específicos e evitar novos agendamentos.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">
+                                <i class="fas fa-calendar mr-2 text-red-500"></i>
+                                Data do Bloqueio *
+                            </label>
+                            <input type="date" id="data-bloqueio" name="dataBloqueio" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-20 transition-all">
+                            <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">
+                                <i class="fas fa-clock mr-2 text-red-500"></i>
+                                Horário de Início *
+                            </label>
+                            <select id="hora-inicio" name="horaInicio" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-20 transition-all">
+                                <option value="">Selecione</option>
+                                <option value="08:00">08:00</option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">
+                                <i class="fas fa-clock mr-2 text-red-500"></i>
+                                Horário de Fim *
+                            </label>
+                            <select id="hora-fim" name="horaFim" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-20 transition-all">
+                                <option value="">Selecione</option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="12:00">12:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                                <option value="17:00">17:00</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">
+                                <i class="fas fa-comment mr-2 text-red-500"></i>
+                                Motivo do Bloqueio *
+                            </label>
+                            <select id="motivo-bloqueio" name="motivoBloqueio" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-20 transition-all">
+                                <option value="">Selecione o motivo</option>
+                                <option value="manutencao">Manutenção Preventiva</option>
+                                <option value="inventario">Inventário</option>
+                                <option value="feriado">Feriado Local</option>
+                                <option value="treinamento">Treinamento da Equipe</option>
+                                <option value="sobrecarga">Sobrecarga de Demanda</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="motivo-outros" class="hidden">
+                        <label class="block text-gray-dark font-semibold mb-2">
+                            <i class="fas fa-edit mr-2 text-red-500"></i>
+                            Especifique o Motivo
+                        </label>
+                        <textarea id="motivo-custom" name="motivoCustom" rows="3" placeholder="Descreva o motivo do bloqueio..."
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-20 transition-all"></textarea>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-dark mb-3">Prévia do Bloqueio:</h4>
+                        <div id="preview-bloqueio" class="text-gray-600">
+                            <p>Selecione os dados acima para ver a prévia</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" onclick="closeBloqueioModal()" 
+                            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all">
+                            Cancelar
+                        </button>
+                        <button type="button" onclick="submitBloqueioButton()"
+                            class="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
+                            <i class="fas fa-ban mr-2"></i>
+                            Confirmar Bloqueio
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Gerenciamento de Bloqueios -->
+    <div id="gerenciar-bloqueios-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-90vh overflow-y-auto shadow-3d">
+            <div class="sticky top-0 bg-gradient-to-r from-red-500 to-red-600 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-white flex items-center">
+                    <i class="fas fa-cogs mr-3"></i>
+                    Gerenciar Bloqueios de Horário
+                </h2>
+                <button onclick="closeGerenciarBloqueiosModal()" class="text-white hover:text-red-200 transition-colors duration-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <!-- Filtros -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h3 class="font-semibold text-gray-dark mb-3">
+                        <i class="fas fa-filter mr-2 text-red-500"></i>
+                        Filtros
+                    </h3>
+                    <div class="grid md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                            <input type="date" id="filtro-data-inicio" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                            <input type="date" id="filtro-data-fim" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select id="filtro-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="">Todos</option>
+                                <option value="ativo">Ativos</option>
+                                <option value="expirado">Expirados</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="filtrarBloqueios()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all text-sm">
+                                <i class="fas fa-search mr-1"></i>
+                                Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estatísticas -->
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <div class="bg-blue-500 text-white p-3 rounded-lg mr-3">
+                                <i class="fas fa-ban"></i>
+                            </div>
+                            <div>
+                                <p class="text-blue-600 text-sm font-medium">Bloqueios Ativos</p>
+                                <p id="stat-ativos" class="text-2xl font-bold text-blue-800">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <div class="bg-yellow-500 text-white p-3 rounded-lg mr-3">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <p class="text-yellow-600 text-sm font-medium">Próximos 7 Dias</p>
+                                <p id="stat-proximos" class="text-2xl font-bold text-yellow-800">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <div class="bg-gray-500 text-white p-3 rounded-lg mr-3">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Total Criados</p>
+                                <p id="stat-total" class="text-2xl font-bold text-gray-800">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Bloqueios -->
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                        <h3 class="font-semibold text-gray-dark flex items-center">
+                            <i class="fas fa-list mr-2 text-red-500"></i>
+                            Lista de Bloqueios
+                        </h3>
+                    </div>
+                    
+                    <div id="bloqueios-loading" class="p-8 text-center hidden">
+                        <i class="fas fa-spinner fa-spin text-3xl text-red-500 mb-3"></i>
+                        <p class="text-gray-600">Carregando bloqueios...</p>
+                    </div>
+                    
+                    <div id="bloqueios-lista" class="divide-y divide-gray-200">
+                        <!-- Lista será preenchida dinamicamente -->
+                    </div>
+                    
+                    <div id="bloqueios-empty" class="p-8 text-center hidden">
+                        <i class="fas fa-calendar-check text-4xl text-gray-400 mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">Nenhum bloqueio encontrado</h3>
+                        <p class="text-gray-500">Não há bloqueios de horário cadastrados ou que atendam aos filtros aplicados.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Bloqueio -->
+    <div id="editar-bloqueio-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center">
+        <div class="bg-white rounded-2xl max-w-2xl w-full mx-4 max-h-90vh overflow-y-auto shadow-3d">
+            <div class="sticky top-0 bg-gradient-to-r from-red-500 to-red-600 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-white flex items-center">
+                    <i class="fas fa-edit mr-3"></i>
+                    Editar Bloqueio
+                </h2>
+                <button onclick="closeEditarBloqueioModal()" class="text-white hover:text-red-200 transition-colors duration-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <form id="editar-bloqueio-form" class="space-y-6">
+                    <input type="hidden" id="edit-bloqueio-id">
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">
+                                <i class="fas fa-calendar mr-2 text-red-500"></i>
+                                Data do Bloqueio *
+                            </label>
+                            <input type="date" id="edit-data-bloqueio" name="dataBloqueio" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-20 transition-all">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">
+                                <i class="fas fa-clock mr-2 text-red-500"></i>
+                                Horário de Início *
+                            </label>
+                            <select id="edit-hora-inicio" name="horaInicio" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-20 transition-all">
+                                <option value="08:00">08:00</option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">
+                                <i class="fas fa-clock mr-2 text-red-500"></i>
+                                Horário de Fim *
+                            </label>
+                            <select id="edit-hora-fim" name="horaFim" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-20 transition-all">
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="12:00">12:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                                <option value="17:00">17:00</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-dark font-semibold mb-2">
+                                <i class="fas fa-comment mr-2 text-red-500"></i>
+                                Motivo do Bloqueio *
+                            </label>
+                            <select id="edit-motivo-bloqueio" name="motivoBloqueio" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-20 transition-all">
+                                <option value="">Selecione o motivo</option>
+                                <option value="Manutenção Preventiva">Manutenção Preventiva</option>
+                                <option value="Inventário">Inventário</option>
+                                <option value="Feriado Local">Feriado Local</option>
+                                <option value="Treinamento da Equipe">Treinamento da Equipe</option>
+                                <option value="Sobrecarga de Demanda">Sobrecarga de Demanda</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="edit-motivo-outros" class="hidden">
+                        <label class="block text-gray-dark font-semibold mb-2">
+                            <i class="fas fa-edit mr-2 text-red-500"></i>
+                            Especifique o Motivo
+                        </label>
+                        <textarea id="edit-motivo-custom" name="motivoCustom" rows="3" placeholder="Descreva o motivo do bloqueio..."
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-20 transition-all"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" onclick="closeEditarBloqueioModal()" 
+                            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all">
+                            Cancelar
+                        </button>
+                        <button type="submit" 
+                            class="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
+                            <i class="fas fa-save mr-2"></i>
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Registrar Entrega -->
+    <div id="registrar-entrega-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4">
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-t-lg">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold">
+                        <i class="fas fa-truck mr-3"></i>
+                        Registrar Entrega Fora do Agendamento
+                    </h2>
+                    <button onclick="closeRegistrarEntregaModal()" class="text-white hover:text-orange-200 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <p class="text-orange-100 mt-2">Registre entregas realizadas fora do sistema de agendamento</p>
+                
+                <!-- Progress Steps -->
+                <div class="flex justify-center items-center space-x-8 mt-6">
+                    <div id="entrega-step-1" class="step-entrega flex items-center justify-center w-10 h-10 rounded-full bg-orange-300 text-orange-800 font-bold">1</div>
+                    <div class="flex-1 h-1 bg-orange-300"></div>
+                    <div id="entrega-step-2" class="step-entrega flex items-center justify-center w-10 h-10 rounded-full bg-orange-200 text-orange-600 font-bold">2</div>
+                    <div class="flex-1 h-1 bg-orange-200"></div>
+                    <div id="entrega-step-3" class="step-entrega flex items-center justify-center w-10 h-10 rounded-full bg-orange-200 text-orange-600 font-bold">3</div>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <form id="registrar-entrega-form">
+                    <!-- Step 1: Dados Básicos -->
+                    <div id="entrega-form-step-1" class="entrega-form-step">
+                        <div class="space-y-6">
+                            <div class="text-center mb-6">
+                                <h3 class="text-2xl font-bold text-gray-700 mb-2">Dados da Entrega</h3>
+                                <p class="text-gray-500">Informe os dados básicos da entrega realizada</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Data da Entrega -->
+                                <div>
+                                    <label for="entrega-data" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-calendar-alt mr-2 text-orange-500"></i>
+                                        Data da Entrega *
+                                    </label>
+                                    <input type="date" id="entrega-data" name="dataEntrega" required
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
+                                    <script>
+                                    // Função para verificar se a data é um dia útil (segunda a sexta) - Dashboard
+                                    function isWeekdayDashboard(dateString) {
+                                        const date = new Date(dateString + 'T00:00:00');
+                                        const day = date.getDay();
+                                        return day !== 0 && day !== 6; // 0 = domingo, 6 = sábado
+                                    }
+                                    
+                                    // Função para encontrar o próximo dia útil - Dashboard
+                                    function getNextWeekdayDashboard(date) {
+                                        const nextDay = new Date(date);
+                                        nextDay.setDate(nextDay.getDate() + 1);
+                                        while (nextDay.getDay() === 0 || nextDay.getDay() === 6) {
+                                            nextDay.setDate(nextDay.getDate() + 1);
+                                        }
+                                        return nextDay;
+                                    }
+                                    
+                                    // Configurar campo de data do dashboard
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        var input = document.getElementById('entrega-data');
+                                        if (input) {
+                                            var today = new Date();
+                                            
+                                            // Se hoje for fim de semana, definir para próximo dia útil
+                                            if (today.getDay() === 0 || today.getDay() === 6) {
+                                                today = getNextWeekdayDashboard(today);
+                                            }
+                                            
+                                            var yyyy = today.getFullYear();
+                                            var mm = String(today.getMonth() + 1).padStart(2, '0');
+                                            var dd = String(today.getDate()).padStart(2, '0');
+                                            var minDate = yyyy + '-' + mm + '-' + dd;
+                                            input.setAttribute('min', minDate);
+                                            
+                                            // Definir valor padrão como próximo dia útil
+                                            var nextWeekday = getNextWeekdayDashboard(new Date());
+                                            var nextWeekdayStr = nextWeekday.getFullYear() + '-' + 
+                                                String(nextWeekday.getMonth() + 1).padStart(2, '0') + '-' + 
+                                                String(nextWeekday.getDate()).padStart(2, '0');
+                                            input.value = nextWeekdayStr;
+                                            
+                                            // Validação em tempo real para impedir seleção de fins de semana
+                                            input.addEventListener('change', function() {
+                                                if (!isWeekdayDashboard(this.value)) {
+                                                    alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
+                                                    var nextWeekday = getNextWeekdayDashboard(new Date(this.value + 'T00:00:00'));
+                                                    var nextWeekdayStr = nextWeekday.getFullYear() + '-' + 
+                                                        String(nextWeekday.getMonth() + 1).padStart(2, '0') + '-' + 
+                                                        String(nextWeekday.getDate()).padStart(2, '0');
+                                                    this.value = nextWeekdayStr;
+                                                }
+                                            });
+                                        }
+                                    });
+                                    </script>
+                                </div>
+
+                                <!-- Horário da Entrega -->
+                                <div>
+                                    <label for="entrega-horario" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-clock mr-2 text-orange-500"></i>
+                                        Horário da Entrega *
+                                    </label>
+                                    <select id="entrega-horario" name="horarioEntrega" required
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
+                                        <option value="">Selecione o horário</option>
+                                        <option value="08:00">08:00</option>
+                                        <option value="09:00">09:00</option>
+                                        <option value="10:00">10:00</option>
+                                        <option value="11:00">11:00</option>
+                                        <option value="13:00">13:00</option>
+                                        <option value="14:00">14:00</option>
+                                        <option value="15:00">15:00</option>
+                                        <option value="16:00">16:00</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Dados do Fornecedor -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="entrega-nome-fornecedor" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-building mr-2 text-orange-500"></i>
+                                        Nome do Fornecedor *
+                                    </label>
+                                    <input type="text" id="entrega-nome-fornecedor" name="nomeFornecedor" required
+                                           placeholder="Digite o nome do fornecedor"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
+                                </div>
+
+                                <div>
+                                    <label for="entrega-cnpj-fornecedor" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-id-card mr-2 text-orange-500"></i>
+                                        CNPJ do Fornecedor *
+                                    </label>
+                                    <input type="text" id="entrega-cnpj-fornecedor" name="cnpjFornecedor" required
+                                           placeholder="00.000.000/0000-00" maxlength="18"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
+                                </div>
+                            </div>
+
+                            <!-- Contato do Fornecedor -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="entrega-email-fornecedor" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-envelope mr-2 text-orange-500"></i>
+                                        Email do Fornecedor *
+                                    </label>
+                                    <input type="email" id="entrega-email-fornecedor" name="emailFornecedor" required
+                                           placeholder="contato@fornecedor.com"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
+                                </div>
+
+                                <div>
+                                    <label for="entrega-telefone-fornecedor" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-phone mr-2 text-orange-500"></i>
+                                        Telefone do Fornecedor *
+                                    </label>
+                                    <input type="tel" id="entrega-telefone-fornecedor" name="telefoneFornecedor" required
+                                           placeholder="(83) 00000-0000" maxlength="15"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
+                                </div>
+                            </div>
+
+                            <!-- Tipo de Carga -->
+                            <div>
+                                <label for="entrega-tipo-carga" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-boxes mr-2 text-orange-500"></i>
+                                    Tipo de Carga *
+                                </label>
+                                <select id="entrega-tipo-carga" name="tipoCarga" required
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
+                                    <option value="">Selecione o tipo</option>
+                                    <option value="equipamentos">Equipamentos de Rede</option>
+                                    <option value="materiais">Materiais de Instalação</option>
+                                    <option value="componentes">Componentes Eletrônicos</option>
+                                    <option value="outros">Outros</option>
+                                </select>
+                            </div>
+
+                            <!-- Observações -->
+                            <div>
+                                <label for="entrega-observacoes" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-sticky-note mr-2 text-orange-500"></i>
+                                    Observações Adicionais
+                                </label>
+                                <textarea id="entrega-observacoes" name="observacoes" rows="3"
+                                          placeholder="Informações adicionais sobre a entrega (opcional)..."
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Pedidos e Notas Fiscais -->
+                    <div id="entrega-form-step-2" class="entrega-form-step hidden">
+                        <div class="space-y-6">
+                            <div class="text-center mb-6">
+                                <h3 class="text-2xl font-bold text-gray-700 mb-2">Pedidos e Notas Fiscais</h3>
+                                <p class="text-gray-500">Informe os pedidos e anexe as notas fiscais da entrega</p>
+                            </div>
+
+                            <!-- Sistema de Abas dos Pedidos -->
+                            <div class="mb-6">
+                                <div class="flex items-center space-x-2 mb-4" id="entrega-pedidos-tabs">
+                                    <!-- Abas dos pedidos serão adicionadas aqui -->
+                                </div>
+                                <button type="button" onclick="adicionarPedidoEntrega()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    Adicionar Pedido
+                                </button>
+                            </div>
+                            
+                            <!-- Container dos Pedidos -->
+                            <div id="entrega-pedidos-container">
+                                <!-- Pedidos serão adicionados dinamicamente aqui -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Confirmação -->
+                    <div id="entrega-form-step-3" class="entrega-form-step hidden">
+                        <div class="space-y-6">
+                            <div class="text-center mb-6">
+                                <h3 class="text-2xl font-bold text-gray-700 mb-2">Confirmação dos Dados</h3>
+                                <p class="text-gray-500">Revise todas as informações antes de registrar a entrega</p>
+                            </div>
+
+                            <!-- Resumo dos Dados -->
+                            <div id="entrega-resumo" class="bg-gray-50 rounded-lg p-6">
+                                <!-- Resumo será preenchido dinamicamente -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Navegação -->
+                    <div class="flex justify-between space-x-4 pt-6 border-t border-gray-200 mt-6">
+                        <button type="button" id="entrega-btn-anterior" onclick="entregaAnteriorStep()" 
+                                class="hidden px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Anterior
+                        </button>
+                        
+                        <div class="flex-1"></div>
+                        
+                        <button type="button" onclick="closeRegistrarEntregaModal()"
+                                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-times mr-2"></i>
+                            Cancelar
+                        </button>
+                        
+                        <button type="button" id="entrega-btn-proximo" onclick="entregaProximoStep()"
+                                class="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all">
+                            Próximo
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                        
+                        <button type="submit" id="entrega-btn-finalizar"
+                                class="hidden px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all">
+                            <i class="fas fa-save mr-2"></i>
+                            Registrar Entrega
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal Visualizar Todas as Entregas -->
+    <div id="modal-entregas-entregues" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[80] flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-7xl mx-4 max-h-[95vh] flex flex-col">
+            <!-- Cabeçalho do Modal -->
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-t-lg flex-shrink-0">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">
+                        <i class="fas fa-check-circle mr-3"></i>
+                        Todas as Entregas Concluídas
+                    </h2>
+                    <button onclick="fecharModalEntregas()" class="text-white hover:text-blue-200 transition-colors">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <p class="text-blue-100 mt-2">Visualize e gerencie todas as entregas finalizadas</p>
+            </div>
+
+            <!-- Filtros e Pesquisa -->
+            <div class="p-6 border-b border-gray-200 flex-shrink-0">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Busca -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Entrega</label>
+                        <div class="relative">
+                            <input type="text" id="busca-entregas" placeholder="Fornecedor, pedido, código..."
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+
+                    <!-- Filtro por Período -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Período</label>
+                        <select id="filtro-periodo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="todos">Todos</option>
+                            <option value="hoje">Hoje</option>
+                            <option value="semana">Última Semana</option>
+                            <option value="mes">Último Mês</option>
+                            <option value="customizado">Período Customizado</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Fornecedor -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fornecedor</label>
+                        <select id="filtro-fornecedor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Todos os Fornecedores</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Filtros de Data Customizada -->
+                <div id="filtros-customizados" class="hidden mt-4 grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                        <input type="date" id="data-inicio" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                        <input type="date" id="data-fim" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Container das Entregas -->
+            <div class="flex-1 overflow-hidden">
+                <div class="p-6 h-full">
+                    <!-- Grid de Cards -->
+                    <div id="entregas-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-full overflow-y-auto">
+                        <!-- Cards serão inseridos aqui dinamicamente -->
+                    </div>
+
+                    <!-- Estado Vazio -->
+                    <div id="entregas-vazio" class="hidden text-center py-12">
+                        <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-medium text-gray-600 mb-2">Nenhuma entrega encontrada</h3>
+                        <p class="text-gray-500">Ajuste os filtros para visualizar entregas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paginação -->
+            <div class="p-6 border-t border-gray-200 flex justify-between items-center flex-shrink-0">
+                <div class="text-sm text-gray-600">
+                    Mostrando <span id="info-inicio-modal2">0</span> a <span id="info-fim-modal2">0</span> de <span id="info-total-modal2">0</span> entregas
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button id="btn-anterior-modal2" onclick="paginaAnterior()" 
+                            class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    
+                    <span class="px-4 py-2 text-sm font-medium">
+                        Página <span id="pagina-atual-modal2">1</span>
+                    </span>
+                    
+                    <button id="btn-proximo-modal2" onclick="proximaPagina()" 
+                            class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Dashboard KPIs -->
+    <div id="dashboard-kpis-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center modal-backdrop p-4">
+        <div class="bg-white rounded-2xl w-full max-w-7xl max-h-[95vh] flex flex-col shadow-3d border-4 border-orange-primary overflow-hidden">
+            <div class="flex-shrink-0 bg-gradient-to-r from-orange-primary to-orange-secondary px-8 py-6 flex justify-between items-center rounded-t-2xl">
+                <h2 class="text-2xl font-bold text-white flex items-center">
+                    <i class="fas fa-chart-pie mr-3"></i>
+                    Dashboard KPIs
+                </h2>
+                <button onclick="dashboard.closeKpisModal()" class="text-white hover:text-orange-200 transition-colors duration-300">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-8 bg-gradient-to-br from-orange-50 to-white">
+                <div id="kpis-loading" class="text-center py-12 hidden">
+                    <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-primary mx-auto mb-4"></div>
+                    <p class="text-gray-medium">Carregando KPIs...</p>
+                </div>
+                <div id="kpis-content" class="space-y-8"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Notification Container -->
+
+
+    <!-- DASHBOARD KPIS REMOVIDO (será refeito) -->
+
+    <div id="notification-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.0/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/pt-br.min.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script>
+    // Força o modal de sugestão de data a ser o último filho do body e com z-index máximo
+    function openSuggestDateModal() {
+        const modal = document.getElementById('suggest-date-modal');
+        // Remove e adiciona novamente para garantir que é o último filho
+        if (modal.parentNode) modal.parentNode.removeChild(modal);
+        document.body.appendChild(modal);
+        modal.style.zIndex = '2147483647';
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+    function closeSuggestDateModal() {
+        const modal = document.getElementById('suggest-date-modal');
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+    window.openSuggestDateModal = openSuggestDateModal;
+    window.closeSuggestDateModal = closeSuggestDateModal;
+
+    // Funções de máscara para formatação automática
+    function maskPhone(value) {
+        // Remove tudo que não é dígito
+        value = value.replace(/\D/g, '');
+        
+        // Limita a 11 dígitos máximo
+        value = value.substring(0, 11);
+        
+        // Aplica a máscara (83) 00000-0000
+        if (value.length <= 10) {
+            value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        } else {
+            value = value.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+        }
+        
+        return value;
+    }
+
+    function maskCPF(value) {
+        // Remove tudo que não é dígito
+        value = value.replace(/\D/g, '');
+        
+        // Limita a 11 dígitos máximo
+        value = value.substring(0, 11);
+        
+        // Aplica a máscara 000.000.000-00
+        value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+        
+        return value;
+    }
+
+    function maskCNPJ(value) {
+        // Remove tudo que não é dígito
+        value = value.replace(/\D/g, '');
+        
+        // Limita a 14 dígitos máximo
+        value = value.substring(0, 14);
+        
+        // Aplica a máscara 00.000.000/0000-00
+        value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+        
+        return value;
+    }
+
+    function maskDocument(input) {
+        let value = input.value.replace(/\D/g, '');
+        
+        // Limita a 14 dígitos máximo (CNPJ)
+        value = value.substring(0, 14);
+        
+        if (value.length <= 11) {
+            // CPF
+            input.value = maskCPF(input.value);
+        } else {
+            // CNPJ
+            input.value = maskCNPJ(input.value);
+        }
+    }
+
+    // Aplicar máscaras aos inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        // Telefone
+        const phoneInput = document.getElementById('entrega-telefone-fornecedor');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                e.target.value = maskPhone(e.target.value);
+            });
+        }
+
+        // CNPJ
+        const cnpjInput = document.getElementById('entrega-cnpj-fornecedor');
+        if (cnpjInput) {
+            cnpjInput.addEventListener('input', function(e) {
+                maskDocument(e.target);
+            });
+        }
+    });
+    </script>
+<script>console.log('dashboard.js carregado:', !!window.submitBloqueioButton);</script>
+</body>
+</html>

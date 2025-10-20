@@ -1,0 +1,66 @@
+{
+  "name": "brisalog-portal",
+  "version": "1.0.0",
+  "description": "Sistema completo de agendamento de entregas para fornecedores da Brisanet",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "start:prod": "npm run db:setup && node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "node prisma/seed.js",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset --force && npm run db:seed",
+    "db:setup": "node scripts/setup-database.js && prisma generate && node scripts/reset-migrations.js && prisma migrate deploy",
+    "db:setup:with-seed": "npm run db:setup && node prisma/seed.js",
+    "db:setup:dev": "node scripts/setup-database.js && prisma generate && prisma db push && node prisma/seed.js",
+    "init-project": "npm install && npm run db:setup:dev",
+    "build": "node scripts/setup-database.js && npm run db:generate",
+    "deploy": "npm run db:migrate:deploy && npm run db:seed && npm start",
+    "railway:deploy": "node scripts/setup-database.js && npm run db:generate && npm run db:migrate:deploy && npm run db:seed"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "prisma",
+    "sqlite",
+    "brisanet",
+    "agendamento",
+    "entregas",
+    "fornecedores"
+  ],
+  "author": "Brisanet",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^5.7.1",
+    "@sendgrid/mail": "^8.1.6",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.1",
+    "resend": "^6.1.2",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "prisma": "^5.7.1"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brisanet/brisalog-portal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/brisanet/brisalog-portal/issues"
+  },
+  "homepage": "https://github.com/brisanet/brisalog-portal#readme"
+}

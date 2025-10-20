@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha - BrisaLOG Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'orange-primary': '#FF6B35',
+                        'orange-secondary': '#FF8C42',
+                        'orange-accent': '#FF9F66',
+                        'orange-light': '#FFA885',
+                        'gray-dark': '#2D3748',
+                        'gray-medium': '#4A5568',
+                        'gray-light': '#E2E8F0'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-simple {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-simple {
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-simple:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%);
+        }
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+        .shape:nth-child(1) {
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        .shape:nth-child(2) {
+            top: 60%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+        .shape:nth-child(3) {
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .password-requirements {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-left: 4px solid #FF6B35;
+        }
+        .requirement {
+            transition: all 0.3s ease;
+        }
+        .requirement.valid {
+            color: #10b981;
+        }
+        .requirement.invalid {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg flex items-center justify-center relative">
+    <!-- Floating Shapes -->
+    <div class="floating-shapes">
+        <div class="shape">
+            <i class="fas fa-shield-alt text-white text-6xl"></i>
+        </div>
+        <div class="shape">
+            <i class="fas fa-lock text-white text-4xl"></i>
+        </div>
+        <div class="shape">
+            <i class="fas fa-key text-white text-5xl"></i>
+        </div>
+    </div>
+
+    <!-- Background Overlay -->
+    <div class="absolute inset-0 bg-black bg-opacity-20"></div>
+
+    <!-- Reset Password Card -->
+    <div class="relative z-10 w-full max-w-md mx-4">
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden card-simple">
+            <!-- Header -->
+            <div class="gradient-bg p-8 text-center text-white">
+                <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-2xl p-4 inline-block mb-4">
+                    <i class="fas fa-shield-alt text-white text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold mb-2">Redefinir Senha</h1>
+                <p class="text-white">Crie uma nova senha segura</p>
+            </div>
+
+            <!-- Reset Form -->
+            <div class="p-8">
+                <div class="mb-6 text-center">
+                    <div class="bg-blue-50 p-4 rounded-xl">
+                        <p class="text-sm text-blue-700">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Defina uma nova senha para sua conta
+                        </p>
+                        <p class="text-xs text-blue-600 mt-1" id="recovery-email-display"></p>
+                    </div>
+                </div>
+
+                <form id="reset-form" class="space-y-6">
+                    <div>
+                        <label for="new-password" class="block text-gray-dark font-semibold mb-2">
+                            <i class="fas fa-lock mr-2 text-orange-primary"></i>
+                            Nova Senha
+                        </label>
+                        <div class="relative">
+                            <input type="password" id="new-password" name="password" required
+                                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                                placeholder="Digite sua nova senha">
+                            <button type="button" onclick="togglePassword('new-password')" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye" id="new-password-eye"></i>
+                            </button>
+                        </div>
+                        <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                    </div>
+
+                    <div>
+                        <label for="confirm-password" class="block text-gray-dark font-semibold mb-2">
+                            <i class="fas fa-lock mr-2 text-orange-primary"></i>
+                            Confirmar Nova Senha
+                        </label>
+                        <div class="relative">
+                            <input type="password" id="confirm-password" name="confirmPassword" required
+                                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                                placeholder="Confirme sua nova senha">
+                            <button type="button" onclick="togglePassword('confirm-password')" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye" id="confirm-password-eye"></i>
+                            </button>
+                        </div>
+                        <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                    </div>
+
+                    <!-- Password Requirements -->
+                    <div class="password-requirements p-4 rounded-xl">
+                        <h4 class="font-semibold text-gray-dark mb-3">
+                            <i class="fas fa-shield-alt mr-2 text-orange-primary"></i>
+                            Requisitos da Senha:
+                        </h4>
+                        <ul class="space-y-2 text-sm">
+                            <li class="requirement flex items-center" id="req-length">
+                                <i class="fas fa-times-circle mr-2"></i>
+                                Mínimo de 8 caracteres
+                            </li>
+                            <li class="requirement flex items-center" id="req-uppercase">
+                                <i class="fas fa-times-circle mr-2"></i>
+                                Pelo menos 1 letra maiúscula
+                            </li>
+                            <li class="requirement flex items-center" id="req-lowercase">
+                                <i class="fas fa-times-circle mr-2"></i>
+                                Pelo menos 1 letra minúscula
+                            </li>
+                            <li class="requirement flex items-center" id="req-number">
+                                <i class="fas fa-times-circle mr-2"></i>
+                                Pelo menos 1 número
+                            </li>
+                            <li class="requirement flex items-center" id="req-special">
+                                <i class="fas fa-times-circle mr-2"></i>
+                                Pelo menos 1 caractere especial
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button type="submit" id="reset-btn" class="w-full btn-simple bg-orange-primary text-white py-3 rounded-xl font-semibold hover:bg-orange-secondary transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-save mr-2"></i>
+                        Redefinir Senha
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <a href="login.html" class="text-gray-500 hover:text-orange-primary transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Voltar ao Login
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Information -->
+        <div class="mt-6 text-center text-white text-sm">
+            <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-4">
+                <h4 class="font-semibold mb-2">
+                    <i class="fas fa-shield-alt mr-2"></i>
+                    Segurança
+                </h4>
+                <p class="text-xs opacity-90">
+                    Sua nova senha será criptografada e protegida. Escolha uma senha forte para manter sua conta segura.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-primary mx-auto mb-4"></div>
+            <p class="text-gray-dark font-semibold">Redefinindo senha...</p>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-3xl p-8 mx-4 max-w-md w-full text-center">
+            <div class="bg-green-100 rounded-full p-4 inline-block mb-4">
+                <i class="fas fa-check text-green-500 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-dark mb-2">Senha Redefinida!</h3>
+            <p class="text-gray-600 mb-6">Sua senha foi alterada com sucesso. Você pode fazer login agora.</p>
+            <button onclick="window.location.href='login.html'" class="w-full btn-simple bg-orange-primary text-white py-3 rounded-xl font-semibold hover:bg-orange-secondary transition-all">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Ir para Login
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class PasswordReset {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.loadRecoveryInfo();
+                this.setupEventListeners();
+            }
+
+            loadRecoveryInfo() {
+                // Tentar obter parâmetros da URL (link do e-mail)
+                const urlParams = new URLSearchParams(window.location.search);
+                const tokenFromUrl = urlParams.get('token');
+                const emailFromUrl = urlParams.get('email');
+
+                if (tokenFromUrl && emailFromUrl) {
+                    // Parâmetros vieram do link do e-mail
+                    sessionStorage.setItem('reset_token', tokenFromUrl);
+                    sessionStorage.setItem('recovery_email', emailFromUrl);
+                    document.getElementById('recovery-email-display').textContent = `Para: ${emailFromUrl}`;
+                } else {
+                    // Tentar obter do sessionStorage (fluxo interno)
+                    const email = sessionStorage.getItem('recovery_email');
+                    if (email) {
+                        document.getElementById('recovery-email-display').textContent = `Para: ${email}`;
+                    } else {
+                        // Se não há informação de recuperação, redirecionar
+                        window.location.href = 'esqueceu-senha.html';
+                    }
+                }
+            }
+
+            setupEventListeners() {
+                // Form submit
+                document.getElementById('reset-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleResetSubmit();
+                });
+
+                // Password validation
+                document.getElementById('new-password').addEventListener('input', (e) => {
+                    this.validatePassword(e.target.value);
+                    this.validatePasswordMatch();
+                });
+
+                document.getElementById('confirm-password').addEventListener('input', () => {
+                    this.validatePasswordMatch();
+                });
+
+                // Field validation
+                document.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('blur', () => this.validateField(input));
+                    input.addEventListener('input', () => this.clearFieldError(input));
+                });
+            }
+
+            validatePassword(password) {
+                const requirements = {
+                    'req-length': password.length >= 8,
+                    'req-uppercase': /[A-Z]/.test(password),
+                    'req-lowercase': /[a-z]/.test(password),
+                    'req-number': /\d/.test(password),
+                    'req-special': /[!@#$%^&*(),.?":{}|<>]/.test(password)
+                };
+
+                Object.entries(requirements).forEach(([id, isValid]) => {
+                    const element = document.getElementById(id);
+                    const icon = element.querySelector('i');
+                    
+                    if (isValid) {
+                        element.classList.add('valid');
+                        element.classList.remove('invalid');
+                        icon.className = 'fas fa-check-circle mr-2';
+                    } else {
+                        element.classList.add('invalid');
+                        element.classList.remove('valid');
+                        icon.className = 'fas fa-times-circle mr-2';
+                    }
+                });
+
+                return Object.values(requirements).every(Boolean);
+            }
+
+            validatePasswordMatch() {
+                const password = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                const confirmField = document.getElementById('confirm-password');
+
+                if (confirmPassword && password !== confirmPassword) {
+                    this.setFieldValidation(confirmField, false, 'As senhas não coincidem.');
+                    return false;
+                } else if (confirmPassword) {
+                    this.setFieldValidation(confirmField, true, '');
+                    return true;
+                }
+                return false;
+            }
+
+            validateField(field) {
+                const value = field.value.trim();
+                let isValid = true;
+                let message = '';
+
+                if (field.hasAttribute('required') && !value) {
+                    isValid = false;
+                    message = 'Este campo é obrigatório.';
+                } else if (field.id === 'new-password' && value) {
+                    isValid = this.validatePassword(value);
+                    if (!isValid) {
+                        message = 'A senha não atende aos requisitos mínimos.';
+                    }
+                } else if (field.id === 'confirm-password' && value) {
+                    isValid = this.validatePasswordMatch();
+                }
+
+                this.setFieldValidation(field, isValid, message);
+                return isValid;
+            }
+
+            setFieldValidation(field, isValid, message) {
+                const feedback = field.parentNode.parentNode.querySelector('.invalid-feedback');
+                
+                if (isValid) {
+                    field.classList.remove('border-red-500');
+                    field.classList.add('border-green-500');
+                    if (feedback) feedback.classList.add('hidden');
+                } else {
+                    field.classList.remove('border-green-500');
+                    field.classList.add('border-red-500');
+                    if (feedback) {
+                        feedback.textContent = message;
+                        feedback.classList.remove('hidden');
+                    }
+                }
+            }
+
+            clearFieldError(field) {
+                field.classList.remove('border-red-500');
+                const feedback = field.parentNode.parentNode.querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.classList.add('hidden');
+                }
+            }
+
+            async handleResetSubmit() {
+                const password = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+
+                // Validar todos os campos
+                const passwordValid = this.validateField(document.getElementById('new-password'));
+                const confirmValid = this.validateField(document.getElementById('confirm-password'));
+
+                if (!passwordValid || !confirmValid) {
+                    this.showNotification('Por favor, corrija os erros antes de continuar.', 'error');
+                    return;
+                }
+
+                this.showLoading(true);
+
+                try {
+                    // Obter dados de recuperação
+                    const token = sessionStorage.getItem('reset_token');
+                    const email = sessionStorage.getItem('recovery_email');
+
+                    if (!token || !email) {
+                        throw new Error('Dados de recuperação inválidos. Solicite uma nova recuperação.');
+                    }
+
+                    // Fazer requisição para a API
+                    const response = await fetch('/api/auth/reset-password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            token,
+                            email,
+                            newPassword: password
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Limpar dados de recuperação
+                        sessionStorage.removeItem('reset_token');
+                        sessionStorage.removeItem('recovery_email');
+                        
+                        // Mostrar modal de sucesso
+                        this.showSuccessModal();
+                    } else {
+                        throw new Error(data.message || 'Erro ao redefinir senha');
+                    }
+
+                } catch (error) {
+                    console.error('Erro:', error);
+                    this.showNotification(
+                        error.message || 'Erro ao redefinir senha. Tente novamente.',
+                        'error'
+                    );
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            showSuccessModal() {
+                document.getElementById('success-modal').classList.remove('hidden');
+            }
+
+            showLoading(show) {
+                const overlay = document.getElementById('loading-overlay');
+                if (show) {
+                    overlay.classList.remove('hidden');
+                } else {
+                    overlay.classList.add('hidden');
+                }
+            }
+
+            showNotification(message, type = 'info') {
+                const colors = {
+                    success: 'bg-green-500',
+                    error: 'bg-red-500',
+                    warning: 'bg-yellow-500',
+                    info: 'bg-blue-500'
+                };
+                
+                const icons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+                
+                const notification = document.createElement('div');
+                notification.className = `notification ${colors[type]} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3`;
+                notification.innerHTML = `
+                    <i class="fas ${icons[type]}"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.remove()" class="ml-4 hover:bg-white hover:bg-opacity-20 rounded p-1">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                document.getElementById('notification-container').appendChild(notification);
+                
+                setTimeout(() => notification.classList.add('show'), 100);
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, 5000);
+            }
+        }
+
+        // Função global para toggle de senha
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const eye = document.getElementById(fieldId + '-eye');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                eye.className = 'fas fa-eye-slash';
+            } else {
+                field.type = 'password';
+                eye.className = 'fas fa-eye';
+            }
+        }
+
+        // Inicializar quando o DOM estiver carregado
+        document.addEventListener('DOMContentLoaded', () => {
+            new PasswordReset();
+        });
+    </script>
+</body>
+</html>

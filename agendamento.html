@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento de Entrega - BrisaLOG Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'orange-primary': '#FF6B35',
+                        'orange-secondary': '#FF8C42',
+                        'orange-accent': '#FF9F66',
+                        'orange-light': '#FFA885',
+                        'gray-dark': '#2D3748',
+                        'gray-medium': '#4A5568',
+                        'gray-light': '#E2E8F0'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-3d {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-3d {
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-3d:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%);
+        }
+        .step-inactive {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .step-completed {
+            background: linear-gradient(135deg, #10B981, #059669);
+        }
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .file-drop-zone {
+            border: 2px dashed #FF9F66;
+            transition: all 0.3s ease;
+        }
+        .file-drop-zone.drag-over {
+            border-color: #FF6B35;
+            background-color: #FFF5F3;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-lg">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-3 rounded-xl">
+                        <i class="fas fa-truck text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-dark">BrisaLOG</h1>
+                        <p class="text-gray-medium text-sm">Agendamento de Entrega</p>
+                    </div>
+                </div>
+                <a href="index.html" class="flex items-center text-gray-medium hover:text-orange-primary transition-colors">
+                    <i class="fas fa-home mr-2"></i>
+                    Voltar ao Início
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="bg-white border-b">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-4">
+                    <div id="step-1" class="step flex items-center justify-center w-10 h-10 rounded-full bg-orange-primary text-white font-bold">1</div>
+                    <div class="h-1 w-16 bg-gray-300">
+                        <div id="progress-1-2" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div id="step-2" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">2</div>
+                    <div class="h-1 w-16 bg-gray-300">
+                        <div id="progress-2-3" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div id="step-3" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">3</div>
+                    <div class="h-1 w-16 bg-gray-300">
+                        <div id="progress-3-4" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div id="step-4" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">4</div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-medium">Etapa <span id="current-step">1</span> de 4</p>
+                    <p class="text-xs text-gray-400" id="step-description">Dados do Fornecedor</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <div class="max-w-4xl mx-auto">
+            <form id="agendamento-form">
+                <!-- Etapa 1: Dados do Fornecedor -->
+                <div id="form-step-1" class="form-step">
+                    <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+                        <div class="text-center mb-8">
+                            <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-4 rounded-2xl inline-block mb-4">
+                                <i class="fas fa-user text-white text-3xl"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold text-gray-dark mb-2">Dados do Fornecedor</h2>
+                            <p class="text-gray-medium">Informe seus dados para identificação da entrega</p>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-building mr-2 text-orange-primary"></i>
+                                    Nome da Empresa *
+                                </label>
+                                <input type="text" id="nome-empresa" name="nomeEmpresa" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                                    placeholder="Digite o nome da empresa">
+                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-user mr-2 text-orange-primary"></i>
+                                    Nome do Responsável *
+                                </label>
+                                <input type="text" id="nome-responsavel" name="nomeResponsavel" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                                    placeholder="Digite o nome do responsável">
+                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-envelope mr-2 text-orange-primary"></i>
+                                    E-mail *
+                                </label>
+                                <input type="email" id="email" name="email" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                                    placeholder="exemplo@empresa.com">
+                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-phone mr-2 text-orange-primary"></i>
+                                    Telefone *
+                                </label>
+                                <input type="tel" id="telefone" name="telefone" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                                    placeholder="(83) 00000-0000" maxlength="15">
+                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-id-card mr-2 text-orange-primary"></i>
+                                    CNPJ/CPF *
+                                </label>
+                                <input type="text" id="documento" name="documento" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                                    placeholder="00.000.000/0000-00 ou 000.000.000-00" maxlength="18">
+                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end mt-8">
+                            <button type="button" onclick="nextStep()" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all">
+                                <span>Próximo</span>
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Etapa 2: Dados da Entrega -->
+                <div id="form-step-2" class="form-step hidden">
+                    <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+                        <div class="text-center mb-8">
+                            <div class="bg-gradient-to-r from-orange-secondary to-orange-accent p-4 rounded-2xl inline-block mb-4">
+                                <i class="fas fa-truck text-white text-3xl"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold text-gray-dark mb-2">Dados da Entrega</h2>
+                            <p class="text-gray-medium">Informe os detalhes da sua entrega</p>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-map-marker-alt mr-2 text-orange-primary"></i>
+                                    Centro de Distribuição *
+                                </label>
+                                <select id="cd-destino" name="cdDestino" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
+                                    <option value="">Selecione o CD</option>
+                                    <option value="Bahia">CD Bahia</option>
+                                    <option value="Pernambuco">CD Pernambuco</option>
+                                    <option value="Lagoa Nova">CD Lagoa Nova</option>
+                                </select>
+                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-boxes mr-2 text-orange-primary"></i>
+                                    Tipo de Carga *
+                                </label>
+                                <select id="tipo-carga" name="tipoCarga" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
+                                    <option value="">Selecione o tipo</option>
+                                    <option value="equipamentos">Equipamentos de Rede</option>
+                                    <option value="materiais">Materiais de Instalação</option>
+                                    <option value="componentes">Componentes Eletrônicos</option>
+                                    <option value="outros">Outros</option>
+                                </select>
+                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-calendar mr-2 text-orange-primary"></i>
+                                    Data de Entrega *
+                                </label>
+                                <input type="date" id="data-entrega" name="dataEntrega" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
+                                <script>
+                                // Função para verificar se a data é um dia útil (segunda a sexta)
+                                function isWeekday(dateString) {
+                                    const date = new Date(dateString + 'T00:00:00');
+                                    const day = date.getDay();
+                                    return day !== 0 && day !== 6; // 0 = domingo, 6 = sábado
+                                }
+                                
+                                // Função para encontrar o próximo dia útil
+                                function getNextWeekday(date) {
+                                    const nextDay = new Date(date);
+                                    nextDay.setDate(nextDay.getDate() + 1);
+                                    while (nextDay.getDay() === 0 || nextDay.getDay() === 6) {
+                                        nextDay.setDate(nextDay.getDate() + 1);
+                                    }
+                                    return nextDay;
+                                }
+                                
+                                // Define a data mínima para hoje (YYYY-MM-DD) no input de data
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    var input = document.getElementById('data-entrega');
+                                    if (input) {
+                                        var today = new Date();
+                                        
+                                        // Se hoje for fim de semana, definir para próximo dia útil
+                                        if (today.getDay() === 0 || today.getDay() === 6) {
+                                            today = getNextWeekday(today);
+                                        }
+                                        
+                                        var yyyy = today.getFullYear();
+                                        var mm = String(today.getMonth() + 1).padStart(2, '0');
+                                        var dd = String(today.getDate()).padStart(2, '0');
+                                        var minDate = yyyy + '-' + mm + '-' + dd;
+                                        input.setAttribute('min', minDate);
+                                        
+                                        // Definir valor padrão como próximo dia útil
+                                        var nextWeekday = getNextWeekday(new Date());
+                                        var nextWeekdayStr = nextWeekday.getFullYear() + '-' + 
+                                            String(nextWeekday.getMonth() + 1).padStart(2, '0') + '-' + 
+                                            String(nextWeekday.getDate()).padStart(2, '0');
+                                        input.value = nextWeekdayStr;
+                                        
+                                        // Validação em tempo real para impedir seleção de fins de semana
+                                        input.addEventListener('change', function() {
+                                            if (!isWeekday(this.value)) {
+                                                alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
+                                                var nextWeekday = getNextWeekday(new Date(this.value + 'T00:00:00'));
+                                                var nextWeekdayStr = nextWeekday.getFullYear() + '-' + 
+                                                    String(nextWeekday.getMonth() + 1).padStart(2, '0') + '-' + 
+                                                    String(nextWeekday.getDate()).padStart(2, '0');
+                                                this.value = nextWeekdayStr;
+                                            }
+                                        });
+                                    }
+                                });
+                                </script>
+                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-clock mr-2 text-orange-primary"></i>
+                                    Horário Preferencial *
+                                </label>
+                                <select id="horario-entrega" name="horarioEntrega" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
+                                    <option value="">Selecione o horário</option>
+                                    <option value="08:00-10:00">08:00 - 10:00</option>
+                                    <option value="10:00-12:00">10:00 - 12:00</option>
+                                    <option value="14:00-16:00">14:00 - 16:00</option>
+                                    <option value="16:00-17:00">16:00 - 17:00</option>
+                                </select>
+                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-comment mr-2 text-orange-primary"></i>
+                                    Observações
+                                </label>
+                                <textarea id="observacoes" name="observacoes" rows="3"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                                    placeholder="Informações adicionais sobre a entrega (opcional)"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button type="button" onclick="previousStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                <span>Anterior</span>
+                            </button>
+                            <button type="button" onclick="nextStep()" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all">
+                                <span>Próximo</span>
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Etapa 3: Pedidos e Notas Fiscais -->
+                <div id="form-step-3" class="form-step hidden">
+                    <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+                        <div class="text-center mb-8">
+                            <div class="bg-gradient-to-r from-orange-accent to-orange-light p-4 rounded-2xl inline-block mb-4">
+                                <i class="fas fa-file-invoice text-white text-3xl"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold text-gray-dark mb-2">Informe os Pedidos e as Notas Fiscais</h2>
+                            <p class="text-gray-medium">Adicione os pedidos e anexe as notas fiscais</p>
+                        </div>
+                        
+                        <!-- Sistema de Abas dos Pedidos -->
+                        <div class="mb-6">
+                            <div class="flex items-center space-x-2 mb-4" id="pedidos-tabs">
+                                <!-- Abas dos pedidos serão adicionadas aqui -->
+                            </div>
+                        </div>
+                        
+                        <!-- Container dos Pedidos -->
+                        <div id="pedidos-container">
+                            <!-- Pedidos serão adicionados dinamicamente aqui -->
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button type="button" onclick="previousStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                <span>Anterior</span>
+                            </button>
+                            <button type="button" onclick="nextStep()" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all">
+                                <span>Próximo</span>
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Etapa 4: Resumo e Envio -->
+                <div id="form-step-4" class="form-step hidden">
+                    <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+                        <div class="text-center mb-8">
+                            <div class="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-2xl inline-block mb-4">
+                                <i class="fas fa-check-circle text-white text-3xl"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold text-gray-dark mb-2">Resumo do Agendamento</h2>
+                            <p class="text-gray-medium">Confira todos os dados antes de finalizar</p>
+                        </div>
+                        
+                        <div id="resumo-agendamento" class="space-y-6">
+                            <!-- Resumo será preenchido dinamicamente -->
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button type="button" onclick="previousStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                <span>Anterior</span>
+                            </button>
+                            <button type="submit" class="btn-3d bg-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-600 transition-all">
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                <span>Finalizar Agendamento</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-primary mx-auto mb-4"></div>
+            <p class="text-gray-dark font-semibold">Processando agendamento...</p>
+        </div>
+    </div>
+
+    <script>
+    // Funções de máscara para formatação automática
+    function maskPhone(value) {
+        // Remove tudo que não é dígito
+        value = value.replace(/\D/g, '');
+        
+        // Limita a 11 dígitos máximo
+        value = value.substring(0, 11);
+        
+        // Aplica a máscara (83) 00000-0000
+        if (value.length <= 10) {
+            value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        } else {
+            value = value.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+        }
+        
+        return value;
+    }
+
+    function maskCPF(value) {
+        // Remove tudo que não é dígito
+        value = value.replace(/\D/g, '');
+        
+        // Limita a 11 dígitos máximo
+        value = value.substring(0, 11);
+        
+        // Aplica a máscara 000.000.000-00
+        value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+        
+        return value;
+    }
+
+    function maskCNPJ(value) {
+        // Remove tudo que não é dígito
+        value = value.replace(/\D/g, '');
+        
+        // Limita a 14 dígitos máximo
+        value = value.substring(0, 14);
+        
+        // Aplica a máscara 00.000.000/0000-00
+        value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+        
+        return value;
+    }
+
+    function maskDocument(input) {
+        let value = input.value.replace(/\D/g, '');
+        
+        // Limita a 14 dígitos máximo (CNPJ)
+        value = value.substring(0, 14);
+        
+        if (value.length <= 11) {
+            // CPF
+            input.value = maskCPF(input.value);
+        } else {
+            // CNPJ
+            input.value = maskCNPJ(input.value);
+        }
+    }
+
+    // Aplicar máscaras aos inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        // Telefone
+        const phoneInput = document.getElementById('telefone');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                e.target.value = maskPhone(e.target.value);
+            });
+        }
+
+        // Documento (CPF/CNPJ)
+        const documentInput = document.getElementById('documento');
+        if (documentInput) {
+            documentInput.addEventListener('input', function(e) {
+                maskDocument(e.target);
+            });
+        }
+    });
+    </script>
+
+    <script src="js/agendamento.js"></script>
+</body>
+</html>
