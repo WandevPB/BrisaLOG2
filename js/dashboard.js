@@ -135,11 +135,25 @@ function carregarHorariosDisponiveis() {
 // Função global para tratar sugestão de data
 function handleSuggestDate() {
     // Exemplo: pegar valores do formulário e enviar para API
-    const agendamentoId = document.getElementById('suggest-agendamento-id')?.value;
-    const novaData = document.getElementById('nova-data')?.value;
-    const novoHorario = document.getElementById('novo-horario')?.value;
+    const agendamentoIdEl = document.getElementById('suggest-agendamento-id');
+    const novaDataEl = document.getElementById('nova-data');
+    const novoHorarioEl = document.getElementById('novo-horario');
+    const agendamentoId = agendamentoIdEl ? agendamentoIdEl.value : '';
+    const novaData = novaDataEl ? novaDataEl.value : '';
+    const novoHorario = novoHorarioEl ? novoHorarioEl.value : '';
+
+    // Debug visual dos valores capturados
+    console.log('DEBUG handleSuggestDate:', {
+        agendamentoId,
+        novaData,
+        novoHorario,
+        agendamentoIdEl,
+        novaDataEl,
+        novoHorarioEl
+    });
+
     if (!agendamentoId || !novaData || !novoHorario) {
-        showNotification('Preencha todos os campos para sugerir nova data.', 'warning');
+        showNotification(`Preencha todos os campos para sugerir nova data. [${agendamentoId}|${novaData}|${novoHorario}]`, 'warning');
         return;
     }
     // Aqui você pode implementar o envio para API
