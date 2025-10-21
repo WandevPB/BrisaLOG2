@@ -775,7 +775,7 @@ class CDDashboard {
         // Suggest date form
         document.getElementById('suggest-date-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleSuggestDate();
+            handleSuggestDate();
         });
         
         // Atualizar horários disponíveis quando a data mudar
