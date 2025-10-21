@@ -115,6 +115,62 @@ function applyMasksToContainer(container) {
 }
 
 // Função global para visualizar PDF
+// Função global para carregar horários disponíveis
+function carregarHorariosDisponiveis() {
+    // Exemplo: Preencher select de horários com opções disponíveis
+    const select = document.getElementById('horario-select');
+    if (select) {
+        select.innerHTML = '';
+        const horarios = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
+        horarios.forEach(h => {
+            const option = document.createElement('option');
+            option.value = h;
+            option.textContent = h;
+            select.appendChild(option);
+        });
+    }
+}
+
+// Função global para tratar sugestão de data
+function handleSuggestDate() {
+    // Exemplo: pegar valores do formulário e enviar para API
+    const agendamentoId = document.getElementById('suggest-agendamento-id')?.value;
+    const novaData = document.getElementById('nova-data')?.value;
+    const novoHorario = document.getElementById('novo-horario')?.value;
+    if (!agendamentoId || !novaData || !novoHorario) {
+        showNotification('Preencha todos os campos para sugerir nova data.', 'warning');
+        return;
+    }
+    // Aqui você pode implementar o envio para API
+    showNotification('Sugestão de nova data enviada!', 'success');
+}
+
+// Função global para tratar token expirado
+function handleTokenExpired(response) {
+    if (response.status === 401) {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+        return true;
+    }
+    return false;
+}
+
+// Função global para tratar registro de entrega
+function handleRegistrarEntrega(e) {
+    e.preventDefault();
+    // Exemplo: pegar dados do formulário e enviar para API
+    showNotification('Entrega registrada com sucesso!', 'success');
+    document.getElementById('registrar-entrega-modal')?.classList.add('hidden');
+}
+
+// Função global para mostrar step da entrega
+function mostrarStepEntrega(step) {
+    // Exemplo: mostrar/esconder steps do formulário de entrega
+    for (let i = 1; i <= 3; i++) {
+        const el = document.getElementById('entrega-step-' + i);
+        if (el) el.style.display = (i === step) ? 'block' : 'none';
+    }
+}
 function viewPDF(filename) {
     if (!filename) {
         console.log('Nenhum arquivo para visualizar');
