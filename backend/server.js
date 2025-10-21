@@ -285,7 +285,6 @@ const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const authRoutes = require('./authRoutes');
-const emailService = require('./emailService');
 
 // Função para corrigir datas de agendamentos existentes no banco (retroativo)
 async function corrigirAgendamentosExistentes() {
@@ -1265,7 +1264,6 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
     // Enviar email para o fornecedor
     try {
       console.log(`📧 [POST /api/agendamentos/${id}/reagendar] Enviando email para fornecedor...`);
-      const emailService = require('./emailService');
       
       const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
       const emailResult = await emailService.sendReagendamentoEmail({
@@ -2952,7 +2950,6 @@ app.post('/api/test-hybrid-brisanet', async (req, res) => {
   console.log('📧 [HYBRID BRISANET] Testando sistema híbrido...');
   
   try {
-    const emailService = require('./emailService');
     
     const result = await emailService._send({
       to: 'wanderson.goncalves@grupobrisanet.com.br',
@@ -3048,7 +3045,6 @@ app.post('/api/test-brisanet-email', async (req, res) => {
     
     // Método 2: Tentar via emailService padrão (que tem fallbacks)
     try {
-      const emailService = require('./emailService');
       const result = await emailService._send({
         to: targetEmail,
         subject: 'Teste Sistema BrisaLOG - Email Direto',
@@ -3223,7 +3219,6 @@ app.post('/api/test-gmail/:email', async (req, res) => {
       });
     }
     
-    const emailService = require('./emailService');
     
     const result = await emailService.sendNovoAgendamentoEmail({
       agendamento: {
