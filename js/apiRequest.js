@@ -1,8 +1,8 @@
 // apiRequest.js
 const API_BASE_URL = typeof getApiBaseUrl === 'function' ? getApiBaseUrl() : 'https://brisalog-back.onrender.com';
 
-export async function apiRequest(endpoint, options = {}) {
-  const token = localStorage.getItem('token');
+window.apiRequest = async function(endpoint, options = {}) {
+  const token = sessionStorage.getItem('token');
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
