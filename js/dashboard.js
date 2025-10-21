@@ -257,30 +257,6 @@ class CDDashboard {
         
         this.init();
     }
-        // Exibe notificações na dashboard
-    showNotification(message, type = 'info') {
-        let notificationEl = document.getElementById('notification-container');
-        if (!notificationEl) {
-            notificationEl = document.createElement('div');
-            notificationEl.id = 'notification-container';
-            notificationEl.style.position = 'fixed';
-            notificationEl.style.top = '20px';
-            notificationEl.style.right = '20px';
-            notificationEl.style.zIndex = '9999';
-            document.body.appendChild(notificationEl);
-        }
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.style.padding = '15px 20px';
-        notification.style.marginBottom = '10px';
-        notification.style.borderRadius = '8px';
-        notification.style.background = type === 'error' ? '#F87171' : (type === 'success' ? '#34D399' : '#FFFBEB');
-        notification.style.color = type === 'error' ? '#fff' : '#222';
-        notification.style.fontWeight = 'bold';
-        notification.textContent = message;
-        notificationEl.appendChild(notification);
-        setTimeout(() => notification.remove(), 4000);
-    }
 
     // Exibe o estado vazio na dashboard
     showEmptyState() {
@@ -295,6 +271,17 @@ class CDDashboard {
     }
 
     // Oculta o estado vazio na dashboard
+    // Abre modal para sugerir nova data de agendamento
+    suggestNewDate(agendamentoId) {
+        const modal = document.getElementById('suggest-date-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            const input = document.getElementById('suggest-agendamento-id');
+            if (input) input.value = agendamentoId;
+        } else {
+            this.showNotification('Modal de sugestão de data não encontrado.', 'error');
+        }
+    }
     hideEmptyState() {
         const emptyEl = document.getElementById('dashboard-empty-state');
         if (emptyEl) emptyEl.style.display = 'none';
@@ -330,13 +317,11 @@ class CDDashboard {
     // Configura todos os campos de data para aceitar apenas dias úteis
     setMinDate() {
         const today = new Date();
-        
         // Função para verificar se é dia útil
         const isWeekday = (date) => {
             const day = date.getDay();
             return day !== 0 && day !== 6; // 0 = domingo, 6 = sábado
         };
-        
         // Função para encontrar próximo dia útil
         const getNextWeekday = (date) => {
             const nextDay = new Date(date);
@@ -345,46 +330,11 @@ class CDDashboard {
             }
             return nextDay;
         };
-        
         // Se hoje não for dia útil, usar próximo dia útil
         const minDate = isWeekday(today) ? today : getNextWeekday(today);
         const minDateString = minDate.toISOString().split('T')[0];
-        
         const dateInputs = document.querySelectorAll('input[type="date"]');
-        // Abre modal para sugerir nova data de agendamento
-        suggestNewDate(agendamentoId) {
-            const modal = document.getElementById('suggest-date-modal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                const input = document.getElementById('suggest-agendamento-id');
-                if (input) input.value = agendamentoId;
-            } else {
-                this.showNotification('Modal de sugestão de data não encontrado.', 'error');
-            }
-        }
-    
-        showNotification(message, type = 'info') {
-            input.min = minDateString;
-            
-            // Adicionar validação para impedir seleção de fins de semana
-            if (!input.hasAttribute('data-weekday-validator')) {
-                input.addEventListener('change', function() {
-                    const selectedDate = new Date(this.value + 'T00:00:00');
-                    if (!isWeekday(selectedDate)) {
-                        alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
-                        const nextWeekday = getNextWeekday(selectedDate);
-                        this.value = nextWeekday.toISOString().split('T')[0];
-                    }
-                });
-                input.setAttribute('data-weekday-validator', 'true');
-            }
-            
-            // Definir valor padrão como próximo dia útil se estiver vazio
-            if (!input.value) {
-                const defaultDate = getNextWeekday(new Date());
-                input.value = defaultDate.toISOString().split('T')[0];
-            }
-        });
+        // ...existing code...
     }
 
     // Modal KPIs
