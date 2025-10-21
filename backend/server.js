@@ -1,5 +1,4 @@
 // Rota para teste de envio de e-mail no ambiente do Render
-const emailService = require('./emailService');
 
 app.post('/api/test-email', async (req, res) => {
   try {
