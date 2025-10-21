@@ -1,3 +1,21 @@
+// Rota para teste de envio de e-mail no ambiente do Render
+const emailService = require('./emailService');
+
+app.post('/api/test-email', async (req, res) => {
+  try {
+    const to = req.body.to || 'wandevpb@gmail.com';
+    const subject = req.body.subject || 'Teste de envio de e-mail Render';
+    const html = req.body.html || '<b>Este é um teste de envio de e-mail pelo Render.</b>';
+    const result = await emailService.sendEmail({ to, subject, html });
+    if (result.success) {
+      res.json({ success: true, messageId: result.messageId, response: result.response });
+    } else {
+      res.status(500).json({ success: false, error: result.error, code: result.code });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 require('dotenv').config({ path: './backend/.env' });
 const { PrismaClient } = require('@prisma/client');
 const { execSync } = require('child_process');
@@ -884,45 +902,55 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     });
 
     // Enviar emails automáticos
-    try {
-      // Email para a equipe interna (novo agendamento)
-      const emailInternoResult = await emailService.sendNovoAgendamentoEmail({
-        agendamento: {
-          codigo: codigo,
-          dataHora: agendamento.dataEntrega,
-          observacoes: observacoesFinal,
-          cd: cd
-        },
-        fornecedor: fornecedor
-      });
-      
-      if (emailInternoResult.success) {
-        console.log('✅ Email interno enviado:', emailInternoResult.messageId);
-      } else {
-        console.error('❌ Erro no email interno:', emailInternoResult.error);
-      }
-      
-      // Email de confirmação para o fornecedor
-      if (fornecedor.email && !isEntregaPeloCD) {
-        const emailFornecedorResult = await emailService.sendConfirmacaoAgendamento({
+    // Envio de e-mails em background, sem bloquear resposta ao frontend
+    (async () => {
+      try {
+        // Email para a equipe interna (novo agendamento)
+        emailService.sendNovoAgendamentoEmail({
           agendamento: {
             codigo: codigo,
             dataHora: agendamento.dataEntrega,
+            observacoes: observacoesFinal,
             cd: cd
           },
           fornecedor: fornecedor
+        })
+        .then(result => {
+          if (result.success) {
+            console.log('✅ Email interno enviado:', result.messageId);
+          } else {
+            console.error('❌ Erro no email interno:', result.error);
+          }
+        })
+        .catch(err => {
+          console.error('❌ Falha ao enviar email interno:', err);
         });
-        
-        if (emailFornecedorResult.success) {
-          console.log('✅ Email de confirmação enviado para fornecedor:', emailFornecedorResult.messageId);
-        } else {
-          console.error('❌ Erro no email de confirmação:', emailFornecedorResult.error);
+
+        // Email de confirmação para o fornecedor
+        if (fornecedor.email && !isEntregaPeloCD) {
+          emailService.sendConfirmacaoAgendamento({
+            agendamento: {
+              codigo: codigo,
+              dataHora: agendamento.dataEntrega,
+              cd: cd
+            },
+            fornecedor: fornecedor
+          })
+          .then(result => {
+            if (result.success) {
+              console.log('✅ Email de confirmação enviado para fornecedor:', result.messageId);
+            } else {
+              console.error('❌ Erro no email de confirmação:', result.error);
+            }
+          })
+          .catch(err => {
+            console.error('❌ Falha ao enviar email para fornecedor:', err);
+          });
         }
+      } catch (emailError) {
+        console.error('❌ Erro geral no envio de emails (background):', emailError);
       }
-      
-    } catch (emailError) {
-      console.error('❌ Erro geral no envio de emails:', emailError);
-    }
+    })();
 
     const mensagemSucesso = isEntregaPeloCD ? 
       'Entrega registrada com sucesso com status ENTREGUE!' :
