@@ -780,7 +780,7 @@ class CDDashboard {
         
         // Atualizar horários disponíveis quando a data mudar
         document.getElementById('nova-data').addEventListener('change', () => {
-            this.carregarHorariosDisponiveis();
+            carregarHorariosDisponiveis();
         });
 
         // Close modals when clicking outside
