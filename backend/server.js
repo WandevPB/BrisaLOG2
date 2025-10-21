@@ -1,20 +1,3 @@
-// Rota para teste de envio de e-mail no ambiente do Render
-
-app.post('/api/test-email', async (req, res) => {
-  try {
-    const to = req.body.to || 'wandevpb@gmail.com';
-    const subject = req.body.subject || 'Teste de envio de e-mail Render';
-    const html = req.body.html || '<b>Este é um teste de envio de e-mail pelo Render.</b>';
-    const result = await emailService.sendEmail({ to, subject, html });
-    if (result.success) {
-      res.json({ success: true, messageId: result.messageId, response: result.response });
-    } else {
-      res.status(500).json({ success: false, error: result.error, code: result.code });
-    }
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
 require('dotenv').config({ path: './backend/.env' });
 const { PrismaClient } = require('@prisma/client');
 const { execSync } = require('child_process');
@@ -309,6 +292,22 @@ async function corrigirAgendamentosExistentes() {
 
 // ...restante do código do servidor...
 const app = express();
+// Rota para teste de envio de e-mail no ambiente do Render
+app.post('/api/test-email', async (req, res) => {
+  try {
+    const to = req.body.to || 'wandevpb@gmail.com';
+    const subject = req.body.subject || 'Teste de envio de e-mail Render';
+    const html = req.body.html || '<b>Este é um teste de envio de e-mail pelo Render.</b>';
+    const result = await emailService.sendEmail({ to, subject, html });
+    if (result.success) {
+      res.json({ success: true, messageId: result.messageId, response: result.response });
+    } else {
+      res.status(500).json({ success: false, error: result.error, code: result.code });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 
