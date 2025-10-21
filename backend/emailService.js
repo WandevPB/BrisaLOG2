@@ -29,8 +29,7 @@ class EmailService {
             }
         });
 
-        // Verificar conexão SMTP na inicialização
-        this.verifyConnection();
+    // Removido: Verificação SMTP na inicialização para evitar travamento no deploy
         
         console.log('📧 [EMAIL SERVICE] Gmail SMTP configurado');
         console.log('📧 [EMAIL SERVICE] FROM_EMAIL:', this.fromEmail);
