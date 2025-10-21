@@ -351,7 +351,19 @@ class CDDashboard {
         const minDateString = minDate.toISOString().split('T')[0];
         
         const dateInputs = document.querySelectorAll('input[type="date"]');
-        dateInputs.forEach(input => {
+        // Abre modal para sugerir nova data de agendamento
+        suggestNewDate(agendamentoId) {
+            const modal = document.getElementById('suggest-date-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                const input = document.getElementById('suggest-agendamento-id');
+                if (input) input.value = agendamentoId;
+            } else {
+                this.showNotification('Modal de sugestão de data não encontrado.', 'error');
+            }
+        }
+    
+        showNotification(message, type = 'info') {
             input.min = minDateString;
             
             // Adicionar validação para impedir seleção de fins de semana
