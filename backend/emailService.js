@@ -1,3 +1,4 @@
+// Alteração fictícia para forçar deploy no Render
 const nodemailer = require('nodemailer');
 
 // Importar templates
