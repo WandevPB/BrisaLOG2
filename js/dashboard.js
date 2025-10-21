@@ -257,7 +257,27 @@ class CDDashboard {
         
         this.init();
     }
-
+    // Exibe ou oculta o loading spinner na dashboard
+    showLoading(isLoading) {
+        let loadingEl = document.getElementById('dashboard-loading');
+        if (!loadingEl) {
+            loadingEl = document.createElement('div');
+            loadingEl.id = 'dashboard-loading';
+            loadingEl.style.position = 'fixed';
+            loadingEl.style.top = '0';
+            loadingEl.style.left = '0';
+            loadingEl.style.width = '100vw';
+            loadingEl.style.height = '100vh';
+            loadingEl.style.background = 'rgba(255,255,255,0.7)';
+            loadingEl.style.zIndex = '9999';
+            loadingEl.style.display = 'flex';
+            loadingEl.style.alignItems = 'center';
+            loadingEl.style.justifyContent = 'center';
+            loadingEl.innerHTML = '<div style="font-size:2rem;color:#FF6B35;"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+            document.body.appendChild(loadingEl);
+        }
+        loadingEl.style.display = isLoading ? 'flex' : 'none';
+    }
     toggleUserMenu() {
         const userMenu = document.getElementById('user-menu');
         if (userMenu) {
