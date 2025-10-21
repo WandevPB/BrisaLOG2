@@ -1,3 +1,4 @@
+// Deploy trigger: alteração fictícia em 21/10/2025
 // Função para obter a URL base da API
 function getApiBaseUrl() {
     // URL da API no Render (produção)
