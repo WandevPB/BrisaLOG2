@@ -1,5 +1,7 @@
 // apiRequest.js
-const API_BASE_URL = typeof getApiBaseUrl === 'function' ? getApiBaseUrl() : 'https://brisalog-back.onrender.com';
+if (typeof window.API_BASE_URL === 'undefined') {
+  window.API_BASE_URL = typeof getApiBaseUrl === 'function' ? getApiBaseUrl() : 'https://brisalog-back.onrender.com';
+}
 
 window.apiRequest = async function(endpoint, options = {}) {
   const token = sessionStorage.getItem('token');
