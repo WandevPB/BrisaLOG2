@@ -1,15 +1,3 @@
-// Endpoint para listar fornecedores e seus emails
-app.get('/api/fornecedores-emails', async (req, res) => {
-  try {
-    const fornecedores = await prisma.fornecedor.findMany({
-      select: { id: true, nome: true, email: true }
-    });
-    res.json({ success: true, fornecedores });
-  } catch (error) {
-    console.error('Erro ao buscar fornecedores:', error);
-    res.status(500).json({ success: false, error: 'Erro ao buscar fornecedores' });
-  }
-});
 // ...existing code...
 require('dotenv').config({ path: './backend/.env' });
 const emailService = require('./emailService');
