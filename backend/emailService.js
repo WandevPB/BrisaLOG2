@@ -154,7 +154,7 @@ class EmailService {
         });
     }
 
-    // Método para novo agendamento (notificação interna)
+    // Método para novo agendamento (notificação interna e fornecedor)
     async sendNovoAgendamentoEmail({ agendamento, fornecedor }) {
         const html = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff;">
@@ -191,9 +191,13 @@ class EmailService {
             </div>
         `;
 
-        // Enviar para equipe interna
+        // Enviar para equipe interna e fornecedor
+        const recipients = [this.fromEmail];
+        if (fornecedor.email) {
+            recipients.push(fornecedor.email);
+        }
         return this.sendEmail({
-            to: this.fromEmail, // Notificação interna
+            to: recipients.join(","),
             subject: `[BrisaLOG] Novo Agendamento - ${fornecedor.nome} - ${agendamento.codigo}`,
             html
         });
@@ -240,9 +244,14 @@ class EmailService {
             </div>
         `;
 
-        // Enviar para equipe interna (notificação com dados do fornecedor)
+        // Enviar para fornecedor e equipe interna
+        const recipients = [];
+        if (fornecedor.email) {
+            recipients.push(fornecedor.email);
+        }
+        recipients.push(this.fromEmail); // sempre notifica interno
         return this.sendEmail({
-            to: this.fromEmail, // Notificação interna
+            to: recipients.join(","),
             subject: `[BrisaLOG] Agendamento Registrado - ${fornecedor.nome} - ${agendamento.codigo}`,
             html
         });
