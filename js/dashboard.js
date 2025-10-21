@@ -257,6 +257,48 @@ class CDDashboard {
         
         this.init();
     }
+        // Exibe notificações na dashboard
+    showNotification(message, type = 'info') {
+        let notificationEl = document.getElementById('notification-container');
+        if (!notificationEl) {
+            notificationEl = document.createElement('div');
+            notificationEl.id = 'notification-container';
+            notificationEl.style.position = 'fixed';
+            notificationEl.style.top = '20px';
+            notificationEl.style.right = '20px';
+            notificationEl.style.zIndex = '9999';
+            document.body.appendChild(notificationEl);
+        }
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.style.padding = '15px 20px';
+        notification.style.marginBottom = '10px';
+        notification.style.borderRadius = '8px';
+        notification.style.background = type === 'error' ? '#F87171' : (type === 'success' ? '#34D399' : '#FFFBEB');
+        notification.style.color = type === 'error' ? '#fff' : '#222';
+        notification.style.fontWeight = 'bold';
+        notification.textContent = message;
+        notificationEl.appendChild(notification);
+        setTimeout(() => notification.remove(), 4000);
+    }
+
+    // Exibe o estado vazio na dashboard
+    showEmptyState() {
+        let emptyEl = document.getElementById('dashboard-empty-state');
+        if (!emptyEl) {
+            emptyEl = document.createElement('div');
+            emptyEl.id = 'dashboard-empty-state';
+            emptyEl.innerHTML = '<div style="text-align:center;padding:40px;color:#FF6B35;font-size:1.2rem;">Nenhum agendamento encontrado.</div>';
+            document.getElementById('dashboard-main').appendChild(emptyEl);
+        }
+        emptyEl.style.display = 'block';
+    }
+
+    // Oculta o estado vazio na dashboard
+    hideEmptyState() {
+        const emptyEl = document.getElementById('dashboard-empty-state');
+        if (emptyEl) emptyEl.style.display = 'none';
+    }
     // Exibe ou oculta o loading spinner na dashboard
     showLoading(isLoading) {
         let loadingEl = document.getElementById('dashboard-loading');
