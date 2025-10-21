@@ -1,4 +1,5 @@
 require('dotenv').config({ path: './backend/.env' });
+const emailService = require('./emailService');
 const { PrismaClient } = require('@prisma/client');
 const { execSync } = require('child_process');
 const prisma = new PrismaClient();
