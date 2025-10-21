@@ -91,9 +91,9 @@ npm run build          # Build do projeto
 
 Após a instalação, o sistema estará disponível em:
 
-- **Portal Principal**: http://localhost:3000
-- **API**: http://localhost:3000/api
-- **Health Check**: http://localhost:3000/health
+- **Portal Principal**: https://brisalog-front.onrender.com
+- **API**: https://brisalog-back.onrender.com/api
+- **Health Check**: https://brisalog-back.onrender.com/health
 
 ### 🔑 Credenciais de Teste
 

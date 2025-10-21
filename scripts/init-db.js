@@ -50,9 +50,9 @@ async function initDatabase() {
 
     console.log('\n🎉 Sistema pronto para uso!');
     console.log('\n🔗 URLs disponíveis:');
-    console.log('   • Portal: http://localhost:3000');
-    console.log('   • API: http://localhost:3000/api');
-    console.log('   • Health: http://localhost:3000/health');
+  console.log('   • Portal: https://brisalog-front.onrender.com');
+  console.log('   • API: https://brisalog-back.onrender.com/api');
+  console.log('   • Health: https://brisalog-back.onrender.com/health');
 
     console.log('\n🔑 Credenciais de login:');
     console.log('   • Usuário: Bahia | Senha: Brisanet123');

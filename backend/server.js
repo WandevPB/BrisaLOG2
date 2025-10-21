@@ -150,7 +150,7 @@ async function startServer() {
     // Inicializar servidor apenas após setup completo
     app.listen(PORT, () => {
       console.log(`🚀 Servidor BrisaLOG Portal rodando na porta ${PORT}`);
-      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`📊 Health check: https://brisalog-back.onrender.com/health`);
   console.log(`🔐 API Base URL: https://brisalog-back.onrender.com/api`);
       console.log('\n📋 Endpoints disponíveis:');
       console.log('• POST /api/auth/login - Login de CD');
@@ -299,7 +299,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 // Middlewares
 const allowedOrigins = [
   'https://brisalog2.onrender.com',
-  'http://localhost:5500'
+  'https://brisalog-front.onrender.com'
 ];
 app.use(cors({
   origin: allowedOrigins,
@@ -1111,7 +1111,7 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
 
     // Enviar emails automáticos conforme o novo status
     try {
-      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
+  const consultaUrl = `${process.env.FRONTEND_URL || 'https://brisalog-front.onrender.com'}/consultar-status.html?codigo=${agendamento.codigo}`;
       if (status === 'confirmado') {
         await emailService.sendConfirmadoEmail({
           to: agendamento.fornecedor.email,

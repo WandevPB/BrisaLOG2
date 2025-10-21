@@ -60,7 +60,7 @@ npm start
 ### 2. **Testar Envio de E-mail**
 ```bash
 # Acesse no navegador ou use curl:
-curl http://localhost:3000/api/auth/test-email/seu.email@exemplo.com
+curl https://brisalog-back.onrender.com/api/auth/test-email/seu.email@exemplo.com
 ```
 
 ### 3. **Verificar Logs**
