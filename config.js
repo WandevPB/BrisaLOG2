@@ -1,5 +1,5 @@
 // Configuração global da API para o BrisaLOG2
-const API_BASE_URL = "https://brisalog-back.onrender.com";
+const API_BASE_URL = "http://SEU_NOVO_IP:10000";
 
 // Função auxiliar para fazer requisições com tratamento de erro
 async function apiRequest(endpoint, options = {}) {

@@ -1,11 +1,7 @@
-// Função para obter a URL base da API
+// Usa API_BASE_URL do config.js
+// Certifique-se que config.js está incluído antes deste arquivo
 function getApiBaseUrl() {
-    // Se estamos em produção (Railway), usar a URL atual
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        return window.location.origin;
-    }
-    // Se estamos em desenvolvimento, usar localhost:3000
-    return 'http://localhost:3000';
+    return typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : window.location.origin;
 }
 
 // Função global para verificar token expirado
@@ -340,7 +336,7 @@ class CDDashboard {
         content.innerHTML = '';
         try {
             const token = sessionStorage.getItem('token');
-            const res = await fetch('/api/kpis', {
+            const res = await fetch(`${getApiBaseUrl()}/api/kpis`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Erro ao buscar KPIs');
@@ -2065,7 +2061,7 @@ class CDDashboard {
             
             console.log('Atualizando status:', { id, newStatus, token: token ? 'presente' : 'ausente' });
             
-            const response = await fetch(`/api/agendamentos/${id}/status`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/status`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -2120,7 +2116,7 @@ class CDDashboard {
         try {
             const token = sessionStorage.getItem('token');
             
-            const response = await fetch(`/api/agendamentos/${id}/cancelar`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/cancelar`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -2236,7 +2232,7 @@ class CDDashboard {
             console.log('Carregando horários disponíveis para data:', novaData, 'CD ID:', cdId);
             
             // Chamar API para obter horários disponíveis
-            const response = await fetch(`/api/horarios-disponiveis?date=${novaData}&cd=${cdId}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/horarios-disponiveis?date=${novaData}&cd=${cdId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2338,7 +2334,7 @@ class CDDashboard {
 
             const token = sessionStorage.getItem('token');
             // Envia a string 'YYYY-MM-DD' pura, sem manipulação
-            const response = await fetch(`/api/agendamentos/${this.currentAgendamentoId}/reagendar`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${this.currentAgendamentoId}/reagendar`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -2393,7 +2389,7 @@ class CDDashboard {
         }
         
         // Construir URL do arquivo usando a rota da API
-        const fileUrl = `/api/files/${filename}`;
+    const fileUrl = `${getApiBaseUrl()}/api/files/${filename}`;
         console.log('Abrindo PDF:', fileUrl);
         
         // Abrir em nova aba
@@ -4015,7 +4011,7 @@ async function handleRegistrarEntrega(e) {
         
         console.log('🚀 [Frontend] Enviando requisição para /api/agendamentos');
         
-        const response = await fetch('/api/agendamentos', {
+    const response = await fetch(`${getApiBaseUrl()}/api/agendamentos`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
