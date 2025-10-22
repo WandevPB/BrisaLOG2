@@ -1,7 +1,6 @@
 // Função para obter a URL base da API
 function getApiBaseUrl() {
-    // URL da API no Render (produção)
-    return 'https://brisalog-back.onrender.com';
+    return typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://54.94.40.122:10000';
 }
 
 // Funções globais para navegação dos steps
