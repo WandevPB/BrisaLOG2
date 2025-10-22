@@ -150,10 +150,10 @@ async function startServer() {
     console.log('🚀 Servidor pronto para iniciar!');
     
     // Inicializar servidor apenas após setup completo
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor BrisaLOG Portal rodando na porta ${PORT}`);
-  console.log(`📊 Health check: https://brisalog-back.onrender.com/health`);
-  console.log(`🔐 API Base URL: https://brisalog-back.onrender.com/api`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Servidor BrisaLOG Portal rodando na porta ${PORT} (acessível externamente)`);
+      console.log(`📊 Health check: http://SEU_IP_PUBLICO:${PORT}/health`);
+      console.log(`🔐 API Base URL: http://SEU_IP_PUBLICO:${PORT}/api`);
       console.log('\n📋 Endpoints disponíveis:');
       console.log('• POST /api/auth/login - Login de CD');
       console.log('• POST /api/auth/change-password - Alterar senha');
