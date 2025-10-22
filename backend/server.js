@@ -75,15 +75,8 @@ async function initializeDatabase() {
         // Se o erro for de conexão, pode ser que o PostgreSQL não esteja configurado
         if (setupError.message.includes('connect') || setupError.message.includes('ENOTFOUND') || setupError.message.includes('getaddrinfo')) {
           console.log('');
-          console.log('🚨 ATENÇÃO: Parece que o PostgreSQL não está configurado no Railway!');
-          console.log('');
-          console.log('📋 Para resolver:');
-          console.log('1. Acesse seu projeto no Railway');
-          console.log('2. Clique em "Add Plugin" ou "New"');
-          console.log('3. Selecione "PostgreSQL"');
-          console.log('4. O Railway irá configurar automaticamente a DATABASE_URL');
-          console.log('5. Refaça o deploy após adicionar o PostgreSQL');
-          console.log('');
+          console.log('🚨 ATENÇÃO: Configure sua DATABASE_URL corretamente para PostgreSQL na AWS.');
+          console.log('Exemplo: postgres://usuario:senha@host:porta/banco');
         }
         
         process.exit(1);
@@ -294,12 +287,12 @@ async function corrigirAgendamentosExistentes() {
 
 // ...restante do código do servidor...
 const app = express();
-// Rota para teste de envio de e-mail no ambiente do Render
+// Rota para teste de envio de e-mail no ambiente de produção
 app.post('/api/test-email', async (req, res) => {
   try {
     const to = req.body.to || 'wandevpb@gmail.com';
-    const subject = req.body.subject || 'Teste de envio de e-mail Render';
-    const html = req.body.html || '<b>Este é um teste de envio de e-mail pelo Render.</b>';
+  const subject = req.body.subject || 'Teste de envio de e-mail Produção';
+  const html = req.body.html || '<b>Este é um teste de envio de e-mail pelo servidor de produção.</b>';
     const result = await emailService.sendEmail({ to, subject, html });
     if (result.success) {
       res.json({ success: true, messageId: result.messageId, response: result.response });
@@ -315,8 +308,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 
 // Middlewares
 const allowedOrigins = [
-  'https://brisalog2.onrender.com',
-  'https://brisalog-front.onrender.com'
+  'http://18.230.75.176',
+  'http://18.230.75.176:10000',
+  'http://localhost:3000'
 ];
 app.use(cors({
   origin: allowedOrigins,
@@ -1138,7 +1132,7 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
 
     // Enviar emails automáticos conforme o novo status
     try {
-  const consultaUrl = `${process.env.FRONTEND_URL || 'https://brisalog-front.onrender.com'}/consultar-status.html?codigo=${agendamento.codigo}`;
+  const consultaUrl = `${process.env.FRONTEND_URL || 'http://18.230.75.176'}/consultar-status.html?codigo=${agendamento.codigo}`;
       if (status === 'confirmado') {
         await emailService.sendConfirmadoEmail({
           to: agendamento.fornecedor.email,
@@ -1265,7 +1259,7 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
     try {
       console.log(`📧 [POST /api/agendamentos/${id}/reagendar] Enviando email para fornecedor...`);
       
-      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
+  const consultaUrl = `${process.env.FRONTEND_URL || 'http://18.230.75.176'}/consultar-status.html?codigo=${agendamento.codigo}`;
       const emailResult = await emailService.sendReagendamentoEmail({
         to: agendamento.fornecedor.email,
         fornecedorNome: agendamento.fornecedor.nome,
@@ -2651,7 +2645,7 @@ app.post('/api/test-email/:email', async (req, res) => {
   const email = req.params.email;
   
   try {
-    // Usar Resend que é compatível com Railway
+  // Usar Resend para envio de e-mails em produção
     const resendEmailService = require('./resendEmailService');
     
     console.log('� Verificando Resend...');
@@ -2660,10 +2654,10 @@ app.post('/api/test-email/:email', async (req, res) => {
     
     const result = await resendEmailService.sendEmail({
       to: email,
-      subject: 'Teste Resend - BrisaLOG Railway',
+  subject: 'Teste Resend - BrisaLOG AWS',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #2563eb;">🎉 Resend + Railway Funcionando!</h1>
+          <h1 style="color: #2563eb;">🎉 Resend + AWS Funcionando!</h1>
           <p>Este email foi enviado através do <strong>Resend</strong> no <strong>Railway</strong>!</p>
           <p>✅ Sistema BrisaLOG totalmente funcional</p>
           <hr>
