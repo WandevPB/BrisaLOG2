@@ -298,7 +298,7 @@ class EmailService {
 
     // E-mail de recuperação de senha
     async sendPasswordResetEmail(email, token, nomeUsuario) {
-        const resetUrl = `${process.env.FRONTEND_URL || 'https://brisalog2.onrender.com'}/redefinir-senha.html?token=${token}&email=${encodeURIComponent(email)}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://brisalog-agenda.online:10000'}/redefinir-senha.html?token=${token}&email=${encodeURIComponent(email)}`;
         
         const html = `
         <!DOCTYPE html>
