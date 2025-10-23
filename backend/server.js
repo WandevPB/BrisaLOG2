@@ -303,14 +303,15 @@ app.post('/api/test-email', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 
 // Middlewares
 const allowedOrigins = [
   'http://18.230.75.176',
   'http://18.230.75.176:10000',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  'http://brisalog-agenda.online:10000'
 ];
 app.use(cors({
   origin: allowedOrigins,
@@ -895,55 +896,28 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     });
 
     // Enviar emails automáticos
-    // Envio de e-mails em background, sem bloquear resposta ao frontend
-    (async () => {
-      try {
-        // Email para a equipe interna (novo agendamento)
-        emailService.sendNovoAgendamentoEmail({
-          agendamento: {
-            codigo: codigo,
-            dataHora: agendamento.dataEntrega,
-            observacoes: observacoesFinal,
-            cd: cd
-          },
-          fornecedor: fornecedor
-        })
-        .then(result => {
-          if (result.success) {
-            console.log('✅ Email interno enviado:', result.messageId);
-          } else {
-            console.error('❌ Erro no email interno:', result.error);
-          }
-        })
-        .catch(err => {
-          console.error('❌ Falha ao enviar email interno:', err);
-        });
-
-        // Email de confirmação para o fornecedor
-        if (fornecedor.email && !isEntregaPeloCD) {
-          emailService.sendConfirmacaoAgendamento({
-            agendamento: {
-              codigo: codigo,
-              dataHora: agendamento.dataEntrega,
-              cd: cd
-            },
-            fornecedor: fornecedor
-          })
-          .then(result => {
-            if (result.success) {
-              console.log('✅ Email de confirmação enviado para fornecedor:', result.messageId);
-            } else {
-              console.error('❌ Erro no email de confirmação:', result.error);
-            }
-          })
-          .catch(err => {
-            console.error('❌ Falha ao enviar email para fornecedor:', err);
-          });
+    // Enviar apenas um e-mail para o fornecedor após solicitação de agendamento
+    if (fornecedor.email && !isEntregaPeloCD) {
+      emailService.sendSolicitacaoRecebidaFornecedor({
+        agendamento: {
+          codigo: codigo,
+          dataHora: agendamento.dataEntrega,
+          observacoes: observacoesFinal,
+          cd: cd
+        },
+        fornecedor: fornecedor
+      })
+      .then(result => {
+        if (result.success) {
+          console.log('✅ Email de solicitação recebido enviado para fornecedor:', result.messageId);
+        } else {
+          console.error('❌ Erro no email de solicitação recebido:', result.error);
         }
-      } catch (emailError) {
-        console.error('❌ Erro geral no envio de emails (background):', emailError);
-      }
-    })();
+      })
+      .catch(err => {
+        console.error('❌ Falha ao enviar email de solicitação recebido para fornecedor:', err);
+      });
+    }
 
     const mensagemSucesso = isEntregaPeloCD ? 
       'Entrega registrada com sucesso com status ENTREGUE!' :
