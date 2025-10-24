@@ -1,5 +1,5 @@
 // Configuração global da API para o BrisaLOG2
-const API_BASE_URL = "http://18.230.75.176:10000";
+const API_BASE_URL = "http://18.231.237.253:10000";
 
 // Função auxiliar para fazer requisições com tratamento de erro
 async function apiRequest(endpoint, options = {}) {
