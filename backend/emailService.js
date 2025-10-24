@@ -55,8 +55,8 @@ class EmailService {
         });
     }
     constructor() {
-        this.fromEmail = process.env.SMTP_USER || process.env.EMAIL_FROM || 'wanderson.goncalves@grupobrisanet.com.br';
-        this.fromName = process.env.EMAIL_NAME || 'BrisaLOG Portal';
+    this.fromEmail = process.env.SMTP_USER || process.env.EMAIL_FROM;
+    this.fromName = process.env.EMAIL_NAME || 'BrisaLOG Portal';
         
         // Configurar transporter para Gmail SMTP
         this.transporter = nodemailer.createTransport({
@@ -64,8 +64,8 @@ class EmailService {
             port: parseInt(process.env.SMTP_PORT) || 587,
             secure: false, // true para 465, false para outros
             auth: {
-                user: process.env.SMTP_USER || 'wanderson.goncalves@grupobrisanet.com.br',
-                pass: process.env.SMTP_PASS || 'onyh pgol zrun vppt' // senha de app
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
             },
             tls: {
                 rejectUnauthorized: false
