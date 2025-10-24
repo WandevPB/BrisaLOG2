@@ -743,7 +743,7 @@ class AgendamentoForm {
                     </p>
                 </div>
                 <div class="space-y-4">
-                    <a href="index.html" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all inline-block">
+                    <a href="/" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all inline-block">
                         <i class="fas fa-home mr-2"></i>
                         Voltar ao Início
                     </a>
