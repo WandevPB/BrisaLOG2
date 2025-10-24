@@ -1,6 +1,6 @@
 // apiRequest.js
 if (typeof window.API_BASE_URL === 'undefined') {
-  window.API_BASE_URL = typeof getApiBaseUrl === 'function' ? getApiBaseUrl() : 'http://54.94.40.122:10000';
+  window.API_BASE_URL = typeof getApiBaseUrl === 'function' ? getApiBaseUrl() : 'http://18.231.237.253:9999';
 }
 
 window.apiRequest = async function(endpoint, options = {}) {

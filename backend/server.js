@@ -303,13 +303,13 @@ app.post('/api/test-email', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-const PORT = process.env.PORT || 10001;
+const PORT = process.env.PORT || 9999;
 const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 
 // Middlewares
 const allowedOrigins = [
-  'http://18.230.75.176',
-  'http://18.230.75.176:9999',
+  'http://18.231.237.253',
+  'http://18.231.237.253:9999',
   'http://localhost:3000',
   'http://brisalog-agenda.online:9999'
 ];
@@ -1106,7 +1106,7 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
 
     // Enviar emails automáticos conforme o novo status
     try {
-  const consultaUrl = `${process.env.FRONTEND_URL || 'http://18.230.75.176'}/consultar-status.html?codigo=${agendamento.codigo}`;
+  const consultaUrl = `${process.env.FRONTEND_URL || 'http://18.231.237.253'}/consultar-status.html?codigo=${agendamento.codigo}`;
       if (status === 'confirmado') {
         await emailService.sendConfirmadoEmail({
           to: agendamento.fornecedor.email,
@@ -1233,7 +1233,7 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
     try {
       console.log(`📧 [POST /api/agendamentos/${id}/reagendar] Enviando email para fornecedor...`);
       
-  const consultaUrl = `${process.env.FRONTEND_URL || 'http://18.230.75.176'}/consultar-status.html?codigo=${agendamento.codigo}`;
+  const consultaUrl = `${process.env.FRONTEND_URL || 'http://18.231.237.253'}/consultar-status.html?codigo=${agendamento.codigo}`;
       const emailResult = await emailService.sendReagendamentoEmail({
         to: agendamento.fornecedor.email,
         fornecedorNome: agendamento.fornecedor.nome,

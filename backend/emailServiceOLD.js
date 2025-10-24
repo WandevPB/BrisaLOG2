@@ -74,9 +74,9 @@ class EmailService {
                     pass: process.env.EMAIL_PASS
                 },
                 // Configurações de timeout e retry
-                connectionTimeout: parseInt(process.env.EMAIL_TIMEOUT) || 10000,
+                connectionTimeout: parseInt(process.env.EMAIL_TIMEOUT) || 9999,
                 greetingTimeout: 5000,
-                socketTimeout: 10000
+                socketTimeout: 9999
             });
 
             // Verificação com timeout
