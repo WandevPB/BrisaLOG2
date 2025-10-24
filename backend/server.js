@@ -303,15 +303,15 @@ app.post('/api/test-email', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10001;
 const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 
 // Middlewares
 const allowedOrigins = [
   'http://18.230.75.176',
-  'http://18.230.75.176:10000',
+  'http://18.230.75.176:9999',
   'http://localhost:3000',
-  'http://brisalog-agenda.online:10000'
+  'http://brisalog-agenda.online:9999'
 ];
 app.use(cors({
   origin: allowedOrigins,
