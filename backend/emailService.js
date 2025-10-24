@@ -28,7 +28,7 @@ class EmailService {
                   <strong>📅 Data Solicitada:</strong> ${new Date(agendamento.dataHora).toLocaleString('pt-BR')}<br>
                 </div>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="http://18.231.237.253:9999/consultar-status.html?codigo=${agendamento.codigo}" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🔎 Consultar Status da Solicitação</a>
+                  <a href="https://brisalog-agenda.online/" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🔎 Acessar Portal BrisaLOG</a>
                 </div>
                 <p style="font-size: 15px; color: #666;">Para consultar, acesse o link acima e informe o código: <b>${agendamento.codigo}</b></p>
               </div>
@@ -209,7 +209,7 @@ class EmailService {
                     </div>
                     
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="https://brisalog2.onrender.com/consultar-status.html?codigo=${agendamento.codigo}" 
+                        <a href="https://brisalog-agenda.online/" 
                            style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                             Consultar Status do Agendamento
                         </a>
@@ -262,7 +262,7 @@ class EmailService {
                     </div>
                     
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="https://brisalog2.onrender.com/consultar-status.html?codigo=${agendamento.codigo}" 
+                        <a href="https://brisalog-agenda.online/" 
                            style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                             Consultar Status do Agendamento
                         </a>
@@ -298,7 +298,7 @@ class EmailService {
 
     // E-mail de recuperação de senha
     async sendPasswordResetEmail(email, token, nomeUsuario) {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://brisalog-agenda.online:9999'}/redefinir-senha.html?token=${token}&email=${encodeURIComponent(email)}`;
+    const resetUrl = `https://brisalog-agenda.online/`;
         
         const html = `
         <!DOCTYPE html>
