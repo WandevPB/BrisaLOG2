@@ -1,3 +1,4 @@
+const templateRecuperacaoCadastrada = require('./emails/recuperacaoCadastrada');
 // Alteração fictícia para forçar deploy no Render
 const nodemailer = require('nodemailer');
 
@@ -11,6 +12,15 @@ const templateCanceladoFornecedor = require('./emails/canceladoFornecedor');
 const templateEntregaSemAgendamento = require('./emails/entregaSemAgendamento');
 
 class EmailService {
+    // E-mail de cadastro de e-mail de recuperação
+    async sendRecuperacaoCadastradaEmail({ to, nome, cd }) {
+        const html = templateRecuperacaoCadastrada({ nome, email: to, cd });
+        return this.sendEmail({
+            to,
+            subject: '[BrisaLOG] E-mail de recuperação cadastrado',
+            html
+        });
+    }
     // E-mail de recebimento de solicitação para o fornecedor
     async sendSolicitacaoRecebidaFornecedor({ agendamento, fornecedor }) {
         const html = `

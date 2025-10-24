@@ -182,6 +182,7 @@ router.post('/change-password-first-login', async (req, res) => {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(novaSenha, saltRounds);
 
+
         // Atualizar senha, e-mail e marcar como não sendo mais primeiro login
         await prisma.cd.update({
             where: { id: usuario.id },
@@ -190,6 +191,13 @@ router.post('/change-password-first-login', async (req, res) => {
                 emailRecuperacao: emailRecuperacao,
                 primeiroLogin: false
             }
+        });
+
+        // Enviar e-mail de notificação de cadastro de e-mail de recuperação
+        await emailService.sendRecuperacaoCadastradaEmail({
+            to: emailRecuperacao,
+            nome: usuario.nome,
+            cd: usuario.nome || username
         });
 
         res.status(200).json({
