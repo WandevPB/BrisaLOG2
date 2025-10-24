@@ -1,6 +1,6 @@
 // Função para obter a URL base da API
 function getApiBaseUrl() {
-    return typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://18.231.237.253:9999';
+    return typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://brisalog-agenda.online';
 }
 
 // Funções globais para navegação dos steps

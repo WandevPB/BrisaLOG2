@@ -1,6 +1,6 @@
 // apiRequest.js
 if (typeof window.API_BASE_URL === 'undefined') {
-  window.API_BASE_URL = typeof getApiBaseUrl === 'function' ? getApiBaseUrl() : 'http://18.231.237.253:9999';
+  window.API_BASE_URL = typeof getApiBaseUrl === 'function' ? getApiBaseUrl() : 'https://brisalog-agenda.online';
 }
 
 window.apiRequest = async function(endpoint, options = {}) {

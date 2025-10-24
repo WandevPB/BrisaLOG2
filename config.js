@@ -1,5 +1,5 @@
 // Configuração global da API para o BrisaLOG2
-const API_BASE_URL = "http://18.231.237.253:9999";
+const API_BASE_URL = "https://brisalog-agenda.online";
 
 // Função auxiliar para fazer requisições com tratamento de erro
 async function apiRequest(endpoint, options = {}) {

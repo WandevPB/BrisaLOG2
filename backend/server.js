@@ -308,10 +308,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 
 // Middlewares
 const allowedOrigins = [
-  'http://18.231.237.253',
-  'http://18.231.237.253:9999',
-  'http://localhost:3000',
-  'http://brisalog-agenda.online:9999'
+  'https://brisalog-agenda.online',
+  'http://localhost:3000'
 ];
 app.use(cors({
   origin: allowedOrigins,
