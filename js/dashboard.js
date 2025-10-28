@@ -1663,13 +1663,27 @@ class CDDashboard {
                     <h3 class="text-md font-semibold text-gray-800">Volumes</h3>
                 </div>
                 <div class="space-y-2 text-sm">
-                    ${agendamento.quantidadeVolumes ? `<div><span class="text-gray-600 text-xs">Quantidade</span><p class="font-semibold">${agendamento.quantidadeVolumes}</p></div>` : ''}
-                    ${agendamento.tipoVolume ? `<div><span class="text-gray-600 text-xs">Tipo</span><p class="font-semibold">${agendamento.tipoVolume}</p></div>` : ''}
+                    <div><span class="text-gray-600 text-xs">Quantidade</span><p class="font-semibold">${agendamento.quantidadeVolumes || 'Não informado'}</p></div>
+                    <div><span class="text-gray-600 text-xs">Tipo</span><p class="font-semibold">${agendamento.tipoVolume || 'Não informado'}</p></div>
                 </div>
             </div>
         ` : '';
 
         const detailContent = document.getElementById('detail-content');
+        // Corrigir valor total das NFs
+        let valorTotal = 0;
+        if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
+            agendamento.notasFiscais.forEach(nf => {
+                let v = nf.valor;
+                if (typeof v === 'string') {
+                    v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
+                    v = parseFloat(v);
+                }
+                if (!isNaN(v)) valorTotal += v;
+            });
+        }
+        // Corrigir data de criação
+        const dataCriacao = agendamento.createdAt ? this.formatDate(agendamento.createdAt) : 'Não informado';
         detailContent.innerHTML = `
             <div class="space-y-4">
                 ${cdIndicatorHtml}
@@ -1759,16 +1773,12 @@ class CDDashboard {
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Valor Total:</span>
                                 <span class="font-semibold text-green-600 text-xs">
-                                    R$ ${agendamento.notasFiscais ? 
-                                        agendamento.notasFiscais.reduce((total, nf) => 
-                                            total + parseFloat(nf.valor?.replace(',', '.') || 0), 0
-                                        ).toLocaleString('pt-BR', {minimumFractionDigits: 2}) 
-                                        : '0,00'}
+                                    R$ ${isNaN(valorTotal) ? '0,00' : valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                                 </span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Criado em:</span>
-                                <span class="font-semibold text-xs">${agendamento.createdAt ? this.formatDate(agendamento.createdAt) : 'N/A'}</span>
+                                <span class="font-semibold text-xs">${dataCriacao}</span>
                             </div>
                         </div>
                     </div>
@@ -1802,7 +1812,17 @@ class CDDashboard {
                     <div class="p-4">
                         ${agendamento.notasFiscais && agendamento.notasFiscais.length > 0 ? `
                             <div class="space-y-3">
-                                ${agendamento.notasFiscais.map(nf => `
+                                ${agendamento.notasFiscais.map(nf => {
+                                    let valorFormatado = 'Valor não informado';
+                                    if (nf.valor) {
+                                        let v = nf.valor;
+                                        if (typeof v === 'string') {
+                                            v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
+                                            v = parseFloat(v);
+                                        }
+                                        valorFormatado = isNaN(v) ? 'Valor não informado' : `R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                                    }
+                                    return `
                                     <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
                                         <div class="flex justify-between items-center">
                                             <div class="flex-1">
@@ -1812,7 +1832,7 @@ class CDDashboard {
                                                     ${nf.serie ? `<span class="text-xs text-gray-500">Série: ${nf.serie}</span>` : ''}
                                                 </div>
                                                 <div class="text-lg font-bold text-green-600">
-                                                    ${nf.valor ? `R$ ${nf.valor}` : 'Valor não informado'}
+                                                    ${valorFormatado}
                                                 </div>
                                             </div>
                                             <div class="flex items-center space-x-2">
@@ -1829,7 +1849,8 @@ class CDDashboard {
                                             </div>
                                         </div>
                                     </div>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </div>
                         ` : `
                             <div class="text-center py-6 text-gray-500">

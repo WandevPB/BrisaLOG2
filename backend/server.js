@@ -1231,7 +1231,10 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
         acao: 'reagendamento_sugerido',
         descricao: `Nova data sugerida: ${formatDateBr(novaData)} às ${novoHorario}`,
         dataAnterior: agendamento.dataEntrega,
-        dataNova: new Date(novaData + 'T00:00:00'),
+        dataNova: (function() {
+          const d = new Date(novaData + 'T00:00:00');
+          return isNaN(d.getTime()) ? null : d;
+        })(),
         agendamentoId: parseInt(id),
         cdId: cdId
       }
