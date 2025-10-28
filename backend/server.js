@@ -852,25 +852,32 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       }
     });
 
-    // Criar notas fiscais
+    // Criar notas fiscais (compatível com novo formato multi-pedido/multi-NF)
     for (const pedido of agendamentoData.pedidos) {
+      const numeroPedido = pedido.numero || pedido.numeroPedido || 'UNICO';
       for (const nf of pedido.notasFiscais) {
         // Encontrar arquivo correspondente
         const arquivo = arquivos.find(f => {
           const info = req.body[`${f.fieldname}_info`];
           if (info) {
             const parsedInfo = JSON.parse(info);
-            return parsedInfo.pedido === pedido.numero && parsedInfo.nf === nf.numero;
+            return parsedInfo.pedido === numeroPedido && parsedInfo.nf === nf.numero;
           }
           return false;
         });
 
+        // Corrigir valor: remover R$, pontos, espaços, trocar vírgula por ponto
+        let valorNF = nf.valor;
+        if (typeof valorNF === 'string') {
+          valorNF = valorNF.replace(/[^\d,\.]/g, '').replace(',', '.');
+        }
+
         await prisma.notaFiscal.create({
           data: {
-            numeroPedido: pedido.numero,
+            numeroPedido: numeroPedido,
             numeroNF: nf.numero,
             serie: nf.serie || null,
-            valor: nf.valor ? String(nf.valor) : null,
+            valor: valorNF ? String(valorNF) : null,
             arquivoPath: arquivo ? arquivo.filename : null,
             agendamentoId: agendamento.id
           }
@@ -989,7 +996,12 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
       status: agendamento.status,
       observacoes: agendamento.observacoes || 'Nenhuma observação',
       valorTotal: agendamento.notasFiscais.reduce((total, nf) => {
-        const valor = parseFloat(nf.valor?.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        let valor = 0;
+        if (typeof nf.valor === 'string') {
+          valor = parseFloat(nf.valor.replace(/[^\d,\.]/g, '').replace(',', '.')) || 0;
+        } else if (typeof nf.valor === 'number') {
+          valor = nf.valor;
+        }
         return total + valor;
       }, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
       tipoCarga: agendamento.tipoCarga,

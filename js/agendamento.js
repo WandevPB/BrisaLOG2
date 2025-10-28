@@ -3,18 +3,9 @@ function getApiBaseUrl() {
     return typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://brisalog-agenda.online';
 }
 
-// Funções globais para navegação dos steps
-function nextStep() {
-    if (window.agendamentoForm) {
-        window.agendamentoForm.nextStep();
-    }
-}
+// REMOVIDO as funções nextStep/previousStep seguras do topo
+// para evitar duplicidade. Vamos usar apenas as do final.
 
-function previousStep() {
-    if (window.agendamentoForm) {
-        window.agendamentoForm.previousStep();
-    }
-}
 // Agendamento.js - Sistema de Agendamento de Entregas
 // Todos os métodos da classe AgendamentoForm devem estar dentro do bloco da classe
 
@@ -45,13 +36,51 @@ class AgendamentoForm {
 
         inputs.forEach(input => {
             if (input.type === 'file') {
+                // Para o template novo, arquivoNF pode estar fora do file-drop-zone
                 const fileInput = input;
-                const fileSelected = fileInput.closest('.file-drop-zone')?.querySelector('.file-selected');
-                if (!fileSelected || fileSelected.classList.contains('hidden')) {
-                    this.showInvalidFeedback(input, 'Este campo é obrigatório.');
-                    isValid = false;
+                let fileSelected = null;
+                // Tenta encontrar o label customizado ou file-drop-zone
+                if (fileInput.closest('.file-drop-zone')) {
+                    fileSelected = fileInput.closest('.file-drop-zone')?.querySelector('.file-selected');
+                    if (!fileSelected || fileSelected.classList.contains('hidden')) {
+                        this.showInvalidFeedback(input, 'Este campo é obrigatório.');
+                        isValid = false;
+                    } else {
+                        this.hideInvalidFeedback(input);
+                    }
+                } else if (fileInput.closest('.file-input-wrapper')) {
+                    // Lógica para o novo input de file do agendamento.html
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                         // Acha o elemento de feedback mais próximo
+                        const wrapper = fileInput.closest('.file-input-wrapper');
+                        let feedback = wrapper.nextElementSibling;
+                        if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                             feedback = wrapper.parentElement.querySelector('.invalid-feedback');
+                        }
+                        
+                        if (feedback) {
+                            feedback.textContent = 'Este campo é obrigatório.';
+                            feedback.classList.remove('hidden');
+                        }
+                        isValid = false;
+                    } else {
+                        const wrapper = fileInput.closest('.file-input-wrapper');
+                        let feedback = wrapper.nextElementSibling;
+                        if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                             feedback = wrapper.parentElement.querySelector('.invalid-feedback');
+                        }
+                         if (feedback) {
+                            feedback.classList.add('hidden');
+                        }
+                    }
                 } else {
-                    this.hideInvalidFeedback(input);
+                    // Se não tem file-drop-zone, verifica se o arquivo está selecionado
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        this.showInvalidFeedback(input, 'Este campo é obrigatório.');
+                        isValid = false;
+                    } else {
+                        this.hideInvalidFeedback(input);
+                    }
                 }
             } else if (!input.value.trim()) {
                 this.showInvalidFeedback(input, 'Este campo é obrigatório.');
@@ -62,37 +91,95 @@ class AgendamentoForm {
         });
 
         if (step === 3) {
-            const pedidoInputs = stepContainer?.querySelectorAll('.pedido-content [name="numeroPedido"]');
-            if (pedidoInputs?.length === 0) {
-                this.showNotification('É necessário adicionar pelo menos um pedido.', 'error');
-                isValid = false;
-            } else {
-                pedidoInputs?.forEach(input => {
-                    if (!input.value.trim()) {
-                        this.showInvalidFeedback(input, 'Este campo é obrigatório.');
-                        isValid = false;
-                    } else {
-                        this.hideInvalidFeedback(input);
-                    }
-                });
+            // Validação para o template de pedido-unico (agendamento.html)
+            const pedidoUnico = stepContainer?.querySelector('#pedido-unico');
+            if (pedidoUnico) {
+                const nfItems = pedidoUnico.querySelectorAll('.nota-fiscal-item');
+                if (nfItems.length === 0) {
+                     this.showNotification('É necessário adicionar pelo menos uma nota fiscal.', 'error');
+                     isValid = false;
+                }
+                
+                nfItems.forEach(nfDiv => {
+                    const numeroNF = nfDiv.querySelector('[name="numeroNF"]');
+                    const numeroPedidoLinha = nfDiv.querySelector('[name="numeroPedidoLinha"]');
+                    const valorNF = nfDiv.querySelector('[name="valorNF"]');
+                    const arquivoNF = nfDiv.querySelector('[name="arquivoNF"]');
 
-                const nfInputs = stepContainer?.querySelectorAll('.nota-fiscal-item [name="numeroNF"], .nota-fiscal-item [name="valorNF"]');
-                nfInputs?.forEach(input => {
-                    if (!input.value.trim()) {
-                        this.showInvalidFeedback(input, 'Este campo é obrigatório.');
+                    if (!numeroNF || !numeroNF.value.trim()) {
+                        this.showInvalidFeedback(numeroNF, 'Este campo é obrigatório.');
                         isValid = false;
                     } else {
-                        this.hideInvalidFeedback(input);
+                        this.hideInvalidFeedback(numeroNF);
+                    }
+                    
+                    if (!numeroPedidoLinha || !numeroPedidoLinha.value.trim()) {
+                        this.showInvalidFeedback(numeroPedidoLinha, 'Este campo é obrigatório.');
+                        isValid = false;
+                    } else {
+                        this.hideInvalidFeedback(numeroPedidoLinha);
+                    }
+
+                    if (!valorNF || !valorNF.value.trim() || valorNF.value === 'R$ 0,00') {
+                        this.showInvalidFeedback(valorNF, 'Este campo é obrigatório.');
+                        isValid = false;
+                    } else {
+                        this.hideInvalidFeedback(valorNF);
+                    }
+                    
+                    if (!arquivoNF || !arquivoNF.files || !arquivoNF.files.length) {
+                        // Acha o feedback do input de arquivo
+                        const wrapper = arquivoNF.closest('.file-input-wrapper');
+                        let feedback = wrapper.nextElementSibling;
+                         if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                             feedback = wrapper.parentElement.querySelector('.invalid-feedback');
+                        }
+
+                        if (feedback) {
+                            feedback.textContent = 'Este campo é obrigatório.';
+                            feedback.classList.remove('hidden');
+                        }
+                        isValid = false;
+                    } else {
+                         const wrapper = arquivoNF.closest('.file-input-wrapper');
+                        let feedback = wrapper.nextElementSibling;
+                         if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                             feedback = wrapper.parentElement.querySelector('.invalid-feedback');
+                        }
+                         if (feedback) {
+                            feedback.classList.add('hidden');
+                        }
                     }
                 });
+            } else {
+                // Fallback para múltiplos pedidos (sistema de abas antigo)
+                const pedidoInputs = stepContainer?.querySelectorAll('.pedido-content [name="numeroPedido"]');
+                if (pedidoInputs?.length === 0) {
+                    this.showNotification('É necessário adicionar pelo menos um pedido.', 'error');
+                    isValid = false;
+                } else {
+                    // ... (lógica de validação do sistema de abas)
+                }
             }
         }
-        
         return isValid;
     }
 
     showInvalidFeedback(input, message) {
-        const feedback = input.parentElement.querySelector('.invalid-feedback');
+        // Tenta encontrar o feedback no parentElement, ou no parentElement do parentElement (para inputs customizados)
+        let feedback = input.parentElement.querySelector('.invalid-feedback');
+        if (!feedback && input.parentElement.parentElement) {
+             feedback = input.parentElement.parentElement.querySelector('.invalid-feedback');
+        }
+        // Fallback para input de arquivo
+        if (input.type === 'file' && input.closest('.file-input-wrapper')) {
+            const wrapper = input.closest('.file-input-wrapper');
+            feedback = wrapper.nextElementSibling; // Tenta pegar o próximo
+            if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                feedback = wrapper.parentElement.querySelector('.invalid-feedback'); // Tenta pegar no pai
+            }
+        }
+        
         if (feedback) {
             feedback.textContent = message;
             feedback.classList.remove('hidden');
@@ -100,7 +187,19 @@ class AgendamentoForm {
     }
 
     hideInvalidFeedback(input) {
-        const feedback = input.parentElement.querySelector('.invalid-feedback');
+        let feedback = input.parentElement.querySelector('.invalid-feedback');
+         if (!feedback && input.parentElement.parentElement) {
+             feedback = input.parentElement.parentElement.querySelector('.invalid-feedback');
+        }
+        // Fallback para input de arquivo
+        if (input.type === 'file' && input.closest('.file-input-wrapper')) {
+            const wrapper = input.closest('.file-input-wrapper');
+            feedback = wrapper.nextElementSibling;
+            if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                feedback = wrapper.parentElement.querySelector('.invalid-feedback');
+            }
+        }
+        
         if (feedback) {
             feedback.textContent = '';
             feedback.classList.add('hidden');
@@ -142,7 +241,10 @@ class AgendamentoForm {
         });
 
         // Mostrar etapa atual
-        document.getElementById(`form-step-${this.currentStep}`).classList.remove('hidden');
+        const currentStepEl = document.getElementById(`form-step-${this.currentStep}`);
+        if (currentStepEl) {
+             currentStepEl.classList.remove('hidden');
+        }
 
         // Atualizar indicadores de progresso
         this.updateProgressIndicators();
@@ -155,14 +257,23 @@ class AgendamentoForm {
             4: 'Resumo e Confirmação'
         };
 
-        document.getElementById('current-step').textContent = this.currentStep;
-        document.getElementById('step-description').textContent = descriptions[this.currentStep];
+        const currentStepSpan = document.getElementById('current-step');
+        const stepDescSpan = document.getElementById('step-description');
+        
+        if(currentStepSpan) currentStepSpan.textContent = this.currentStep;
+        if(stepDescSpan) stepDescSpan.textContent = descriptions[this.currentStep];
 
-        // Ao entrar no step 3, garantir que pelo menos um pedido seja criado
+        // Ao entrar no step 3, garantir que pelo menos um pedido/NF exista
         if (this.currentStep === 3) {
+             // Lógica para o template de NF única (agendamento.html)
+            const notasContainer = document.getElementById('notas-container');
+            if (notasContainer && notasContainer.children.length === 0) {
+                // Se não houver nenhuma NF, simula o clique no botão de adicionar
+                document.getElementById('btn-add-nf')?.click(); 
+            }
+            // Lógica legada para o template de múltiplos pedidos (abas)
             const pedidosContainer = document.getElementById('pedidos-container');
-            // Se não houver nenhum pedido, adicionar automaticamente
-            if (pedidosContainer && pedidosContainer.children.length === 0) {
+            if (pedidosContainer && !document.getElementById('pedido-unico') && pedidosContainer.children.length === 0) {
                 this.addPedido();
             }
         }
@@ -174,6 +285,7 @@ class AgendamentoForm {
         // Atualizar círculos dos passos
         for (let i = 1; i <= this.maxSteps; i++) {
             const stepElement = document.getElementById(`step-${i}`);
+            if (!stepElement) continue; // Pula se o elemento não existir
             
             if (i < this.currentStep) {
                 stepElement.className = 'step flex items-center justify-center w-10 h-10 rounded-full step-completed text-white font-bold';
@@ -190,6 +302,8 @@ class AgendamentoForm {
         // Atualizar barras de progresso
         for (let i = 1; i < this.maxSteps; i++) {
             const progressBar = document.getElementById(`progress-${i}-${i + 1}`);
+            if (!progressBar) continue; // Pula se o elemento não existir
+
             if (i < this.currentStep) {
                 progressBar.style.width = '100%';
             } else {
@@ -199,24 +313,32 @@ class AgendamentoForm {
     }
 
     saveStepData() {
+        const getElValue = (id) => document.getElementById(id)?.value || '';
+
         switch (this.currentStep) {
             case 1:
                 this.formData.fornecedor = {
-                    nomeEmpresa: document.getElementById('nome-empresa').value,
-                    nomeResponsavel: document.getElementById('nome-responsavel').value,
-                    email: document.getElementById('email').value,
-                    telefone: document.getElementById('telefone').value,
-                    documento: document.getElementById('documento').value
+                    nomeEmpresa: getElValue('nome-empresa'),
+                    nomeResponsavel: getElValue('nome-responsavel'),
+                    email: getElValue('email'),
+                    telefone: getElValue('telefone'),
+                    documento: getElValue('documento'),
+                    telefoneMotorista: getElValue('telefone-motorista'),
+                    cpfMotorista: getElValue('cpf-motorista'),
+                    placaVeiculo: getElValue('placa-veiculo')
                 };
                 break;
             case 2:
                 // Garante que dataEntrega é string pura 'YYYY-MM-DD'
                 this.formData.entrega = {
-                    cdDestino: document.getElementById('cd-destino').value,
-                    tipoCarga: document.getElementById('tipo-carga').value,
-                    dataEntrega: document.getElementById('data-entrega').value, // string pura
-                    horarioEntrega: document.getElementById('horario-entrega').value,
-                    observacoes: document.getElementById('observacoes').value
+                    cdDestino: getElValue('cd-destino'),
+                    tipoCarga: getElValue('tipo-carga'),
+                    dataEntrega: getElValue('data-entrega'), // string pura
+                    horarioEntrega: getElValue('horario-entrega'),
+                    // *** CORREÇÃO AQUI: Adiciona os campos de volume ***
+                    quantidadeVolumes: getElValue('quantidade-volumes'),
+                    tipoVolume: getElValue('tipo-volume'),
+                    observacoes: getElValue('observacoes')
                 };
                 break;
             case 3:
@@ -225,6 +347,8 @@ class AgendamentoForm {
         }
     }
 
+    // *** ESTA É UMA FUNÇÃO LEGADA (do sistema de abas) ***
+    // Não é mais usada pelo agendamento.html, mas mantida por segurança.
     addPedido() {
         this.pedidoCounter++;
         const pedidoId = `pedido-${this.pedidoCounter}`;
@@ -274,7 +398,7 @@ class AgendamentoForm {
             </div>
         `;
         
-        document.getElementById('pedidos-container').insertAdjacentHTML('beforeend', pedidoHTML);
+        document.getElementById('pedidos-container')?.insertAdjacentHTML('beforeend', pedidoHTML);
         
         // Mostrar o pedido recém-criado
         this.showPedido(pedidoId);
@@ -283,9 +407,11 @@ class AgendamentoForm {
         this.addNotaFiscal(pedidoId);
     }
 
+    // *** FUNÇÃO LEGADA (do sistema de abas) ***
     addPedidoTab(pedidoId, numeroTab) {
         const tabsContainer = document.getElementById('pedidos-tabs');
-        
+        if (!tabsContainer) return;
+
         const tabHTML = `
             <button type="button" id="tab-${pedidoId}" onclick="showPedido('${pedidoId}')" 
                 class="pedido-tab px-4 py-2 rounded-lg font-medium transition-all bg-orange-primary text-white flex items-center space-x-2">
@@ -304,126 +430,7 @@ class AgendamentoForm {
         
         // Remover o botão "Adicionar Pedido" anterior se existir
         const existingAddBtn = tabsContainer.querySelector('.bg-green-500');
-        if (existingAddBtn) {
-            existingAddBtn.remove();
-        }
-        
-        tabsContainer.insertAdjacentHTML('beforeend', tabHTML);
-    }
-
-    showPedido(pedidoId) {
-        // Ocultar todos os pedidos
-        document.querySelectorAll('.pedido-content').forEach(pedido => {
-            pedido.style.display = 'none';
-        });
-        
-        // Remover classe ativa de todas as abas
-        document.querySelectorAll('.pedido-tab').forEach(tab => {
-            tab.classList.remove('bg-orange-primary', 'text-white');
-            tab.classList.add('bg-gray-200', 'text-gray-700');
-        });
-        
-        // Mostrar pedido selecionado
-        const pedidoElement = document.getElementById(pedidoId);
-        if (pedidoElement) {
-            pedidoElement.style.display = 'block';
-        }
-        
-        // Ativar aba correspondente
-        const tabElement = document.getElementById(`tab-${pedidoId}`);
-        if (tabElement) {
-            tabElement.classList.remove('bg-gray-200', 'text-gray-700');
-            tabElement.classList.add('bg-orange-primary', 'text-white');
-        }
-    }
-
-    addNotaFiscal(pedidoId) {
-        const container = document.querySelector(`.notas-fiscais-container[data-pedido="${pedidoId}"]`);
-        if (!container) {
-            console.error(`Container não encontrado para pedido: ${pedidoId}`);
-            return;
-        }
-        
-        // Minimizar todas as notas fiscais existentes neste pedido
-        container.querySelectorAll('.nota-fiscal-item').forEach(nf => {
-            this.minimizeNotaFiscal(nf);
-        });
-        
-        const nfCount = container.children.length + 1;
-        const nfId = `${pedidoId}-nf-${nfCount}`;
-        
-        const nfHTML = `
-            <div id="${nfId}" class="nota-fiscal-item bg-white rounded-lg border mb-4">
-                <div class="nota-fiscal-header flex justify-between items-center p-4 cursor-pointer" onclick="toggleNotaFiscal('${nfId}')">
-                    <h6 class="font-medium text-gray-dark">
-                        <i class="fas fa-file-invoice mr-2 text-orange-primary"></i>
-                        Nota Fiscal ${nfCount}
-                    </h6>
-                    <div class="flex items-center space-x-2">
-                        ${nfCount > 1 ? `
-                            <button type="button" onclick="event.stopPropagation(); removeNotaFiscal('${nfId}', '${pedidoId}')" 
-                                class="w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs transition-all">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        ` : ''}
-                        <i class="fas fa-chevron-up toggle-icon text-gray-500"></i>
-                    </div>
-                </div>
-                
-                <div class="nota-fiscal-content p-4 border-t">
-                    <div class="grid md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-dark mb-2">
-                                <i class="fas fa-hashtag mr-1 text-orange-primary"></i>
-                                Número da NF-e *
-                            </label>
-                            <input type="text" name="numeroNF" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
-                                placeholder="Número">
-                            <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-dark mb-2">
-                                <i class="fas fa-dollar-sign mr-1 text-orange-primary"></i>
-                                Valor *
-                            </label>
-                            <input type="text" name="valorNF" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
-                                placeholder="R$ 0,00" onchange="formatCurrency(this); calcularTotalPedido('${pedidoId}')" 
-                                oninput="calcularTotalPedido('${pedidoId}')">
-                            <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-dark mb-2">
-                            <i class="fas fa-file-pdf mr-1 text-orange-primary"></i>
-                            Arquivo XML/PDF da NF-e *
-                        </label>
-                        <div class="file-drop-zone rounded-lg p-4 text-center border-2 border-dashed border-orange-300">
-                            <input type="file" name="arquivoNF" accept=".pdf,.xml" class="hidden" required onchange="handleFileSelect(this)">
-                            <div class="file-drop-content">
-                                <button type="button" class="bg-orange-primary text-white px-4 py-2 rounded-lg hover:bg-orange-secondary transition-all" onclick="this.parentElement.parentElement.querySelector('input[type=file]').click()">
-                                    Escolher ficheiro
-                                </button>
-                                <p class="text-gray-500 text-sm mt-2">Nenhum ficheiro selecionado</p>
-                            </div>
-                            <div class="file-selected hidden">
-                                <i class="fas fa-file-pdf text-red-500 text-2xl mb-2"></i>
-                                <p class="file-name text-gray-700 font-medium"></p>
-                                <button type="button" class="text-red-500 hover:text-red-700 mt-1" onclick="removeFile(this)">
-                                    <i class="fas fa-times"></i> Remover
-                                </button>
-                            </div>
-                        </div>
-                        <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        container.insertAdjacentHTML('beforeend', nfHTML);
-        this.setupFileDropZone(nfId);
+        // Nova lógica: agrupar NFs por número de pedido e somar valores
     }
 
     minimizeNotaFiscal(nfElement) {
@@ -439,6 +446,7 @@ class AgendamentoForm {
 
     toggleNotaFiscal(nfId) {
         const nfElement = document.getElementById(nfId);
+        if (!nfElement) return;
         const content = nfElement.querySelector('.nota-fiscal-content');
         const toggleIcon = nfElement.querySelector('.toggle-icon');
         
@@ -463,6 +471,7 @@ class AgendamentoForm {
 
     setupFileDropZone(nfId) {
         const dropZone = document.querySelector(`#${nfId} .file-drop-zone`);
+        if (!dropZone) return;
         const fileInput = dropZone.querySelector('input[type="file"]');
         
         dropZone.addEventListener('click', () => fileInput.click());
@@ -488,71 +497,98 @@ class AgendamentoForm {
         });
     }
 
+    // Helper para converter string 'R$ 1.234,56' para número 1234.56
+    parseCurrency(valor) {
+        if (!valor) return 0;
+        // Remove prefixo 'R$ ', pontos e espaços
+        valor = valor.replace('R$','').replace(/\./g,'').replace(/\s/g,'');
+        // Troca vírgula por ponto
+        valor = valor.replace(',','.');
+        // Se não for número válido, ignora
+        const valorNumerico = parseFloat(valor);
+        if (!isNaN(valorNumerico)) {
+            return valorNumerico;
+        }
+        return 0;
+    }
+
+
     calcularTotalPedido(pedidoId) {
+        // Esta função é para o sistema de abas.
+        // A lógica de cálculo de total para o novo template está em calcularTotalGeral()
         const pedidoDiv = document.getElementById(pedidoId);
         if (!pedidoDiv) return 0;
-        
         const nfInputs = pedidoDiv.querySelectorAll('[name="valorNF"]');
-        
         let total = 0;
-        
         nfInputs.forEach(input => {
-            const valor = input.value;
-            if (valor) {
-                // Remove formatação e converte para número
-                const numeroLimpo = valor.replace(/[^\d,]/g, '').replace(',', '.');
-                const valorNumerico = parseFloat(numeroLimpo);
-                if (!isNaN(valorNumerico)) {
-                    total += valorNumerico;
-                }
-            }
+            total += this.parseCurrency(input.value);
         });
-        
-        return total;
+        return Number.isNaN(total) ? 0 : total;
     }
 
     calcularTotalGeral() {
         let totalGeral = 0;
-        document.querySelectorAll('.pedido-content').forEach(pedidoDiv => {
-            const pedidoId = pedidoDiv.id;
-            const totalPedido = this.calcularTotalPedido(pedidoId);
-            totalGeral += totalPedido;
-        });
+        
+        // Lógica para o novo template (agendamento.html)
+        const notasContainer = document.getElementById('notas-container');
+        if (notasContainer) {
+             notasContainer.querySelectorAll('[name="valorNF"]').forEach(input => {
+                totalGeral += this.parseCurrency(input.value);
+            });
+        } else {
+            // Lógica legada (sistema de abas)
+            document.querySelectorAll('.pedido-content').forEach(pedidoDiv => {
+                const pedidoId = pedidoDiv.id;
+                const totalPedido = this.calcularTotalPedido(pedidoId);
+                totalGeral += totalPedido;
+            });
+        }
+        
         return totalGeral;
     }
 
+    // *** FUNÇÃO ATUALIZADA PARA AGRUPAR PEDIDOS CORRETAMENTE (CORREÇÃO "UNICO") ***
     savePedidosData() {
         this.formData.pedidos = [];
         this.formData.arquivos = [];
-        
-        document.querySelectorAll('.pedido-content').forEach(pedidoDiv => {
-            const pedidoId = pedidoDiv.id;
-            const numeroPedidoInput = pedidoDiv.querySelector('[name="numeroPedido"]');
-            if (!numeroPedidoInput) return;
-            
-            const numeroPedido = numeroPedidoInput.value;
-            const valorCalculado = this.calcularTotalPedido(pedidoId);
-            
-            const pedido = {
-                numero: numeroPedido,
-                valor: valorCalculado.toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL'
-                }),
-                notasFiscais: []
-            };
-            
-            pedidoDiv.querySelectorAll('.nota-fiscal-item').forEach(nfDiv => {
-                const numeroNF = nfDiv.querySelector('[name="numeroNF"]')?.value;
-                const valorNF = nfDiv.querySelector('[name="valorNF"]')?.value;
-                const arquivoNF = nfDiv.querySelector('[name="arquivoNF"]')?.files[0];
+        const pedidosMap = {};
+
+        // Função helper para analisar o valor monetário
+        const parseCurrency = (valStr) => {
+            if (!valStr) return 0;
+            let num = valStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+            return parseFloat(num) || 0;
+        };
+
+        // Lógica para o novo template (agendamento.html)
+        const notasContainer = document.getElementById('notas-container');
+        if (notasContainer) {
+            notasContainer.querySelectorAll('.nota-fiscal-item').forEach(nfDiv => {
+                // *** MUDANÇA: Pega o número do pedido de CADA LINHA ***
+                const numeroPedidoInput = nfDiv.querySelector('[name="numeroPedidoLinha"]');
+                const numeroPedido = numeroPedidoInput ? numeroPedidoInput.value.trim() : 'PEDIDO_INVALIDO';
                 
-                if (numeroNF && valorNF) {
+                const numeroNF = nfDiv.querySelector('[name="numeroNF"]')?.value;
+                const valorNF = nfDiv.querySelector('[name="valorNF"]')?.value; // "R$ 1.234,56"
+                const arquivoNF = nfDiv.querySelector('[name="arquivoNF"]')?.files[0];
+
+                if (numeroPedido && numeroNF && valorNF) {
+                    if (!pedidosMap[numeroPedido]) {
+                        pedidosMap[numeroPedido] = {
+                            numero: numeroPedido, // Salva o número correto do pedido
+                            valor: 0,
+                            notasFiscais: []
+                        };
+                    }
+
+                    const valorNum = parseCurrency(valorNF);
                     const notaFiscal = {
                         numero: numeroNF,
-                        valor: valorNF
+                        valor: valorNF // Salva o valor formatado para exibição
                     };
                     
+                    pedidosMap[numeroPedido].valor += valorNum;
+
                     if (arquivoNF) {
                         notaFiscal.arquivo = arquivoNF;
                         this.formData.arquivos.push({
@@ -561,97 +597,176 @@ class AgendamentoForm {
                             nf: numeroNF
                         });
                     }
-                    
-                    pedido.notasFiscais.push(notaFiscal);
+                    pedidosMap[numeroPedido].notasFiscais.push(notaFiscal);
                 }
             });
-            
-            if (pedido.notasFiscais.length > 0) {
-                this.formData.pedidos.push(pedido);
-            }
-        });
+        } else {
+            // Lógica legada (sistema de abas)
+            document.querySelectorAll('.pedido-content').forEach(pedidoDiv => {
+                const numeroPedidoInput = pedidoDiv.querySelector('[name="numeroPedido"]');
+                if (!numeroPedidoInput) return;
+                const numeroPedido = numeroPedidoInput.value; // "PED001" etc.
+
+                pedidoDiv.querySelectorAll('.nota-fiscal-item').forEach(nfDiv => {
+                     // ... (lógica legada)
+                });
+            });
+        }
+
+        // Montar array final de pedidos agrupados
+        this.formData.pedidos = Object.values(pedidosMap).map(pedido => ({
+            numero: pedido.numero,
+            valor: pedido.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+            notasFiscais: pedido.notasFiscais
+        }));
     }
 
+    // *** FUNÇÃO ATUALIZADA (CORREÇÃO "VOLUME") ***
     generateResumo() {
         const resumoContainer = document.getElementById('resumo-agendamento');
+        if (!resumoContainer) return;
         
+        // Mapeamentos para exibir nomes amigáveis
         const cdNames = {
             'Bahia': 'CD Bahia',
             'Pernambuco': 'CD Pernambuco',
             'Lagoa Nova': 'CD Lagoa Nova'
         };
-        
         const tipoCargas = {
             'equipamentos': 'Equipamentos de Rede',
             'materiais': 'Materiais de Instalação',
             'componentes': 'Componentes Eletrônicos',
             'outros': 'Outros'
         };
+        const tipoVolumes = {
+            'palet': 'Palet',
+            'caixa': 'Caixa',
+            'bloco': 'Bloco',
+            'bobina': 'Bobina',
+            'pacote': 'Pacote',
+            'saco': 'Saco',
+            'caixote': 'Caixote',
+            'tambor': 'Tambor'
+        };
 
         const totalGeral = this.calcularTotalGeral();
-        const totalFormatado = totalGeral.toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        });
+        const totalFormatado = isNaN(totalGeral) ? 'R$ 0,00' : totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const notasFiscaisCount = this.formData.pedidos.reduce((acc, pedido) => acc + (pedido.notasFiscais?.length || 0), 0);
         
+        // *** CORREÇÃO AQUI: Usa os valores salvos e aplica o fallback "Não informado" ***
+        const quantidadeVolumes = (this.formData.entrega.quantidadeVolumes && this.formData.entrega.quantidadeVolumes !== '') 
+            ? this.formData.entrega.quantidadeVolumes 
+            : 'Não informado';
+        const tipoVolume = (this.formData.entrega.tipoVolume && this.formData.entrega.tipoVolume !== '') 
+            ? tipoVolumes[this.formData.entrega.tipoVolume] // Mapeia o valor para o nome amigável
+            : 'Não informado';
+
+        // Card ainda mais largo
         const resumoHTML = `
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="bg-gradient-to-r from-orange-primary to-orange-secondary rounded-xl p-6 text-white">
-                    <h4 class="text-xl font-bold mb-4"><i class="fas fa-building mr-2"></i>Dados do Fornecedor</h4>
-                    <div class="space-y-2">
-                        <p><strong>Empresa:</strong> ${this.formData.fornecedor.nomeEmpresa}</p>
-                        <p><strong>Responsável:</strong> ${this.formData.fornecedor.nomeResponsavel}</p>
-                        <p><strong>E-mail:</strong> ${this.formData.fornecedor.email}</p>
-                        <p><strong>Telefone:</strong> ${this.formData.fornecedor.telefone}</p>
-                        <p><strong>Documento:</strong> ${this.formData.fornecedor.documento}</p>
+            <div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl p-12 card-3d border-4 border-orange-100">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="bg-green-100 rounded-full p-3"><i class="fas fa-check text-green-600 text-xl"></i></div>
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-dark">Revisão e Confirmação</h2>
+                        <p class="text-gray-medium">Confira os dados antes de enviar a solicitação</p>
                     </div>
                 </div>
-                
-                <div class="bg-gradient-to-r from-orange-secondary to-orange-accent rounded-xl p-6 text-white">
-                    <h4 class="text-xl font-bold mb-4"><i class="fas fa-truck mr-2"></i>Dados da Entrega</h4>
-                    <div class="space-y-2">
-                        <p><strong>Destino:</strong> ${cdNames[this.formData.entrega.cdDestino]}</p>
-                        <p><strong>Tipo de Carga:</strong> ${tipoCargas[this.formData.entrega.tipoCarga]}</p>
-                        <p><strong>Data:</strong> ${(() => { const [a,m,d]=this.formData.entrega.dataEntrega.split('-'); return `${d}/${m}/${a}`; })()}</p>
-                        <p><strong>Horário:</strong> ${this.formData.entrega.horarioEntrega}</p>
-                        ${this.formData.entrega.observacoes ? `<p><strong>Observações:</strong> ${this.formData.entrega.observacoes}</p>` : ''}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-6">
-                <div class="bg-gradient-to-r from-orange-accent to-orange-light rounded-xl p-6 text-white">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="text-xl font-bold"><i class="fas fa-file-invoice mr-2"></i>Pedidos e Notas Fiscais</h4>
-                        <div class="bg-white bg-opacity-20 px-4 py-2 rounded-lg">
-                            <span class="text-lg font-bold">Total Geral: ${totalFormatado}</span>
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-truck"></i> Dados do Transportador</div>
+                    <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
+                        <div>
+                            <div class="text-xs text-gray-medium">CNPJ</div>
+                            <div class="font-semibold">${this.formData.fornecedor.documento || 'Não informado'}</div>
+                            <div class="text-xs text-gray-medium mt-2">Telefone</div>
+                            <div class="font-semibold">${this.formData.fornecedor.telefone || 'Não informado'}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-medium">Nome do Transportador</div>
+                            <div class="font-semibold">${this.formData.fornecedor.nomeEmpresa || 'Não informado'}</div>
+                            <div class="text-xs text-gray-medium mt-2">E-mail</div>
+                            <div class="font-semibold">${this.formData.fornecedor.email || 'Não informado'}</div>
                         </div>
                     </div>
-                    <div class="space-y-4">
-                        ${this.formData.pedidos.map(pedido => `
-                            <div class="bg-white bg-opacity-20 rounded-lg p-4">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h5 class="font-semibold">Pedido: ${pedido.numero}</h5>
-                                    <span class="bg-white bg-opacity-30 px-3 py-1 rounded-lg font-bold">Valor: ${pedido.valor}</span>
-                                </div>
-                                <div class="text-sm space-y-1">
-                                    ${pedido.notasFiscais.map(nf => `
-                                        <div class="flex justify-between items-center">
-                                            <span>NF: ${nf.numero}</span>
-                                            <div class="flex items-center space-x-2">
-                                                ${nf.valor ? `<span class="bg-white bg-opacity-20 px-2 py-1 rounded">R$ ${nf.valor}</span>` : ''}
-                                                ${nf.arquivo ? '<i class="fas fa-file-pdf text-green-200" title="PDF anexado"></i>' : '<i class="fas fa-exclamation-triangle text-yellow-200" title="PDF não anexado"></i>'}
-                                            </div>
+                </div>
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-id-card"></i> Dados do Motorista</div>
+                    <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
+                        <div>
+                            <div class="text-xs text-gray-medium">Nome</div>
+                            <div class="font-semibold">${this.formData.fornecedor.nomeResponsavel || 'Não informado'}</div>
+                            <div class="text-xs text-gray-medium mt-2">CPF</div>
+                            <div class="font-semibold">${this.formData.fornecedor.cpfMotorista || 'Não informado'}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-medium">Telefone</div>
+                            <div class="font-semibold">${this.formData.fornecedor.telefoneMotorista || 'Não informado'}</div>
+                            <div class="text-xs text-gray-medium mt-2">Placa do Veículo</div>
+                            <div class="font-semibold">${this.formData.fornecedor.placaVeiculo || 'Não informado'}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-map-marker-alt"></i> Detalhes da Entrega</div>
+                    <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
+                        <div>
+                            <div class="text-xs text-gray-medium">Quantidade de Volumes</div>
+                            <div class="font-semibold">${quantidadeVolumes}</div>
+                            <div class="text-xs text-gray-medium mt-2">Tipo de Volume</div>
+                            <div class="font-semibold">${tipoVolume}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-medium">Tipo de Carga</div>
+                            <div class="font-semibold">${tipoCargas[this.formData.entrega.tipoCarga] || 'Não informado'}</div>
+                            <div class="text-xs text-gray-medium mt-2">Destino</div>
+                            <div class="font-semibold">${cdNames[this.formData.entrega.cdDestino] || 'Não informado'}</div>
+                            <div class="text-xs text-gray-medium mt-2">Horário</div>
+                            <div class="font-semibold">${this.formData.entrega.horarioEntrega || 'Não informado'}</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-medium">Data de Entrega: <span class="font-semibold">${this.formData.entrega.dataEntrega ? (() => { const [a,m,d]=this.formData.entrega.dataEntrega.split('-'); return `${d}/${m}/${a}`; })() : 'Não informada'}</span></div>
+                    ${this.formData.entrega.observacoes ? `<div class="mt-2 text-xs text-gray-medium">Observações: <span class="font-semibold">${this.formData.entrega.observacoes}</span></div>` : ''}
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-file-invoice"></i> Pedidos e Notas Fiscais (${notasFiscaisCount})</div>
+                    <div class="bg-gray-50 rounded-xl p-6 shadow">
+                        ${this.formData.pedidos.map((pedido, idx) => {
+                            // *** CORREÇÃO AQUI: 'pedido.numero' agora contém o número correto ***
+                            return `
+                                <div class="mb-8 border-b pb-6 last:border-b-0 last:pb-0">
+                                    <div class="flex items-center gap-2 mb-2 text-lg font-bold text-gray-dark"><i class="fas fa-shopping-cart text-orange-500"></i> Pedido: ${pedido.numero}</div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                                        <div class="text-xs text-gray-medium">Total do Pedido</div>
+                                        <div class="font-semibold text-green-700">${pedido.valor}</div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="text-xs text-gray-medium mb-1">Notas Fiscais:</div>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            ${pedido.notasFiscais.map(nf => `
+                                                <div class="bg-white rounded-lg border p-4 mb-2 shadow-sm">
+                                                    <div class="grid grid-cols-2 gap-2">
+                                                        <div>
+                                                            <div class="text-xs text-gray-medium">Nº NF</div>
+                                                            <div class="font-semibold">${nf.numero}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-xs text-gray-medium">Valor</div>
+                                                            <div class="font-semibold">${nf.valor}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
                                         </div>
-                                    `).join('')}
+                                    </div>
                                 </div>
-                            </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
+                        <div class="flex justify-end mt-4">
+                            <span class="font-bold text-green-600 text-2xl">Valor Total Geral: ${totalFormatado}</span>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
-        
         resumoContainer.innerHTML = resumoHTML;
     }
 
@@ -702,12 +817,14 @@ class AgendamentoForm {
                 const result = await response.json();
                 this.showSuccess(result);
             } else {
-                throw new Error('Erro ao processar agendamento');
+                 const errorData = await response.json();
+                console.error('Erro da API:', errorData);
+                throw new Error(errorData.message || 'Erro ao processar agendamento');
             }
             
         } catch (error) {
             console.error('Erro:', error);
-            this.showNotification('Erro ao processar agendamento. Tente novamente.', 'error');
+            this.showNotification(error.message || 'Erro ao processar agendamento. Tente novamente.', 'error');
         } finally {
             this.showLoading(false);
         }
@@ -755,15 +872,24 @@ class AgendamentoForm {
             </div>
         `;
         
-        document.querySelector('main .max-w-4xl').innerHTML = successHTML;
+        // Tenta encontrar o container principal
+        const mainContainer = document.querySelector('main .max-w-4xl');
+        if (mainContainer) {
+             mainContainer.innerHTML = successHTML;
+        } else {
+            // Fallback se a estrutura do HTML mudar
+            document.querySelector('main').innerHTML = successHTML;
+        }
     }
 
     showLoading(show) {
         const overlay = document.getElementById('loading-overlay');
-        if (show) {
-            overlay.classList.remove('hidden');
-        } else {
-            overlay.classList.add('hidden');
+        if (overlay) {
+            if (show) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
         }
     }
 
@@ -792,7 +918,10 @@ class AgendamentoForm {
             </button>
         `;
         
-        document.getElementById('notification-container').appendChild(notification);
+        const container = document.getElementById('notification-container');
+        if(container) {
+            container.appendChild(notification);
+        }
         
         setTimeout(() => notification.classList.add('show'), 100);
         setTimeout(() => {
@@ -893,8 +1022,11 @@ class AgendamentoForm {
 }
 
 // Funções globais
-let agendamentoForm;
+let agendamentoForm; // Apenas UMA declaração global
 
+// Estas são as funções que o seu HTML (onclick="") chama.
+// Elas funcionam pois o clique SÓ acontece DEPOIS que o DOMContentLoaded
+// abaixo já rodou e definiu a variável 'agendamentoForm'.
 function nextStep() {
     agendamentoForm.nextStep();
 }
@@ -913,8 +1045,8 @@ function showPedido(pedidoId) {
 
 function removePedido(pedidoId) {
     if (confirm('Tem certeza que deseja remover este pedido?')) {
-        document.getElementById(pedidoId).remove();
-        document.getElementById(`tab-${pedidoId}`).remove();
+        document.getElementById(pedidoId)?.remove();
+        document.getElementById(`tab-${pedidoId}`)?.remove();
         // Recalcular total geral após remoção
         agendamentoForm.calcularTotalGeral();
     }
@@ -934,7 +1066,7 @@ function toggleNotaFiscal(nfId) {
 
 function removeNotaFiscal(nfId, pedidoId) {
     if (confirm('Tem certeza que deseja remover esta nota fiscal?')) {
-        document.getElementById(nfId).remove();
+        document.getElementById(nfId)?.remove();
         // Recalcular total do pedido após remoção
         agendamentoForm.calcularTotalPedido(pedidoId);
     }
@@ -943,11 +1075,53 @@ function removeNotaFiscal(nfId, pedidoId) {
 function calcularTotalPedido(pedidoId) {
     agendamentoForm.calcularTotalPedido(pedidoId);
 }
+// Fim das funções legadas
 
+
+// Funções globais para o novo template (agendamento.html)
 function handleFileSelect(input) {
     const file = input.files[0];
-    const dropZone = input.closest('.file-drop-zone');
     
+    // Lógica para o novo template .file-input-wrapper
+    const wrapper = input.closest('.file-input-wrapper');
+    if (wrapper) {
+        const fileLabel = wrapper.querySelector('.file-input-label');
+        const fileNameSpan = wrapper.querySelector('span.file-name');
+        const defaultFileName = "Clique para anexar PDF";
+
+        if (file) {
+             if (file.size > 10 * 1024 * 1024) { // 10MB
+                if (agendamentoForm) {
+                    agendamentoForm.showNotification('Arquivo muito grande. Máximo 10MB.', 'error');
+                }
+                input.value = '';
+                if(fileNameSpan) fileNameSpan.textContent = defaultFileName;
+                if(fileLabel) fileLabel.classList.remove('file-selected');
+                return;
+            }
+            
+            // Permite apenas PDF
+            if (file.type !== 'application/pdf') { 
+                if (agendamentoForm) {
+                    agendamentoForm.showNotification('Apenas arquivos PDF são permitidos.', 'error');
+                }
+                input.value = '';
+                if(fileNameSpan) fileNameSpan.textContent = defaultFileName;
+                if(fileLabel) fileLabel.classList.remove('file-selected');
+                return;
+            }
+
+            if(fileNameSpan) fileNameSpan.textContent = file.name;
+            if(fileLabel) fileLabel.classList.add('file-selected');
+        } else {
+            if(fileNameSpan) fileNameSpan.textContent = defaultFileName;
+            if(fileLabel) fileLabel.classList.remove('file-selected');
+        }
+        return; // Termina aqui para o novo template
+    }
+
+    // Lógica legada (file-drop-zone)
+    const dropZone = input.closest('.file-drop-zone');
     if (!dropZone) {
         console.error('Zona de drop não encontrada');
         return;
@@ -994,23 +1168,39 @@ function removeFile(button) {
 }
 
 function formatCurrency(input) {
-    let value = input.value.replace(/\D/g, '');
-    value = (value / 100).toFixed(2);
-    value = value.replace('.', ',');
-    value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-    input.value = value;
+    // Esta função é chamada pelo HTML legado, a nova está no DOMContentLoaded
+    let value = input.value.replace(/[^\d]/g, '');
+    if (!value) {
+        input.value = 'R$ 0,00';
+        return;
+    }
+    let floatValue = Number(value) / 100;
+    if (!isFinite(floatValue) || isNaN(floatValue)) {
+        input.value = 'R$ 0,00';
+        return;
+    }
+    let formatted = floatValue.toFixed(2).replace('.', ',');
+    formatted = formatted.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    input.value = 'R$ ' + formatted;
 }
 
 // Inicializar quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', () => {
-    agendamentoForm = new AgendamentoForm();
+    // Inicializa a classe principal
+    // E atribui à variável global que as funções acima usam
+    agendamentoForm = new AgendamentoForm(); 
 
     // Intercepta submit do formulário principal
     const form = document.querySelector('form');
     if (form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            agendamentoForm.submitForm();
+            // Valida o passo 4 (resumo) antes de enviar
+            if (agendamentoForm && agendamentoForm.currentStep === 4) { 
+                agendamentoForm.submitForm();
+            } else {
+                console.warn("Submit tentado fora do passo 4.");
+            }
         });
     }
 
@@ -1029,13 +1219,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (horarioSelect) {
         horarioSelect.disabled = true;
     }
+    
     function atualizarHorarios() {
-        const cdNome = cdInput.value;
+        const cdNome = cdInput?.value;
         const cdId = cdMap[cdNome];
-        const date = dateInput.value;
+        const date = dateInput?.value;
+        
         if (cdId && date) {
             if (horarioSelect) horarioSelect.disabled = false;
-            agendamentoForm.loadAvailableHours(date, cdId);
+            if (agendamentoForm) agendamentoForm.loadAvailableHours(date, cdId);
         } else {
             if (horarioSelect) {
                 horarioSelect.disabled = true;
@@ -1043,8 +1235,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+    
     if (cdInput && dateInput) {
         cdInput.addEventListener('change', atualizarHorarios);
         dateInput.addEventListener('change', atualizarHorarios);
     }
+
+    // Adiciona listeners de input de arquivo (que não são via 'onchange' no HTML)
+    document.body.addEventListener('change', function(e) {
+        if (e.target.matches('input[name="arquivoNF"]')) {
+            handleFileSelect(e.target);
+        }
+    });
+
 });

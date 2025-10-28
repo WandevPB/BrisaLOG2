@@ -1610,7 +1610,7 @@ class CDDashboard {
         if (!agendamento) return;
 
         this.currentAgendamentoId = id;
-        
+
         // Verificar se a entrega foi incluída pelo CD
         const incluidoPeloCD = agendamento.incluidoPeloCD;
         const cdIndicatorHtml = incluidoPeloCD ? 
@@ -1618,14 +1618,61 @@ class CDDashboard {
                 <i class="fas fa-exclamation-circle mr-2 text-yellow-600"></i>
                 ENTREGA INCLUÍDA PELO CD
             </div>` : '';
-        
+
+        // NOVOS DADOS: Motorista, Transportador, Volumes, Tipo de Volume, Placa
+        const motoristaHtml = (agendamento.motoristaNome || agendamento.motoristaCpf || agendamento.motoristaTelefone || agendamento.placaVeiculo) ? `
+            <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
+                <div class="flex items-center mb-3">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                        <i class="fas fa-user-tie text-blue-600 text-sm"></i>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
+                </div>
+                <div class="space-y-2 text-sm">
+                    ${agendamento.motoristaNome ? `<div><span class="text-gray-600 text-xs">Nome</span><p class="font-semibold">${agendamento.motoristaNome}</p></div>` : ''}
+                    ${agendamento.motoristaCpf ? `<div><span class="text-gray-600 text-xs">CPF</span><p class="font-semibold">${agendamento.motoristaCpf}</p></div>` : ''}
+                    ${agendamento.motoristaTelefone ? `<div><span class="text-gray-600 text-xs">Telefone</span><p class="font-semibold">${agendamento.motoristaTelefone}</p></div>` : ''}
+                    ${agendamento.placaVeiculo ? `<div><span class="text-gray-600 text-xs">Placa</span><p class="font-semibold">${agendamento.placaVeiculo}</p></div>` : ''}
+                </div>
+            </div>
+        ` : '';
+
+        const transportadorHtml = (agendamento.transportadorNome || agendamento.transportadorDocumento || agendamento.transportadorTelefone || agendamento.transportadorEmail) ? `
+            <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
+                <div class="flex items-center mb-3">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                        <i class="fas fa-truck-moving text-green-600 text-sm"></i>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800">Transportador</h3>
+                </div>
+                <div class="space-y-2 text-sm">
+                    ${agendamento.transportadorNome ? `<div><span class="text-gray-600 text-xs">Nome</span><p class="font-semibold">${agendamento.transportadorNome}</p></div>` : ''}
+                    ${agendamento.transportadorDocumento ? `<div><span class="text-gray-600 text-xs">CNPJ</span><p class="font-semibold">${agendamento.transportadorDocumento}</p></div>` : ''}
+                    ${agendamento.transportadorTelefone ? `<div><span class="text-gray-600 text-xs">Telefone</span><p class="font-semibold">${agendamento.transportadorTelefone}</p></div>` : ''}
+                    ${agendamento.transportadorEmail ? `<div><span class="text-gray-600 text-xs">E-mail</span><p class="font-semibold">${agendamento.transportadorEmail}</p></div>` : ''}
+                </div>
+            </div>
+        ` : '';
+
+        const volumesHtml = (agendamento.quantidadeVolumes || agendamento.tipoVolume) ? `
+            <div class="bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
+                <div class="flex items-center mb-3">
+                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-2">
+                        <i class="fas fa-boxes text-orange-600 text-sm"></i>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800">Volumes</h3>
+                </div>
+                <div class="space-y-2 text-sm">
+                    ${agendamento.quantidadeVolumes ? `<div><span class="text-gray-600 text-xs">Quantidade</span><p class="font-semibold">${agendamento.quantidadeVolumes}</p></div>` : ''}
+                    ${agendamento.tipoVolume ? `<div><span class="text-gray-600 text-xs">Tipo</span><p class="font-semibold">${agendamento.tipoVolume}</p></div>` : ''}
+                </div>
+            </div>
+        ` : '';
+
         const detailContent = document.getElementById('detail-content');
         detailContent.innerHTML = `
-    
             <div class="space-y-4">
                 ${cdIndicatorHtml}
-                
-                <!-- Informações Básicas -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <!-- Informações Gerais -->
                     <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
@@ -1661,7 +1708,12 @@ class CDDashboard {
                             </div>
                         </div>
                     </div>
-
+                    <!-- Motorista -->
+                    ${motoristaHtml}
+                    <!-- Transportador -->
+                    ${transportadorHtml}
+                    <!-- Volumes -->
+                    ${volumesHtml}
                     <!-- Dados do Fornecedor -->
                     <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-3">
@@ -1691,7 +1743,6 @@ class CDDashboard {
                             ` : ''}
                         </div>
                     </div>
-
                     <!-- Resumo de Notas -->
                     <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-3">
@@ -1824,7 +1875,7 @@ class CDDashboard {
                 </div>
             </div>
         `;
-        
+
         document.getElementById('detail-modal').classList.remove('hidden');
     }
 

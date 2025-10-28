@@ -20,7 +20,10 @@
     "init-project": "npm install && npm run db:setup:dev",
     "build": "node scripts/setup-database.js && npm run db:generate",
     "deploy": "npm run db:migrate:deploy && npm run db:seed && npm start",
-    "railway:deploy": "node scripts/setup-database.js && npm run db:generate && npm run db:migrate:deploy && npm run db:seed"
+    "railway:deploy": "node scripts/setup-database.js && npm run db:generate && npm run db:migrate:deploy && npm run db:seed",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:seed": "node prisma/seed.js"
   },
   "keywords": [
     "nodejs",
@@ -49,8 +52,11 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.21",
     "nodemon": "^3.0.2",
-    "prisma": "^5.7.1"
+    "postcss": "^8.5.6",
+    "prisma": "^5.7.1",
+    "tailwindcss": "^4.1.16"
   },
   "engines": {
     "node": ">=16.0.0",

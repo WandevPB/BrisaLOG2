@@ -1,514 +1,940 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendamento de Entrega - BrisaLOG Portal</title>
-    <script src="config.js"></script>
-    <script src="js/apiRequest.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'orange-primary': '#FF6B35',
-                        'orange-secondary': '#FF8C42',
-                        'orange-accent': '#FF9F66',
-                        'orange-light': '#FFA885',
-                        'gray-dark': '#2D3748',
-                        'gray-medium': '#4A5568',
-                        'gray-light': '#E2E8F0'
-                    }
-                }
-            }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agendamento de Entrega - BrisaLOG Portal</title>
+
+  <script src="config.js"></script>
+  <script src="js/apiRequest.js"></script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'orange-primary': '#FF6B35',
+            'orange-secondary': '#FF8C42',
+            'orange-accent': '#FF9F66',
+            'orange-light': '#FFA885',
+            'gray-dark': '#2D3748',
+            'gray-medium': '#4A5568',
+            'gray-light': '#E2E8F0',
+            'background': 'hsl(0,0%,98%)',
+            'card': 'hsl(0,0%,100%)',
+            'primary': 'hsl(14,100%,60%)',
+            'secondary': 'hsl(16,100%,63%)',
+            'accent': 'hsl(16,100%,70%)',
+            'muted': 'hsl(210,40%,96.1%)',
+            'destructive': 'hsl(0,84%,60%)',
+            'border': 'hsl(214,32%,91%)',
+            'input': 'hsl(214,32%,91%)',
+            'ring': 'hsl(14,100%,60%)'
+          },
+          borderRadius: {
+            DEFAULT: '0.75rem',
+            md: 'calc(0.75rem - 2px)',
+            lg: 'calc(0.75rem + 2px)'
+          },
+          boxShadow: {
+            soft: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+            medium: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+            large: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+          }
         }
-    </script>
-    <style>
-        .card-3d {
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .btn-3d {
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .btn-3d:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%);
-        }
-        .step-inactive {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-        .step-completed {
-            background: linear-gradient(135deg, #10B981, #059669);
-        }
-        .progress-bar {
-            transition: width 0.5s ease;
-        }
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-        }
-        .notification.show {
-            transform: translateX(0);
-        }
-        .file-drop-zone {
-            border: 2px dashed #FF9F66;
-            transition: all 0.3s ease;
-        }
-        .file-drop-zone.drag-over {
-            border-color: #FF6B35;
-            background-color: #FFF5F3;
-            transform: scale(1.02);
-        }
-    </style>
+      }
+    }
+  </script>
+
+  <style>
+  :root {
+    --background: hsl(0,0%,98%);
+    --foreground: hsl(214,31%,21%);
+    --card: hsl(0,0%,100%);
+    --card-foreground: hsl(214,31%,21%);
+    --primary: hsl(14,100%,60%);
+    --primary-foreground: hsl(0,0%,100%);
+    --secondary: hsl(16,100%,63%);
+    --secondary-foreground: hsl(0,0%,100%);
+    --accent: hsl(16,100%,70%);
+    --accent-foreground: hsl(214,31%,21%);
+    --muted: hsl(210,40%,96.1%);
+    --muted-foreground: hsl(215,16%,47%);
+    --destructive: hsl(0,84%,60%);
+    --destructive-foreground: hsl(0,0%,100%);
+    --border: hsl(214,32%,91%);
+    --input: hsl(214,32%,91%);
+    /* Adicionado HSL para o ring-opacity funcionar no CSS */
+    --ring-hsl: 14, 100%, 60%; 
+    --ring: hsl(var(--ring-hsl));
+    --radius: 0.75rem;
+    --gradient-primary: linear-gradient(135deg, hsl(14,100%,60%), hsl(16,100%,63%));
+    --gradient-warm: linear-gradient(135deg, hsl(16,100%,63%), hsl(16,100%,70%));
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-medium: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-large: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-3d { transition: all 0.3s ease; box-shadow: var(--shadow-large); border-radius: 1.5rem; border: 1px solid var(--border); }
+  .btn-3d { transition: all 0.3s ease; box-shadow: var(--shadow-soft); border-radius: var(--radius); font-weight: 600; }
+  .btn-3d:hover { box-shadow: var(--shadow-medium); }
+  .gradient-bg { background: var(--gradient-primary); }
+  .step-inactive { opacity: .5; pointer-events: none; }
+  .step-completed { background: linear-gradient(135deg, #10B981, #059669); }
+  .progress-bar { transition: width .5s ease; }
+  .notification { position: fixed; top: 20px; right: 20px; z-index: 1000; transform: translateX(400px); transition: transform .3s ease; }
+  .notification.show { transform: translateX(0); }
+  .file-drop-zone { border: 2px dashed var(--accent); transition: all .3s ease; border-radius: var(--radius); background: #fff; }
+  .file-drop-zone.drag-over { border-color: var(--primary); background-color: #FFF5F3; transform: scale(1.02); }
+  .nf-card { background: #fff; border-radius: 1.25rem; box-shadow: var(--shadow-soft); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; }
+  .nf-header { font-size: 1.1rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+  
+  /* .nf-input (substituído pela classe .input-themed) */
+  .nf-trash { color: #e53e3e; background: #fff; border: none; border-radius: 50%; width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-soft); transition: background .2s; }
+  .nf-trash:hover { background: #ffe5e5; }
+  .nf-summary { background: #fff; border-radius: 1.5rem; box-shadow: var(--shadow-soft); border: 1px solid var(--border); padding: 2rem; margin-top: 2rem; }
+  .nf-summary-title { font-size: 1.3rem; font-weight: 700; color: #059669; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+  .nf-summary-section { margin-bottom: 1.5rem; }
+  .nf-summary-label { font-weight: 600; color: var(--muted-foreground); margin-bottom: 0.25rem; font-size: 0.9rem; }
+  .nf-summary-value { font-size: 1.1rem; color: var(--foreground); font-weight: 500; }
+
+  /* * NOVO: Classes de Input Padronizadas (Objetivo 2)
+  * Usam as variáveis CSS do seu tema para animação e cores.
+  */
+  .input-themed {
+    width: 100%;
+    padding: 0.75rem 1rem; /* py-3 px-4 */
+    border: 1px solid var(--border);
+    border-radius: var(--radius); /* rounded-lg */
+    background-color: var(--card); /* bg-white */
+    color: var(--foreground);
+    transition: var(--transition-smooth);
+    font-size: 1rem;
+  }
+  .input-themed::placeholder {
+    color: var(--muted-foreground);
+    opacity: 0.8;
+  }
+  .input-themed:focus,
+  .input-themed:focus-within {
+    outline: none;
+    border-color: var(--primary);
+    /* Sombra com cor e opacidade do tema */
+    box-shadow: 0 0 0 2px hsla(var(--ring-hsl), 0.2); 
+  }
+
+  /* Adiciona a seta para <select> */
+  .select-themed {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25em 1.25em;
+    padding-right: 2.5rem; /* Espaço para a seta */
+  }
+
+  /* Ajuste para o input[type=file] customizado */
+  .file-input-wrapper {
+    position: relative;
+  }
+  .file-input-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    overflow: hidden; /* Garante que o span.file-name não quebre o layout */
+  }
+  .file-input-label span.file-name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    color: var(--muted-foreground);
+  }
+  .file-input-label.file-selected span.file-name {
+    color: var(--foreground); /* Texto normal quando selecionado */
+  }
+  .file-input-native {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- Header -->
-    <header class="bg-white shadow-lg">
-        <nav class="container mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-3 rounded-xl">
-                        <i class="fas fa-truck text-white text-2xl"></i>
+<body class="bg-gray-50 min-h-screen font-[Inter]">
+  <header class="bg-white shadow-lg">
+    <nav class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-3 rounded-xl">
+            <i class="fas fa-truck text-white text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-dark">BrisaLOG</h1>
+            <p class="text-gray-medium text-sm">Agendamento de Entrega</p>
+          </div>
+        </div>
+        <a href="/" class="flex items-center text-gray-medium hover:text-orange-primary transition-colors">
+          <i class="fas fa-home mr-2"></i>
+          Voltar ao Início
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <div class="bg-white border-b">
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-4">
+          <div id="step-1" class="step flex items-center justify-center w-10 h-10 rounded-full bg-orange-primary text-white font-bold">1</div>
+          <div class="h-1 w-16 bg-gray-300">
+            <div id="progress-1-2" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
+          </div>
+          <div id="step-2" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">2</div>
+          <div class="h-1 w-16 bg-gray-300">
+            <div id="progress-2-3" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
+          </div>
+          <div id="step-3" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">3</div>
+          <div class="h-1 w-16 bg-gray-300">
+            <div id="progress-3-4" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
+          </div>
+          <div id="step-4" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">4</div>
+        </div>
+        <div class="text-right">
+          <p class="text-sm text-gray-medium">Etapa <span id="current-step">1</span> de 4</p>
+          <p class="text-xs text-gray-400" id="step-description">Dados do Transportador</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-6 py-8">
+    <div class="max-w-4xl mx-auto">
+      <form id="agendamento-form">
+        <div id="form-step-1" class="form-step">
+          <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+            <div class="text-center mb-8">
+              <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-4 rounded-2xl inline-block mb-4">
+                <i class="fas fa-user text-white text-3xl"></i>
+              </div>
+              <h2 class="text-3xl font-bold text-gray-dark mb-2">Dados do Transportador</h2>
+              <p class="text-gray-medium">Informe os dados para identificação da entrega</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-building mr-2 text-orange-primary"></i>
+                  Nome do Transportador *
+                </label>
+                <input type="text" id="nome-empresa" name="nomeEmpresa" required
+                  class="input-themed"
+                  placeholder="Nome da empresa transportadora">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-briefcase mr-2 text-orange-primary"></i>
+                  CNPJ da Transportadora *
+                </label>
+                <input type="text" id="documento" name="documento" required maxlength="18"
+                  class="input-themed"
+                  placeholder="00.000.000/0000-00">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-envelope mr-2 text-orange-primary"></i>
+                  E-mail do Transportador *
+                </label>
+                <input type="email" id="email" name="email" required
+                  class="input-themed"
+                  placeholder="email@transportadora.com">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-phone mr-2 text-orange-primary"></i>
+                  Telefone da Transportadora *
+                </label>
+                <input type="tel" id="telefone" name="telefone" required maxlength="15"
+                  class="input-themed"
+                  placeholder="(00) 00000-0000">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-id-badge mr-2 text-orange-primary"></i>
+                  Nome do Motorista *
+                </label>
+                <input type="text" id="nome-responsavel" name="nomeResponsavel" required
+                  class="input-themed"
+                  placeholder="Nome do motorista responsável">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-id-card mr-2 text-orange-primary"></i>
+                  CPF do Motorista *
+                </label>
+                <input type="text" id="cpf-motorista" name="cpfMotorista" required maxlength="14"
+                  class="input-themed"
+                  placeholder="000.000.000-00">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-car-side mr-2 text-orange-primary"></i>
+                  Placa do Veículo (CAVALO) *
+                </label>
+                <input type="text" id="placa-veiculo" name="placaVeiculo" required maxlength="8"
+                  class="input-themed"
+                  placeholder="AAA-0A00">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-phone mr-2 text-orange-primary"></i>
+                  Telefone do Motorista *
+                </label>
+                <input type="tel" id="telefone-motorista" name="telefoneMotorista" required maxlength="15"
+                  class="input-themed"
+                  placeholder="(00) 00000-0000">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+            </div>
+
+            <div class="flex justify-end mt-8">
+              <button type="button" onclick="nextStep()" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all">
+                <span>Próximo</span>
+                <i class="fas fa-arrow-right ml-2"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="form-step-2" class="form-step hidden">
+          <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+            <div class="text-center mb-8">
+              <div class="bg-gradient-to-r from-orange-secondary to-orange-accent p-4 rounded-2xl inline-block mb-4">
+                <i class="fas fa-truck text-white text-3xl"></i>
+              </div>
+              <h2 class="text-3xl font-bold text-gray-dark mb-2">Dados da Entrega</h2>
+              <p class="text-gray-medium">Informe os detalhes da sua entrega</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-map-marker-alt mr-2 text-orange-primary"></i>
+                  Centro de Distribuição *
+                </label>
+                <select id="cd-destino" name="cdDestino" required
+                  class="input-themed select-themed">
+                  <option value="">Selecione o CD</option>
+                  <option value="Bahia">CD Bahia</option>
+                  <option value="Pernambuco">CD Pernambuco</option>
+                  <option value="Lagoa Nova">CD Lagoa Nova</option>
+                </select>
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-boxes mr-2 text-orange-primary"></i>
+                  Tipo de Carga *
+                </label>
+                <select id="tipo-carga" name="tipoCarga" required
+                  class="input-themed select-themed">
+                  <option value="">Selecione o tipo</option>
+                  <option value="equipamentos">Equipamentos de Rede</option>
+                  <option value="materiais">Materiais de Instalação</option>
+                  <option value="componentes">Componentes Eletrônicos</option>
+                  <option value="outros">Outros</option>
+                </select>
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-calendar mr-2 text-orange-primary"></i>
+                  Data de Entrega *
+                </label>
+                <input type="date" id="data-entrega" name="dataEntrega" required
+                  class="input-themed">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-clock mr-2 text-orange-primary"></i>
+                  Horário Preferencial *
+                </label>
+                <select id="horario-entrega" name="horarioEntrega" required
+                  class="input-themed select-themed">
+                  <option value="">Selecione o horário</option>
+                  <option value="08:00-10:00">08:00 - 10:00</option>
+                  <option value="10:00-12:00">10:00 - 12:00</option>
+                  <option value="14:00-16:00">14:00 - 16:00</option>
+                  <option value="16:00-17:00">16:00 - 17:00</option>
+                </select>
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-layer-group mr-2 text-orange-primary"></i>
+                  Quantidade de Volumes *
+                </label>
+                <input type="number" id="quantidade-volumes" name="quantidadeVolumes" min="1" required
+                  class="input-themed"
+                  placeholder="Informe a quantidade de volumes">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-box mr-2 text-orange-primary"></i>
+                  Tipo de Volume *
+                </label>
+                <select id="tipo-volume" name="tipoVolume" required
+                  class="input-themed select-themed">
+                  <option value="">Selecione o tipo</option>
+                  <option value="palet">Palet</option>
+                  <option value="caixa">Caixa</option>
+                  <option value="bloco">Bloco</option>
+                  <option value="bobina">Bobina</option>
+                  <option value="pacote">Pacote</option>
+                  <option value="saco">Saco</option>
+                  <option value="caixote">Caixote</option>
+                  <option value="tambor">Tambor</option>
+                </select>
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-comment mr-2 text-orange-primary"></i>
+                  Observações
+                </label>
+                <textarea id="observacoes" name="observacoes" rows="3"
+                  class="input-themed"
+                  placeholder="Informações adicionais sobre a entrega (opcional)"></textarea>
+              </div>
+            </div>
+
+            <div class="flex justify-between mt-8">
+              <button type="button" onclick="previousStep()" class="btn-3d bg-gray-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all">
+                <i class="fas fa-arrow-left mr-2"></i>
+                <span>Anterior</span>
+              </button>
+              <button type="button" onclick="nextStep()" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all">
+                <span>Próximo</span>
+                <i class="fas fa-arrow-right ml-2"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="form-step-3" class="form-step hidden">
+          <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+            <div class="text-center mb-8">
+              <div class="bg-gradient-to-r from-orange-accent to-orange-light p-4 rounded-2xl inline-block mb-4">
+                <i class="fas fa-file-invoice text-white text-3xl"></i>
+              </div>
+              <h2 class="text-3xl font-bold text-gray-dark mb-2">Notas Fiscais</h2>
+              <p class="text-gray-medium">Informe as notas e anexe os PDFs</p>
+            </div>
+
+            <div id="pedidos-container">
+              <div id="pedido-unico" class="pedido-content">
+                <input type="text" name="numeroPedido" value="UNICO" class="hidden">
+
+                <div class="space-y-6" id="notas-container">
+                  
+                  <div class="nota-fiscal-item bg-gray-50 border border-border rounded-xl p-6 relative">
+                    <button type="button" class="btn-remove-nf nf-trash absolute -top-4 -right-4" title="Remover Nota Fiscal" style="display:none">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+                      <div>
+                        <label class="block text-gray-dark font-semibold mb-2">Número da Nota Fiscal *</label>
+                        <input type="text" name="numeroNF" class="input-themed" placeholder="Ex: 123456" required>
+                      </div>
+                      <div>
+                        <label class="block text-gray-dark font-semibold mb-2">Número do Pedido *</label>
+                        <input type="text" name="numeroPedidoLinha" class="input-themed" placeholder="Ex: PED001" required>
+                      </div>
+                      <div>
+                        <label class="block text-gray-dark font-semibold mb-2">Valor (R$) *</label>
+                        <input type="text" name="valorNF" class="input-themed" placeholder="R$ 0,00" required>
+                      </div>
+                      
+                      <div>
+                        <label class="block text-gray-dark font-semibold mb-2">Anexo PDF *</label>
+                        <div class="file-input-wrapper">
+                          <label class="input-themed file-input-label">
+                            <span class="file-name">Clique para anexar PDF</span>
+                            <i class="fas fa-upload ml-2 text-gray-400"></i>
+                          </label>
+                          <input type="file" name="arquivoNF" accept=".pdf" class="file-input-native" required>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  </div>
+
+                <div class="flex justify-between items-center mt-8">
+                  <button type="button" id="btn-add-nf" class="btn-3d bg-orange-secondary text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-primary transition-all">
+                    <i class="fas fa-plus mr-2"></i> Adicionar Nota Fiscal
+                  </button>
+                  <div class="text-right">
+                    <p class="text-gray-600 font-semibold">Total Geral:</p>
+                    <p id="total-geral-nf" class="text-3xl font-bold text-green-600">R$ 0,00</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex justify-between mt-8">
+              <button type="button" onclick="previousStep()" class="btn-3d bg-gray-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all">
+                <i class="fas fa-arrow-left mr-2"></i>
+                <span>Anterior</span>
+              </button>
+              <button type="button" onclick="nextStep()" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all">
+                <span>Próximo</span>
+                <i class="fas fa-arrow-right ml-2"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="form-step-4" class="form-step hidden">
+          <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+            <div class="text-center mb-8">
+              <div class="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-2xl inline-block mb-4">
+                <i class="fas fa-check-circle text-white text-3xl"></i>
+              </div>
+              <h2 class="text-3xl font-bold text-gray-dark mb-2">Resumo do Agendamento</h2>
+              <p class="text-gray-medium">Confira todos os dados antes de finalizar</p>
+            </div>
+
+            <div id="resumo-agendamento" class="nf-summary !shadow-none !border-none !p-0 !mt-0">
+              <div id="resumo-agendamento-content" class="space-y-6">
+
+                <div class="nf-summary-section bg-gray-50 p-6 rounded-xl">
+                  <h4 class="nf-summary-title !text-orange-primary">
+                    <i class="fas fa-user"></i>
+                    Dados do Transportador
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                      <p class="nf-summary-label">Empresa</p>
+                      <p class="nf-summary-value" id="resumo-nome-empresa"></p>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-dark">BrisaLOG</h1>
-                        <p class="text-gray-medium text-sm">Agendamento de Entrega</p>
+                      <p class="nf-summary-label">CNPJ</p>
+                      <p class="nf-summary-value" id="resumo-documento"></p>
                     </div>
+                    <div>
+                      <p class="nf-summary-label">E-mail</p>
+                      <p class="nf-summary-value" id="resumo-email"></p>
+                    </div>
+                    <div>
+                      <p class="nf-summary-label">Telefone</p>
+                      <p class="nf-summary-value" id="resumo-telefone"></p>
+                    </div>
+                    <div>
+                      <p class="nf-summary-label">Motorista</p>
+                      <p class="nf-summary-value" id="resumo-nome-responsavel"></p>
+                    </div>
+                    <div>
+                      <p class="nf-summary-label">CPF Motorista</p>
+                      <p class="nf-summary-value" id="resumo-cpf-motorista"></p>
+                    </div>
+                     <div>
+                      <p class="nf-summary-label">Placa (Cavalo)</p>
+                      <p class="nf-summary-value" id="resumo-placa-veiculo"></p>
+                    </div>
+                    <div>
+                      <p class="nf-summary-label">Telefone Motorista</p>
+                      <p class="nf-summary-value" id="resumo-telefone-motorista"></p>
+                    </div>
+                  </div>
                 </div>
-                <a href="/" class="flex items-center text-gray-medium hover:text-orange-primary transition-colors">
-                    <i class="fas fa-home mr-2"></i>
-                    Voltar ao Início
-                </a>
+
+                <div class="nf-summary-section bg-gray-50 p-6 rounded-xl">
+                  <h4 class="nf-summary-title !text-orange-secondary">
+                    <i class="fas fa-truck"></i>
+                    Detalhes da Entrega
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                      <p class="nf-summary-label">Centro de Distribuição</p>
+                      <p class="nf-summary-value" id="resumo-cd-destino"></p>
+                    </div>
+                    <div>
+                      <p class="nf-summary-label">Data de Entrega</p>
+                      <p class="nf-summary-value" id="resumo-data-entrega"></p>
+                    </div>
+                    <div>
+                      <p class="nf-summary-label">Horário</p>
+                      <p class="nf-summary-value" id="resumo-horario-entrega"></p>
+                    </div>
+                    <div>
+                      <p class="nf-summary-label">Tipo de Carga</p>
+                      <p class="nf-summary-value" id="resumo-tipo-carga"></p>
+                    </div>
+                    <div>
+                      <p class="nf-summary-label">Qtd. Volumes</p>
+                      <p class="nf-summary-value" id="resumo-quantidade-volumes"></p>
+                    </div>
+                    <div>
+                      <p class="nf-summary-label">Tipo de Volume</p>
+                      <p class="nf-summary-value" id="resumo-tipo-volume"></p>
+                    </div>
+                    <div class="md:col-span-2">
+                      <p class="nf-summary-label">Observações</p>
+                      <p class="nf-summary-value" id="resumo-observacoes"></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="nf-summary-section bg-gray-50 p-6 rounded-xl">
+                  <h4 class="nf-summary-title !text-green-600">
+                    <i class="fas fa-file-invoice"></i>
+                    Resumo das Notas
+                  </h4>
+                  <div id="resumo-pedidos-lista" class="space-y-3 mb-4">
+                    </div>
+                  <hr class="border-border my-4">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <p class="nf-summary-label">Valor Total</p>
+                      <p class="nf-summary-value text-2xl font-bold text-green-600" id="resumo-valor-total"></p>
+                    </div>
+                     <div>
+                      <p class="nf-summary-label">Total de Notas</p>
+                      <p class="nf-summary-value text-xl text-right" id="resumo-total-notas"></p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
             </div>
-        </nav>
-    </header>
-
-    <!-- Progress Bar -->
-    <div class="bg-white border-b">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-4">
-                    <div id="step-1" class="step flex items-center justify-center w-10 h-10 rounded-full bg-orange-primary text-white font-bold">1</div>
-                    <div class="h-1 w-16 bg-gray-300">
-                        <div id="progress-1-2" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
-                    </div>
-                    <div id="step-2" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">2</div>
-                    <div class="h-1 w-16 bg-gray-300">
-                        <div id="progress-2-3" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
-                    </div>
-                    <div id="step-3" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">3</div>
-                    <div class="h-1 w-16 bg-gray-300">
-                        <div id="progress-3-4" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
-                    </div>
-                    <div id="step-4" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">4</div>
-                </div>
-                <div class="text-right">
-                    <p class="text-sm text-gray-medium">Etapa <span id="current-step">1</span> de 4</p>
-                    <p class="text-xs text-gray-400" id="step-description">Dados do Fornecedor</p>
-                </div>
+            <div class="flex justify-between mt-8">
+              <button type="button" onclick="previousStep()" class="btn-3d bg-gray-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all">
+                <i class="fas fa-arrow-left mr-2"></i>
+                <span>Anterior</span>
+              </button>
+              <button type="submit" class="btn-3d bg-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-600 transition-all">
+                <i class="fas fa-paper-plane mr-2"></i>
+                <span>Finalizar Agendamento</span>
+              </button>
             </div>
+          </div>
         </div>
+      </form>
     </div>
+  </main>
 
-    <!-- Main Content -->
-    <main class="container mx-auto px-6 py-8">
-        <div class="max-w-4xl mx-auto">
-            <form id="agendamento-form">
-                <!-- Etapa 1: Dados do Fornecedor -->
-                <div id="form-step-1" class="form-step">
-                    <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
-                        <div class="text-center mb-8">
-                            <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-4 rounded-2xl inline-block mb-4">
-                                <i class="fas fa-user text-white text-3xl"></i>
-                            </div>
-                            <h2 class="text-3xl font-bold text-gray-dark mb-2">Dados do Fornecedor</h2>
-                            <p class="text-gray-medium">Informe seus dados para identificação da entrega</p>
-                        </div>
-                        
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-building mr-2 text-orange-primary"></i>
-                                    Nome da Empresa *
-                                </label>
-                                <input type="text" id="nome-empresa" name="nomeEmpresa" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                                    placeholder="Digite o nome da empresa">
-                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-user mr-2 text-orange-primary"></i>
-                                    Nome do Responsável *
-                                </label>
-                                <input type="text" id="nome-responsavel" name="nomeResponsavel" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                                    placeholder="Digite o nome do responsável">
-                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-envelope mr-2 text-orange-primary"></i>
-                                    E-mail *
-                                </label>
-                                <input type="email" id="email" name="email" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                                    placeholder="exemplo@empresa.com">
-                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-phone mr-2 text-orange-primary"></i>
-                                    Telefone *
-                                </label>
-                                <input type="tel" id="telefone" name="telefone" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                                    placeholder="(83) 00000-0000" maxlength="15">
-                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                            </div>
-                            
-                            <div class="md:col-span-2">
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-id-card mr-2 text-orange-primary"></i>
-                                    CNPJ/CPF *
-                                </label>
-                                <input type="text" id="documento" name="documento" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                                    placeholder="00.000.000/0000-00 ou 000.000.000-00" maxlength="18">
-                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex justify-end mt-8">
-                            <button type="button" onclick="nextStep()" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all">
-                                <span>Próximo</span>
-                                <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+  <div id="notification-container"></div>
 
-                <!-- Etapa 2: Dados da Entrega -->
-                <div id="form-step-2" class="form-step hidden">
-                    <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
-                        <div class="text-center mb-8">
-                            <div class="bg-gradient-to-r from-orange-secondary to-orange-accent p-4 rounded-2xl inline-block mb-4">
-                                <i class="fas fa-truck text-white text-3xl"></i>
-                            </div>
-                            <h2 class="text-3xl font-bold text-gray-dark mb-2">Dados da Entrega</h2>
-                            <p class="text-gray-medium">Informe os detalhes da sua entrega</p>
-                        </div>
-                        
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-map-marker-alt mr-2 text-orange-primary"></i>
-                                    Centro de Distribuição *
-                                </label>
-                                <select id="cd-destino" name="cdDestino" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
-                                    <option value="">Selecione o CD</option>
-                                    <option value="Bahia">CD Bahia</option>
-                                    <option value="Pernambuco">CD Pernambuco</option>
-                                    <option value="Lagoa Nova">CD Lagoa Nova</option>
-                                </select>
-                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-boxes mr-2 text-orange-primary"></i>
-                                    Tipo de Carga *
-                                </label>
-                                <select id="tipo-carga" name="tipoCarga" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
-                                    <option value="">Selecione o tipo</option>
-                                    <option value="equipamentos">Equipamentos de Rede</option>
-                                    <option value="materiais">Materiais de Instalação</option>
-                                    <option value="componentes">Componentes Eletrônicos</option>
-                                    <option value="outros">Outros</option>
-                                </select>
-                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-calendar mr-2 text-orange-primary"></i>
-                                    Data de Entrega *
-                                </label>
-                                <input type="date" id="data-entrega" name="dataEntrega" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
-                                <script>
-                                // Função para verificar se a data é um dia útil (segunda a sexta)
-                                function isWeekday(dateString) {
-                                    const date = new Date(dateString + 'T00:00:00');
-                                    const day = date.getDay();
-                                    return day !== 0 && day !== 6; // 0 = domingo, 6 = sábado
-                                }
-                                
-                                // Função para encontrar o próximo dia útil
-                                function getNextWeekday(date) {
-                                    const nextDay = new Date(date);
-                                    nextDay.setDate(nextDay.getDate() + 1);
-                                    while (nextDay.getDay() === 0 || nextDay.getDay() === 6) {
-                                        nextDay.setDate(nextDay.getDate() + 1);
-                                    }
-                                    return nextDay;
-                                }
-                                
-                                // Define a data mínima para hoje (YYYY-MM-DD) no input de data
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    var input = document.getElementById('data-entrega');
-                                    if (input) {
-                                        var today = new Date();
-                                        
-                                        // Se hoje for fim de semana, definir para próximo dia útil
-                                        if (today.getDay() === 0 || today.getDay() === 6) {
-                                            today = getNextWeekday(today);
-                                        }
-                                        
-                                        var yyyy = today.getFullYear();
-                                        var mm = String(today.getMonth() + 1).padStart(2, '0');
-                                        var dd = String(today.getDate()).padStart(2, '0');
-                                        var minDate = yyyy + '-' + mm + '-' + dd;
-                                        input.setAttribute('min', minDate);
-                                        
-                                        // Definir valor padrão como próximo dia útil
-                                        var nextWeekday = getNextWeekday(new Date());
-                                        var nextWeekdayStr = nextWeekday.getFullYear() + '-' + 
-                                            String(nextWeekday.getMonth() + 1).padStart(2, '0') + '-' + 
-                                            String(nextWeekday.getDate()).padStart(2, '0');
-                                        input.value = nextWeekdayStr;
-                                        
-                                        // Validação em tempo real para impedir seleção de fins de semana
-                                        input.addEventListener('change', function() {
-                                            if (!isWeekday(this.value)) {
-                                                alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
-                                                var nextWeekday = getNextWeekday(new Date(this.value + 'T00:00:00'));
-                                                var nextWeekdayStr = nextWeekday.getFullYear() + '-' + 
-                                                    String(nextWeekday.getMonth() + 1).padStart(2, '0') + '-' + 
-                                                    String(nextWeekday.getDate()).padStart(2, '0');
-                                                this.value = nextWeekdayStr;
-                                            }
-                                        });
-                                    }
-                                });
-                                </script>
-                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-clock mr-2 text-orange-primary"></i>
-                                    Horário Preferencial *
-                                </label>
-                                <select id="horario-entrega" name="horarioEntrega" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
-                                    <option value="">Selecione o horário</option>
-                                    <option value="08:00-10:00">08:00 - 10:00</option>
-                                    <option value="10:00-12:00">10:00 - 12:00</option>
-                                    <option value="14:00-16:00">14:00 - 16:00</option>
-                                    <option value="16:00-17:00">16:00 - 17:00</option>
-                                </select>
-                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                            </div>
-                            
-                            <div class="md:col-span-2">
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-comment mr-2 text-orange-primary"></i>
-                                    Observações
-                                </label>
-                                <textarea id="observacoes" name="observacoes" rows="3"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                                    placeholder="Informações adicionais sobre a entrega (opcional)"></textarea>
-                            </div>
-                        </div>
-                        
-                        <div class="flex justify-between mt-8">
-                            <button type="button" onclick="previousStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all">
-                                <i class="fas fa-arrow-left mr-2"></i>
-                                <span>Anterior</span>
-                            </button>
-                            <button type="button" onclick="nextStep()" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all">
-                                <span>Próximo</span>
-                                <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Etapa 3: Pedidos e Notas Fiscais -->
-                <div id="form-step-3" class="form-step hidden">
-                    <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
-                        <div class="text-center mb-8">
-                            <div class="bg-gradient-to-r from-orange-accent to-orange-light p-4 rounded-2xl inline-block mb-4">
-                                <i class="fas fa-file-invoice text-white text-3xl"></i>
-                            </div>
-                            <h2 class="text-3xl font-bold text-gray-dark mb-2">Informe os Pedidos e as Notas Fiscais</h2>
-                            <p class="text-gray-medium">Adicione os pedidos e anexe as notas fiscais</p>
-                        </div>
-                        
-                        <!-- Sistema de Abas dos Pedidos -->
-                        <div class="mb-6">
-                            <div class="flex items-center space-x-2 mb-4" id="pedidos-tabs">
-                                <!-- Abas dos pedidos serão adicionadas aqui -->
-                            </div>
-                        </div>
-                        
-                        <!-- Container dos Pedidos -->
-                        <div id="pedidos-container">
-                            <!-- Pedidos serão adicionados dinamicamente aqui -->
-                        </div>
-                        
-                        <div class="flex justify-between mt-8">
-                            <button type="button" onclick="previousStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all">
-                                <i class="fas fa-arrow-left mr-2"></i>
-                                <span>Anterior</span>
-                            </button>
-                            <button type="button" onclick="nextStep()" class="btn-3d bg-orange-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-secondary transition-all">
-                                <span>Próximo</span>
-                                <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Etapa 4: Resumo e Envio -->
-                <div id="form-step-4" class="form-step hidden">
-                    <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
-                        <div class="text-center mb-8">
-                            <div class="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-2xl inline-block mb-4">
-                                <i class="fas fa-check-circle text-white text-3xl"></i>
-                            </div>
-                            <h2 class="text-3xl font-bold text-gray-dark mb-2">Resumo do Agendamento</h2>
-                            <p class="text-gray-medium">Confira todos os dados antes de finalizar</p>
-                        </div>
-                        
-                        <div id="resumo-agendamento" class="space-y-6">
-                            <!-- Resumo será preenchido dinamicamente -->
-                        </div>
-                        
-                        <div class="flex justify-between mt-8">
-                            <button type="button" onclick="previousStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all">
-                                <i class="fas fa-arrow-left mr-2"></i>
-                                <span>Anterior</span>
-                            </button>
-                            <button type="submit" class="btn-3d bg-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-600 transition-all">
-                                <i class="fas fa-paper-plane mr-2"></i>
-                                <span>Finalizar Agendamento</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </main>
-
-    <!-- Notification Container -->
-    <div id="notification-container"></div>
-
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl p-8 text-center">
-            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-primary mx-auto mb-4"></div>
-            <p class="text-gray-dark font-semibold">Processando agendamento...</p>
-        </div>
+  <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-8 text-center">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-primary mx-auto mb-4"></div>
+      <p class="text-gray-dark font-semibold">Processando agendamento...</p>
     </div>
+  </div>
 
-    <script>
-    // Funções de máscara para formatação automática
+  <script>
+
+    // Máscara de telefone (celular e fixo)
     function maskPhone(value) {
-        // Remove tudo que não é dígito
-        value = value.replace(/\D/g, '');
-        
-        // Limita a 11 dígitos máximo
-        value = value.substring(0, 11);
-        
-        // Aplica a máscara (83) 00000-0000
-        if (value.length <= 10) {
-            value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-        } else {
-            value = value.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
-        }
-        
+      value = value.replace(/\D/g, '').substring(0, 11);
+      if (value.length === 11) {
+        return value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+      } else if (value.length === 10) {
+        return value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+      } else {
         return value;
+      }
     }
 
+    // Máscara de CPF (000.000.000-00)
     function maskCPF(value) {
-        // Remove tudo que não é dígito
-        value = value.replace(/\D/g, '');
-        
-        // Limita a 11 dígitos máximo
-        value = value.substring(0, 11);
-        
-        // Aplica a máscara 000.000.000-00
-        value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
-        
+      value = value.replace(/\D/g, '').substring(0, 11);
+      if (value.length === 11) {
+        return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      } else {
         return value;
+      }
     }
 
+    // Máscara de CNPJ (00.000.000/0000-00)
     function maskCNPJ(value) {
-        // Remove tudo que não é dígito
-        value = value.replace(/\D/g, '');
-        
-        // Limita a 14 dígitos máximo
-        value = value.substring(0, 14);
-        
-        // Aplica a máscara 00.000.000/0000-00
-        value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
-        
+      value = value.replace(/\D/g, '').substring(0, 14);
+      if (value.length === 14) {
+        return value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+      } else {
         return value;
+      }
     }
 
-    function maskDocument(input) {
-        let value = input.value.replace(/\D/g, '');
-        
-        // Limita a 14 dígitos máximo (CNPJ)
-        value = value.substring(0, 14);
-        
-        if (value.length <= 11) {
-            // CPF
-            input.value = maskCPF(input.value);
-        } else {
-            // CNPJ
-            input.value = maskCNPJ(input.value);
-        }
+    // Placa Mercosul (AAA-0A00)
+    function maskPlaca(value) {
+      value = value.toUpperCase().replace(/[^A-Z0-9]/g,'').substring(0,7);
+      // Formata como LLLNLNN
+      if (value.length >= 3) value = value.slice(0,3) + '-' + value.slice(3);
+      return value;
     }
 
-    // Aplicar máscaras aos inputs
+    // Data: apenas dias úteis + hoje mínimo (mantém comportamento do seu HTML antigo)
+    function isWeekday(dateString) {
+      const date = new Date(dateString + 'T00:00:00');
+      const day = date.getDay();
+      return day !== 0 && day !== 6;
+    }
+    function getNextWeekday(date) {
+      const next = new Date(date);
+      next.setDate(next.getDate() + 1);
+      while ([0,6].includes(next.getDay())) next.setDate(next.getDate() + 1);
+      return next;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Telefone
-        const phoneInput = document.getElementById('telefone');
-        if (phoneInput) {
-            phoneInput.addEventListener('input', function(e) {
-                e.target.value = maskPhone(e.target.value);
-            });
+      function removeNF(btn) {
+        const nfDiv = btn.closest('.nota-fiscal-item');
+        if (nfDiv && document.querySelectorAll('.nota-fiscal-item').length > 1) {
+          nfDiv.remove();
+          calcularTotalUI();
+        }
+      }
+
+      // Telefone do Motorista
+      const phoneMotoristaInput = document.getElementById('telefone-motorista');
+      if (phoneMotoristaInput) phoneMotoristaInput.addEventListener('input', (e)=> {
+        e.target.value = maskPhone(e.target.value);
+        e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+      });
+
+      // Telefone
+      const phoneInput = document.getElementById('telefone');
+      if (phoneInput) phoneInput.addEventListener('input', (e)=> {
+        e.target.value = maskPhone(e.target.value);
+        e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+      });
+
+      // CNPJ
+      const docInput = document.getElementById('documento');
+      if (docInput) docInput.addEventListener('input', (e)=> {
+        e.target.value = maskCNPJ(e.target.value);
+        e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+      });
+
+      // CPF Motorista
+      const cpfInput = document.getElementById('cpf-motorista');
+      if (cpfInput) cpfInput.addEventListener('input', (e)=> {
+        e.target.value = maskCPF(e.target.value);
+        e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+      });
+
+      // Placa Veículo
+      const placaInput = document.getElementById('placa-veiculo');
+      if (placaInput) placaInput.addEventListener('input', (e)=> {
+        e.target.value = maskPlaca(e.target.value);
+        e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+      });
+
+
+      // Data mínima e impedir finais de semana
+      const dataInput = document.getElementById('data-entrega');
+      if (dataInput) {
+        let today = new Date();
+        if ([0,6].includes(today.getDay())) today = getNextWeekday(today);
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth()+1).padStart(2,'0');
+        const dd = String(today.getDate()).padStart(2,'0');
+        const minDate = `${yyyy}-${mm}-${dd}`;
+        dataInput.setAttribute('min', minDate);
+        const nextWeekday = getNextWeekday(new Date());
+        dataInput.value = `${nextWeekday.getFullYear()}-${String(nextWeekday.getMonth()+1).padStart(2,'0')}-${String(nextWeekday.getDate()).padStart(2,'0')}`;
+
+        dataInput.addEventListener('change', function() {
+          if (!isWeekday(this.value)) {
+            alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
+            const nwd = getNextWeekday(new Date(this.value + 'T00:00:00'));
+            this.value = `${nwd.getFullYear()}-${String(nwd.getMonth()+1).padStart(2,'0')}-${String(nwd.getDate()).padStart(2,'0')}`;
+          }
+        });
+      }
+
+      // Notas: máscara de dinheiro + ícone de arquivo
+      function maskMoneyInput(input) {
+        // Aceita apenas dígitos e vírgula, bloqueia letras e múltiplos separadores
+        let value = input.value.replace(/[^\d,]/g, '');
+        // Permite apenas uma vírgula
+        const parts = value.split(',');
+        if (parts.length > 2) value = parts[0] + ',' + parts[1];
+        
+        // Limita a duas casas decimais
+        if (parts[1] && parts[1].length > 2) {
+          value = parts[0] + ',' + parts[1].substring(0, 2);
         }
 
-        // Documento (CPF/CNPJ)
-        const documentInput = document.getElementById('documento');
-        if (documentInput) {
-            documentInput.addEventListener('input', function(e) {
-                maskDocument(e.target);
+        // Adiciona "R$ " e formatação de milhar no blur
+        if (value) {
+            let num = parseFloat(value.replace(',', '.'));
+            if (!isNaN(num)) {
+                input.value = 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } else {
+                input.value = 'R$ 0,00';
+            }
+        } else {
+            input.value = 'R$ 0,00';
+        }
+      }
+      
+      function formatMoneyOnInput(input) {
+          let value = input.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+          
+          if (value === "") {
+              input.value = ""; // Permite apagar
+              return;
+          }
+
+          // Remove zeros à esquerda
+          value = value.replace(/^0+/, '');
+
+          if (value.length === 0) {
+            input.value = 'R$ 0,00';
+          } else if (value.length === 1) {
+            input.value = 'R$ 0,0' + value;
+          } else if (value.length === 2) {
+            input.value = 'R$ 0,' + value;
+          } else {
+            let intPart = value.substring(0, value.length - 2);
+            let decPart = value.substring(value.length - 2);
+            
+            // Adiciona pontos de milhar
+            intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            
+            input.value = 'R$ ' + intPart + ',' + decPart;
+          }
+          
+          // Move o cursor para o final
+          if (typeof input.selectionStart === 'number') {
+            input.setSelectionRange(input.value.length, input.value.length);
+          }
+      }
+
+      function calcularTotalUI() {
+        const valores = document.querySelectorAll('#notas-container [name="valorNF"]');
+        let total = 0;
+        valores.forEach(inp => {
+          let raw = inp.value || '';
+          // Remove prefixo, espaços, pontos, deixa só número e vírgula
+          raw = raw.replace(/R\$|\s|\./g, '');
+          // Troca vírgula por ponto
+          raw = raw.replace(',', '.');
+          let num = parseFloat(raw);
+          if (isFinite(num) && !isNaN(num)) total += num;
+        });
+        document.getElementById('total-geral-nf').textContent =
+          'R$ ' + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      // Função de setup para cada linha de NF (MODIFICADA)
+      function setupNota(notaDiv) {
+        const valor = notaDiv.querySelector('[name="valorNF"]');
+        const file = notaDiv.querySelector('[name="arquivoNF"]');
+        const fileLabel = notaDiv.querySelector('.file-input-label');
+        const fileNameSpan = notaDiv.querySelector('span.file-name');
+        const defaultFileName = "Clique para anexar PDF";
+
+        if (valor) {
+          valor.addEventListener('input', (e) => formatMoneyOnInput(e.target));
+          valor.addEventListener('blur', (e) => {
+            maskMoneyInput(e.target);
+            calcularTotalUI();
+          });
+        }
+        
+        if (file && fileLabel && fileNameSpan) {
+            file.addEventListener('change', () => {
+            if (file.files.length > 0) {
+                fileNameSpan.textContent = file.files[0].name;
+                fileLabel.classList.add('file-selected');
+            } else {
+                fileNameSpan.textContent = defaultFileName;
+                fileLabel.classList.remove('file-selected');
+            }
             });
         }
+      }
+
+      // Primeira linha de NF
+      setupNota(document.querySelector('.nota-fiscal-item'));
+      
+      // Exibe lixeira nas linhas extras
+      function updateRemoveButtons() {
+        const nfItems = document.querySelectorAll('.nota-fiscal-item');
+        nfItems.forEach((item, idx) => {
+          const btn = item.querySelector('.btn-remove-nf');
+          if (btn) {
+            btn.style.display = nfItems.length > 1 ? '' : 'flex'; // 'flex' para alinhar icone
+            btn.onclick = () => removeNF(btn);
+          }
+        });
+      }
+      updateRemoveButtons();
+
+      // Botão de adicionar NF
+      const addNFBtn = document.getElementById('btn-add-nf');
+      if (addNFBtn) {
+        addNFBtn.addEventListener('click', () => {
+          const tmpl = document.querySelector('.nota-fiscal-item');
+          const clone = tmpl.cloneNode(true);
+          // limpar valores
+          clone.querySelectorAll('input').forEach(i => { i.value = ''; });
+          
+          // Resetar o label do arquivo
+          const fileLabel = clone.querySelector('.file-input-label');
+          const fileNameSpan = clone.querySelector('span.file-name');
+          if(fileNameSpan) fileNameSpan.textContent = "Clique para anexar PDF";
+          if(fileLabel) fileLabel.classList.remove('file-selected');
+
+          document.getElementById('notas-container').appendChild(clone);
+          setupNota(clone);
+          updateRemoveButtons();
+        });
+      }
     });
-    </script>
 
-    <script src="js/agendamento.js"></script>
+    // Regra de bloqueio automático (usada pelo backend/validador ou exibida ao usuário)
+    function calcularTempoDescarregamento(qtd, tipo) {
+      let horas = 1;
+      if (['palet','bloco','tambor'].includes(String(tipo).toLowerCase())) {
+        if (qtd > 3 && qtd <= 6) horas = 2;
+        else if (qtd > 6) horas = 3;
+      }
+      return horas;
+    }
+  </script>
+
+  <script src="js/agendamento.js"></script>
 </body>
 </html>

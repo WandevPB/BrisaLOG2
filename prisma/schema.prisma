@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -52,6 +52,16 @@ model Agendamento {
   dataSugestaoCD         DateTime?
   horarioSugestaoCD      String?
   motivoNaoVeio          String?
+  motoristaNome          String?
+  motoristaCpf           String?
+  motoristaTelefone      String?
+  placaVeiculo           String?
+  quantidadeVolumes      String?
+  tipoVolume             String?
+  transportadorNome      String?
+  transportadorDocumento String?
+  transportadorTelefone  String?
+  transportadorEmail     String?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   cdId                   Int
