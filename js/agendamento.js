@@ -330,12 +330,19 @@ class AgendamentoForm {
                 break;
             case 2:
                 // Garante que dataEntrega é string pura 'YYYY-MM-DD'
+                // Adapta dataEntrega para formato ISO completo (YYYY-MM-DDT00:00:00)
+                let dataEntregaRaw = getElValue('data-entrega');
+                let dataEntregaISO = '';
+                if (dataEntregaRaw && /^\d{4}-\d{2}-\d{2}$/.test(dataEntregaRaw)) {
+                    dataEntregaISO = dataEntregaRaw + 'T00:00:00';
+                } else {
+                    dataEntregaISO = dataEntregaRaw;
+                }
                 this.formData.entrega = {
                     cdDestino: getElValue('cd-destino'),
                     tipoCarga: getElValue('tipo-carga'),
-                    dataEntrega: getElValue('data-entrega'), // string pura
+                    dataEntrega: dataEntregaISO, // formato ISO
                     horarioEntrega: getElValue('horario-entrega'),
-                    // *** CORREÇÃO AQUI: Adiciona os campos de volume ***
                     quantidadeVolumes: getElValue('quantidade-volumes'),
                     tipoVolume: getElValue('tipo-volume'),
                     observacoes: getElValue('observacoes')
