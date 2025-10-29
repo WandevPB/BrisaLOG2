@@ -1232,7 +1232,12 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
         descricao: `Nova data sugerida: ${formatDateBr(novaData)} às ${novoHorario}`,
         dataAnterior: agendamento.dataEntrega,
         dataNova: (function() {
-          const d = new Date(novaData + 'T00:00:00');
+          let d = null;
+          if (typeof novaData === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(novaData)) {
+            d = new Date(novaData + 'T00:00:00');
+          } else {
+            d = new Date(novaData);
+          }
           return isNaN(d.getTime()) ? null : d;
         })(),
         agendamentoId: parseInt(id),
@@ -1443,7 +1448,19 @@ app.post('/api/agendamentos/:codigo/responder-reagendamento', async (req, res) =
         acao: `reagendamento_${resposta}`,
         descricao: descricaoHistorico,
         dataAnterior: resposta === 'aceito' ? agendamento.dataSugestaoCD : agendamento.dataEntrega,
-  dataNova: resposta === 'aceito' ? updateData.dataEntrega : (novaData ? toUTCDateOnly(novaData) : null),
+  dataNova: (function() {
+    let d = null;
+    if (resposta === 'aceito') {
+      d = updateData.dataEntrega;
+    } else if (novaData) {
+      if (typeof novaData === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(novaData)) {
+        d = new Date(novaData + 'T00:00:00');
+      } else {
+        d = new Date(novaData);
+      }
+    }
+    return (!d || isNaN(d.getTime())) ? null : d;
+  })(),
         agendamentoId: agendamento.id,
         cdId: agendamento.cdId
       }
