@@ -825,9 +825,17 @@ class AgendamentoForm {
                 const result = await response.json();
                 this.showSuccess(result);
             } else {
-                 const errorData = await response.json();
-                console.error('Erro da API:', errorData);
-                throw new Error(errorData.message || 'Erro ao processar agendamento');
+                const contentType = response.headers.get('content-type');
+                let errorData;
+                if (contentType && contentType.includes('application/json')) {
+                    errorData = await response.json();
+                    console.error('Erro da API:', errorData);
+                    throw new Error(errorData.message || 'Erro ao processar agendamento');
+                } else {
+                    const errorText = await response.text();
+                    console.error('Resposta não JSON:', errorText);
+                    throw new Error('Erro inesperado do servidor. Tente novamente ou contate o suporte.');
+                }
             }
             
         } catch (error) {
