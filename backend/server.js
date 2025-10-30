@@ -856,7 +856,8 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         status: statusFinal,
         tipoRegistro: agendamentoData.tipoRegistro || 'agendamento',
         cdId: cd.id,
-        fornecedorId: fornecedor.id
+        fornecedorId: fornecedor.id,
+        tipoVeiculo: agendamentoData.tipoVeiculo || ''
       }
     });
 
