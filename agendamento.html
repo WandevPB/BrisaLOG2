@@ -301,7 +301,27 @@
                 </label>
                 <input type="text" id="placa-veiculo" name="placaVeiculo" required maxlength="8"
                   class="input-themed"
-                  placeholder="AAA-0A00">
+                  placeholder="AAA0A00">
+                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+              </div>
+
+              <div>
+                <label class="block text-gray-dark font-semibold mb-2">
+                  <i class="fas fa-truck-moving mr-2 text-orange-primary"></i>
+                  Tipo de Veículo *
+                </label>
+                <select id="tipo-veiculo" name="tipoVeiculo" required class="input-themed select-themed">
+                  <option value="" disabled selected>Selecione o tipo de veículo</option>
+                  <option>Moto</option>
+                  <option>Carro</option>
+                  <option>Van</option>
+                  <option>3/4</option>
+                  <option>Toco</option>
+                  <option>Truck</option>
+                  <option>Bi-Truck</option>
+                  <option>Carreta</option>
+                  <option>Bi-Tren</option>
+                </select>
                 <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
               </div>
               <div>

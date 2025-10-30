@@ -1,9 +1,10 @@
+datasource db {
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -55,6 +56,7 @@ model Agendamento {
   motoristaNome          String?
   motoristaCpf           String?
   motoristaTelefone      String?
+  tipoVeiculo            String
   placaVeiculo           String?
   quantidadeVolumes      String?
   tipoVolume             String?

@@ -1162,6 +1162,7 @@ class CDDashboard {
                         <h3 class="text-lg font-bold text-gray-dark">${agendamento.codigo}</h3>
                         <p class="text-gray-medium">${agendamento.fornecedor.nome}</p>
                         <p class="text-sm text-gray-500">${agendamento.fornecedor.email}</p>
+                        <p class="text-sm text-gray-500"><strong>Tipo de Veículo:</strong> ${agendamento.fornecedor.tipoVeiculo || 'Não informado'}</p>
                     </div>
                     <div class="px-3 py-1 rounded-full text-white text-sm font-semibold ${statusClass}">
                         <i class="${statusIcon} mr-1"></i>
@@ -1755,6 +1756,10 @@ class CDDashboard {
                                     <p class="font-semibold text-xs">${agendamento.fornecedor.documento}</p>
                                 </div>
                             ` : ''}
+                               <div>
+                                   <span class="text-gray-600 text-xs">Tipo de Veículo</span>
+                                   <p class="font-semibold text-xs">${agendamento.fornecedor.tipoVeiculo || 'Não informado'}</p>
+                               </div>
                         </div>
                     </div>
                     <!-- Resumo de Notas -->

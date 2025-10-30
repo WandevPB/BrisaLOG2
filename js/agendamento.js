@@ -325,7 +325,8 @@ class AgendamentoForm {
                     documento: getElValue('documento'),
                     telefoneMotorista: getElValue('telefone-motorista'),
                     cpfMotorista: getElValue('cpf-motorista'),
-                    placaVeiculo: getElValue('placa-veiculo')
+                    placaVeiculo: getElValue('placa-veiculo'),
+                    tipoVeiculo: document.getElementById('tipo-veiculo')?.value || ''
                 };
                 break;
             case 2:

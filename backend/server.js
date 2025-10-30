@@ -1,5 +1,5 @@
 // ...existing code...
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
 const emailService = require('./emailService');
 const { PrismaClient } = require('@prisma/client');
 const { execSync } = require('child_process');
@@ -305,11 +305,18 @@ app.post('/api/test-email', async (req, res) => {
 });
 const PORT = process.env.PORT || 9999;
 const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
+const EMAIL_FROM = process.env.EMAIL_FROM;
+const EMAIL_NAME = process.env.EMAIL_NAME;
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_PORT = process.env.SMTP_PORT;
 
 // Middlewares
 const allowedOrigins = [
-  'https://brisalog-agenda.online',
-  'http://localhost:3000'
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'http://localhost:8080'
 ];
 app.use(cors({
   origin: allowedOrigins,
