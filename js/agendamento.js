@@ -795,7 +795,8 @@ class AgendamentoForm {
                         numero: nf.numero,
                         valor: nf.valor
                     }))
-                }))
+                })),
+                tipoVeiculo: this.formData.fornecedor?.tipoVeiculo || ''
             }));
             
             // Adicionar arquivos
