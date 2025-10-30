@@ -994,10 +994,13 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
     // Formatar dados para o frontend
     const agendamentoFormatado = {
       codigo: agendamento.codigo,
-      fornecedor: agendamento.fornecedor.nome,
-      cnpj: agendamento.fornecedor.documento || 'N/A',
-      email: agendamento.fornecedor.email,
-      telefone: agendamento.fornecedor.telefone || 'N/A',
+      fornecedor: {
+        nome: agendamento.fornecedor.nome,
+        documento: agendamento.fornecedor.documento || 'N/A',
+        email: agendamento.fornecedor.email,
+        telefone: agendamento.fornecedor.telefone || 'N/A',
+        tipoVeiculo: agendamento.tipoVeiculo || agendamento.fornecedor.tipoVeiculo || 'Não informado'
+      },
   dataEntrega: formatarDataBrasilia(agendamento.dataEntrega),
       horarioEntrega: agendamento.horarioEntrega,
       cdDestino: agendamento.cd.nome,
