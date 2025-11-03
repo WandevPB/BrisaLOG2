@@ -624,7 +624,15 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
       agendamentos.map(a => ({ id: a.id, codigo: a.codigo, status: a.status }))
     );
 
-    res.json({
+    // Serializa BigInt para string
+    function replacer(key, value) {
+      if (typeof value === 'bigint') {
+        return value.toString();
+      }
+      return value;
+    }
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({
       success: true,
       data: agendamentos,
       pagination: {
@@ -633,7 +641,7 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
         total: total,
         pages: Math.ceil(total / limit)
       }
-    });
+    }, replacer));
 
   } catch (error) {
     console.error('Erro ao listar agendamentos:', error);
