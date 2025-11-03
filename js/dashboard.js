@@ -2652,21 +2652,143 @@ class CDDashboard {
         const statusIcon = this.getStatusIcon(agendamento.status);
         const statusText = this.getStatusText(agendamento.status);
     
+        let valorTotal = 0;
+        if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
+            agendamento.notasFiscais.forEach(nf => {
+                let v = nf.valor;
+                if (typeof v === 'string') {
+                    v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
+                    v = parseFloat(v);
+                }
+                if (!isNaN(v)) valorTotal += v;
+            });
+        }
+        const dataCriacao = agendamento.createdAt ? this.formatDate(agendamento.createdAt) : 'Não informado';
         statusContent.innerHTML = `
-            <div class="space-y-6">
-                <div class="bg-gradient-to-r from-orange-primary to-orange-secondary rounded-xl p-6 text-white text-center">
-                    <h3 class="text-2xl font-bold mb-2">Status do Agendamento</h3>
-                    <p class="text-lg"><strong>Código:</strong> ${agendamento.codigo}</p>
-                </div>
-                <div class="text-center">
-                    <span class="px-4 py-2 rounded-full text-white text-lg font-semibold ${statusClass}">
-                        <i class="${statusIcon} mr-2"></i>${statusText}
-                    </span>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-6 space-y-3">
-                    <p><strong>Fornecedor:</strong> ${agendamento.fornecedor.nome}</p>
-                    <p><strong>Data Programada:</strong> ${this.formatDate(agendamento.dataEntrega)}</p>
-                    <p><strong>Horário:</strong> ${agendamento.horarioEntrega}</p>
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    <!-- Informações Gerais -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-info-circle text-blue-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Informações Gerais</h3>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Código:</span>
+                                <span class="font-semibold">${agendamento.codigo}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Status:</span>
+                                <span class="status-${agendamento.status} px-2 py-1 rounded-full text-xs font-medium">
+                                    <i class="${statusIcon} mr-1"></i>
+                                    ${statusText}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Data:</span>
+                                <span class="font-semibold">${this.formatDate(agendamento.dataEntrega)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Horário:</span>
+                                <span class="font-semibold">${agendamento.horarioEntrega}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tipo:</span>
+                                <span class="font-semibold text-xs">${this.getTipoCargaText(agendamento.tipoCarga)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Transportadora -->
+                    <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-truck-moving text-green-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Transportadora</h3>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="text-gray-600 text-xs">Empresa</span>
+                                <p class="font-semibold truncate" title="${agendamento.fornecedor.nome}">${agendamento.fornecedor.nome}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 text-xs">E-mail</span>
+                                <p class="font-semibold truncate" title="${agendamento.fornecedor.email}">${agendamento.fornecedor.email}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 text-xs">Telefone</span>
+                                <p class="font-semibold">${agendamento.fornecedor.telefone}</p>
+                            </div>
+                            ${agendamento.fornecedor.documento ? `
+                                <div>
+                                    <span class="text-gray-600 text-xs">CNPJ</span>
+                                    <p class="font-semibold text-xs">${agendamento.fornecedor.documento}</p>
+                                </div>
+                            ` : ''}
+                               <div>
+                                   <!-- Tipo de Veículo removido do card Transportadora -->
+                               </div>
+                        </div>
+                    </div>
+                    <!-- Motorista -->
+                        <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                    <i class="fas fa-user-tie text-blue-600 text-sm"></i>
+                                </div>
+                                <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div>
+                                    <span class="text-gray-600 text-xs">Nome</span>
+                                    <p class="font-semibold">${agendamento.motoristaNome || agendamento.fornecedor?.nomeResponsavel || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">CPF</span>
+                                    <p class="font-semibold">${agendamento.motoristaCpf || agendamento.fornecedor?.cpfMotorista || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">Telefone</span>
+                                    <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.fornecedor?.telefoneMotorista || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">Placa</span>
+                                    <p class="font-semibold">${agendamento.placaVeiculo || agendamento.fornecedor?.placaVeiculo || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">Tipo de Veículo</span>
+                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.fornecedor?.tipoVeiculo || 'Não informado'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    <!-- Resumo de Notas -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-file-invoice text-purple-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Resumo</h3>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Notas Fiscais:</span>
+                                <span class="font-semibold">${agendamento.notasFiscais ? agendamento.notasFiscais.length : 0}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Valor Total:</span>
+                                <span class="font-semibold text-green-600 text-xs">
+                                    R$ ${isNaN(valorTotal) ? '0,00' : valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Criado em:</span>
+                                <span class="font-semibold text-xs">${dataCriacao}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
