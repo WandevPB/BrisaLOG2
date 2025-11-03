@@ -1730,12 +1730,12 @@ class CDDashboard {
                     <!-- Volumes -->
                     ${volumesHtml}
                     <!-- Dados do Fornecedor -->
-                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-3">
                             <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-building text-green-600 text-sm"></i>
+                                <i class="fas fa-truck-moving text-green-600 text-sm"></i>
                             </div>
-                            <h3 class="text-md font-semibold text-gray-800">Fornecedor</h3>
+                            <h3 class="text-md font-semibold text-gray-800">Transportadora</h3>
                         </div>
                         <div class="space-y-2 text-sm">
                             <div>
@@ -1760,6 +1760,33 @@ class CDDashboard {
                                    <span class="text-gray-600 text-xs">Tipo de Veículo</span>
                                    <p class="font-semibold text-xs">${agendamento.fornecedor.tipoVeiculo || 'Não informado'}</p>
                                </div>
+                        </div>
+                    </div>
+                    <!-- Motorista -->
+                    <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-user-tie text-blue-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="text-gray-600 text-xs">Nome</span>
+                                <p class="font-semibold">${agendamento.motoristaNome || 'Não informado'}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 text-xs">CPF</span>
+                                <p class="font-semibold">${agendamento.motoristaCpf || 'Não informado'}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 text-xs">Telefone</span>
+                                <p class="font-semibold">${agendamento.motoristaTelefone || 'Não informado'}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 text-xs">Placa</span>
+                                <p class="font-semibold">${agendamento.placaVeiculo || 'Não informado'}</p>
+                            </div>
                         </div>
                     </div>
                     <!-- Resumo de Notas -->
