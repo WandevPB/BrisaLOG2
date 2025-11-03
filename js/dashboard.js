@@ -2707,30 +2707,25 @@ class CDDashboard {
                             <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
                                 <i class="fas fa-truck-moving text-green-600 text-sm"></i>
                             </div>
-                            <h3 class="text-md font-semibold text-gray-800">Transportadora</h3>
+                            <h3 class="text-md font-semibold text-gray-800">Fornecedor</h3>
                         </div>
                         <div class="space-y-2 text-sm">
                             <div>
                                 <span class="text-gray-600 text-xs">Empresa</span>
-                                <p class="font-semibold truncate" title="${agendamento.fornecedor.nome}">${agendamento.fornecedor.nome}</p>
+                                <p class="font-semibold truncate" title="${agendamento.fornecedor?.nome || 'N/A'}">${agendamento.fornecedor?.nome || 'N/A'}</p>
                             </div>
                             <div>
                                 <span class="text-gray-600 text-xs">E-mail</span>
-                                <p class="font-semibold truncate" title="${agendamento.fornecedor.email}">${agendamento.fornecedor.email}</p>
+                                <p class="font-semibold truncate" title="${agendamento.fornecedor?.email || 'N/A'}">${agendamento.fornecedor?.email || 'N/A'}</p>
                             </div>
                             <div>
                                 <span class="text-gray-600 text-xs">Telefone</span>
-                                <p class="font-semibold">${agendamento.fornecedor.telefone}</p>
+                                <p class="font-semibold">${agendamento.fornecedor?.telefone || 'N/A'}</p>
                             </div>
-                            ${agendamento.fornecedor.documento ? `
-                                <div>
-                                    <span class="text-gray-600 text-xs">CNPJ</span>
-                                    <p class="font-semibold text-xs">${agendamento.fornecedor.documento}</p>
-                                </div>
-                            ` : ''}
-                               <div>
-                                   <!-- Tipo de Veículo removido do card Transportadora -->
-                               </div>
+                            <div>
+                                <span class="text-gray-600 text-xs">CNPJ</span>
+                                <p class="font-semibold text-xs">${agendamento.fornecedor?.documento || 'N/A'}</p>
+                            </div>
                         </div>
                     </div>
                     <!-- Motorista -->
