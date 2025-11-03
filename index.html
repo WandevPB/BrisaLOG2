@@ -1732,6 +1732,41 @@
 
         // Sistema de consulta por código
         class ConsultaStatus {
+            abrirCancelarSolicitacaoModal(codigo) {
+                this.codigoCancelamento = codigo;
+                document.getElementById('cancelar-solicitacao-modal').classList.remove('hidden');
+            }
+
+            fecharCancelarSolicitacaoModal() {
+                document.getElementById('cancelar-solicitacao-modal').classList.add('hidden');
+                document.getElementById('motivo-cancelamento').value = '';
+            }
+
+            async enviarMotivoCancelamento() {
+                const motivo = document.getElementById('motivo-cancelamento').value.trim();
+                if (!motivo) {
+                    this.showNotification('Informe o motivo do cancelamento.', 'error');
+                    return;
+                }
+                try {
+                    // Envia para backend
+                    const response = await fetch(`/api/agendamentos/cancelar/${this.codigoCancelamento}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ motivo })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        this.fecharCancelarSolicitacaoModal();
+                        this.showNotification('Solicitação cancelada com sucesso!', 'success');
+                        this.closeStatusModal();
+                    } else {
+                        this.showNotification(result.message || 'Erro ao cancelar solicitação.', 'error');
+                    }
+                } catch (error) {
+                    this.showNotification('Erro ao cancelar solicitação.', 'error');
+                }
+            }
             constructor() {
                 this.init();
             }
@@ -2038,10 +2073,7 @@
                                         </div>
                                         <h3 class="text-md font-semibold text-gray-800">Pedidos e Notas Fiscais</h3>
                                     </div>
-                                    <button onclick="consultaStatus.adicionarPedido()" 
-                                        class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-all text-sm font-medium">
-                                        <!-- Botão Adicionar Pedido removido -->
-                                    </button>
+                                    <!-- Botão Adicionar Pedido removido -->
                                 </div>
                             </div>
                             <div class="p-4">
@@ -2333,32 +2365,32 @@
                 // Mostrar pedido selecionado
                 const pedidoElement = document.getElementById(pedidoId);
                 if (pedidoElement) {
-                    pedidoElement.style.display = 'block';
-                }
-                
-                // Ativar aba correspondente
-                const tabElement = document.getElementById(`tab-${pedidoId}`);
-                if (tabElement) {
-                    tabElement.classList.remove('bg-gray-200', 'text-gray-700');
-                    tabElement.classList.add('bg-orange-primary', 'text-white');
-                }
-            }
-
-            adicionarNotaFiscalModal(pedidoId) {
-                const container = document.querySelector(`.notas-fiscais-modal-container[data-pedido="${pedidoId}"]`);
-                if (!container) {
-                    console.error(`Container não encontrado para pedido: ${pedidoId}`);
-                    return;
-                }
-                
-                // Minimizar todas as notas fiscais existentes neste pedido
-                container.querySelectorAll('.nota-fiscal-modal-item').forEach(nf => {
-                    this.minimizarNotaFiscalModal(nf);
-                });
-                
-                const nfCount = container.children.length + 1;
-                const nfId = `${pedidoId}-nf-${nfCount}`;
-                
+                                <div class="flex flex-wrap gap-3 mt-4">
+                                    <button onclick="consultaStatus.abrirCancelarSolicitacaoModal('${agendamento.codigo}')" 
+                                        class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all text-sm font-medium">
+                                        <i class="fas fa-trash mr-1"></i>Cancelar Solicitação
+                                    </button>
+                                </div>
+                                <div class="mt-3 bg-red-50 border border-red-200 rounded p-3">
+                                    <p class="text-red-700 text-xs">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        <strong>Atenção:</strong> Ao cancelar a solicitação, todos os dados serão removidos permanentemente da base de dados e não poderão ser recuperados.
+                                    </p>
+                                </div>
+    <!-- Modal para Motivo do Cancelamento -->
+    <div id="cancelar-solicitacao-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+            <h2 class="text-lg font-bold mb-4 text-red-700"><i class="fas fa-exclamation-triangle mr-2"></i>Cancelar Solicitação</h2>
+            <form id="form-cancelar-solicitacao" onsubmit="event.preventDefault(); consultaStatus.enviarMotivoCancelamento();">
+                <label for="motivo-cancelamento" class="block text-sm font-medium text-gray-700 mb-2">Motivo do cancelamento:</label>
+                <textarea id="motivo-cancelamento" name="motivo" rows="4" required class="w-full border border-gray-300 rounded-lg p-2 mb-4"></textarea>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="consultaStatus.fecharCancelarSolicitacaoModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Cancelar</button>
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Confirmar Cancelamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
                 const nfHTML = `
                     <div id="${nfId}" class="nota-fiscal-modal-item bg-white rounded-lg border mb-4">
                         <div class="nota-fiscal-header flex justify-between items-center p-4 cursor-pointer" onclick="consultaStatus.toggleNotaFiscalModal('${nfId}')">
