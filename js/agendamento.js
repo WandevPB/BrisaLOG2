@@ -381,9 +381,9 @@ class AgendamentoForm {
                             <i class="fas fa-shopping-cart mr-2 text-orange-primary"></i>
                             Número do Pedido *
                         </label>
-                        <input type="text" name="numeroPedido" required
+                        <input type="text" name="numeroPedido" required maxlength="10" inputmode="numeric" pattern="[0-9]*"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                            placeholder="Ex: PED12345">
+                            placeholder="Ex: 4501234567">
                         <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
                     </div>
                     <div class="flex items-end">
