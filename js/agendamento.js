@@ -91,6 +91,14 @@ class AgendamentoForm {
                 } else {
                     this.hideInvalidFeedback(input);
                 }
+            } else if (input.name === 'numeroPedidoLinha') {
+                const value = input.value.trim();
+                if (!/^450\d{7}$/.test(value)) {
+                    this.showInvalidFeedback(input, 'O número do pedido deve começar com 450 e ter 10 dígitos numéricos.');
+                    isValid = false;
+                } else {
+                    this.hideInvalidFeedback(input);
+                }
             } else if (!input.value.trim()) {
                 this.showInvalidFeedback(input, 'Este campo é obrigatório.');
                 isValid = false;
