@@ -865,7 +865,12 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         tipoRegistro: agendamentoData.tipoRegistro || 'agendamento',
         cdId: cd.id,
         fornecedorId: fornecedor.id,
-        tipoVeiculo: agendamentoData.tipoVeiculo || ''
+        // Motorista fields from step 1 (agendamentoData.fornecedor)
+        motoristaNome: agendamentoData.fornecedor?.nomeResponsavel || '',
+        motoristaCpf: agendamentoData.fornecedor?.cpfMotorista || '',
+        motoristaTelefone: agendamentoData.fornecedor?.telefoneMotorista || '',
+        placaVeiculo: agendamentoData.fornecedor?.placaVeiculo || '',
+        tipoVeiculo: agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo || ''
       }
     });
 
