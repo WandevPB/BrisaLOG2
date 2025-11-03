@@ -1898,34 +1898,19 @@ class CDDashboard {
                 </div>
 
                 <!-- Observações -->
-                    <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
+                    ${agendamento.observacoes ? `
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-truck-moving text-green-600 text-sm"></i>
+                            <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-comment-alt text-gray-600 text-sm"></i>
                             </div>
-                            <h3 class="text-md font-semibold text-gray-800">Transportadora</h3>
+                            <h3 class="text-md font-semibold text-gray-800">Observações da Carga</h3>
                         </div>
                         <div class="space-y-2 text-sm">
-                            <div>
-                                <span class="text-gray-600 text-xs">Empresa</span>
-                                <p class="font-semibold truncate" title="${agendamento.fornecedor.nome}">${agendamento.fornecedor.nome}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">E-mail</span>
-                                <p class="font-semibold truncate" title="${agendamento.fornecedor.email}">${agendamento.fornecedor.email}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">Telefone</span>
-                                <p class="font-semibold">${agendamento.fornecedor.telefone}</p>
-                            </div>
-                            ${agendamento.fornecedor.documento ? `
-                                <div>
-                                    <span class="text-gray-600 text-xs">CNPJ</span>
-                                    <p class="font-semibold text-xs">${agendamento.fornecedor.documento}</p>
-                                </div>
-                            ` : ''}
+                            <p class="font-semibold text-gray-700">${agendamento.observacoes}</p>
                         </div>
                     </div>
+                    ` : ''}
             </div>
         `;
 
