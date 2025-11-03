@@ -1688,7 +1688,7 @@ class CDDashboard {
         detailContent.innerHTML = `
             <div class="space-y-4">
                 ${cdIndicatorHtml}
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
                     <!-- Informações Gerais -->
                     <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-3">
@@ -1763,32 +1763,36 @@ class CDDashboard {
                         </div>
                     </div>
                     <!-- Motorista -->
-                    <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-user-tie text-blue-600 text-sm"></i>
+                        <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                    <i class="fas fa-user-tie text-blue-600 text-sm"></i>
+                                </div>
+                                <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
                             </div>
-                            <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
+                            <div class="space-y-2 text-sm">
+                                <div>
+                                    <span class="text-gray-600 text-xs">Nome</span>
+                                    <p class="font-semibold">${agendamento.motoristaNome || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">CPF</span>
+                                    <p class="font-semibold">${agendamento.motoristaCpf || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">Telefone</span>
+                                    <p class="font-semibold">${agendamento.motoristaTelefone || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">Placa</span>
+                                    <p class="font-semibold">${agendamento.placaVeiculo || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">Tipo de Veículo</span>
+                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || 'Não informado'}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="space-y-2 text-sm">
-                            <div>
-                                <span class="text-gray-600 text-xs">Nome</span>
-                                <p class="font-semibold">${agendamento.motoristaNome || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">CPF</span>
-                                <p class="font-semibold">${agendamento.motoristaCpf || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">Telefone</span>
-                                <p class="font-semibold">${agendamento.motoristaTelefone || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">Placa</span>
-                                <p class="font-semibold">${agendamento.placaVeiculo || 'Não informado'}</p>
-                            </div>
-                        </div>
-                    </div>
                     <!-- Resumo de Notas -->
                     <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-3">
@@ -1894,38 +1898,34 @@ class CDDashboard {
                 </div>
 
                 <!-- Observações -->
-                ${agendamento.observacoes ? `
-                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <div class="border-b border-gray-200 p-4">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-2">
-                                    <i class="fas fa-comment-alt text-gray-600 text-sm"></i>
+                    <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-truck-moving text-green-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Transportadora</h3>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="text-gray-600 text-xs">Empresa</span>
+                                <p class="font-semibold truncate" title="${agendamento.fornecedor.nome}">${agendamento.fornecedor.nome}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 text-xs">E-mail</span>
+                                <p class="font-semibold truncate" title="${agendamento.fornecedor.email}">${agendamento.fornecedor.email}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 text-xs">Telefone</span>
+                                <p class="font-semibold">${agendamento.fornecedor.telefone}</p>
+                            </div>
+                            ${agendamento.fornecedor.documento ? `
+                                <div>
+                                    <span class="text-gray-600 text-xs">CNPJ</span>
+                                    <p class="font-semibold text-xs">${agendamento.fornecedor.documento}</p>
                                 </div>
-                                <h3 class="text-md font-semibold text-gray-800">Observações</h3>
-                            </div>
-                        </div>
-                        <div class="p-4">
-                            <p class="text-gray-700 text-sm leading-relaxed">${agendamento.observacoes}</p>
+                            ` : ''}
                         </div>
                     </div>
-                ` : ''}
-
-                <!-- Ações -->
-                <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                    <div class="border-b border-gray-200 p-4">
-                        <div class="flex items-center">
-                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-cogs text-orange-600 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-800">Ações Disponíveis</h3>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <div class="flex flex-wrap gap-2">
-                            ${this.getDetailActionButtons(agendamento)}
-                        </div>
-                    </div>
-                </div>
             </div>
         `;
 
