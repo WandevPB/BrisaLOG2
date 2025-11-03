@@ -803,7 +803,17 @@ class AgendamentoForm {
             
             // Adicionar dados do agendamento
             formData.append('agendamento', JSON.stringify({
-                fornecedor: this.formData.fornecedor,
+                fornecedor: {
+                    nomeEmpresa: this.formData.fornecedor?.nomeEmpresa || '',
+                    nomeResponsavel: this.formData.fornecedor?.nomeResponsavel || '',
+                    email: this.formData.fornecedor?.email || '',
+                    telefone: this.formData.fornecedor?.telefone || '',
+                    documento: this.formData.fornecedor?.documento || '',
+                    telefoneMotorista: this.formData.fornecedor?.telefoneMotorista || '',
+                    cpfMotorista: this.formData.fornecedor?.cpfMotorista || '',
+                    placaVeiculo: this.formData.fornecedor?.placaVeiculo || '',
+                    tipoVeiculo: this.formData.fornecedor?.tipoVeiculo || ''
+                },
                 entrega: this.formData.entrega,
                 pedidos: this.formData.pedidos.map(p => ({
                     numero: p.numero,
