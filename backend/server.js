@@ -1014,6 +1014,12 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
         telefone: agendamento.fornecedor.telefone || 'N/A',
         tipoVeiculo: agendamento.tipoVeiculo || agendamento.fornecedor.tipoVeiculo || 'Não informado'
       },
+      // Adiciona os campos do motorista para o frontend
+      motoristaNome: agendamento.motoristaNome || '',
+      motoristaCpf: agendamento.motoristaCpf || '',
+      motoristaTelefone: agendamento.motoristaTelefone || '',
+      placaVeiculo: agendamento.placaVeiculo || '',
+      tipoVeiculo: agendamento.tipoVeiculo || '',
   dataEntrega: formatarDataBrasilia(agendamento.dataEntrega),
       horarioEntrega: agendamento.horarioEntrega,
       cdDestino: agendamento.cd.nome,
