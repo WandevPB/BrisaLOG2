@@ -1020,9 +1020,10 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
   dataCriacao: formatarDataBrasilia(agendamento.createdAt),
       // Agrupar notas fiscais por pedido para compatibilidade com o frontend
       pedidos: agendamento.notasFiscais.reduce((pedidos, nf) => {
-        let pedido = pedidos.find(p => p.numero === nf.numeroPedido);
+        let numeroPedidoStr = nf.numeroPedido?.toString();
+        let pedido = pedidos.find(p => p.numero === numeroPedidoStr);
         if (!pedido) {
-          pedido = { numero: nf.numeroPedido, notasFiscais: [] };
+          pedido = { numero: numeroPedidoStr, notasFiscais: [] };
           pedidos.push(pedido);
         }
         pedido.notasFiscais.push({
@@ -1033,7 +1034,7 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
         return pedidos;
       }, []),
       notasFiscais: agendamento.notasFiscais.map(nf => ({
-        numeroPedido: nf.numeroPedido,
+        numeroPedido: nf.numeroPedido?.toString(),
         numeroNF: nf.numeroNF,
         serie: nf.serie,
         valor: nf.valor,
