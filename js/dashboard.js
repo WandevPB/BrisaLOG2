@@ -1162,7 +1162,7 @@ class CDDashboard {
                         <h3 class="text-lg font-bold text-gray-dark">${agendamento.codigo}</h3>
                         <p class="text-gray-medium">${agendamento.fornecedor.nome}</p>
                         <p class="text-sm text-gray-500">${agendamento.fornecedor.email}</p>
-                        <p class="text-sm text-gray-500"><strong>Tipo de Veículo:</strong> ${agendamento.fornecedor.tipoVeiculo || 'Não informado'}</p>
+                        <!-- Tipo de Veículo removido do card Transportadora -->
                     </div>
                     <div class="px-3 py-1 rounded-full text-white text-sm font-semibold ${statusClass}">
                         <i class="${statusIcon} mr-1"></i>
@@ -1757,8 +1757,7 @@ class CDDashboard {
                                 </div>
                             ` : ''}
                                <div>
-                                   <span class="text-gray-600 text-xs">Tipo de Veículo</span>
-                                   <p class="font-semibold text-xs">${agendamento.fornecedor.tipoVeiculo || 'Não informado'}</p>
+                                   <!-- Tipo de Veículo removido do card Transportadora -->
                                </div>
                         </div>
                     </div>
@@ -1773,23 +1772,23 @@ class CDDashboard {
                             <div class="space-y-2 text-sm">
                                 <div>
                                     <span class="text-gray-600 text-xs">Nome</span>
-                                    <p class="font-semibold">${agendamento.motoristaNome || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaNome || agendamento.fornecedor?.nomeResponsavel || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">CPF</span>
-                                    <p class="font-semibold">${agendamento.motoristaCpf || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaCpf || agendamento.fornecedor?.cpfMotorista || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Telefone</span>
-                                    <p class="font-semibold">${agendamento.motoristaTelefone || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.fornecedor?.telefoneMotorista || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Placa</span>
-                                    <p class="font-semibold">${agendamento.placaVeiculo || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.placaVeiculo || agendamento.fornecedor?.placaVeiculo || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Tipo de Veículo</span>
-                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || 'Não informado'}</p>
+                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.fornecedor?.tipoVeiculo || 'Não informado'}</p>
                                 </div>
                             </div>
                         </div>
