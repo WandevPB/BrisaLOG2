@@ -2649,12 +2649,12 @@ class CDDashboard {
         }
 
         try {
-            // Buscar agendamento pelos dados carregados do banco de dados
-            const agendamento = this.agendamentos.find(a => a.codigo.toLowerCase() === codigo.toLowerCase());
-            
-            if (agendamento) {
+            // Buscar agendamento diretamente da API para garantir dados atualizados
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/consultar/${codigo}`);
+            const result = await response.json();
+            if (result.success && result.data) {
                 this.closeConsultaModal();
-                this.showStatusModal(agendamento);
+                this.showStatusModal(result.data);
             } else {
                 this.showNotification('Agendamento não encontrado', 'error');
             }
