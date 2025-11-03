@@ -24,8 +24,7 @@ class AgendamentoForm {
         document.getElementById('next-btn')?.addEventListener('click', () => this.nextStep());
         document.getElementById('prev-btn')?.addEventListener('click', () => this.previousStep());
 
-        // Adicionar Pedido
-        document.getElementById('add-pedido-btn')?.addEventListener('click', () => this.addPedido());
+    // Botão Adicionar Pedido removido
     }
 
     validateStep(step) {
@@ -374,63 +373,7 @@ class AgendamentoForm {
 
     // *** ESTA É UMA FUNÇÃO LEGADA (do sistema de abas) ***
     // Não é mais usada pelo agendamento.html, mas mantida por segurança.
-    addPedido() {
-        this.pedidoCounter++;
-        const pedidoId = `pedido-${this.pedidoCounter}`;
-        
-        // Adicionar aba do pedido
-        this.addPedidoTab(pedidoId, this.pedidoCounter);
-        
-        const pedidoHTML = `
-            <div id="${pedidoId}" class="pedido-content bg-gray-50 rounded-xl p-6 border-l-4 border-orange-primary" style="display: none;">
-                <div class="grid md:grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label class="block text-gray-dark font-semibold mb-2">
-                            <i class="fas fa-shopping-cart mr-2 text-orange-primary"></i>
-                            Número do Pedido *
-                        </label>
-                        <input type="text" name="numeroPedido" required maxlength="10" inputmode="numeric" pattern="[0-9]*"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                            placeholder="Ex: 4501234567">
-                        <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                    </div>
-                    <div class="flex items-end">
-                        <div class="w-full">
-                            <label class="block text-gray-dark font-semibold mb-2">
-                                <i class="fas fa-receipt mr-2 text-orange-primary"></i>
-                                Notas Fiscais do Pedido *
-                            </label>
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-                                <span class="text-blue-800 font-medium">
-                                    <i class="fas fa-file-invoice mr-2"></i>
-                                    Adicione as notas fiscais abaixo
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="space-y-4">
-                    <div class="notas-fiscais-container" data-pedido="${pedidoId}">
-                        </div>
-                    
-                    <div class="text-left">
-                        <button type="button" onclick="addNotaFiscal('${pedidoId}')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all">
-                            <i class="fas fa-plus mr-2"></i>Adicionar Nota Fiscal
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('pedidos-container')?.insertAdjacentHTML('beforeend', pedidoHTML);
-        
-        // Mostrar o pedido recém-criado
-        this.showPedido(pedidoId);
-        
-        // Adicionar primeira nota fiscal automaticamente
-        this.addNotaFiscal(pedidoId);
-    }
+    // Função addPedido removida
 
     // *** FUNÇÃO LEGADA (do sistema de abas) ***
     addPedidoTab(pedidoId, numeroTab) {
@@ -1079,9 +1022,7 @@ function previousStep() {
     agendamentoForm.previousStep();
 }
 
-function addPedido() {
-    agendamentoForm.addPedido();
-}
+// Função addPedido removida
 
 function showPedido(pedidoId) {
     agendamentoForm.showPedido(pedidoId);

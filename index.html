@@ -1604,10 +1604,7 @@
                     
                     <!-- Botões de Ação -->
                     <div class="flex justify-between items-center mt-6 pt-6 border-t border-gray-200">
-                        <button type="button" onclick="adicionarPedidoNoModal()" 
-                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium">
-                            <i class="fas fa-plus mr-2"></i>Adicionar Outro Pedido
-                        </button>
+                        <!-- Botão Adicionar Outro Pedido removido -->
                         
                         <div class="flex space-x-4">
                             <button type="button" onclick="closePedidosModal()" 
@@ -2043,7 +2040,7 @@
                                     </div>
                                     <button onclick="consultaStatus.adicionarPedido()" 
                                         class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-all text-sm font-medium">
-                                        <i class="fas fa-plus mr-1"></i>Adicionar Pedido
+                                        <!-- Botão Adicionar Pedido removido -->
                                     </button>
                                 </div>
                             </div>
@@ -2290,7 +2287,7 @@
                             
                             <div class="text-left">
                                 <button type="button" onclick="consultaStatus.adicionarNotaFiscalModal('${pedidoId}')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all">
-                                    <i class="fas fa-plus mr-2"></i>Adicionar Nota Fiscal
+                                    <!-- Botão Adicionar Nota Fiscal removido -->
                                 </button>
                             </div>
                         </div>
@@ -3109,9 +3106,7 @@
             consultaStatus.closePedidosModal();
         }
 
-        function adicionarPedidoNoModal() {
-            consultaStatus.adicionarPedidoNoModal();
-        }
+        // Função adicionarPedidoNoModal removida
 
         function salvarPedidosModal() {
             consultaStatus.salvarPedidosModal();
