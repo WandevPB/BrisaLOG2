@@ -2160,12 +2160,9 @@
 
                 return agendamento.pedidos.map(pedido => `
                     <div class="border border-gray-200 rounded-lg p-4 mb-4">
-                        <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center mb-3">
                             <h4 class="font-semibold text-gray-900">Pedido: ${pedido.numero}</h4>
-                            <button onclick="consultaStatus.adicionarNFAoPedido('${pedido.numero}')" 
-                                class="text-green-600 hover:text-green-800 text-sm">
-                                <i class="fas fa-plus mr-1"></i>Adicionar NF
-                            </button>
+                            <!-- Botão Adicionar NF removido -->
                         </div>
                         <div class="space-y-2">
                             ${pedido.notasFiscais.map(nf => `
@@ -2179,7 +2176,6 @@
                                     </div>
                                     <div class="flex items-center space-x-2">
                                         ${(() => {
-                                            console.log('[DEBUG PDF] NF:', nf.numero, 'arquivo:', nf.arquivo);
                                             return nf.arquivo ? `
                                                 <button onclick="consultaStatus.viewPDF('${nf.arquivo}')" 
                                                     class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium hover:bg-blue-200">
