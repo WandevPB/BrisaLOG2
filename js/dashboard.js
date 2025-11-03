@@ -1620,23 +1620,7 @@ class CDDashboard {
                 ENTREGA INCLUÍDA PELO CD
             </div>` : '';
 
-        // NOVOS DADOS: Motorista, Transportador, Volumes, Tipo de Volume, Placa
-        const motoristaHtml = (agendamento.motoristaNome || agendamento.motoristaCpf || agendamento.motoristaTelefone || agendamento.placaVeiculo) ? `
-            <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
-                <div class="flex items-center mb-3">
-                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                        <i class="fas fa-user-tie text-blue-600 text-sm"></i>
-                    </div>
-                    <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
-                </div>
-                <div class="space-y-2 text-sm">
-                    ${agendamento.motoristaNome ? `<div><span class="text-gray-600 text-xs">Nome</span><p class="font-semibold">${agendamento.motoristaNome}</p></div>` : ''}
-                    ${agendamento.motoristaCpf ? `<div><span class="text-gray-600 text-xs">CPF</span><p class="font-semibold">${agendamento.motoristaCpf}</p></div>` : ''}
-                    ${agendamento.motoristaTelefone ? `<div><span class="text-gray-600 text-xs">Telefone</span><p class="font-semibold">${agendamento.motoristaTelefone}</p></div>` : ''}
-                    ${agendamento.placaVeiculo ? `<div><span class="text-gray-600 text-xs">Placa</span><p class="font-semibold">${agendamento.placaVeiculo}</p></div>` : ''}
-                </div>
-            </div>
-        ` : '';
+        // ...existing code...
 
         const transportadorHtml = (agendamento.transportadorNome || agendamento.transportadorDocumento || agendamento.transportadorTelefone || agendamento.transportadorEmail) ? `
             <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
@@ -1723,8 +1707,6 @@ class CDDashboard {
                             </div>
                         </div>
                     </div>
-                    <!-- Motorista -->
-                    ${motoristaHtml}
                     <!-- Transportador -->
                     ${transportadorHtml}
                     <!-- Volumes -->
