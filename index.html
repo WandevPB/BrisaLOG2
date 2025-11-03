@@ -592,18 +592,14 @@
         
         /* Mapa logístico */
         .logistics-map {
-            top: 45%;
-            left: 15%;
-            width: 90px;
-            height: 90px;
+            top: 40%;
+            left: 50%;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.1), transparent);
             border-radius: 50%;
-            background: radial-gradient(circle, 
-                rgba(255, 107, 53, 0.1) 0%, 
-                transparent 30%, 
-                rgba(247, 147, 30, 0.08) 60%, 
-                transparent 100%);
-            animation: map-scan 10s linear infinite;
-        }
+            animation: map-rotate 20s linear infinite;
+        }   
         
         .logistics-map::before, .logistics-map::after {
             content: '';
