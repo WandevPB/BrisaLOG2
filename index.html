@@ -1793,25 +1793,19 @@
 
             showStatusModal(agendamento) {
                 const statusContent = document.getElementById('status-content');
-                this.currentAgendamento = agendamento; // Armazenar para edições
+                this.currentAgendamento = agendamento;
 
+                // Cards detalhados replicados do dashboard
                 statusContent.innerHTML = `
                     <div class="space-y-4">
-                        <!-- Informações Básicas -->
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
                             <!-- Informações Gerais -->
                             <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                                            <i class="fas fa-info-circle text-blue-600 text-sm"></i>
-                                        </div>
-                                        <h3 class="text-md font-semibold text-gray-800">Informações Gerais</h3>
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                        <i class="fas fa-info-circle text-blue-600 text-sm"></i>
                                     </div>
-                                    <button onclick="consultaStatus.editarInformacoes()" 
-                                        class="text-blue-600 hover:text-blue-800 text-sm">
-                                        <i class="fas fa-edit mr-1"></i>Editar
-                                    </button>
+                                    <h3 class="text-md font-semibold text-gray-800">Informações Gerais</h3>
                                 </div>
                                 <div class="space-y-2 text-sm">
                                     <div class="flex justify-between">
@@ -1839,41 +1833,64 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Dados do Fornecedor -->
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
-                                            <i class="fas fa-building text-green-600 text-sm"></i>
-                                        </div>
-                                        <h3 class="text-md font-semibold text-gray-800">Fornecedor</h3>
+                            <!-- Fornecedor/Transportadora -->
+                            <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                                        <i class="fas fa-truck-moving text-green-600 text-sm"></i>
                                     </div>
-                                    <button onclick="consultaStatus.editarFornecedor()" 
-                                        class="text-green-600 hover:text-green-800 text-sm">
-                                        <i class="fas fa-edit mr-1"></i>Editar
-                                    </button>
+                                    <h3 class="text-md font-semibold text-gray-800">Fornecedor</h3>
                                 </div>
                                 <div class="space-y-2 text-sm">
                                     <div>
                                         <span class="text-gray-600 text-xs">Empresa</span>
-                                        <p class="font-semibold truncate" title="${agendamento.fornecedor || agendamento.nomeEmpresa}">${agendamento.fornecedor || agendamento.nomeEmpresa}</p>
+                                        <p class="font-semibold truncate" title="${agendamento.fornecedor?.nome || agendamento.nomeEmpresa || 'N/A'}">${agendamento.fornecedor?.nome || agendamento.nomeEmpresa || 'N/A'}</p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600 text-xs">E-mail</span>
-                                        <p class="font-semibold truncate" title="${agendamento.email}">${agendamento.email}</p>
+                                        <p class="font-semibold truncate" title="${agendamento.fornecedor?.email || agendamento.email || 'N/A'}">${agendamento.fornecedor?.email || agendamento.email || 'N/A'}</p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600 text-xs">Telefone</span>
-                                        <p class="font-semibold">${agendamento.telefone}</p>
+                                        <p class="font-semibold">${agendamento.fornecedor?.telefone || agendamento.telefone || 'N/A'}</p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600 text-xs">CNPJ</span>
-                                        <p class="font-semibold text-xs">${agendamento.cnpj || 'N/A'}</p>
+                                        <p class="font-semibold text-xs">${agendamento.fornecedor?.documento || agendamento.cnpj || 'N/A'}</p>
                                     </div>
                                 </div>
                             </div>
-
+                            <!-- Motorista -->
+                            <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                        <i class="fas fa-user-tie text-blue-600 text-sm"></i>
+                                    </div>
+                                    <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div>
+                                        <span class="text-gray-600 text-xs">Nome</span>
+                                        <p class="font-semibold">${agendamento.motoristaNome || agendamento.fornecedor?.nomeResponsavel || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">CPF</span>
+                                        <p class="font-semibold">${agendamento.motoristaCpf || agendamento.fornecedor?.cpfMotorista || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">Telefone</span>
+                                        <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.fornecedor?.telefoneMotorista || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">Placa</span>
+                                        <p class="font-semibold">${agendamento.placaVeiculo || agendamento.fornecedor?.placaVeiculo || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">Tipo de Veículo</span>
+                                        <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.fornecedor?.tipoVeiculo || 'Não informado'}</p>
+                                    </div>
+                                </div>
+                            </div>
                             <!-- Resumo de Notas -->
                             <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                                 <div class="flex items-center mb-3">
