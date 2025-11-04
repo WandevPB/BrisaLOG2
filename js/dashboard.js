@@ -1162,7 +1162,7 @@ class CDDashboard {
                         <h3 class="text-lg font-bold text-gray-dark">${agendamento.codigo}</h3>
                         <p class="text-gray-medium">${agendamento.fornecedor.nome}</p>
                         <p class="text-sm text-gray-500">${agendamento.fornecedor.email}</p>
-                        <p class="text-sm text-gray-500"><strong>Tipo de Veículo:</strong> ${agendamento.fornecedor.tipoVeiculo || 'Não informado'}</p>
+                        <!-- Tipo de Veículo removido do card Transportadora -->
                     </div>
                     <div class="px-3 py-1 rounded-full text-white text-sm font-semibold ${statusClass}">
                         <i class="${statusIcon} mr-1"></i>
@@ -1620,23 +1620,7 @@ class CDDashboard {
                 ENTREGA INCLUÍDA PELO CD
             </div>` : '';
 
-        // NOVOS DADOS: Motorista, Transportador, Volumes, Tipo de Volume, Placa
-        const motoristaHtml = (agendamento.motoristaNome || agendamento.motoristaCpf || agendamento.motoristaTelefone || agendamento.placaVeiculo) ? `
-            <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
-                <div class="flex items-center mb-3">
-                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                        <i class="fas fa-user-tie text-blue-600 text-sm"></i>
-                    </div>
-                    <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
-                </div>
-                <div class="space-y-2 text-sm">
-                    ${agendamento.motoristaNome ? `<div><span class="text-gray-600 text-xs">Nome</span><p class="font-semibold">${agendamento.motoristaNome}</p></div>` : ''}
-                    ${agendamento.motoristaCpf ? `<div><span class="text-gray-600 text-xs">CPF</span><p class="font-semibold">${agendamento.motoristaCpf}</p></div>` : ''}
-                    ${agendamento.motoristaTelefone ? `<div><span class="text-gray-600 text-xs">Telefone</span><p class="font-semibold">${agendamento.motoristaTelefone}</p></div>` : ''}
-                    ${agendamento.placaVeiculo ? `<div><span class="text-gray-600 text-xs">Placa</span><p class="font-semibold">${agendamento.placaVeiculo}</p></div>` : ''}
-                </div>
-            </div>
-        ` : '';
+        // ...existing code...
 
         const transportadorHtml = (agendamento.transportadorNome || agendamento.transportadorDocumento || agendamento.transportadorTelefone || agendamento.transportadorEmail) ? `
             <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
@@ -1723,8 +1707,6 @@ class CDDashboard {
                             </div>
                         </div>
                     </div>
-                    <!-- Motorista -->
-                    ${motoristaHtml}
                     <!-- Transportador -->
                     ${transportadorHtml}
                     <!-- Volumes -->
@@ -1757,8 +1739,7 @@ class CDDashboard {
                                 </div>
                             ` : ''}
                                <div>
-                                   <span class="text-gray-600 text-xs">Tipo de Veículo</span>
-                                   <p class="font-semibold text-xs">${agendamento.fornecedor.tipoVeiculo || 'Não informado'}</p>
+                                   <!-- Tipo de Veículo removido do card Transportadora -->
                                </div>
                         </div>
                     </div>
@@ -1773,23 +1754,23 @@ class CDDashboard {
                             <div class="space-y-2 text-sm">
                                 <div>
                                     <span class="text-gray-600 text-xs">Nome</span>
-                                    <p class="font-semibold">${agendamento.motoristaNome || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaNome || agendamento.fornecedor?.nomeResponsavel || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">CPF</span>
-                                    <p class="font-semibold">${agendamento.motoristaCpf || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaCpf || agendamento.fornecedor?.cpfMotorista || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Telefone</span>
-                                    <p class="font-semibold">${agendamento.motoristaTelefone || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.fornecedor?.telefoneMotorista || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Placa</span>
-                                    <p class="font-semibold">${agendamento.placaVeiculo || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.placaVeiculo || agendamento.fornecedor?.placaVeiculo || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Tipo de Veículo</span>
-                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || 'Não informado'}</p>
+                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.fornecedor?.tipoVeiculo || 'Não informado'}</p>
                                 </div>
                             </div>
                         </div>
@@ -2650,12 +2631,12 @@ class CDDashboard {
         }
 
         try {
-            // Buscar agendamento pelos dados carregados do banco de dados
-            const agendamento = this.agendamentos.find(a => a.codigo.toLowerCase() === codigo.toLowerCase());
-            
-            if (agendamento) {
+            // Buscar agendamento diretamente da API para garantir dados atualizados
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/consultar/${codigo}`);
+            const result = await response.json();
+            if (result.success && result.data) {
                 this.closeConsultaModal();
-                this.showStatusModal(agendamento);
+                this.showStatusModal(result.data);
             } else {
                 this.showNotification('Agendamento não encontrado', 'error');
             }
