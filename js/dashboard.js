@@ -1607,6 +1607,55 @@ class CDDashboard {
     // --- MÉTODOS DE AÇÃO E MODAIS ---
 
     showAgendamentoDetails(id) {
+        // Preencher Informações Gerais
+        let infoGeralHtml = '';
+        infoGeralHtml += `<div><span class='font-semibold'>Código:</span> ${agendamento.codigo || '-'}</div>`;
+        infoGeralHtml += `<div><span class='font-semibold'>Data Entrega:</span> ${agendamento.dataEntrega ? this.formatDate(agendamento.dataEntrega) : '-'}</div>`;
+        infoGeralHtml += `<div><span class='font-semibold'>Horário:</span> ${agendamento.horarioEntrega || '-'}</div>`;
+        infoGeralHtml += `<div><span class='font-semibold'>Tipo de Carga:</span> ${this.getTipoCargaText(agendamento.tipoCarga) || '-'}</div>`;
+        document.getElementById('detail-info-geral').innerHTML = infoGeralHtml;
+
+        // Preencher Transportador
+        let transportadorHtml = '';
+        if (agendamento.fornecedor) {
+            transportadorHtml += `<div><span class='font-semibold'>Nome:</span> ${agendamento.fornecedor.nome || '-'}</div>`;
+            transportadorHtml += `<div><span class='font-semibold'>Email:</span> ${agendamento.fornecedor.email || '-'}</div>`;
+            transportadorHtml += `<div><span class='font-semibold'>Telefone:</span> ${agendamento.fornecedor.telefone || '-'}</div>`;
+        } else {
+            transportadorHtml = '<div>Não informado</div>';
+        }
+        document.getElementById('detail-transportador').innerHTML = transportadorHtml;
+
+        // Preencher Motorista
+        let motoristaHtml = '';
+        if (agendamento.motorista) {
+            motoristaHtml += `<div><span class='font-semibold'>Nome:</span> ${agendamento.motorista.nome || '-'}</div>`;
+            motoristaHtml += `<div><span class='font-semibold'>Telefone:</span> ${agendamento.motorista.telefone || '-'}</div>`;
+            motoristaHtml += `<div><span class='font-semibold'>Documento:</span> ${agendamento.motorista.documento || '-'}</div>`;
+            motoristaHtml += `<div><span class='font-semibold'>Veículo:</span> ${agendamento.motorista.veiculo || '-'}</div>`;
+            motoristaHtml += `<div><span class='font-semibold'>Placa:</span> ${agendamento.motorista.placa || '-'}</div>`;
+        } else {
+            motoristaHtml = '<div>Não informado</div>';
+        }
+        document.getElementById('detail-motorista').innerHTML = motoristaHtml;
+
+        // Preencher Resumo
+        let resumoHtml = '';
+        let totalNFs = agendamento.notasFiscais ? agendamento.notasFiscais.length : 0;
+        let valorTotal = 0;
+        if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
+            agendamento.notasFiscais.forEach(nf => {
+                let v = nf.valor;
+                if (typeof v === 'string') {
+                    v = v.replace(/[^\d,.]/g, '').replace(',', '.');
+                    v = parseFloat(v);
+                }
+                if (!isNaN(v)) valorTotal += v;
+            });
+        }
+        resumoHtml += `<div><span class='font-semibold'>Total de Notas Fiscais:</span> ${totalNFs}</div>`;
+        resumoHtml += `<div><span class='font-semibold'>Valor Total:</span> R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>`;
+        document.getElementById('detail-resumo').innerHTML = resumoHtml;
         const agendamento = this.agendamentos.find(a => a.id === id);
         if (!agendamento) return;
 
