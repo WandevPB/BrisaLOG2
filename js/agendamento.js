@@ -81,21 +81,15 @@ class AgendamentoForm {
                         this.hideInvalidFeedback(input);
                     }
                 }
-            } else if (input.name === 'numeroPedido') {
+            } else if (input.name === 'numeroPedido' || input.name === 'numeroPedidoLinha') {
                 const value = input.value.trim();
-                // Deve ser numérico, 10 dígitos, começar com 450
+                // Validação: deve começar com 450 e ter 10 dígitos
                 if (!/^450\d{7}$/.test(value)) {
-                    this.showInvalidFeedback(input, 'O número do pedido deve começar com 450 e ter 10 dígitos numéricos.');
+                    input.classList.add('border-red-500');
+                    this.showInvalidFeedback(input, 'O número do pedido deve iniciar com 450 e ter 10 dígitos.');
                     isValid = false;
                 } else {
-                    this.hideInvalidFeedback(input);
-                }
-            } else if (input.name === 'numeroPedidoLinha') {
-                const value = input.value.trim();
-                if (!/^450\d{7}$/.test(value)) {
-                    this.showInvalidFeedback(input, 'O número do pedido deve começar com 450 e ter 10 dígitos numéricos.');
-                    isValid = false;
-                } else {
+                    input.classList.remove('border-red-500');
                     this.hideInvalidFeedback(input);
                 }
             } else if (!input.value.trim()) {
@@ -468,16 +462,19 @@ class AgendamentoForm {
     // Helper para converter string 'R$ 1.234,56' para número 1234.56
     parseCurrency(valor) {
         if (!valor) return 0;
-        // Remove prefixo 'R$ ', pontos e espaços
-        valor = valor.replace('R$','').replace(/\./g,'').replace(/\s/g,'');
-        // Troca vírgula por ponto
-        valor = valor.replace(',','.');
-        // Se não for número válido, ignora
-        const valorNumerico = parseFloat(valor);
-        if (!isNaN(valorNumerico)) {
-            return valorNumerico;
+        // Remove tudo que não for número, vírgula ou ponto
+        valor = valor.replace(/[^0-9,\.]/g, '');
+        // Se houver mais de uma vírgula, pega só a última como decimal
+        const partes = valor.split(',');
+        if (partes.length > 2) {
+            valor = partes.slice(0, -1).join('') + '.' + partes[partes.length - 1];
+        } else if (partes.length === 2) {
+            valor = partes[0].replace(/\./g, '') + '.' + partes[1];
         }
-        return 0;
+        // Se não houver vírgula, só remove pontos
+        valor = valor.replace(/\./g, '');
+        const valorNumerico = parseFloat(valor);
+        return isNaN(valorNumerico) ? 0 : valorNumerico;
     }
 
 
@@ -1075,16 +1072,16 @@ function handleFileSelect(input) {
         const defaultFileName = "Clique para anexar PDF";
 
         if (file) {
-             if (file.size > 10 * 1024 * 1024) { // 10MB
+            // Validação de tamanho: máximo 3MB
+            if (file.size > 3 * 1024 * 1024) {
                 if (agendamentoForm) {
-                    agendamentoForm.showNotification('Arquivo muito grande. Máximo 10MB.', 'error');
+                    agendamentoForm.showNotification('Arquivo muito grande. Máximo 3MB.', 'error');
                 }
                 input.value = '';
                 if(fileNameSpan) fileNameSpan.textContent = defaultFileName;
                 if(fileLabel) fileLabel.classList.remove('file-selected');
                 return;
             }
-            
             // Permite apenas PDF
             if (file.type !== 'application/pdf') { 
                 if (agendamentoForm) {
