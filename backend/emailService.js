@@ -133,7 +133,16 @@ class EmailService {
 
     // E-mail de confirmação de agendamento
     async sendConfirmadoEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, consultaUrl }) {
-        const html = templateConfirmado({ fornecedorNome, agendamentoCodigo, cdNome, consultaUrl });
+        const html = templateConfirmado({
+            transportadorNome: fornecedorNome,
+            agendamentoCodigo,
+            cdNome,
+            consultaUrl,
+            motoristaNome: arguments[0].motoristaNome,
+            veiculoPlaca: arguments[0].veiculoPlaca,
+            dataAgendamento: arguments[0].dataAgendamento,
+            horarioAgendamento: arguments[0].horarioAgendamento
+        });
         return this.sendEmail({
             to,
             subject: '[BrisaLOG] Agendamento Confirmado',
@@ -143,7 +152,16 @@ class EmailService {
 
     // E-mail de entrega realizada
     async sendEntregueEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, consultaUrl }) {
-        const html = templateEntregue({ fornecedorNome, agendamentoCodigo, cdNome, consultaUrl });
+        const html = templateEntregue({
+            transportadorNome: fornecedorNome,
+            agendamentoCodigo,
+            cdNome,
+            baseUrl: consultaUrl,
+            motoristaNome: arguments[0].motoristaNome,
+            veiculoPlaca: arguments[0].veiculoPlaca,
+            dataEntrega: arguments[0].dataEntrega,
+            horarioEntrega: arguments[0].horarioEntrega
+        });
         return this.sendEmail({
             to,
             subject: '[BrisaLOG] Entrega Realizada',
@@ -153,7 +171,16 @@ class EmailService {
 
     // E-mail de não comparecimento
     async sendNaoVeioEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, consultaUrl }) {
-        const html = templateNaoVeio({ fornecedorNome, agendamentoCodigo, cdNome, consultaUrl });
+        const html = templateNaoVeio({
+            transportadorNome: fornecedorNome,
+            agendamentoCodigo,
+            cdNome,
+            consultaUrl,
+            motoristaNome: arguments[0].motoristaNome,
+            veiculoPlaca: arguments[0].veiculoPlaca,
+            dataAgendamento: arguments[0].dataAgendamento,
+            horarioAgendamento: arguments[0].horarioAgendamento
+        });
         return this.sendEmail({
             to,
             subject: '[BrisaLOG] Entrega Não Realizada',
@@ -163,7 +190,18 @@ class EmailService {
 
     // E-mail de reagendamento
     async sendReagendamentoEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, dataOriginal, novaDataSugerida, novoHorario, motivo, consultaUrl }) {
-        const html = templateReagendamento({ fornecedorNome, agendamentoCodigo, cdNome, dataOriginal, novaDataSugerida, novoHorario, motivo, consultaUrl });
+        const html = templateReagendamento({
+            transportadorNome: fornecedorNome,
+            agendamentoCodigo,
+            cdNome,
+            dataOriginal,
+            novaDataSugerida,
+            novoHorario,
+            motivo,
+            consultaUrl,
+            motoristaNome: arguments[0].motoristaNome,
+            veiculoPlaca: arguments[0].veiculoPlaca
+        });
         return this.sendEmail({
             to,
             subject: `[BrisaLOG] Solicitação de Reagendamento - ${agendamentoCodigo}`,
@@ -183,7 +221,12 @@ class EmailService {
 
     // E-mail de cancelamento pelo fornecedor
     async sendCanceladoFornecedorEmail({ to, fornecedorNome, agendamentoCodigo, motivo, consultaUrl }) {
-        const html = templateCanceladoFornecedor({ fornecedorNome, agendamentoCodigo, motivo, consultaUrl });
+        const html = templateCanceladoFornecedor({
+            transportadorNome: fornecedorNome,
+            agendamentoCodigo,
+            motivo,
+            consultaUrl
+        });
         return this.sendEmail({
             to,
             subject: '[BrisaLOG] Solicitação Cancelada',

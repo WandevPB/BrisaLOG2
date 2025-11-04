@@ -1,14 +1,14 @@
 // Template: Cancelamento pelo Fornecedor
-module.exports = function({ fornecedorNome, agendamentoCodigo, motivo, consultaUrl }) {
+module.exports = function({ transportadorNome, agendamentoCodigo, motivo, consultaUrl }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%); color: white; border-radius: 10px; padding: 30px 20px; text-align: center;">
         <h1 style="margin: 0; font-size: 26px;">Solicitação Cancelada</h1>
-        <p style="font-size: 18px; margin: 10px 0 0 0;">O agendamento foi cancelado pelo fornecedor</p>
+        <p style="font-size: 18px; margin: 10px 0 0 0;">O agendamento foi cancelado pelo transportador</p>
       </div>
       <div style="background: #fff; border-radius: 10px; margin-top: 20px; padding: 30px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-        <h2 style="color: #FF6B35; margin-top: 0;">Olá, ${fornecedorNome}!</h2>
-        <p>O agendamento <b>${agendamentoCodigo}</b> foi cancelado pelo fornecedor.</p>
+        <h2 style="color: #FF6B35; margin-top: 0;">Olá, ${transportadorNome}!</h2>
+        <p>O agendamento <b>${agendamentoCodigo}</b> foi cancelado pelo transportador.</p>
         <div style="background: #f8f9fa; border-left: 4px solid #FF6B35; padding: 15px; margin: 20px 0; border-radius: 5px;">
           <strong>📦 Código do Agendamento:</strong> <span style="font-size: 18px; color: #FF6B35;">${agendamentoCodigo}</span><br>
           <strong>💬 Motivo:</strong> ${motivo}
