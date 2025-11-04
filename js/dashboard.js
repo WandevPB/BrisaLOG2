@@ -1632,237 +1632,40 @@ class CDDashboard {
                     <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-3">
                             <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-info-circle text-blue-600 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-800">Informações Gerais</h3>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Código:</span>
-                                <span class="font-semibold">${agendamento.codigo}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Status:</span>
-                                <span class="status-${agendamento.status} px-2 py-1 rounded-full text-xs font-medium">
-                                    <i class="${this.getStatusIcon(agendamento.status)} mr-1"></i>
-                                    ${this.getStatusText(agendamento.status)}
-                                </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Data:</span>
-                                <span class="font-semibold">${this.formatDate(agendamento.dataEntrega)}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Horário:</span>
-                                <span class="font-semibold">${agendamento.horarioEntrega}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Tipo:</span>
-                                <span class="font-semibold text-xs">${this.getTipoCargaText(agendamento.tipoCarga)}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Transportadora -->
-                    <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-truck-moving text-green-600 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-800">Transportadora</h3>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div>
-                                <span class="text-gray-600 text-xs">Empresa</span>
-                                <p class="font-semibold truncate" title="${agendamento.fornecedor.nome}">${agendamento.fornecedor.nome}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">E-mail</span>
-                                <p class="font-semibold truncate" title="${agendamento.fornecedor.email}">${agendamento.fornecedor.email}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">Telefone</span>
-                                <p class="font-semibold">${agendamento.fornecedor.telefone}</p>
-                            </div>
-                            ${agendamento.fornecedor.documento ? `
-                                <div>
-                                    <span class="text-gray-600 text-xs">CNPJ</span>
-                                    <p class="font-semibold text-xs">${agendamento.fornecedor.documento}</p>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                    <!-- Motorista -->
-                    <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-user-tie text-blue-600 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div>
-                                <span class="text-gray-600 text-xs">Nome</span>
-                                <p class="font-semibold">${agendamento.motoristaNome || agendamento.fornecedor?.nomeResponsavel || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">CPF</span>
-                                <p class="font-semibold">${agendamento.motoristaCpf || agendamento.fornecedor?.cpfMotorista || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">Telefone</span>
-                                <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.fornecedor?.telefoneMotorista || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">Placa</span>
-                                <p class="font-semibold">${agendamento.placaVeiculo || agendamento.fornecedor?.placaVeiculo || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-600 text-xs">Tipo de Veículo</span>
-                                <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.fornecedor?.tipoVeiculo || 'Não informado'}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Resumo -->
-                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-file-invoice text-purple-600 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-800">Resumo</h3>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Notas Fiscais:</span>
-                                <span class="font-semibold">${agendamento.notasFiscais ? agendamento.notasFiscais.length : 0}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Valor Total:</span>
-                                <span class="font-semibold text-green-600 text-xs">
-                                    R$ ${isNaN(valorTotal) ? '0,00' : valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                                </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Criado em:</span>
-                                <span class="font-semibold text-xs">${dataCriacao}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Pedidos e Notas Fiscais agrupadas por pedido -->
-                <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                    <div class="border-b border-gray-200 p-4">
-                        <div class="flex items-center">
-                            <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-file-invoice-dollar text-indigo-600 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-800">Pedidos e Notas Fiscais</h3>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        ${agendamento.notasFiscais && agendamento.notasFiscais.length > 0 ? (() => {
-                            // Agrupar notas por pedido
-                            const pedidosMap = {};
-                            agendamento.notasFiscais.forEach(nf => {
-                                const pedido = nf.numeroPedido || 'Pedido não informado';
-                                if (!pedidosMap[pedido]) pedidosMap[pedido] = [];
-                                pedidosMap[pedido].push(nf);
-                            });
-                            return Object.keys(pedidosMap).map(pedido => `
-                                <div class="mb-6">
-                                    <div class="font-bold text-orange-primary text-lg mb-2 flex items-center">
-                                        <i class="fas fa-box mr-2"></i>Pedido: ${pedido}
-                                    </div>
-                                    <div class="space-y-3">
-                                        ${pedidosMap[pedido].map(nf => {
-                                            let valorFormatado = 'Valor não informado';
-                                            if (nf.valor) {
-                                                let v = nf.valor;
-                                                if (typeof v === 'string') {
-                                                    v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
-                                                    v = parseFloat(v);
+                                const agendamento = this.agendamentos.find(a => a.id === id);
+                                if (!agendamento) return;
+
+                                // Preencher apenas a seção de Pedidos e Notas Fiscais
+                                let pedidosNotasHtml = '';
+                                if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
+                                    const pedidosMap = {};
+                                    agendamento.notasFiscais.forEach(nf => {
+                                        const pedido = nf.numeroPedido || 'Pedido não informado';
+                                        if (!pedidosMap[pedido]) pedidosMap[pedido] = [];
+                                        pedidosMap[pedido].push(nf);
+                                    });
+                                    pedidosNotasHtml = Object.keys(pedidosMap).map(pedido => {
+                                        return `<div class="mb-6"><div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-box mr-2"></i>Pedido: ${pedido}</div><div class="space-y-3">` +
+                                            pedidosMap[pedido].map(nf => {
+                                                let valorFormatado = 'Valor não informado';
+                                                if (nf.valor) {
+                                                    let v = nf.valor;
+                                                    if (typeof v === 'string') {
+                                                        v = v.replace(/[^
+,\.]/g, '').replace(',', '.');
+                                                        v = parseFloat(v);
+                                                    }
+                                                    valorFormatado = isNaN(v) ? 'Valor não informado' : `R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                                                 }
-                                                valorFormatado = isNaN(v) ? 'Valor não informado' : `R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                                            }
-                                            return `
-                                            <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
-                                                <div class="flex justify-between items-center">
-                                                    <div class="flex-1">
-                                                        <div class="flex items-center space-x-3 mb-1">
-                                                            <span class="font-semibold text-gray-900">NF: ${nf.numeroNF}</span>
-                                                            ${nf.serie ? `<span class="text-xs text-gray-500">Série: ${nf.serie}</span>` : ''}
-                                                        </div>
-                                                        <div class="text-lg font-bold text-green-600">
-                                                            ${valorFormatado}
-                                                        </div>
-                                                    </div>
-                                                    <div class="flex items-center space-x-2">
-                                                        ${nf.arquivoPath ? `
-                                                            <button onclick=\"dashboard.viewPDF('${nf.arquivoPath}')\" 
-                                                                class=\"bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium hover:bg-green-200 transition-colors\">
-                                                                <i class=\"fas fa-file-pdf mr-1\"></i>PDF
-                                                            </button>
-                                                        ` : `
-                                                            <span class=\"bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-medium\">
-                                                                <i class=\"fas fa-exclamation-triangle mr-1\"></i>Sem PDF
-                                                            </span>
-                                                        `}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            `;
-                                        }).join('')}
-                                    </div>
-                                </div>
-                            `).join('');
-                        })() : `
-                            <div class="text-center py-6 text-gray-500">
-                                <i class="fas fa-inbox text-2xl mb-2"></i>
-                                <p class="text-sm">Nenhuma nota fiscal encontrada</p>
-                            </div>
-                        `}
-                    </div>
-                </div>
-                <!-- Histórico de Comunicação -->
-                <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                    <div class="border-b border-gray-200 p-4">
-                        <div class="flex items-center">
-                            <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-comments text-yellow-600 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-800">Histórico de Comunicação</h3>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        ${this.renderCommunicationHistory(agendamento)}
-                    </div>
-                </div>
-                <!-- Observações -->
-                ${agendamento.observacoes ? `
-                <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                    <div class="flex items-center mb-3">
-                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-2">
-                            <i class="fas fa-comment-alt text-gray-600 text-sm"></i>
-                        </div>
-                        <h3 class="text-md font-semibold text-gray-800">Observações da Carga</h3>
-                    </div>
-                    <div class="space-y-2 text-sm">
-                        <p class="font-semibold text-gray-700">${agendamento.observacoes}</p>
-                    </div>
-                </div>
-                ` : ''}
-            </div>
-        `;
-
-        // Inserir o HTML no modal de detalhes
-        const modalContent = document.getElementById('detail-modal-content');
-        if (modalContent) {
-            modalContent.innerHTML = detailHtml;
-        }
-        document.getElementById('detail-modal').classList.remove('hidden');
-    }
-
-    shouldShowCommunicationHistory(agendamento) {
-        return agendamento.status === 'reagendamento' || agendamento.status === 'nao-veio' || 
+                                                return `<div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors"><div class="flex justify-between items-center"><div class="flex-1"><div class="flex items-center space-x-3 mb-1"><span class="font-semibold text-gray-900">NF: ${nf.numeroNF}</span>${nf.serie ? `<span class=\"text-xs text-gray-500\">Série: ${nf.serie}</span>` : ''}</div><div class="text-lg font-bold text-green-600">${valorFormatado}</div></div><div class="flex items-center space-x-2">${nf.arquivoPath ? `<button onclick=\"dashboard.viewPDF('${nf.arquivoPath}')\" class=\"bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium hover:bg-green-200 transition-colors\"><i class=\"fas fa-file-pdf mr-1\"></i>PDF</button>` : `<span class=\"bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-medium\"><i class=\"fas fa-exclamation-triangle mr-1\"></i>Sem PDF</span>`}</div></div></div>`;
+                                            }).join('') + '</div></div>';
+                                    }).join('');
+                                } else {
+                                    pedidosNotasHtml = `<div class="text-center py-6 text-gray-500"><i class="fas fa-inbox text-2xl mb-2"></i><p class="text-sm">Nenhuma nota fiscal encontrada</p></div>`;
+                                }
+                                document.getElementById('detail-pedidos-notas').innerHTML = pedidosNotasHtml;
+                                // Abrir modal
+                                document.getElementById('detail-modal').classList.remove('hidden');
                (agendamento.historicoAcoes && agendamento.historicoAcoes.some(h => 
                    h.acao.includes('reagendamento') || h.acao.includes('sugestao')));
     }
