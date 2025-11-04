@@ -1,18 +1,3 @@
-    ...existing code...
-    <!-- Modal para Motivo do Cancelamento -->
-    <div id="cancelar-solicitacao-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
-            <h2 class="text-lg font-bold mb-4 text-red-700"><i class="fas fa-exclamation-triangle mr-2"></i>Cancelar Solicitação</h2>
-            <form id="form-cancelar-solicitacao" onsubmit="event.preventDefault(); consultaStatus.enviarMotivoCancelamento();">
-                <label for="motivo-cancelamento" class="block text-sm font-medium text-gray-700 mb-2">Motivo do cancelamento:</label>
-                <textarea id="motivo-cancelamento" name="motivo" rows="4" required class="w-full border border-gray-300 rounded-lg p-2 mb-4"></textarea>
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="consultaStatus.fecharCancelarSolicitacaoModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Cancelar</button>
-                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Confirmar Cancelamento</button>
-                </div>
-            </form>
-        </div>
-    </div>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -592,14 +577,18 @@
         
         /* Mapa logístico */
         .logistics-map {
-            top: 40%;
-            left: 50%;
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle, rgba(255, 107, 53, 0.1), transparent);
+            top: 45%;
+            left: 15%;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
-            animation: map-rotate 20s linear infinite;
-        }   
+            background: radial-gradient(circle, 
+                rgba(255, 107, 53, 0.1) 0%, 
+                transparent 30%, 
+                rgba(247, 147, 30, 0.08) 60%, 
+                transparent 100%);
+            animation: map-scan 10s linear infinite;
+        }
         
         .logistics-map::before, .logistics-map::after {
             content: '';
@@ -1055,12 +1044,9 @@
     </style>
 </head>
 <body class="bg-gradient-to-br from-orange-50 to-orange-100 min-h-screen font-sans">
-    <!-- Background Animado -->
     <div class="animated-background">
-        <!-- Grid pattern sutil -->
         <div class="grid-overlay"></div>
         
-        <!-- Glow effects pulsantes -->
         <div class="glow-container">
             <div class="glow-orb glow-orb-1"></div>
             <div class="glow-orb glow-orb-2"></div>
@@ -1068,7 +1054,6 @@
             <div class="glow-orb glow-orb-4"></div>
         </div>
         
-        <!-- Elementos flutuantes -->
         <div class="floating-elements">
             <div class="float-element float-1"></div>
             <div class="float-element float-2"></div>
@@ -1077,7 +1062,6 @@
             <div class="float-element float-5"></div>
         </div>
         
-        <!-- Partículas micro flutuantes -->
         <div class="micro-particles">
             <div class="particle"></div>
             <div class="particle"></div>
@@ -1091,12 +1075,9 @@
             <div class="particle"></div>
         </div>
         
-        <!-- Overlay de profundidade -->
         <div class="depth-overlay"></div>
     </div>
 
-    <!-- Conteúdo principal -->
-    <!-- Navigation -->
     <nav class="bg-white shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
@@ -1121,20 +1102,16 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero-background relative py-20 overflow-hidden">
-        <!-- Elementos de brilho flutuante -->
         <div class="floating-glow glow-1"></div>
         <div class="floating-glow glow-2"></div>
         <div class="floating-glow glow-3"></div>
         
-        <!-- Elementos logísticos únicos -->
         <div class="logistics-element delivery-route"></div>
         <div class="logistics-element shipping-container"></div>
         <div class="logistics-element logistics-map"></div>
         <div class="logistics-element warehouse-grid"></div>
         
-        <!-- Formas geométricas originais -->
         <div class="geometric-square square-1"></div>
         <div class="geometric-square square-2"></div>
         <div class="geometric-square square-3"></div>
@@ -1149,7 +1126,6 @@
         <div class="geometric-square triangle-3"></div>
         <div class="geometric-square diamond-1"></div>
         
-        <!-- Rede de distribuição -->
         <div class="logistics-element distribution-network">
             <div class="network-node node-1"></div>
             <div class="network-node node-2"></div>
@@ -1162,7 +1138,6 @@
             <div class="network-line line-4"></div>
         </div>
         
-        <!-- Ícones temáticos de fundo -->
         <div class="geometric-shape shape-1">
             <i class="fas fa-truck"></i>
         </div>
@@ -1179,7 +1154,6 @@
             <i class="fas fa-boxes"></i>
         </div>
         
-        <!-- Ícones FontAwesome adicionais -->
         <div class="absolute top-1/5 right-1/5 text-2xl opacity-10 text-orange-400">
             <i class="fas fa-wifi"></i>
         </div>
@@ -1219,7 +1193,6 @@
         </div>
     </section>
 
-    <!-- How It Works Section -->
     <section class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
@@ -1231,7 +1204,6 @@
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- Step 1 -->
                 <div class="text-center card-3d">
                     <div class="bg-white rounded-2xl p-8 shadow-lg border border-orange-100">
                         <div class="w-16 h-16 step-number rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
@@ -1247,7 +1219,6 @@
                     </div>
                 </div>
 
-                <!-- Step 2 -->
                 <div class="text-center card-3d">
                     <div class="bg-white rounded-2xl p-8 shadow-lg border border-orange-100 h-full flex flex-col">
                         <div class="w-16 h-16 step-number rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
@@ -1263,7 +1234,6 @@
                     </div>
                 </div>
 
-                <!-- Step 3 -->
                 <div class="text-center card-3d">
                     <div class="bg-white rounded-2xl p-8 shadow-lg border border-orange-100">
                         <div class="w-16 h-16 step-number rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
@@ -1279,7 +1249,6 @@
                     </div>
                 </div>
 
-                <!-- Step 4 -->
                 <div class="text-center card-3d">
                     <div class="bg-white rounded-2xl p-8 shadow-lg border border-orange-100">
                         <div class="w-16 h-16 step-number rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
@@ -1298,7 +1267,6 @@
         </div>
     </section>
 
-    <!-- Benefits Section -->
     <section class="py-20 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
@@ -1309,7 +1277,6 @@
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Benefit 1 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
                     <div class="w-16 h-16 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i class="fas fa-user-slash text-white text-2xl"></i>
@@ -1320,7 +1287,6 @@
                     </p>
                 </div>
 
-                <!-- Benefit 2 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
                     <div class="w-16 h-16 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i class="fas fa-clock text-white text-2xl"></i>
@@ -1331,7 +1297,6 @@
                     </p>
                 </div>
 
-                <!-- Benefit 3 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
                     <div class="w-16 h-16 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i class="fas fa-envelope text-white text-2xl"></i>
@@ -1342,7 +1307,6 @@
                     </p>
                 </div>
 
-                <!-- Benefit 4 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
                     <div class="w-16 h-16 bg-gradient-to-r from-orange-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i class="fas fa-search text-white text-2xl"></i>
@@ -1353,7 +1317,6 @@
                     </p>
                 </div>
 
-                <!-- Benefit 5 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
                     <div class="w-16 h-16 bg-gradient-to-r from-red-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i class="fas fa-calendar-check text-white text-2xl"></i>
@@ -1364,7 +1327,6 @@
                     </p>
                 </div>
 
-                <!-- Benefit 6 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
                     <div class="w-16 h-16 bg-gradient-to-r from-teal-400 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i class="fas fa-comments text-white text-2xl"></i>
@@ -1378,7 +1340,6 @@
         </div>
     </section>
 
-    <!-- CTA Section -->
     <section class="py-20 bg-gradient-to-r from-orange-primary to-orange-secondary">
         <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
             <h2 class="text-4xl font-bold text-white mb-6">
@@ -1394,7 +1355,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="bg-gray-dark text-white py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-3 gap-8">
@@ -1431,8 +1391,20 @@
             </div>
         </div>
     </footer>
+    <div id="cancelar-solicitacao-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+            <h2 class="text-lg font-bold mb-4 text-red-700"><i class="fas fa-exclamation-triangle mr-2"></i>Cancelar Solicitação</h2>
+            <form id="form-cancelar-solicitacao" onsubmit="event.preventDefault(); consultaStatus.enviarMotivoCancelamento();">
+                <label for="motivo-cancelamento" class="block text-sm font-medium text-gray-700 mb-2">Motivo do cancelamento:</label>
+                <textarea id="motivo-cancelamento" name="motivo" rows="4" required class="w-full border border-gray-300 rounded-lg p-2 mb-4"></textarea>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="consultaStatus.fecharCancelarSolicitacaoModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Cancelar</button>
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Confirmar Cancelamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <!-- Modal de Consulta por Código -->
     <div id="consulta-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div class="bg-white rounded-2xl max-w-md w-full mx-4">
             <div class="p-6">
@@ -1466,7 +1438,6 @@
         </div>
     </div>
 
-    <!-- Modal de Status do Agendamento -->
     <div id="status-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal-backdrop p-4">
         <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-3d">
             <div class="flex-shrink-0 bg-gradient-to-r from-orange-primary to-orange-secondary px-6 py-4 flex justify-between items-center rounded-t-2xl">
@@ -1479,12 +1450,10 @@
                 </button>
             </div>
             <div id="status-content" class="flex-1 overflow-y-auto p-6">
-                <!-- Conteúdo será inserido dinamicamente -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- Modal de Edição de Agendamento -->
     <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-60 flex items-center justify-center modal-backdrop p-4">
         <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-3d">
             <div class="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center rounded-t-2xl">
@@ -1497,12 +1466,10 @@
                 </button>
             </div>
             <div id="edit-content" class="flex-1 overflow-y-auto p-6">
-                <!-- Conteúdo será inserido dinamicamente -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- Modal de Adicionar/Editar Nota Fiscal -->
     <div id="nf-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-60 modal-backdrop">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto">
@@ -1582,10 +1549,8 @@
         </div>
     </div>
 
-    <!-- Notification Container -->
     <div id="notification-container"></div>
 
-    <!-- Modal para Adicionar Pedidos (Passo 3 do Agendamento) -->
     <div id="pedidos-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 modal-backdrop">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-xl max-w-5xl w-full max-h-screen overflow-y-auto">
@@ -1603,20 +1568,13 @@
                 </div>
                 
                 <div class="p-6">
-                    <!-- Tabs dos Pedidos -->
                     <div id="pedidos-modal-tabs" class="flex flex-wrap gap-2 mb-6">
-                        <!-- Tabs serão adicionadas dinamicamente -->
-                    </div>
+                        </div>
                     
-                    <!-- Container dos Pedidos -->
                     <div id="pedidos-modal-container" class="min-h-[400px]">
-                        <!-- Pedidos serão adicionados dinamicamente -->
-                    </div>
+                        </div>
                     
-                    <!-- Botões de Ação -->
                     <div class="flex justify-between items-center mt-6 pt-6 border-t border-gray-200">
-                        <!-- Botão Adicionar Outro Pedido removido -->
-                        
                         <div class="flex space-x-4">
                             <button type="button" onclick="closePedidosModal()" 
                                 class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all font-medium">
@@ -1633,7 +1591,6 @@
         </div>
     </div>
 
-    <!-- Modal de Contra-proposta de Data -->
     <div id="contra-proposta-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-60 modal-backdrop">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-xl max-w-md w-full">
@@ -1658,10 +1615,10 @@
                                     Nova Data *
                                 </label>
                                 <input type="date" 
-                                       id="contra-proposta-data" 
-                                       name="novaData" 
-                                       required 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        id="contra-proposta-data" 
+                                        name="novaData" 
+                                        required 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             
                             <div>
@@ -1746,8 +1703,6 @@
             abrirCancelarSolicitacaoModal(codigo) {
                 this.codigoCancelamento = codigo;
                 document.getElementById('cancelar-solicitacao-modal').classList.remove('hidden');
-                // Todos os métodos da classe ConsultaStatus devem estar aqui, diretamente dentro do bloco da classe.
-                // ...existing code...
             }
 
             fecharCancelarSolicitacaoModal() {
@@ -1761,6 +1716,582 @@
                     this.showNotification('Informe o motivo do cancelamento.', 'error');
                     return;
                 }
+                try {
+                    // Envia para backend
+                    const response = await fetch(`/api/agendamentos/cancelar/${this.codigoCancelamento}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ motivo })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        this.fecharCancelarSolicitacaoModal();
+                        this.showNotification('Solicitação cancelada com sucesso!', 'success');
+                        this.closeStatusModal();
+                    } else {
+                        this.showNotification(result.message || 'Erro ao cancelar solicitação.', 'error');
+                    }
+                } catch (error) {
+                    this.showNotification('Erro ao cancelar solicitação.', 'error');
+                }
+            }
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+            }
+
+            // Função para formatar data ISO para formato brasileiro
+            formatDateBrFromISO(isoString) {
+                if (!isoString) return 'N/A';
+                const dateStr = isoString.slice(0, 10); // YYYY-MM-DD
+                const [year, month, day] = dateStr.split('-');
+                return `${day}/${month}/${year}`;
+            }
+
+            setupEventListeners() {
+                document.getElementById('consulta-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.consultarAgendamento();
+                });
+
+                // Fechar modais ao clicar fora
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal-backdrop')) {
+                        this.closeConsultaModal();
+                        this.closeStatusModal();
+                        this.closePedidosModal();
+                    }
+                });
+            }
+
+            async consultarAgendamento() {
+                const codigo = document.getElementById('codigo-consulta').value.trim();
+                
+                if (!codigo) {
+                    this.showNotification('Digite o código do agendamento', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/agendamentos/consultar/${codigo}`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.closeConsultaModal();
+                        this.showStatusModal(result.data);
+                    } else {
+                        this.showNotification(result.message || 'Agendamento não encontrado', 'error');
+                    }
+                } catch (error) {
+                    console.error('Erro ao consultar agendamento:', error);
+                    this.showNotification('Erro ao consultar agendamento', 'error');
+                }
+            }
+
+            showStatusModal(agendamento) {
+                const statusContent = document.getElementById('status-content');
+                this.currentAgendamento = agendamento;
+
+                // Cards detalhados replicados do dashboard
+                statusContent.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                        <i class="fas fa-info-circle text-blue-600 text-sm"></i>
+                                    </div>
+                                    <h3 class="text-md font-semibold text-gray-800">Informações Gerais</h3>
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Código:</span>
+                                        <span class="font-semibold">${agendamento.codigo}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-600">Status:</span>
+                                        <span class="status-${agendamento.status} px-2 py-1 rounded-full text-xs font-medium">
+                                            <i class="${this.getStatusIcon(agendamento.status)} mr-1"></i>
+                                            ${this.getStatusText(agendamento.status)}
+                                        </span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Data:</span>
+                                        <span class="font-semibold">${this.formatDateBrFromISO(agendamento.dataEntrega)}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Horário:</span>
+                                        <span class="font-semibold">${agendamento.horarioEntrega}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">CD:</span>
+                                        <span class="font-semibold text-xs">${agendamento.cdDestino || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                                        <i class="fas fa-truck-moving text-green-600 text-sm"></i>
+                                    </div>
+                                    <h3 class="text-md font-semibold text-gray-800">Fornecedor</h3>
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div>
+                                        <span class="text-gray-600 text-xs">Empresa</span>
+                                        <p class="font-semibold truncate" title="${agendamento.fornecedor?.nome || agendamento.nomeEmpresa || 'N/A'}">${agendamento.fornecedor?.nome || agendamento.nomeEmpresa || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">E-mail</span>
+                                        <p class="font-semibold truncate" title="${agendamento.fornecedor?.email || agendamento.email || 'N/A'}">${agendamento.fornecedor?.email || agendamento.email || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">Telefone</span>
+                                        <p class="font-semibold">${agendamento.fornecedor?.telefone || agendamento.telefone || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">CNPJ</span>
+                                        <p class="font-semibold text-xs">${agendamento.fornecedor?.documento || agendamento.cnpj || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                        <i class="fas fa-user-tie text-blue-600 text-sm"></i>
+                                    </div>
+                                    <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div>
+                                        <span class="text-gray-600 text-xs">Nome</span>
+                                        <p class="font-semibold">${agendamento.motoristaNome || agendamento.fornecedor?.nomeResponsavel || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">CPF</span>
+                                        <p class="font-semibold">${agendamento.motoristaCpf || agendamento.fornecedor?.cpfMotorista || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">Telefone</span>
+                                        <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.fornecedor?.telefoneMotorista || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">Placa</span>
+                                        <p class="font-semibold">${agendamento.placaVeiculo || agendamento.fornecedor?.placaVeiculo || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600 text-xs">Tipo de Veículo</span>
+                                        <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.fornecedor?.tipoVeiculo || 'Não informado'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
+                                        <i class="fas fa-file-invoice text-purple-600 text-sm"></i>
+                                    </div>
+                                    <h3 class="text-md font-semibold text-gray-800">Resumo</h3>
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Pedidos:</span>
+                                        <span class="font-semibold">${agendamento.pedidos ? agendamento.pedidos.length : 0}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Notas Fiscais:</span>
+                                        <span class="font-semibold">${agendamento.pedidos ? agendamento.pedidos.reduce((total, p) => total + p.notasFiscais.length, 0) : 0}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Valor Total:</span>
+                                        <span class="font-semibold text-green-600 text-xs">
+                                            R$ ${agendamento.valorTotal || this.calcularValorTotal(agendamento)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${this.shouldShowCommunicationHistory(agendamento) ? `
+                            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                                <div class="border-b border-gray-200 p-4">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mr-2">
+                                            <i class="fas fa-comments text-yellow-600 text-sm"></i>
+                                        </div>
+                                        <h3 class="text-md font-semibold text-gray-800">Histórico de Comunicação</h3>
+                                    </div>
+                                </div>
+                                <div class="p-4">
+                                    ${this.renderCommunicationHistory(agendamento)}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${agendamento.status === 'reagendamento' ? `
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <h3 class="text-lg font-bold text-yellow-800 mb-4">
+                                    <i class="fas fa-calendar-alt mr-2"></i>Nova Data Sugerida pelo CD
+                                </h3>
+                                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <p class="text-yellow-700"><strong>Nova Data:</strong> ${this.formatDateBrFromISO(agendamento.dataSugestaoCD || agendamento.dataEntrega)}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-yellow-700"><strong>Novo Horário:</strong> ${agendamento.horarioSugestaoCD || agendamento.horarioEntrega}</p>
+                                    </div>
+                                </div>
+                                ${agendamento.motivoNaoVeio ? `<p class="text-yellow-700 mb-4"><strong>Motivo:</strong> ${agendamento.motivoNaoVeio}</p>` : ''}
+                                
+                                <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                                    <p class="text-blue-800 text-sm"><strong>⏰ Aguardando sua resposta!</strong> O CD está esperando você aceitar ou sugerir uma nova data.</p>
+                                </div>
+                                
+                                <div class="flex flex-wrap gap-3">
+                                    <button onclick="consultaStatus.responderReagendamento('${agendamento.codigo}', 'aceito')" 
+                                        class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all text-sm font-medium">
+                                        <i class="fas fa-check mr-1"></i>Aceitar Nova Data
+                                    </button>
+                                    <button onclick="consultaStatus.abrirContraProposta('${agendamento.codigo}')" 
+                                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all text-sm font-medium">
+                                        <i class="fas fa-calendar mr-1"></i>Sugerir Outra Data
+                                    </button>
+                                    <button onclick="consultaStatus.confirmarCancelamento('${agendamento.codigo}')" 
+                                        class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all text-sm font-medium">
+                                        <i class="fas fa-trash mr-1"></i>Cancelar Solicitação
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-3 bg-red-50 border border-red-200 rounded p-3">
+                                    <p class="text-red-700 text-xs">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        <strong>Atenção:</strong> Ao cancelar a solicitação, todos os dados serão removidos permanentemente da base de dados e não poderão ser recuperados.
+                                    </p>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${agendamento.status === 'nao-veio' ? `
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <h3 class="text-lg font-bold text-red-800 mb-4">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>Entrega Não Realizada
+                                </h3>
+                                ${agendamento.motivoNaoVeio ? `<p class="text-red-700 mb-4"><strong>Motivo:</strong> ${agendamento.motivoNaoVeio}</p>` : ''}
+                                
+                                <div class="fornecedor-options mb-4">
+                                    <h4 class="text-md font-semibold text-red-700 mb-3">Opções Disponíveis:</h4>
+                                    <div class="flex flex-wrap gap-3">
+                                        <button onclick="consultaStatus.reagendarEntrega('${agendamento.codigo}')" 
+                                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all text-sm font-medium">
+                                            <i class="fas fa-calendar-plus mr-1"></i>Reagendar Entrega
+                                        </button>
+                                        <button onclick="consultaStatus.cancelarAgendamento('${agendamento.codigo}')" 
+                                            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all text-sm font-medium">
+                                            <i class="fas fa-times mr-1"></i>Cancelar Agendamento
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                ${agendamento.dataSugestaoCD ? `
+                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                                        <h4 class="text-md font-semibold text-blue-800 mb-2">
+                                            <i class="fas fa-lightbulb mr-2"></i>Nova Data Sugerida pelo CD
+                                        </h4>
+                                        <div class="grid md:grid-cols-2 gap-3 mb-3">
+                                            <div>
+                                                <p class="text-blue-700"><strong>Data:</strong> ${this.formatDateBrFromISO(agendamento.dataSugestaoCD)}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-blue-700"><strong>Horário:</strong> ${agendamento.horarioSugestaoCD}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button onclick="consultaStatus.responderSugestaoCD('${agendamento.codigo}', 'aceito')" 
+                                                class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+                                                <i class="fas fa-check mr-1"></i>Aceitar
+                                            </button>
+                                            <button onclick="consultaStatus.responderSugestaoCD('${agendamento.codigo}', 'rejeitado')" 
+                                                class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
+                                                <i class="fas fa-times mr-1"></i>Rejeitar
+                                            </button>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <div class="border-b border-gray-200 p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-2">
+                                            <i class="fas fa-file-invoice-dollar text-indigo-600 text-sm"></i>
+                                        </div>
+                                        <h3 class="text-md font-semibold text-gray-800">Pedidos e Notas Fiscais</h3>
+                                    </div>
+                                    </div>
+                            </div>
+                            <div class="p-4">
+                                ${this.renderPedidosENotasFiscais(agendamento)}
+                            </div>
+                        </div>
+
+                        ${agendamento.observacoes ? `
+                            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                                <div class="border-b border-gray-200 p-4">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-2">
+                                            <i class="fas fa-comment-alt text-gray-600 text-sm"></i>
+                                        </div>
+                                        <h3 class="text-md font-semibold text-gray-800">Observações</h3>
+                                    </div>
+                                </div>
+                                <div class="p-4">
+                                    <p class="text-gray-700 text-sm leading-relaxed">${agendamento.observacoes}</p>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                document.getElementById('status-modal').classList.remove('hidden');
+            }
+
+            // Funções auxiliares para o novo modal
+            calcularValorTotal(agendamento) {
+                if (!agendamento.pedidos) return '0,00';
+                
+                let total = 0;
+                agendamento.pedidos.forEach(pedido => {
+                    pedido.notasFiscais.forEach(nf => {
+                        const valor = parseFloat(nf.valor?.replace(',', '.') || 0);
+                        total += valor;
+                    });
+                });
+                
+                return total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            }
+
+            shouldShowCommunicationHistory(agendamento) {
+                return agendamento.status === 'reagendamento' || agendamento.status === 'nao-veio' || 
+                       (agendamento.historico && agendamento.historico.length > 0);
+            }
+
+            renderCommunicationHistory(agendamento) {
+                const historico = agendamento.historico || [];
+                
+                if (historico.length === 0) {
+                    return `
+                        <div class="text-center py-4 text-gray-500">
+                            <i class="fas fa-comments text-2xl mb-2"></i>
+                            <p class="text-sm">Nenhuma comunicação registrada</p>
+                        </div>
+                    `;
+                }
+
+                return historico.map((evento, index) => `
+                    <div class="flex items-start space-x-3 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-3 mb-3' : ''}">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 rounded-full ${this.getHistoryIconClass(evento.acao)} flex items-center justify-center">
+                                <i class="${this.getHistoryIcon(evento.acao)} text-white text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <p class="text-sm font-medium text-gray-900">${this.getHistoryTitle(evento.acao)}</p>
+                                <p class="text-xs text-gray-500">${evento.data ? this.formatDateBrFromISO(evento.data) : 'Agora'}</p>
+                            </div>
+                            <p class="text-sm text-gray-600">${evento.descricao}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            getHistoryIconClass(acao) {
+                const classes = {
+                    'agendamento_criado': 'bg-green-500',
+                    'cd_sugeriu_reagendamento': 'bg-blue-500',
+                    'fornecedor_respondeu': 'bg-purple-500'
+                };
+                return classes[acao] || 'bg-gray-500';
+            }
+
+            getHistoryIcon(acao) {
+                const icons = {
+                    'agendamento_criado': 'fas fa-plus',
+                    'cd_sugeriu_reagendamento': 'fas fa-calendar-alt',
+                    'fornecedor_respondeu': 'fas fa-reply'
+                };
+                return icons[acao] || 'fas fa-comment';
+            }
+
+            getHistoryTitle(acao) {
+                const titles = {
+                    'agendamento_criado': 'Agendamento Criado',
+                    'cd_sugeriu_reagendamento': 'CD Sugeriu Nova Data',
+                    'fornecedor_respondeu': 'Fornecedor Respondeu'
+                };
+                return titles[acao] || 'Evento';
+            }
+
+            renderPedidosENotasFiscais(agendamento) {
+                if (!agendamento.pedidos || agendamento.pedidos.length === 0) {
+                    return `
+                        <div class="text-center py-6 text-gray-500">
+                            <i class="fas fa-inbox text-2xl mb-2"></i>
+                            <p class="text-sm">Nenhum pedido encontrado</p>
+                        </div>
+                    `;
+                }
+
+                return agendamento.pedidos.map(pedido => `
+                    <div class="border border-gray-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-center mb-3">
+                            <h4 class="font-semibold text-gray-900">Pedido: ${pedido.numero}</h4>
+                            </div>
+                        <div class="space-y-2">
+                            ${pedido.notasFiscais.map(nf => `
+                                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-3 mb-1">
+                                            <span class="font-medium text-gray-900">NF: ${nf.numero}</span>
+                                            ${nf.serie ? `<span class="text-xs text-gray-500">Série: ${nf.serie}</span>` : ''}
+                                        </div>
+                                        <div class="text-lg font-bold text-green-600">R$ ${nf.valor}</div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        ${(() => {
+                                            return nf.arquivo ? `
+                                                <button onclick="consultaStatus.viewPDF('${nf.arquivo}')" 
+                                                    class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium hover:bg-blue-200">
+                                                    <i class="fas fa-file-pdf mr-1"></i>PDF
+                                                </button>
+                                            ` : `
+                                                <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
+                                                    <i class="fas fa-exclamation-triangle mr-1"></i>Sem PDF
+                                                </span>
+                                            `;
+                                        })()}
+                                        <button onclick="consultaStatus.editarNF('${pedido.numero}', '${nf.numero}')" 
+                                            class="text-blue-600 hover:text-blue-800 text-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="consultaStatus.excluirNF('${pedido.numero}', '${nf.numero}')" 
+                                            class="text-red-600 hover:text-red-800 text-sm">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Funções de edição
+            editarInformacoes() {
+                // Implementar modal de edição de informações gerais
+                console.log('Editar informações gerais');
+            }
+
+            editarFornecedor() {
+                // Implementar modal de edição de dados do fornecedor
+                console.log('Editar fornecedor');
+            }
+
+            adicionarNF() {
+                // Abrir modal para adicionar nova NF
+                document.getElementById('nf-modal-title').textContent = 'Adicionar Nota Fiscal';
+                document.getElementById('nf-form').reset();
+                document.getElementById('nf-modal').classList.remove('hidden');
+            }
+
+            adicionarPedido() {
+                // Inicializar dados do modal
+                this.pedidosModalData = {
+                    pedidos: [],
+                    pedidoCounter: 0
+                };
+                
+                // Limpar containers
+                document.getElementById('pedidos-modal-tabs').innerHTML = '';
+                document.getElementById('pedidos-modal-container').innerHTML = '';
+                
+                // Adicionar primeiro pedido automaticamente
+                this.adicionarPedidoNoModal();
+                
+                // Abrir modal
+                document.getElementById('pedidos-modal').classList.remove('hidden');
+            }
+
+            adicionarPedidoNoModal() {
+                this.pedidosModalData.pedidoCounter++;
+                const pedidoId = `modal-pedido-${this.pedidosModalData.pedidoCounter}`;
+                
+                // Criar tab do pedido
+                this.criarTabPedidoModal(pedidoId, this.pedidosModalData.pedidoCounter);
+                
+                // Criar conteúdo do pedido
+                const pedidoHTML = `
+                    <div id="${pedidoId}" class="pedido-modal-content bg-gray-50 rounded-xl p-6 border-l-4 border-orange-primary" style="display: none;">
+                        <div class="grid md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-gray-dark font-semibold mb-2">
+                                    <i class="fas fa-shopping-cart mr-2 text-orange-primary"></i>
+                                    Número do Pedido *
+                                </label>
+                                <input type="text" name="numeroPedido" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                                    placeholder="Ex: PED12345">
+                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            <div class="flex items-end">
+                                <div class="w-full">
+                                    <label class="block text-gray-dark font-semibold mb-2">
+                                        <i class="fas fa-receipt mr-2 text-orange-primary"></i>
+                                        Notas Fiscais do Pedido *
+                                    </label>
+                                    <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                                        <span class="text-blue-800 font-medium">
+                                            <i class="fas fa-file-invoice mr-2"></i>
+                                            Adicione as notas fiscais abaixo
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="notas-fiscais-modal-container" data-pedido="${pedidoId}">
+                                </div>
+                            
+                            <div class="text-left">
+                                <button type="button" onclick="consultaStatus.adicionarNotaFiscalModal('${pedidoId}')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all">
+                                    </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('pedidos-modal-container').insertAdjacentHTML('beforeend', pedidoHTML);
+                
+                // Mostrar o pedido recém-criado
+                this.mostrarPedidoModal(pedidoId);
+                
+                // Adicionar primeira nota fiscal automaticamente
+                this.adicionarNotaFiscalModal(pedidoId);
+            }
+
+            criarTabPedidoModal(pedidoId, numeroTab) {
+                const tabsContainer = document.getElementById('pedidos-modal-tabs');
+                
+                const tabHTML = `
+                    <button type="button" id="tab-${pedidoId}" onclick="consultaStatus.mostrarPedidoModal('${pedidoId}')" 
+                        class="pedido-modal-tab px-4 py-2 rounded-lg font-medium transition-all bg-orange-primary text-white flex items-center space-x-2">
+                        <span>Pedido ${numeroTab}</span>
+                        ${numeroTab > 1 ? `
                             <button type="button" onclick="event.stopPropagation(); consultaStatus.removerPedidoModal('${pedidoId}')" 
                                 class="ml-2 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs transition-all">
                                 <i class="fas fa-times"></i>
@@ -1917,9 +2448,9 @@
                     }
                 }
             }
-        
+            
             // Funções para status "nao-veio"
-        async reagendarEntrega(codigo) {
+            async reagendarEntrega(codigo) {
                 // Criar modal simples para reagendamento
                 const novaData = prompt('Digite a nova data (YYYY-MM-DD):');
                 const novoHorario = prompt('Digite o novo horário (ex: 14:00-16:00):');
@@ -2340,10 +2871,10 @@
 
             confirmarCancelamento(codigo) {
                 if (confirm('⚠️ ATENÇÃO: Tem certeza que deseja cancelar esta solicitação?\n\n' +
-                           '• Todos os dados serão removidos PERMANENTEMENTE da base de dados\n' +
-                           '• Esta ação NÃO PODE ser desfeita\n' +
-                           '• Você precisará criar um novo agendamento se necessário\n\n' +
-                           'Digite "CONFIRMAR" para continuar:')) {
+                            '• Todos os dados serão removidos PERMANENTEMENTE da base de dados\n' +
+                            '• Esta ação NÃO PODE ser desfeita\n' +
+                            '• Você precisará criar um novo agendamento se necessário\n\n' +
+                            'Digite "CONFIRMAR" para continuar:')) {
                     
                     const confirmacao = prompt('Digite "CONFIRMAR" (em maiúsculas) para continuar:');
                     if (confirmacao === 'CONFIRMAR') {
@@ -2507,13 +3038,14 @@
                 document.getElementById('notification-container').appendChild(notification);
                 
                 setTimeout(() => notification.remove(), 5000);
-                }
             }
-        // Funções globais
+        } // <-- FECHAMENTO CORRETO DA CLASSE
+
+        // Funções globais (BLOCO ÚNICO, SEM DUPLICAÇÃO)
         function openConsultaModal() {
             document.getElementById('consulta-modal').classList.remove('hidden');
-        
         }
+
         function closeConsultaModal() {
             consultaStatus.closeConsultaModal();
         }
@@ -2528,14 +3060,84 @@
 
         function closeNFModal() {
             document.getElementById('nf-modal').classList.add('hidden');
-            
             // Limpar o formulário
             document.getElementById('nf-form').reset();
-            
             // Remover campos de edição se existirem
             const editModeField = document.getElementById('nf-edit-mode');
             const originalField = document.getElementById('nf-numero-original');
             if (editModeField) editModeField.remove();
             if (originalField) originalField.remove();
-            
+            // Restaurar título original
+            document.querySelector('#nf-modal h2').innerHTML = `
+                <i class="fas fa-file-invoice mr-2 text-green-600"></i>
+                Adicionar Nota Fiscal
+            `;
         }
+
+        function closePedidosModal() {
+            consultaStatus.closePedidosModal();
+        }
+
+        // Função adicionarPedidoNoModal removida (está dentro da classe)
+
+        function salvarPedidosModal() {
+            consultaStatus.salvarPedidosModal();
+        }
+
+        // Inicializar sistema
+        let consultaStatus;
+        document.addEventListener('DOMContentLoaded', () => {
+            consultaStatus = new ConsultaStatus();
+            // Event listener para formulário de NF
+            document.getElementById('nf-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const editMode = document.getElementById('nf-edit-mode')?.value === 'edit';
+                const numeroOriginal = document.getElementById('nf-numero-original')?.value;
+                const formData = new FormData();
+                formData.append('numeroPedido', document.getElementById('nf-pedido').value);
+                formData.append('numeroNF', document.getElementById('nf-numero').value);
+                formData.append('valor', document.getElementById('nf-valor').value);
+                const arquivo = document.getElementById('nf-arquivo').files[0];
+                if (arquivo) {
+                    formData.append('arquivo', arquivo);
+                }
+                fetch(`/api/agendamentos/${consultaStatus.currentAgendamento.codigo}/notas-fiscais`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        consultaStatus.showNotification(
+                            editMode ? 'Nota fiscal atualizada com sucesso!' : 'Nota fiscal salva com sucesso!', 
+                            'success'
+                        );
+                        // Atualizar dados do agendamento
+                        consultaStatus.currentAgendamento = result.data;
+                        // Recarregar modal de status
+                        consultaStatus.showStatusModal(consultaStatus.currentAgendamento);
+                        closeNFModal();
+                        // Limpar campos de edição
+                        const editModeField = document.getElementById('nf-edit-mode');
+                        const originalField = document.getElementById('nf-numero-original');
+                        if (editModeField) editModeField.remove();
+                        if (originalField) originalField.remove();
+                        // Restaurar título original
+                        document.querySelector('#nf-modal h2').innerHTML = `
+                            <i class="fas fa-file-invoice mr-2 text-green-600"></i>
+                            Adicionar Nota Fiscal
+                        `;
+                    } else {
+                        consultaStatus.showNotification(result.message || 'Erro ao salvar nota fiscal', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao salvar NF:', error);
+                    consultaStatus.showNotification('Erro ao salvar nota fiscal', 'error');
+                });
+            });
+        });
+
+    </script>
+</body>
+</html>
