@@ -1607,13 +1607,15 @@ class CDDashboard {
     // --- MÉTODOS DE AÇÃO E MODAIS ---
 
     showAgendamentoDetails(id) {
-        // Preencher Informações Gerais
-        let infoGeralHtml = '';
-        infoGeralHtml += `<div><span class='font-semibold'>Código:</span> ${agendamento.codigo || '-'}</div>`;
-        infoGeralHtml += `<div><span class='font-semibold'>Data Entrega:</span> ${agendamento.dataEntrega ? this.formatDate(agendamento.dataEntrega) : '-'}</div>`;
-        infoGeralHtml += `<div><span class='font-semibold'>Horário:</span> ${agendamento.horarioEntrega || '-'}</div>`;
-        infoGeralHtml += `<div><span class='font-semibold'>Tipo de Carga:</span> ${this.getTipoCargaText(agendamento.tipoCarga) || '-'}</div>`;
-        document.getElementById('detail-info-geral').innerHTML = infoGeralHtml;
+    const agendamento = this.agendamentos.find(a => a.id === id);
+    if (!agendamento) return;
+    // Preencher Informações Gerais
+    let infoGeralHtml = '';
+    infoGeralHtml += `<div><span class='font-semibold'>Código:</span> ${agendamento.codigo || '-'}</div>`;
+    infoGeralHtml += `<div><span class='font-semibold'>Data Entrega:</span> ${agendamento.dataEntrega ? this.formatDate(agendamento.dataEntrega) : '-'}</div>`;
+    infoGeralHtml += `<div><span class='font-semibold'>Horário:</span> ${agendamento.horarioEntrega || '-'}</div>`;
+    infoGeralHtml += `<div><span class='font-semibold'>Tipo de Carga:</span> ${this.getTipoCargaText(agendamento.tipoCarga) || '-'}</div>`;
+    document.getElementById('detail-info-geral').innerHTML = infoGeralHtml;
 
         // Preencher Transportador
         let transportadorHtml = '';
@@ -1656,9 +1658,6 @@ class CDDashboard {
         resumoHtml += `<div><span class='font-semibold'>Total de Notas Fiscais:</span> ${totalNFs}</div>`;
         resumoHtml += `<div><span class='font-semibold'>Valor Total:</span> R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>`;
         document.getElementById('detail-resumo').innerHTML = resumoHtml;
-        const agendamento = this.agendamentos.find(a => a.id === id);
-        if (!agendamento) return;
-
         // Preencher apenas a seção de Pedidos e Notas Fiscais
         let pedidosNotasHtml = '';
         if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
