@@ -662,7 +662,7 @@
         </div>
     </section>
 
-    <!-- Agendamento Detail Modal -->
+    <!-- Agendamento Detail Modal (Replicado: Pedidos e Notas Fiscais Layout) -->
     <div id="detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal-backdrop p-4">
         <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-3d">
             <div class="flex-shrink-0 bg-gradient-to-r from-orange-primary to-orange-secondary px-6 py-4 flex justify-between items-center rounded-t-2xl">
@@ -675,7 +675,83 @@
                 </button>
             </div>
             <div id="detail-content" class="flex-1 overflow-y-auto p-6">
-                <!-- Conteúdo será inserido dinamicamente -->
+                <!-- Replicado: Pedidos e Notas Fiscais Layout -->
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                    <i class="fas fa-info-circle text-blue-600 text-sm"></i>
+                                </div>
+                                <h3 class="text-md font-semibold text-gray-800">Informações Gerais</h3>
+                            </div>
+                            <div class="space-y-2 text-sm" id="detail-info-geral">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+                        <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                                    <i class="fas fa-truck-moving text-green-600 text-sm"></i>
+                                </div>
+                                <h3 class="text-md font-semibold text-gray-800">Transportador</h3>
+                            </div>
+                            <div class="space-y-2 text-sm" id="detail-transportador">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+                        <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                    <i class="fas fa-user-tie text-blue-600 text-sm"></i>
+                                </div>
+                                <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
+                            </div>
+                            <div class="space-y-2 text-sm" id="detail-motorista">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
+                                    <i class="fas fa-file-invoice text-purple-600 text-sm"></i>
+                                </div>
+                                <h3 class="text-md font-semibold text-gray-800">Resumo</h3>
+                            </div>
+                            <div class="space-y-2 text-sm" id="detail-resumo">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <div class="border-b border-gray-200 p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-2">
+                                        <i class="fas fa-file-invoice-dollar text-indigo-600 text-sm"></i>
+                                    </div>
+                                    <h3 class="text-md font-semibold text-gray-800">Pedidos e Notas Fiscais</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4" id="detail-pedidos-notas">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm" id="detail-observacoes-container" style="display:none;">
+                        <div class="border-b border-gray-200 p-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-2">
+                                    <i class="fas fa-comment-alt text-gray-600 text-sm"></i>
+                                </div>
+                                <h3 class="text-md font-semibold text-gray-800">Observações</h3>
+                            </div>
+                        </div>
+                        <div class="p-4" id="detail-observacoes">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
