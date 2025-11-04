@@ -1610,64 +1610,36 @@ class CDDashboard {
         const agendamento = this.agendamentos.find(a => a.id === id);
         if (!agendamento) return;
 
-        // Calcular valor total das NFs
-        let valorTotal = 0;
+        // Preencher apenas a seção de Pedidos e Notas Fiscais
+        let pedidosNotasHtml = '';
         if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
+            const pedidosMap = {};
             agendamento.notasFiscais.forEach(nf => {
-                let v = nf.valor;
-                if (typeof v === 'string') {
-                    v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
-                    v = parseFloat(v);
-                }
-                if (!isNaN(v)) valorTotal += v;
+                const pedido = nf.numeroPedido || 'Pedido não informado';
+                if (!pedidosMap[pedido]) pedidosMap[pedido] = [];
+                pedidosMap[pedido].push(nf);
             });
+            pedidosNotasHtml = Object.keys(pedidosMap).map(pedido => {
+                return `<div class="mb-6"><div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-box mr-2"></i>Pedido: ${pedido}</div><div class="space-y-3">` +
+                    pedidosMap[pedido].map(nf => {
+                        let valorFormatado = 'Valor não informado';
+                        if (nf.valor) {
+                            let v = nf.valor;
+                            if (typeof v === 'string') {
+                                v = v.replace(/[^\d,.]/g, '').replace(',', '.');
+                                v = parseFloat(v);
+                            }
+                            valorFormatado = isNaN(v) ? 'Valor não informado' : `R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                        }
+                        return `<div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors"><div class="flex justify-between items-center"><div class="flex-1"><div class="flex items-center space-x-3 mb-1"><span class="font-semibold text-gray-900">NF: ${nf.numeroNF}</span>${nf.serie ? `<span class=\"text-xs text-gray-500\">Série: ${nf.serie}</span>` : ''}</div><div class="text-lg font-bold text-green-600">${valorFormatado}</div></div><div class="flex items-center space-x-2">${nf.arquivoPath ? `<button onclick=\"dashboard.viewPDF('${nf.arquivoPath}')\" class=\"bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium hover:bg-green-200 transition-colors\"><i class=\"fas fa-file-pdf mr-1\"></i>PDF</button>` : `<span class=\"bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-medium\"><i class=\"fas fa-exclamation-triangle mr-1\"></i>Sem PDF</span>`}</div></div></div>`;
+                    }).join('') + '</div></div>';
+            }).join('');
+        } else {
+            pedidosNotasHtml = `<div class="text-center py-6 text-gray-500"><i class="fas fa-inbox text-2xl mb-2"></i><p class="text-sm">Nenhuma nota fiscal encontrada</p></div>`;
         }
-        const dataCriacao = agendamento.createdAt ? this.formatDate(agendamento.createdAt) : 'Não informado';
-
-        // HTML do modal de detalhes
-        const detailHtml = `
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                    <!-- Informações Gerais -->
-                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                                const agendamento = this.agendamentos.find(a => a.id === id);
-                                if (!agendamento) return;
-
-                                // Preencher apenas a seção de Pedidos e Notas Fiscais
-                                let pedidosNotasHtml = '';
-                                if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
-                                    const pedidosMap = {};
-                                    agendamento.notasFiscais.forEach(nf => {
-                                        const pedido = nf.numeroPedido || 'Pedido não informado';
-                                        if (!pedidosMap[pedido]) pedidosMap[pedido] = [];
-                                        pedidosMap[pedido].push(nf);
-                                    });
-                                    pedidosNotasHtml = Object.keys(pedidosMap).map(pedido => {
-                                        return `<div class="mb-6"><div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-box mr-2"></i>Pedido: ${pedido}</div><div class="space-y-3">` +
-                                            pedidosMap[pedido].map(nf => {
-                                                let valorFormatado = 'Valor não informado';
-                                                if (nf.valor) {
-                                                    let v = nf.valor;
-                                                    if (typeof v === 'string') {
-                                                        v = v.replace(/[^
-,\.]/g, '').replace(',', '.');
-                                                        v = parseFloat(v);
-                                                    }
-                                                    valorFormatado = isNaN(v) ? 'Valor não informado' : `R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                                                }
-                                                return `<div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors"><div class="flex justify-between items-center"><div class="flex-1"><div class="flex items-center space-x-3 mb-1"><span class="font-semibold text-gray-900">NF: ${nf.numeroNF}</span>${nf.serie ? `<span class=\"text-xs text-gray-500\">Série: ${nf.serie}</span>` : ''}</div><div class="text-lg font-bold text-green-600">${valorFormatado}</div></div><div class="flex items-center space-x-2">${nf.arquivoPath ? `<button onclick=\"dashboard.viewPDF('${nf.arquivoPath}')\" class=\"bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium hover:bg-green-200 transition-colors\"><i class=\"fas fa-file-pdf mr-1\"></i>PDF</button>` : `<span class=\"bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-medium\"><i class=\"fas fa-exclamation-triangle mr-1\"></i>Sem PDF</span>`}</div></div></div>`;
-                                            }).join('') + '</div></div>';
-                                    }).join('');
-                                } else {
-                                    pedidosNotasHtml = `<div class="text-center py-6 text-gray-500"><i class="fas fa-inbox text-2xl mb-2"></i><p class="text-sm">Nenhuma nota fiscal encontrada</p></div>`;
-                                }
-                                document.getElementById('detail-pedidos-notas').innerHTML = pedidosNotasHtml;
-                                // Abrir modal
-                                document.getElementById('detail-modal').classList.remove('hidden');
-               (agendamento.historicoAcoes && agendamento.historicoAcoes.some(h => 
-                   h.acao.includes('reagendamento') || h.acao.includes('sugestao')));
+        document.getElementById('detail-pedidos-notas').innerHTML = pedidosNotasHtml;
+        // Abrir modal
+        document.getElementById('detail-modal').classList.remove('hidden');
     }
 
     renderCommunicationHistory(agendamento) {
