@@ -297,6 +297,7 @@ class CDDashboard {
         const dateInputs = document.querySelectorAll('input[type="date"]');
         dateInputs.forEach(input => {
             input.min = minDateString;
+            
             // Adicionar validação para impedir seleção de fins de semana
             if (!input.hasAttribute('data-weekday-validator')) {
                 input.addEventListener('change', function() {
@@ -309,7 +310,259 @@ class CDDashboard {
                 });
                 input.setAttribute('data-weekday-validator', 'true');
             }
+            
+            // Definir valor padrão como próximo dia útil se estiver vazio
+            if (!input.value) {
+                const defaultDate = getNextWeekday(new Date());
+                input.value = defaultDate.toISOString().split('T')[0];
+            }
         });
+    }
+
+    // Modal KPIs
+    openKpisModal() {
+        document.getElementById('dashboard-kpis-modal')?.classList.remove('hidden');
+        this.loadKpis();
+    }
+
+    closeKpisModal() {
+        document.getElementById('dashboard-kpis-modal')?.classList.add('hidden');
+    }
+
+    async loadKpis() {
+        const loading = document.getElementById('kpis-loading');
+        const content = document.getElementById('kpis-content');
+        loading.classList.remove('hidden');
+        content.innerHTML = '';
+        try {
+            const token = sessionStorage.getItem('token');
+            const res = await fetch(`${getApiBaseUrl()}/api/kpis`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Erro ao buscar KPIs');
+            const kpis = await res.json();
+            loading.classList.add('hidden');
+            content.innerHTML = this.renderKpisContent(kpis);
+            this.renderKpisCharts(kpis);
+        } catch (e) {
+            loading.classList.add('hidden');
+            content.innerHTML = `<div class='text-center text-red-600 font-bold'>Erro ao carregar KPIs</div>`;
+        }
+    }
+
+    renderKpisContent(kpis) {
+        // KPIs principais
+        return `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div class="bg-gradient-to-br from-orange-primary to-orange-accent text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                <div class="text-4xl font-bold mb-2">${kpis.totalAgendamentos ?? '-'}</div>
+                <div class="text-lg font-semibold">Total de Agendamentos</div>
+            </div>
+            <div class="bg-gradient-to-br from-green-500 to-green-400 text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                <div class="text-4xl font-bold mb-2">${kpis.percentEntregues ?? '-'}</div>
+                <div class="text-lg font-semibold">% Entregues</div>
+            </div>
+            <div class="bg-gradient-to-br from-red-500 to-orange-primary text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                <div class="text-4xl font-bold mb-2">${kpis.percentNaoVeio ?? '-'}</div>
+                <div class="text-lg font-semibold">% Não Veio</div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="font-bold text-orange-primary text-lg flex items-center"><i class="fas fa-chart-pie mr-2"></i>Status dos Agendamentos</div>
+                    <button onclick="dashboard.loadKpis()" class="bg-orange-primary text-white px-3 py-1 rounded hover:bg-orange-secondary"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <canvas id="kpi-status-pizza" height="180"></canvas>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-chart-line mr-2"></i>Agendamentos por Dia</div>
+                <canvas id="kpi-agendamentos-linha" height="180"></canvas>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-stopwatch mr-2"></i>Tempo Médio de Permanência</div>
+                <div class="text-3xl font-bold text-gray-700">${kpis.tempoMedioPermanencia ?? '-'}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-users mr-2"></i>Top 5 Fornecedores Não Veio</div>
+                <canvas id="kpi-top-fornecedores" height="180"></canvas>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow flex flex-col mb-8">
+            <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-chart-bar mr-2"></i>Não Veio por Dia</div>
+            <canvas id="kpi-nao-veio-linha" height="180"></canvas>
+        </div>
+        `;
+    }
+
+    renderKpisCharts(kpis) {
+        // Pizza status
+        if (window.kpiStatusPizza) window.kpiStatusPizza.destroy();
+        window.kpiStatusPizza = new Chart(document.getElementById('kpi-status-pizza').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: kpis.statusLabels,
+                datasets: [{
+                    data: kpis.statusValores,
+                    backgroundColor: [
+                        '#FF6B35','#10B981','#3B82F6','#EF4444','#8B5CF6'
+                    ],
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#FF6B35', font: { weight: 'bold' } } }
+                }
+            }
+        });
+        // Linha agendamentos por dia
+        if (window.kpiAgendLinha) window.kpiAgendLinha.destroy();
+        window.kpiAgendLinha = new Chart(document.getElementById('kpi-agendamentos-linha').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: kpis.agendamentosLabels,
+                datasets: [{
+                    label: 'Agendamentos',
+                    data: kpis.agendamentosValores,
+                    borderColor: '#FF6B35',
+                    backgroundColor: 'rgba(255,107,53,0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
+            }
+        });
+        // Top fornecedores não veio
+        if (window.kpiTopForn) window.kpiTopForn.destroy();
+        window.kpiTopForn = new Chart(document.getElementById('kpi-top-fornecedores').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: kpis.topFornecedoresLabels,
+                datasets: [{
+                    label: 'Não Veio',
+                    data: kpis.topFornecedoresValores,
+                    backgroundColor: '#EF4444',
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
+            }
+        });
+        // Linha não veio por dia
+        if (window.kpiNaoVeioLinha) window.kpiNaoVeioLinha.destroy();
+        window.kpiNaoVeioLinha = new Chart(document.getElementById('kpi-nao-veio-linha').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: kpis.agendamentosLabels,
+                datasets: [{
+                    label: 'Não Veio',
+                    data: kpis.naoVeioPorDia,
+                    borderColor: '#EF4444',
+                    backgroundColor: 'rgba(239,68,68,0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#EF4444' } } }
+            }
+        });
+    }
+
+    // Funções globais para abrir/fechar modais do dashboard
+    openConsultaModal() {
+        document.getElementById('consulta-modal')?.classList.remove('hidden');
+    }
+
+    closeConsultaModal() {
+        document.getElementById('consulta-modal')?.classList.add('hidden');
+    }
+
+    openRegistrarEntregaModal() {
+        const modal = document.getElementById('registrar-entrega-modal');
+        modal.classList.remove('hidden');
+        
+        // Reset do formulário
+        entregaCurrentStep = 1;
+        entregaPedidos = [];
+        entregaCurrentPedido = 0;
+        
+        // Mostrar apenas o primeiro step
+        mostrarStepEntrega(1);
+        
+        // Configurar data atual
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('entrega-data').value = hoje;
+        
+        // Configurar horário atual
+        const agora = new Date();
+        const horaAtual = agora.getHours().toString().padStart(2, '0') + ':00';
+        const selectHorario = document.getElementById('entrega-horario');
+        if (selectHorario) {
+            selectHorario.value = horaAtual;
+        }
+        
+        // Configurar o submit do formulário
+        document.getElementById('registrar-entrega-form').onsubmit = handleRegistrarEntrega;
+    }
+
+    closeRegistrarEntregaModal() {
+        document.getElementById('registrar-entrega-modal')?.classList.add('hidden');
+    }
+
+    openBloqueioModal() {
+        document.getElementById('bloqueio-modal')?.classList.remove('hidden');
+    }
+
+    closeBloqueioModal() {
+        document.getElementById('bloqueio-modal')?.classList.add('hidden');
+    }
+
+    openGerenciarBloqueiosModal() {
+        document.getElementById('gerenciar-bloqueios-modal')?.classList.remove('hidden');
+    }
+
+    closeGerenciarBloqueiosModal() {
+        document.getElementById('gerenciar-bloqueios-modal')?.classList.add('hidden');
+    }
+
+    openEntregasModal() {
+        document.getElementById('modal-entregas')?.classList.remove('hidden');
+    }
+
+    closeEntregasModal() {
+        document.getElementById('modal-entregas')?.classList.add('hidden');
+    }
+
+    closeDetailModal() {
+        document.getElementById('detail-modal')?.classList.add('hidden');
+    }
+
+    closeSuggestDateModal() {
+        document.getElementById('suggest-date-modal')?.classList.add('hidden');
+    }
+
+    closeAllStatusModal() {
+        document.getElementById('all-status-modal')?.classList.add('hidden');
+    }
+
+    closeTodayDeliveriesModal() {
+        document.getElementById('today-deliveries-modal')?.classList.add('hidden');
+    }
+
+    closeStatusModal() {
+        document.getElementById('status-modal')?.classList.add('hidden');
+    }
+
+    closeEditarBloqueioModal() {
+        document.getElementById('editar-bloqueio-modal')?.classList.add('hidden');
     }
 
     fecharModalEntregas() {
