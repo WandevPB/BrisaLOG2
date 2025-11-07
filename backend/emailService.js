@@ -132,16 +132,16 @@ class EmailService {
     }
 
     // E-mail de confirmação de agendamento
-    async sendConfirmadoEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, consultaUrl }) {
+    async sendConfirmadoEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, consultaUrl, motoristaNome, veiculoPlaca, dataAgendamento, horarioAgendamento }) {
         const html = templateConfirmado({
             transportadorNome: fornecedorNome,
             agendamentoCodigo,
             cdNome,
             consultaUrl,
-            motoristaNome: arguments[0].motoristaNome,
-            veiculoPlaca: arguments[0].veiculoPlaca,
-            dataAgendamento: arguments[0].dataAgendamento,
-            horarioAgendamento: arguments[0].horarioAgendamento
+            motoristaNome,
+            veiculoPlaca,
+            dataAgendamento,
+            horarioAgendamento
         });
         return this.sendEmail({
             to,
@@ -151,16 +151,16 @@ class EmailService {
     }
 
     // E-mail de entrega realizada
-    async sendEntregueEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, consultaUrl }) {
+    async sendEntregueEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, consultaUrl, motoristaNome, veiculoPlaca, dataEntrega, horarioEntrega }) {
         const html = templateEntregue({
             transportadorNome: fornecedorNome,
             agendamentoCodigo,
             cdNome,
             baseUrl: consultaUrl,
-            motoristaNome: arguments[0].motoristaNome,
-            veiculoPlaca: arguments[0].veiculoPlaca,
-            dataEntrega: arguments[0].dataEntrega,
-            horarioEntrega: arguments[0].horarioEntrega
+            motoristaNome,
+            veiculoPlaca,
+            dataEntrega,
+            horarioEntrega
         });
         return this.sendEmail({
             to,
@@ -170,16 +170,16 @@ class EmailService {
     }
 
     // E-mail de não comparecimento
-    async sendNaoVeioEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, consultaUrl }) {
+    async sendNaoVeioEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, consultaUrl, motoristaNome, veiculoPlaca, dataAgendamento, horarioAgendamento }) {
         const html = templateNaoVeio({
             transportadorNome: fornecedorNome,
             agendamentoCodigo,
             cdNome,
             consultaUrl,
-            motoristaNome: arguments[0].motoristaNome,
-            veiculoPlaca: arguments[0].veiculoPlaca,
-            dataAgendamento: arguments[0].dataAgendamento,
-            horarioAgendamento: arguments[0].horarioAgendamento
+            motoristaNome,
+            veiculoPlaca,
+            dataAgendamento,
+            horarioAgendamento
         });
         return this.sendEmail({
             to,
@@ -189,7 +189,7 @@ class EmailService {
     }
 
     // E-mail de reagendamento
-    async sendReagendamentoEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, dataOriginal, novaDataSugerida, novoHorario, motivo, consultaUrl }) {
+    async sendReagendamentoEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, dataOriginal, novaDataSugerida, novoHorario, motivo, consultaUrl, motoristaNome, veiculoPlaca }) {
         const html = templateReagendamento({
             transportadorNome: fornecedorNome,
             agendamentoCodigo,
@@ -199,8 +199,8 @@ class EmailService {
             novoHorario,
             motivo,
             consultaUrl,
-            motoristaNome: arguments[0].motoristaNome,
-            veiculoPlaca: arguments[0].veiculoPlaca
+            motoristaNome,
+            veiculoPlaca
         });
         return this.sendEmail({
             to,

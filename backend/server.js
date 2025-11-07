@@ -929,6 +929,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         agendamento: {
           codigo: codigo,
           dataHora: agendamento.dataEntrega,
+          horarioEntrega: agendamento.horarioEntrega,
           observacoes: observacoesFinal,
           cd: cd
         },
@@ -1155,7 +1156,11 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
           fornecedorNome: agendamento.fornecedor.nome,
           agendamentoCodigo: agendamento.codigo,
           cdNome: agendamento.cd.nome,
-          consultaUrl
+          consultaUrl,
+          motoristaNome: agendamento.motoristaNome,
+          veiculoPlaca: agendamento.placaVeiculo,
+          dataAgendamento: agendamento.dataEntrega,
+          horarioAgendamento: agendamento.horarioEntrega
         });
       } else if (status === 'entregue') {
         await emailService.sendEntregueEmail({
@@ -1163,7 +1168,11 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
           fornecedorNome: agendamento.fornecedor.nome,
           agendamentoCodigo: agendamento.codigo,
           cdNome: agendamento.cd.nome,
-          consultaUrl
+          consultaUrl,
+          motoristaNome: agendamento.motoristaNome,
+          veiculoPlaca: agendamento.placaVeiculo,
+          dataEntrega: agendamento.dataEntrega,
+          horarioEntrega: agendamento.horarioEntrega
         });
       } else if (status === 'nao-veio') {
         await emailService.sendNaoVeioEmail({
@@ -1171,7 +1180,11 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
           fornecedorNome: agendamento.fornecedor.nome,
           agendamentoCodigo: agendamento.codigo,
           cdNome: agendamento.cd.nome,
-          consultaUrl
+          consultaUrl,
+          motoristaNome: agendamento.motoristaNome,
+          veiculoPlaca: agendamento.placaVeiculo,
+          dataAgendamento: agendamento.dataEntrega,
+          horarioAgendamento: agendamento.horarioEntrega
         });
       }
     } catch (emailError) {
@@ -1293,7 +1306,9 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
         novaDataSugerida: toUTCDateOnly(novaData),
         novoHorario,
         motivo,
-        consultaUrl
+        consultaUrl,
+        motoristaNome: agendamento.motoristaNome,
+        veiculoPlaca: agendamento.placaVeiculo
       });
 
       if (emailResult.success) {
