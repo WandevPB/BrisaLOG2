@@ -92,65 +92,62 @@ function maskDocument(input) {
 
 // --- INICIALIZAÇÃO E FUNÇÕES GLOBAIS ---
 
+document.addEventListener('DOMContentLoaded', () => {
+// Função que aplica máscaras a inputs dentro de um container
+function applyMasksToContainer(container) {
+    if (!container) return;
+
+    // Inputs telefone: data-mask="phone" ou class .mask-phone
+    const phoneEls = container.querySelectorAll('input[data-mask="phone"], input.mask-phone');
+    phoneEls.forEach(el => {
+        // Formatar valor atual
+        el.value = maskPhone(el.value || '');
+        el.addEventListener('input', (e) => {
+            e.target.value = maskPhone(e.target.value || '');
+        });
+    });
+
+    // Inputs CPF
+    const cpfEls = container.querySelectorAll('input[data-mask="cpf"], input.mask-cpf');
+    cpfEls.forEach(el => {
+        el.value = maskCPF(el.value || '');
+        el.addEventListener('input', (e) => {
+            e.target.value = maskCPF(e.target.value || '');
+        });
+    });
+
+    // Inputs CNPJ
+    const cnpjEls = container.querySelectorAll('input[data-mask="cnpj"], input.mask-cnpj');
+    cnpjEls.forEach(el => {
+        el.value = maskCNPJ(el.value || '');
+        el.addEventListener('input', (e) => {
+            e.target.value = maskCNPJ(e.target.value || '');
+        });
+    });
+
+    // Inputs genéricos de documento (usa maskDocument que aceita o elemento)
+    const docEls = container.querySelectorAll('input[data-mask="document"], input.mask-document');
+    docEls.forEach(el => {
+        try {
+            maskDocument(el);
+        } catch (err) {
+            // maskDocument pode lançar se o formato não estiver esperado; ignorar
+        }
+        el.addEventListener('input', (e) => {
+            try {
+                maskDocument(e.target);
+            } catch (err) { /* ignore */ }
+        });
+    });
+
+    // Expor globalmente se necessário
+    window.applyMasksToContainer = applyMasksToContainer;
+}
+
 let dashboard;
 document.addEventListener('DOMContentLoaded', () => {
     dashboard = new CDDashboard();
-    
-    // Aplicar máscaras aos inputs da página
-    document.addEventListener('DOMContentLoaded', () => {
-        applyMasksToContainer(document);
-    });
-    
-    // Função que aplica máscaras a inputs dentro de um container
-    function applyMasksToContainer(container) {
-        if (!container) return;
-    
-        // Inputs telefone: data-mask="phone" ou class .mask-phone
-        const phoneEls = container.querySelectorAll('input[data-mask="phone"], input.mask-phone');
-        phoneEls.forEach(el => {
-            // Formatar valor atual
-            el.value = maskPhone(el.value || '');
-            el.addEventListener('input', (e) => {
-                e.target.value = maskPhone(e.target.value || '');
-            });
-        });
-    
-        // Inputs CPF
-        const cpfEls = container.querySelectorAll('input[data-mask="cpf"], input.mask-cpf');
-        cpfEls.forEach(el => {
-            el.value = maskCPF(el.value || '');
-            el.addEventListener('input', (e) => {
-                e.target.value = maskCPF(e.target.value || '');
-            });
-        });
-    
-        // Inputs CNPJ
-        const cnpjEls = container.querySelectorAll('input[data-mask="cnpj"], input.mask-cnpj');
-        cnpjEls.forEach(el => {
-            el.value = maskCNPJ(el.value || '');
-            el.addEventListener('input', (e) => {
-                e.target.value = maskCNPJ(e.target.value || '');
-            });
-        });
-    
-        // Inputs genéricos de documento (usa maskDocument que aceita o elemento)
-        const docEls = container.querySelectorAll('input[data-mask="document"], input.mask-document');
-        docEls.forEach(el => {
-            try {
-                maskDocument(el);
-            } catch (err) {
-                // maskDocument pode lançar se o formato não estiver esperado; ignorar
-            }
-            el.addEventListener('input', (e) => {
-                try {
-                    maskDocument(e.target);
-                } catch (err) { /* ignore */ }
-            });
-        });
-    
-        // Expor globalmente se necessário
-        window.applyMasksToContainer = applyMasksToContainer;
-    }
+    applyMasksToContainer(document);
 });
 
 // Funções globais que delegam para a instância do dashboard
