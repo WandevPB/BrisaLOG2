@@ -2059,20 +2059,16 @@
 
             // Funções auxiliares para o novo modal
             calcularValorTotal(agendamento) {
-                if (!agendamento.pedidos) return '0,00';
+                if (!agendamento.notasFiscais) return '0,00';
                 
                 let total = 0;
-                agendamento.pedidos.forEach(pedido => {
-                    if (pedido.notasFiscais && pedido.notasFiscais.length > 0) {
-                        pedido.notasFiscais.forEach(nf => {
-                            let v = nf.valor;
-                            if (typeof v === 'string') {
-                                v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
-                                v = parseFloat(v);
-                            }
-                            if (!isNaN(v)) total += v;
-                        });
+                agendamento.notasFiscais.forEach(nf => {
+                    let v = nf.valor;
+                    if (typeof v === 'string') {
+                        v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
+                        v = parseFloat(v);
                     }
+                    if (!isNaN(v)) total += v;
                 });
                 
                 return total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
