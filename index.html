@@ -2089,14 +2089,14 @@
                 }
                 // Mapeamento de ícones e títulos
                 const iconMap = {
-                    'agendamento_criado': 'fa-plus-circle text-blue-500',
-                    'cd_sugeriu_reagendamento': 'fa-calendar-alt text-yellow-500',
-                    'fornecedor_sugeriu_reagendamento': 'fa-calendar text-purple-600',
-                    'fornecedor_aceitou_reagendamento': 'fa-thumbs-up text-green-600',
-                    'fornecedor_rejeitou_reagendamento': 'fa-thumbs-down text-red-600',
-                    'fornecedor_respondeu': 'fa-reply-all text-purple-600',
-                    'entrega_realizada': 'fa-truck text-blue-600',
-                    'ausencia_registrada': 'fa-user-slash text-red-500'
+                    'agendamento_criado': 'fa-plus-circle',
+                    'cd_sugeriu_reagendamento': 'fa-calendar-alt',
+                    'fornecedor_sugeriu_reagendamento': 'fa-calendar',
+                    'fornecedor_aceitou_reagendamento': 'fa-thumbs-up',
+                    'fornecedor_rejeitou_reagendamento': 'fa-thumbs-down',
+                    'fornecedor_respondeu': 'fa-reply-all',
+                    'entrega_realizada': 'fa-truck',
+                    'ausencia_registrada': 'fa-user-slash'
                 };
                 const titleMap = {
                     'agendamento_criado': 'Agendamento Criado',
@@ -2115,27 +2115,43 @@
                     ev.acao === 'fornecedor_respondeu'
                 );
                 let html = historico.map((evento, index) => {
-                    let icon = iconMap[evento.acao] || 'fa-info-circle text-gray-400';
+                    let icon = iconMap[evento.acao] || 'fa-info-circle';
                     let title = titleMap[evento.acao] || evento.acao || 'Evento do Sistema';
                     let iconColor = 'text-gray-400';
                     let faClass = 'fas';
                     // Ícones coloridos e padronizados
-                    if (evento.acao.toLowerCase().includes('fornecedor') && evento.acao.toLowerCase().includes('sugeriu')) {
+                    if (evento.acao === 'fornecedor_sugeriu_reagendamento') {
                         title = 'Fornecedor Sugeriu Nova Data';
                         icon = 'fa-calendar';
                         iconColor = 'text-purple-500';
-                    } else if (evento.acao.toLowerCase().includes('criado')) {
+                    } else if (evento.acao === 'agendamento_criado') {
                         title = 'Agendamento Criado';
                         icon = 'fa-plus-circle';
                         iconColor = 'text-blue-500';
-                    } else if (evento.acao.toLowerCase().includes('aceitou')) {
+                    } else if (evento.acao === 'fornecedor_aceitou_reagendamento') {
                         title = 'Fornecedor Aceitou Nova Data';
                         icon = 'fa-thumbs-up';
                         iconColor = 'text-green-500';
-                    } else if (evento.acao.toLowerCase().includes('rejeitou')) {
+                    } else if (evento.acao === 'fornecedor_rejeitou_reagendamento') {
                         title = 'Fornecedor Rejeitou Nova Data';
                         icon = 'fa-thumbs-down';
                         iconColor = 'text-red-500';
+                    } else if (evento.acao === 'cd_sugeriu_reagendamento') {
+                        title = 'CD Sugeriu Nova Data';
+                        icon = 'fa-calendar-alt';
+                        iconColor = 'text-yellow-500';
+                    } else if (evento.acao === 'entrega_realizada') {
+                        title = 'Entrega Realizada';
+                        icon = 'fa-truck';
+                        iconColor = 'text-blue-600';
+                    } else if (evento.acao === 'ausencia_registrada') {
+                        title = 'Ausência Registrada';
+                        icon = 'fa-user-slash';
+                        iconColor = 'text-red-500';
+                    } else if (evento.acao === 'fornecedor_respondeu') {
+                        title = 'Fornecedor Respondeu';
+                        icon = 'fa-reply-all';
+                        iconColor = 'text-purple-600';
                     }
                     // Garante que todos os ícones usem 'fas fa-...'
                     if (!icon.startsWith('fa-')) {
