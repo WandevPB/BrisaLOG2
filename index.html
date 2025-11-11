@@ -2063,10 +2063,16 @@
                 
                 let total = 0;
                 agendamento.pedidos.forEach(pedido => {
-                    pedido.notasFiscais.forEach(nf => {
-                        const valor = parseFloat(nf.valor?.replace(',', '.') || 0);
-                        total += valor;
-                    });
+                    if (pedido.notasFiscais && pedido.notasFiscais.length > 0) {
+                        pedido.notasFiscais.forEach(nf => {
+                            let v = nf.valor;
+                            if (typeof v === 'string') {
+                                v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
+                                v = parseFloat(v);
+                            }
+                            if (!isNaN(v)) total += v;
+                        });
+                    }
                 });
                 
                 return total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
