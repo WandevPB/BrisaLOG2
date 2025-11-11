@@ -88,8 +88,6 @@ function maskDocument(input) {
     return value;
 }
 
-// ...existing code...
-
 // --- FIM DA CLASSE ---
 
 // --- INICIALIZAÇÃO E FUNÇÕES GLOBAIS ---
@@ -1441,167 +1439,6 @@ function atualizarNotaFiscalEntrega(pedidoIndex, nfIndex, campo, valor) {
     entregaPedidos[pedidoIndex].notasFiscais[nfIndex][campo] = valor;
 }
 
-function adicionarPedidoEntrega() {
-    const numeroPedido = entregaPedidos.length + 1;
-    const pedido = {
-        numero: '',
-        notasFiscais: []
-    };
-    
-    entregaPedidos.push(pedido);
-    entregaCurrentPedido = entregaPedidos.length - 1;
-    
-    criarTabPedidoEntrega(entregaCurrentPedido);
-    criarFormularioPedidoEntrega(entregaCurrentPedido);
-    selecionarTabPedidoEntrega(entregaCurrentPedido);
-}
-
-function criarTabPedidoEntrega(index) {
-    const tabsContainer = document.getElementById('entrega-pedidos-tabs');
-    
-    const tab = document.createElement('div');
-    tab.className = 'tab-pedido-entrega px-4 py-2 rounded-lg cursor-pointer transition-colors bg-gray-200 text-gray-600';
-    tab.dataset.index = index;
-    tab.innerHTML = `
-        <span>Pedido ${index + 1}</span>
-        ${index > 0 ? '<button onclick="removerPedidoEntrega(' + index + ')" class="ml-2 text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>' : ''}
-    `;
-    
-    tab.addEventListener('click', () => selecionarTabPedidoEntrega(index));
-    tabsContainer.appendChild(tab);
-}
-
-function selecionarTabPedidoEntrega(index) {
-    entregaCurrentPedido = index;
-    
-    // Atualizar appearance das tabs
-    document.querySelectorAll('.tab-pedido-entrega').forEach((tab, i) => {
-        if (i === index) {
-            tab.className = 'tab-pedido-entrega px-4 py-2 rounded-lg cursor-pointer transition-colors bg-orange-500 text-white';
-        } else {
-            tab.className = 'tab-pedido-entrega px-4 py-2 rounded-lg cursor-pointer transition-colors bg-gray-200 text-gray-600';
-        }
-    });
-    
-    // Mostrar formulário do pedido
-    document.querySelectorAll('.pedido-entrega-form').forEach((form, i) => {
-        if (i === index) {
-            form.classList.remove('hidden');
-        } else {
-            form.classList.add('hidden');
-        }
-    });
-}
-
-function criarFormularioPedidoEntrega(index) {
-    const container = document.getElementById('entrega-pedidos-container');
-    
-    const formHtml = `
-        <div class="pedido-entrega-form bg-white border border-gray-200 rounded-lg p-6 ${index > 0 ? 'hidden' : ''}" data-index="${index}">
-            <div class="mb-6">
-                <label class="block text-gray-dark font-semibold mb-2">
-                    <i class="fas fa-hashtag mr-2 text-orange-primary"></i>
-                    Número do Pedido *
-                </label>
-                <input type="text" 
-                       id="entrega-pedido-numero-${index}" 
-                       placeholder="Ex: PED-2024-001" 
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                       onchange="atualizarNumeroPedidoEntrega(${index}, this.value)">
-            </div>
-
-            <!-- Notas Fiscais -->
-            <div class="mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-lg font-semibold text-gray-dark">
-                        <i class="fas fa-file-invoice mr-2 text-orange-primary"></i>
-                        Notas Fiscais
-                    </h4>
-                    <button type="button" onclick="adicionarNotaFiscalEntrega(${index})" 
-                            class="bg-orange-primary text-white px-4 py-2 rounded-lg hover:bg-orange-secondary transition-all">
-                        <i class="fas fa-plus mr-2"></i>Adicionar NF
-                    </button>
-                </div>
-                
-                <div id="entrega-notas-fiscais-${index}" class="space-y-4">
-                    <!-- Notas fiscais serão adicionadas aqui -->
-                </div>
-            </div>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', formHtml);
-}
-
-function atualizarNumeroPedidoEntrega(pedidoIndex, numero) {
-    entregaPedidos[pedidoIndex].numero = numero;
-}
-
-function adicionarNotaFiscalEntrega(pedidoIndex) {
-    const nf = {
-        numero: '',
-        valor: '',
-        arquivo: null
-    };
-    
-    entregaPedidos[pedidoIndex].notasFiscais.push(nf);
-    
-    const nfIndex = entregaPedidos[pedidoIndex].notasFiscais.length - 1;
-    criarFormularioNotaFiscalEntrega(pedidoIndex, nfIndex);
-}
-
-function criarFormularioNotaFiscalEntrega(pedidoIndex, nfIndex) {
-    const container = document.getElementById(`entrega-notas-fiscais-${pedidoIndex}`);
-    
-    const nfHtml = `
-        <div class="nota-fiscal-entrega bg-gray-50 border border-gray-200 rounded-lg p-4" data-pedido="${pedidoIndex}" data-nf="${nfIndex}">
-            <div class="flex justify-between items-start mb-4">
-                <h5 class="font-semibold text-gray-dark">Nota Fiscal ${nfIndex + 1}</h5>
-                <button type="button" onclick="removerNotaFiscalEntrega(${pedidoIndex}, ${nfIndex})" 
-                        class="text-red-500 hover:text-red-700 transition-colors">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Número da NF *</label>
-                    <input type="text" 
-                           id="entrega-nf-numero-${pedidoIndex}-${nfIndex}"
-                           placeholder="Ex: 123456"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary transition-all"
-                           onchange="atualizarNotaFiscalEntrega(${pedidoIndex}, ${nfIndex}, 'numero', this.value)">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$) *</label>
-                    <input type="number" 
-                           id="entrega-nf-valor-${pedidoIndex}-${nfIndex}"
-                           step="0.01" 
-                           placeholder="0,00"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary transition-all"
-                           onchange="atualizarNotaFiscalEntrega(${pedidoIndex}, ${nfIndex}, 'valor', this.value)">
-                </div>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Arquivo PDF da NF</label>
-                <input type="file" 
-                       id="entrega-nf-arquivo-${pedidoIndex}-${nfIndex}"
-                       accept=".pdf"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary transition-all"
-                       onchange="atualizarArquivoNotaFiscalEntrega(${pedidoIndex}, ${nfIndex}, this)">
-                <p class="text-xs text-gray-500 mt-1">Apenas arquivos PDF (opcional)</p>
-            </div>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', nfHtml);
-}
-
-function atualizarNotaFiscalEntrega(pedidoIndex, nfIndex, campo, valor) {
-    entregaPedidos[pedidoIndex].notasFiscais[nfIndex][campo] = valor;
-}
-
 // CORREÇÃO: Melhor validação de upload de arquivos
 function atualizarArquivoNotaFiscalEntrega(pedidoIndex, nfIndex, input) {
     const file = input.files[0];
@@ -2323,4 +2160,34 @@ function irParaPagina(pagina) {
     paginaAtual = pagina;
     renderizarEntregas();
     atualizarPaginacao();
+}
+
+// Esqueleto mínimo da classe CDDashboard para evitar erro de referência
+class CDDashboard {
+    constructor() {
+        // Inicialização básica
+    }
+    loadAgendamentos() {}
+    changeView(view) {}
+    applyFilters() {}
+    exportData(format) {}
+    showAllStatus(status) {}
+    showTodayDeliveries() {}
+    closeTodayDeliveriesModal() {}
+    openConsultaModal() {}
+    closeConsultaModal() {}
+    closeStatusModal() {}
+    closeDetailModal() {}
+    closeSuggestDateModal() {}
+    openKpisModal() {}
+    closeKpisModal() {}
+    loadKpis() {}
+    showNotification(msg, type) {}
+}
+
+// Função global para fechar todos os modais de status
+function closeAllStatusModal() {
+    document.querySelectorAll('.status-modal').forEach(modal => {
+        modal.classList.add('hidden');
+    });
 }
