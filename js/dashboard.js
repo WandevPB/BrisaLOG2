@@ -1655,20 +1655,16 @@ class CDDashboard {
         ` : '';
 
         const detailContent = document.getElementById('detail-content');
-        // Corrigir valor total das NFs (soma todas as notas fiscais de todos os pedidos)
+        // Corrigir valor total das NFs
         let valorTotal = 0;
-        if (agendamento.pedidos && agendamento.pedidos.length > 0) {
-            agendamento.pedidos.forEach(pedido => {
-                if (pedido.notasFiscais && pedido.notasFiscais.length > 0) {
-                    pedido.notasFiscais.forEach(nf => {
-                        let v = nf.valor;
-                        if (typeof v === 'string') {
-                            v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
-                            v = parseFloat(v);
-                        }
-                        if (!isNaN(v)) valorTotal += v;
-                    });
+        if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
+            agendamento.notasFiscais.forEach(nf => {
+                let v = nf.valor;
+                if (typeof v === 'string') {
+                    v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
+                    v = parseFloat(v);
                 }
+                if (!isNaN(v)) valorTotal += v;
             });
         }
         // Corrigir data de criação
@@ -1789,7 +1785,7 @@ class CDDashboard {
                         <div class="space-y-2 text-sm">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Notas Fiscais:</span>
-                                <span class="font-semibold">${agendamento.pedidos && agendamento.pedidos.length > 0 ? agendamento.pedidos.reduce((acc, pedido) => acc + (pedido.notasFiscais ? pedido.notasFiscais.length : 0), 0) : 0}</span>
+                                <span class="font-semibold">${agendamento.notasFiscais ? agendamento.notasFiscais.length : 0}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Valor Total:</span>
