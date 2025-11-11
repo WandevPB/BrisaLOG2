@@ -2079,7 +2079,6 @@
 
             renderCommunicationHistory(agendamento) {
                 const historico = agendamento.historico || [];
-                
                 if (historico.length === 0) {
                     return `
                         <div class="text-center py-4 text-gray-500">
@@ -2088,23 +2087,84 @@
                         </div>
                     `;
                 }
-
-                return historico.map((evento, index) => `
-                    <div class="flex items-start space-x-3 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-3 mb-3' : ''}">
-                        <div class="flex-shrink-0">
-                            <div class="w-8 h-8 rounded-full ${this.getHistoryIconClass(evento.acao)} flex items-center justify-center">
-                                <i class="${this.getHistoryIcon(evento.acao)} text-white text-xs"></i>
+                // Mapeamento de ícones e títulos
+                const iconMap = {
+                    'agendamento_criado': 'fa-plus-circle text-blue-500',
+                    'cd_sugeriu_reagendamento': 'fa-calendar-alt text-yellow-500',
+                    'fornecedor_sugeriu_reagendamento': 'fa-calendar text-purple-600',
+                    'fornecedor_aceitou_reagendamento': 'fa-thumbs-up text-green-600',
+                    'fornecedor_rejeitou_reagendamento': 'fa-thumbs-down text-red-600',
+                    'fornecedor_respondeu': 'fa-reply-all text-purple-600',
+                    'entrega_realizada': 'fa-truck text-blue-600',
+                    'ausencia_registrada': 'fa-user-slash text-red-500'
+                };
+                const titleMap = {
+                    'agendamento_criado': 'Agendamento Criado',
+                    'cd_sugeriu_reagendamento': 'CD Sugeriu Nova Data',
+                    'fornecedor_sugeriu_reagendamento': 'Fornecedor Sugeriu Nova Data',
+                    'fornecedor_aceitou_reagendamento': 'Fornecedor Aceitou Nova Data',
+                    'fornecedor_rejeitou_reagendamento': 'Fornecedor Rejeitou Nova Data',
+                    'fornecedor_respondeu': 'Fornecedor Respondeu',
+                    'entrega_realizada': 'Entrega Realizada',
+                    'ausencia_registrada': 'Ausência Registrada'
+                };
+                // Detecta resposta do fornecedor
+                const hasSupplierResponse = historico.some(ev =>
+                    ev.acao === 'fornecedor_aceitou_reagendamento' ||
+                    ev.acao === 'fornecedor_rejeitou_reagendamento' ||
+                    ev.acao === 'fornecedor_respondeu'
+                );
+                let html = historico.map((evento, index) => {
+                    let icon = iconMap[evento.acao] || 'fa-info-circle text-gray-400';
+                    let title = titleMap[evento.acao] || evento.acao || 'Evento do Sistema';
+                    // Se for resposta genérica, tenta detalhar pelo campo descricao
+                    if (evento.acao === 'fornecedor_respondeu') {
+                        if (evento.descricao && evento.descricao.toLowerCase().includes('aceit')) {
+                            title = 'Fornecedor Aceitou Nova Data';
+                            icon = iconMap['fornecedor_aceitou_reagendamento'];
+                        } else if (evento.descricao && evento.descricao.toLowerCase().includes('rejeit')) {
+                            title = 'Fornecedor Rejeitou Nova Data';
+                            icon = iconMap['fornecedor_rejeitou_reagendamento'];
+                        }
+                    }
+                    if (evento.acao.toLowerCase().includes('fornecedor') && evento.acao.toLowerCase().includes('sugeriu')) {
+                        title = 'Fornecedor Sugeriu Nova Data';
+                        icon = iconMap['fornecedor_sugeriu_reagendamento'];
+                    }
+                    return `
+                        <div class="flex items-start space-x-3 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-3 mb-3' : ''}">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                    <i class="fas ${icon} text-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="text-sm font-medium text-gray-900">${title}</p>
+                                    <p class="text-xs text-gray-500">${evento.data ? this.formatDateBrFromISO(evento.data) : 'Agora'}</p>
+                                </div>
+                                <p class="text-sm text-gray-600">${evento.descricao || ''}</p>
                             </div>
                         </div>
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between mb-1">
-                                <p class="text-sm font-medium text-gray-900">${this.getHistoryTitle(evento.acao)}</p>
-                                <p class="text-xs text-gray-500">${evento.data ? this.formatDateBrFromISO(evento.data) : 'Agora'}</p>
+                    `;
+                }).join('');
+                // Box aguardando resposta
+                if (agendamento.status === 'reagendamento' && !hasSupplierResponse) {
+                    html += `
+                        <div class="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-hourglass-half text-white text-sm"></i>
+                                </div>
+                                <span class="font-semibold text-yellow-800">Aguardando resposta do fornecedor</span>
                             </div>
-                            <p class="text-sm text-gray-600">${evento.descricao}</p>
+                            <p class="text-sm text-yellow-700 leading-relaxed">
+                                O fornecedor foi notificado sobre a solicitação de reagendamento e deve responder em breve.
+                            </p>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }
+                return html;
             }
 
             getHistoryIconClass(acao) {
