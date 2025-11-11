@@ -1929,55 +1929,68 @@ class CDDashboard {
 
         return `
             <div class="space-y-4">
-                ${historico.map((evento, index) => `
-                    <div class="flex items-start space-x-4 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-4' : ''}">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 rounded-full ${this.getHistoryIconClass(evento.acao)} flex items-center justify-center shadow-sm">
-                                <i class="${this.getHistoryIcon(evento.acao)} text-white text-lg"></i>
-                            </div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-base font-semibold text-gray-900">
-                                    ${this.getHistoryTitle(evento.acao, evento.autor, evento)}
-                                </p>
-                                <div class="flex items-center text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                    <i class="fas fa-clock mr-1"></i>
-                                    ${evento.createdAt ? this.formatDateTime(evento.createdAt) : 'Agora'}
+                ${historico.map((evento, index) => {
+                    // Detecta reagendamento do fornecedor por nome da ação
+                    let acao = evento.acao;
+                    let iconClass = this.getHistoryIconClass(acao);
+                    let icon = this.getHistoryIcon(acao);
+                    let title = this.getHistoryTitle(acao, evento.autor, evento);
+                    // Se for texto customizado do backend
+                    if (acao && acao.toLowerCase().includes('fornecedor') && acao.toLowerCase().includes('sugeriu')) {
+                        iconClass = 'bg-purple-500';
+                        icon = 'fas fa-calendar text-white';
+                        title = 'Nova Data Sugerida';
+                    }
+                    return `
+                        <div class="flex items-start space-x-4 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-4' : ''}">
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 rounded-full ${iconClass} flex items-center justify-center shadow-sm">
+                                    <i class="${icon} text-white text-lg"></i>
                                 </div>
                             </div>
-                            ${evento.descricao ? `
-                                <p class="text-sm text-gray-700 leading-relaxed mb-2">
-                                    ${evento.descricao}
-                                </p>
-                            ` : ''}
-                            ${evento.novaData ? `
-                                <div class="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-                                    <div class="flex items-center mb-2">
-                                        <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
-                                        <span class="font-medium text-blue-900">Nova Data Proposta</span>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-4 text-sm">
-                                        <div class="flex items-center">
-                                            <i class="fas fa-calendar mr-2 text-blue-600"></i>
-                                            <span class="font-medium text-blue-800">${this.formatDate(evento.novaData)}</span>
-                                        </div>
-                                        <div class="flex items-center">
-                                            <i class="fas fa-clock mr-2 text-blue-600"></i>
-                                            <span class="font-medium text-blue-800">${evento.novoHorario}</span>
-                                        </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="text-base font-semibold text-gray-900">
+                                        ${title}
+                                    </p>
+                                    <div class="flex items-center text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        ${evento.createdAt ? this.formatDateTime(evento.createdAt) : 'Agora'}
                                     </div>
                                 </div>
-                            ` : ''}
-                            ${evento.autor ? `
-                                <div class="mt-2 flex items-center text-xs text-gray-500">
-                                    <i class="fas fa-user mr-1"></i>
-                                    <span>Por: ${evento.autor}</span>
-                                </div>
-                            ` : ''}
+                                ${evento.descricao ? `
+                                    <p class="text-sm text-gray-700 leading-relaxed mb-2">
+                                        ${evento.descricao}
+                                    </p>
+                                ` : ''}
+                                ${evento.novaData ? `
+                                    <div class="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                                        <div class="flex items-center mb-2">
+                                            <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
+                                            <span class="font-medium text-blue-900">Nova Data Proposta</span>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4 text-sm">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-calendar mr-2 text-blue-600"></i>
+                                                <span class="font-medium text-blue-800">${this.formatDate(evento.novaData)}</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <i class="fas fa-clock mr-2 text-blue-600"></i>
+                                                <span class="font-medium text-blue-800">${evento.novoHorario}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                ${evento.autor ? `
+                                    <div class="mt-2 flex items-center text-xs text-gray-500">
+                                        <i class="fas fa-user mr-1"></i>
+                                        <span>Por: ${evento.autor}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
                         </div>
-                    </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
             
             ${(agendamento.status === 'reagendamento' && !hasSupplierResponse) ? `
