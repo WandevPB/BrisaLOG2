@@ -1789,7 +1789,7 @@ class CDDashboard {
                         <div class="space-y-2 text-sm">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Notas Fiscais:</span>
-                                <span class="font-semibold">${agendamento.notasFiscais ? agendamento.notasFiscais.length : 0}</span>
+                                <span class="font-semibold">${agendamento.pedidos && agendamento.pedidos.length > 0 ? agendamento.pedidos.reduce((acc, pedido) => acc + (pedido.notasFiscais ? pedido.notasFiscais.length : 0), 0) : 0}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Valor Total:</span>
