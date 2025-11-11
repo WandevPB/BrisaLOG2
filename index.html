@@ -2118,6 +2118,7 @@
                     let icon = iconMap[evento.acao] || 'fa-info-circle text-gray-400';
                     let title = titleMap[evento.acao] || evento.acao || 'Evento do Sistema';
                     let iconColor = 'text-gray-400';
+                    let faClass = 'fas';
                     // Ícones coloridos e padronizados
                     if (evento.acao.toLowerCase().includes('fornecedor') && evento.acao.toLowerCase().includes('sugeriu')) {
                         title = 'Fornecedor Sugeriu Nova Data';
@@ -2136,11 +2137,15 @@
                         icon = 'fa-thumbs-down';
                         iconColor = 'text-red-500';
                     }
+                    // Garante que todos os ícones usem 'fas fa-...'
+                    if (!icon.startsWith('fa-')) {
+                        icon = 'fa-info-circle';
+                    }
                     return `
                         <div class="flex items-start space-x-3 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-3 mb-3' : ''}">
                             <div class="flex-shrink-0">
                                 <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                    <i class="fas ${icon} ${iconColor} text-lg"></i>
+                                    <i class="${faClass} ${icon} ${iconColor} text-lg"></i>
                                 </div>
                             </div>
                             <div class="flex-1 min-w-0">
