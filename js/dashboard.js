@@ -1655,16 +1655,20 @@ class CDDashboard {
         ` : '';
 
         const detailContent = document.getElementById('detail-content');
-        // Corrigir valor total das NFs
+        // Corrigir valor total das NFs (soma todas as notas fiscais de todos os pedidos)
         let valorTotal = 0;
-        if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
-            agendamento.notasFiscais.forEach(nf => {
-                let v = nf.valor;
-                if (typeof v === 'string') {
-                    v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
-                    v = parseFloat(v);
+        if (agendamento.pedidos && agendamento.pedidos.length > 0) {
+            agendamento.pedidos.forEach(pedido => {
+                if (pedido.notasFiscais && pedido.notasFiscais.length > 0) {
+                    pedido.notasFiscais.forEach(nf => {
+                        let v = nf.valor;
+                        if (typeof v === 'string') {
+                            v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
+                            v = parseFloat(v);
+                        }
+                        if (!isNaN(v)) valorTotal += v;
+                    });
                 }
-                if (!isNaN(v)) valorTotal += v;
             });
         }
         // Corrigir data de criação
