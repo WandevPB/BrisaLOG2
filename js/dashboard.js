@@ -1855,7 +1855,11 @@ class CDDashboard {
                                         else if (valorStr.includes(',')) {
                                             valorStr = valorStr.replace(',', '.');
                                         }
-                                        // Se tem apenas ponto ou nada, já está OK
+                                        // Se tem apenas ponto(s), assumir que são separadores de milhar e remover
+                                        else if (valorStr.includes('.')) {
+                                            valorStr = valorStr.replace(/\./g, '');
+                                        }
+                                        // Se não tem nada, é só número simples
                                         
                                         const valorNumerico = parseFloat(valorStr);
                                         valorFormatado = isNaN(valorNumerico) ? 'Valor não informado' : `R$ ${valorNumerico.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
