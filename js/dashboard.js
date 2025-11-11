@@ -1,8 +1,10 @@
 // Usa API_BASE_URL do config.js
+// Certifique-se que config.js está incluído antes deste arquivo
 function getApiBaseUrl() {
     return typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : window.location.origin;
 }
 
+// Função global para verificar token expirado
 function handleTokenExpired(response) {
     if (response.status === 403) {
         console.log('🔒 Token expirado, redirecionando para login...');
@@ -14,180 +16,310 @@ function handleTokenExpired(response) {
     return false;
 }
 
+// Função utilitária para converter datas do backend para timezone local
 function parseLocalDate(dateInput) {
     if (!dateInput) return null;
+    
     if (typeof dateInput === 'string') {
         if (dateInput.includes('T')) {
+            // Formato ISO (ex: '2025-10-06T00:00:00.000Z') - extrair apenas YYYY-MM-DD
             const dateOnly = dateInput.split('T')[0];
             const [ano, mes, dia] = dateOnly.split('-').map(Number);
-            return new Date(ano, mes - 1, dia);
+            return new Date(ano, mes - 1, dia); // mes - 1 porque Date usa 0-11 para meses
         } else if (dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            // Formato YYYY-MM-DD simples
             const [ano, mes, dia] = dateInput.split('-').map(Number);
             return new Date(ano, mes - 1, dia);
         }
     }
+    
+    // Fallback para outros casos
     return new Date(dateInput);
 }
 
+// Funções globais de máscara para formatação automática
 function maskPhone(value) {
+    // Remove tudo que não é dígito
     value = value.replace(/\D/g, '');
+    
+    // Limita a 11 dígitos máximo
     value = value.substring(0, 11);
+    
+    // Aplica a máscara (83) 00000-0000
     if (value.length <= 10) {
         value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
     } else {
         value = value.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
     }
+    
     return value;
 }
 
 function maskCPF(value) {
+    // Remove tudo que não é dígito
     value = value.replace(/\D/g, '');
+    
+    // Limita a 11 dígitos máximo
     value = value.substring(0, 11);
+    
+    // Aplica a máscara 000.000.000-00
     value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+    
     return value;
 }
 
 function maskCNPJ(value) {
+    // Remove tudo que não é dígito
     value = value.replace(/\D/g, '');
+    
+    // Limita a 14 dígitos máximo
     value = value.substring(0, 14);
+    
+    // Aplica a máscara 00.000.000/0000-00
     value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+    
     return value;
 }
 
 function maskDocument(input) {
     let value = input.value.replace(/\D/g, '');
+    
+    // Limita a 14 dígitos máximo (CNPJ)
     value = value.substring(0, 14);
-    input.value = value;
-    return value;
+    
+    if (value.length <= 11) {
+        // CPF
+        input.value = maskCPF(input.value);
+    } else {
+        // CNPJ
+        input.value = maskCNPJ(input.value);
+    }
 }
 
+// Função para aplicar máscaras em um elemento pai
 function applyMasksToContainer(container) {
-    if (!container) return;
-    const phoneEls = container.querySelectorAll('input[data-mask="phone"], input.mask-phone');
-    phoneEls.forEach(el => {
-        el.value = maskPhone(el.value || '');
-        el.addEventListener('input', (e) => {
-            e.target.value = maskPhone(e.target.value || '');
+    // Telefone
+    const phoneInputs = container.querySelectorAll('input[type="tel"], input[name*="telefone"], input[id*="telefone"]');
+    phoneInputs.forEach(input => {
+        // Definir maxlength se não estiver definido
+        if (!input.getAttribute('maxlength')) {
+            input.setAttribute('maxlength', '15');
+        }
+        
+        input.addEventListener('input', function(e) {
+            e.target.value = maskPhone(e.target.value);
         });
     });
-    const cpfEls = container.querySelectorAll('input[data-mask="cpf"], input.mask-cpf');
-    cpfEls.forEach(el => {
-        el.value = maskCPF(el.value || '');
-        el.addEventListener('input', (e) => {
-            e.target.value = maskCPF(e.target.value || '');
+
+    // Documento (CPF/CNPJ)
+    const documentInputs = container.querySelectorAll('input[name*="cnpj"], input[id*="cnpj"], input[name*="documento"], input[id*="documento"]');
+    documentInputs.forEach(input => {
+        // Definir maxlength se não estiver definido
+        if (!input.getAttribute('maxlength')) {
+            input.setAttribute('maxlength', '18');
+        }
+        
+        input.addEventListener('input', function(e) {
+            maskDocument(e.target);
         });
     });
-    const cnpjEls = container.querySelectorAll('input[data-mask="cnpj"], input.mask-cnpj');
-    cnpjEls.forEach(el => {
-        el.value = maskCNPJ(el.value || '');
-        el.addEventListener('input', (e) => {
-            e.target.value = maskCNPJ(e.target.value || '');
-        });
-    });
-    const docEls = container.querySelectorAll('input[data-mask="document"], input.mask-document');
-    docEls.forEach(el => {
-        try {
-            maskDocument(el);
-        } catch (err) {}
-        el.addEventListener('input', (e) => {
-            try {
-                maskDocument(e.target);
-            } catch (err) {}
-        });
-    });
-    window.applyMasksToContainer = applyMasksToContainer;
+}
+
+// Função global para visualizar PDF
+function viewPDF(filename) {
+    if (!filename) {
+        console.log('Nenhum arquivo para visualizar');
+        return;
+    }
+    
+    // Construir URL do arquivo usando a rota da API
+    const fileUrl = `/api/files/${filename}`;
+    console.log('Abrindo PDF:', fileUrl);
+    
+    // Abrir em nova aba
+    window.open(fileUrl, '_blank');
+}
+// Garantir função global para o botão do bloqueio
+window.submitBloqueioButton = function() {
+    try {
+        const form = document.getElementById('bloqueio-form');
+        if (!form) {
+            console.error('[Frontend] submitBloqueioButton: formulário não encontrado');
+            return;
+        }
+        const fakeEvent = {
+            preventDefault: () => {},
+            target: form
+        };
+        console.log('[Frontend] submitBloqueioButton chamado — executando handleBloqueioSubmit');
+        handleBloqueioSubmit(fakeEvent);
+    } catch (err) {
+        console.error('[Frontend] Erro em submitBloqueioButton:', err);
+    }
+};
+
+// Modal DASHBOARD KPIs removido - será refeito do zero conforme solicitado
+// Funções globais para compatibilidade com HTML (onclick)
+window.openConsultaModal = function() { dashboard.openConsultaModal(); };
+window.closeConsultaModal = function() { dashboard.closeConsultaModal(); };
+window.openRegistrarEntregaModal = function() { dashboard.openRegistrarEntregaModal(); };
+window.closeRegistrarEntregaModal = function() { dashboard.closeRegistrarEntregaModal(); };
+window.openBloqueioModal = function() { dashboard.openBloqueioModal(); };
+window.closeBloqueioModal = function() { dashboard.closeBloqueioModal(); };
+window.openGerenciarBloqueiosModal = function() { dashboard.openGerenciarBloqueiosModal(); };
+window.closeGerenciarBloqueiosModal = function() { dashboard.closeGerenciarBloqueiosModal(); };
+window.openEntregasModal = function() { dashboard.openEntregasModal(); };
+window.closeEntregasModal = function() { dashboard.closeEntregasModal(); };
+window.closeDetailModal = function() { dashboard.closeDetailModal(); };
+window.closeSuggestDateModal = function() { dashboard.closeSuggestDateModal(); };
+window.closeAllStatusModal = function() { dashboard.closeAllStatusModal(); };
+window.closeTodayDeliveriesModal = function() { dashboard.closeTodayDeliveriesModal(); };
+window.closeStatusModal = function() { dashboard.closeStatusModal(); };
+window.closeEditarBloqueioModal = function() { dashboard.closeEditarBloqueioModal(); };
+window.fecharModalEntregas = function() { dashboard.fecharModalEntregas(); };
+
+// Dashboard.js - Sistema de Dashboard para CDs
+
+// Função para mostrar notificações ao usuário
+function showNotification(message, type = 'info') {
+    console.log(`Notificação (${type}): ${message}`);
+    
+    // Verificar se o elemento de notificação existe
+    let notificationEl = document.getElementById('notification-container');
+    
+    // Se não existir, criar um novo
+    if (!notificationEl) {
+        notificationEl = document.createElement('div');
+        notificationEl.id = 'notification-container';
+        notificationEl.style.position = 'fixed';
+        notificationEl.style.top = '20px';
+        notificationEl.style.right = '20px';
+        notificationEl.style.zIndex = '9999';
+        document.body.appendChild(notificationEl);
+    }
+    
+    // Criar notificação
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.style.padding = '15px 20px';
+    notification.style.marginBottom = '10px';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+    notification.style.fontWeight = 'bold';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease-in-out';
+    
+    // Definir cor de acordo com o tipo
+    switch (type) {
+        case 'error':
+            notification.style.backgroundColor = '#f44336';
+            notification.style.color = 'white';
+            break;
+        case 'success':
+            notification.style.backgroundColor = '#4CAF50';
+            notification.style.color = 'white';
+            break;
+        case 'warning':
+            notification.style.backgroundColor = '#ff9800';
+            notification.style.color = 'white';
+            break;
+        default:
+            notification.style.backgroundColor = '#2196F3';
+            notification.style.color = 'white';
+    }
+    
+    // Adicionar texto
+    notification.textContent = message;
+    
+    // Adicionar ao container
+    notificationEl.appendChild(notification);
+    
+    // Mostrar com fade in
+    setTimeout(() => {
+        notification.style.opacity = '1';
+    }, 10);
+    
+    // Remover após 5 segundos
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            notificationEl.removeChild(notification);
+        }, 300);
+    }, 5000);
 }
 
 class CDDashboard {
     constructor() {
-        // Estado centralizado
-        this.entregaCurrentStep = 1;
-        this.entregaPedidos = [];
-        this.entregasData = [];
-        this.paginaAtual = 1;
-        this.itensPorPagina = 10;
+        this.agendamentos = [];
+        this.filteredAgendamentos = [];
         this.currentView = 'cards';
         this.currentAgendamentoId = null;
         this.cdId = null; // CORREÇÃO: Inicializar cdId
+        
+        // Propriedades de paginação
         this.currentPage = 1;
+        this.itemsPerPage = 10;
         this.totalPages = 1;
-        this.currentSort = null;
+        
         this.init();
     }
 
-    // Métodos principais
-    init() {
-        this.checkAuthentication();
-        this.setupEventListeners();
-        const kpisBtn = document.getElementById('dashboard-kpis-button');
-        if (kpisBtn) {
-            kpisBtn.onclick = () => this.openKpisModal();
+    toggleUserMenu() {
+        const userMenu = document.getElementById('user-menu');
+        if (userMenu) {
+            userMenu.classList.toggle('hidden');
         }
-        this.loadUserInfo();
-        this.loadAgendamentos();
-        this.setMinDate();
     }
 
-    loadAgendamentos() {
-        console.log('🔄 Recarregando agendamentos...');
-        this.showLoading(true);
+    // Configura todos os campos de data para aceitar apenas dias úteis
+    setMinDate() {
+        const today = new Date();
         
-        try {
-            const token = sessionStorage.getItem('token');
-            console.log('🔑 Token encontrado:', !!token);
-            
-            const url = `${getApiBaseUrl()}/api/agendamentos?t=${Date.now()}`;
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache'
-                }
-            });
-
-            console.log('📡 Response status:', response.status);
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Erro na resposta:', errorText);
-                
-                if (handleTokenExpired(response)) {
-                    return;
-                }
-                
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('📊 Dados recebidos:', data);
-            this.agendamentos = data.data || [];
-            this.filteredAgendamentos = [...this.agendamentos];
-            this.showLoading(false);
-            this.renderAgendamentos();
-        } catch (error) {
-            console.error('Erro ao carregar agendamentos:', error);
-            this.showNotification('Erro ao carregar agendamentos.', 'error');
-            this.showLoading(false);
-            return;
-        }
-
-        const stats = {
-            total: this.agendamentos.length,
-            pendente: this.agendamentos.filter(a => a.status === 'pendente').length,
-            confirmado: this.agendamentos.filter(a => a.status === 'confirmado').length,
-            entregue: this.agendamentos.filter(a => a.status === 'entregue').length,
-            'nao-veio': this.agendamentos.filter(a => a.status === 'nao-veio').length
+        // Função para verificar se é dia útil
+        const isWeekday = (date) => {
+            const day = date.getDay();
+            return day !== 0 && day !== 6; // 0 = domingo, 6 = sábado
         };
-
-        Object.keys(stats).forEach(key => {
-            const element = document.getElementById(`stat-${key}`);
-            if (element) {
-                this.animateNumber(element, parseInt(element.textContent), stats[key]);
+        
+        // Função para encontrar próximo dia útil
+        const getNextWeekday = (date) => {
+            const nextDay = new Date(date);
+            while (!isWeekday(nextDay)) {
+                nextDay.setDate(nextDay.getDate() + 1);
+            }
+            return nextDay;
+        };
+        
+        // Se hoje não for dia útil, usar próximo dia útil
+        const minDate = isWeekday(today) ? today : getNextWeekday(today);
+        const minDateString = minDate.toISOString().split('T')[0];
+        
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            input.min = minDateString;
+            
+            // Adicionar validação para impedir seleção de fins de semana
+            if (!input.hasAttribute('data-weekday-validator')) {
+                input.addEventListener('change', function() {
+                    const selectedDate = new Date(this.value + 'T00:00:00');
+                    if (!isWeekday(selectedDate)) {
+                        alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
+                        const nextWeekday = getNextWeekday(selectedDate);
+                        this.value = nextWeekday.toISOString().split('T')[0];
+                    }
+                });
+                input.setAttribute('data-weekday-validator', 'true');
+            }
+            
+            // Definir valor padrão como próximo dia útil se estiver vazio
+            if (!input.value) {
+                const defaultDate = getNextWeekday(new Date());
+                input.value = defaultDate.toISOString().split('T')[0];
             }
         });
     }
 
+    // Modal KPIs
     openKpisModal() {
         document.getElementById('dashboard-kpis-modal')?.classList.remove('hidden');
         this.loadKpis();
@@ -219,6 +351,7 @@ class CDDashboard {
     }
 
     renderKpisContent(kpis) {
+        // KPIs principais
         return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div class="bg-gradient-to-br from-orange-primary to-orange-accent text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
@@ -265,6 +398,7 @@ class CDDashboard {
     }
 
     renderKpisCharts(kpis) {
+        // Pizza status
         if (window.kpiStatusPizza) window.kpiStatusPizza.destroy();
         window.kpiStatusPizza = new Chart(document.getElementById('kpi-status-pizza').getContext('2d'), {
             type: 'doughnut',
@@ -283,6 +417,7 @@ class CDDashboard {
                 }
             }
         });
+        // Linha agendamentos por dia
         if (window.kpiAgendLinha) window.kpiAgendLinha.destroy();
         window.kpiAgendLinha = new Chart(document.getElementById('kpi-agendamentos-linha').getContext('2d'), {
             type: 'line',
@@ -302,6 +437,7 @@ class CDDashboard {
                 scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
             }
         });
+        // Top fornecedores não veio
         if (window.kpiTopForn) window.kpiTopForn.destroy();
         window.kpiTopForn = new Chart(document.getElementById('kpi-top-fornecedores').getContext('2d'), {
             type: 'bar',
@@ -318,6 +454,7 @@ class CDDashboard {
                 scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
             }
         });
+        // Linha não veio por dia
         if (window.kpiNaoVeioLinha) window.kpiNaoVeioLinha.destroy();
         window.kpiNaoVeioLinha = new Chart(document.getElementById('kpi-nao-veio-linha').getContext('2d'), {
             type: 'line',
@@ -339,99 +476,180 @@ class CDDashboard {
         });
     }
 
-    toggleUserMenu() {
-        const userMenu = document.getElementById('user-menu');
-        if (userMenu) {
-            userMenu.classList.toggle('hidden');
-        }
+    // Funções globais para abrir/fechar modais do dashboard
+    openConsultaModal() {
+        document.getElementById('consulta-modal')?.classList.remove('hidden');
     }
 
-    setMinDate() {
-        const today = new Date();
-        const isWeekday = (date) => {
-            const day = date.getDay();
-            return day !== 0 && day !== 6;
-        };
-        const getNextWeekday = (date) => {
-            const nextDay = new Date(date);
-            while (!isWeekday(nextDay)) {
-                nextDay.setDate(nextDay.getDate() + 1);
-            }
-            return nextDay;
-        };
-        const minDate = isWeekday(today) ? today : getNextWeekday(today);
-        const minDateString = minDate.toISOString().split('T')[0];
+    closeConsultaModal() {
+        document.getElementById('consulta-modal')?.classList.add('hidden');
+    }
+
+    openRegistrarEntregaModal() {
+        const modal = document.getElementById('registrar-entrega-modal');
+        modal.classList.remove('hidden');
         
-        const dateInputs = document.querySelectorAll('input[type="date"]');
-        dateInputs.forEach(input => {
-            input.min = minDateString;
-            if (!input.hasAttribute('data-weekday-validator')) {
-                input.addEventListener('change', function() {
-                    const selectedDate = new Date(this.value + 'T00:00:00');
-                    if (!isWeekday(selectedDate)) {
-                        alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
-                        const nextWeekday = getNextWeekday(selectedDate);
-                        this.value = nextWeekday.toISOString().split('T')[0];
-                    }
-                });
-                input.setAttribute('data-weekday-validator', 'true');
-            }
-            if (!input.value) {
-                const defaultDate = getNextWeekday(new Date());
-                input.value = defaultDate.toISOString().split('T')[0];
-            }
-        });
+        // Reset do formulário
+        entregaCurrentStep = 1;
+        entregaPedidos = [];
+        entregaCurrentPedido = 0;
+        
+        // Mostrar apenas o primeiro step
+        mostrarStepEntrega(1);
+        
+        // Configurar data atual
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('entrega-data').value = hoje;
+        
+        // Configurar horário atual
+        const agora = new Date();
+        const horaAtual = agora.getHours().toString().padStart(2, '0') + ':00';
+        const selectHorario = document.getElementById('entrega-horario');
+        if (selectHorario) {
+            selectHorario.value = horaAtual;
+        }
+        
+        // Configurar o submit do formulário
+        document.getElementById('registrar-entrega-form').onsubmit = handleRegistrarEntrega;
     }
 
-    showNotification(message, type = 'info') {
-        console.log(`Notificação (${type}): ${message}`);
-        let notificationEl = document.getElementById('notification-container');
-        if (!notificationEl) {
-            notificationEl = document.createElement('div');
-            notificationEl.id = 'notification-container';
-            notificationEl.style.position = 'fixed';
-            notificationEl.style.top = '20px';
-            notificationEl.style.right = '20px';
-            notificationEl.style.zIndex = '9999';
-            document.body.appendChild(notificationEl);
+    closeRegistrarEntregaModal() {
+        document.getElementById('registrar-entrega-modal')?.classList.add('hidden');
+    }
+
+    openBloqueioModal() {
+        document.getElementById('bloqueio-modal')?.classList.remove('hidden');
+    }
+
+    closeBloqueioModal() {
+        document.getElementById('bloqueio-modal')?.classList.add('hidden');
+    }
+
+    openGerenciarBloqueiosModal() {
+        document.getElementById('gerenciar-bloqueios-modal')?.classList.remove('hidden');
+    }
+
+    closeGerenciarBloqueiosModal() {
+        document.getElementById('gerenciar-bloqueios-modal')?.classList.add('hidden');
+    }
+
+    openEntregasModal() {
+        document.getElementById('modal-entregas')?.classList.remove('hidden');
+    }
+
+    closeEntregasModal() {
+        document.getElementById('modal-entregas')?.classList.add('hidden');
+    }
+
+    closeDetailModal() {
+        document.getElementById('detail-modal')?.classList.add('hidden');
+    }
+
+    closeSuggestDateModal() {
+        document.getElementById('suggest-date-modal')?.classList.add('hidden');
+    }
+
+    closeAllStatusModal() {
+        document.getElementById('all-status-modal')?.classList.add('hidden');
+    }
+
+    closeTodayDeliveriesModal() {
+        document.getElementById('today-deliveries-modal')?.classList.add('hidden');
+    }
+
+    closeStatusModal() {
+        document.getElementById('status-modal')?.classList.add('hidden');
+    }
+
+    closeEditarBloqueioModal() {
+        document.getElementById('editar-bloqueio-modal')?.classList.add('hidden');
+    }
+
+    fecharModalEntregas() {
+        document.getElementById('modal-entregas-entregues')?.classList.add('hidden');
+    }
+
+    // CORREÇÃO: Método getCDFromToken adicionado
+    getCDFromToken() {
+        try {
+            const token = sessionStorage.getItem('token');
+            if (!token) return null;
+            
+            if (token.includes('.')) {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.cdId || payload.id || null;
+            }
+            return null;
+        } catch (error) {
+            console.error('Erro ao decodificar token:', error);
+            return null;
         }
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.style.padding = '15px 20px';
-        notification.style.marginBottom = '10px';
-        notification.style.borderRadius = '5px';
-        notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-        notification.style.fontWeight = 'bold';
-        notification.style.opacity = '0';
-        notification.style.transition = 'opacity 0.3s ease-in-out';
-        switch (type) {
-            case 'error':
-                notification.style.backgroundColor = '#f44336';
-                notification.style.color = 'white';
-                break;
-            case 'success':
-                notification.style.backgroundColor = '#4CAF50';
-                notification.style.color = 'white';
-                break;
-            case 'warning':
-                notification.style.backgroundColor = '#ff9800';
-                notification.style.color = 'white';
-                break;
-            default:
-                notification.style.backgroundColor = '#2196F3';
-                notification.style.color = 'white';
+    }
+
+    // Função para formatar datas de forma segura
+    formatDate(dateString) {
+    // Extrai 'YYYY-MM-DD' de ISO ou já recebe 'YYYY-MM-DD', retorna 'DD/MM/YYYY'
+    if (!dateString) return '';
+    const [isoDate] = dateString.split('T');
+    if (!isoDate || isoDate.length < 10) return '';
+    const [ano, mes, dia] = isoDate.split('-');
+    return `${dia}/${mes}/${ano}`;
+    }
+
+    // Função para formatar data e hora de forma segura
+    formatDateTime(dateString) {
+        if (!dateString) {
+            return 'Data/Hora não informada';
         }
-        notification.textContent = message;
-        notificationEl.appendChild(notification);
-        setTimeout(() => {
-            notification.style.opacity = '1';
-        }, 10);
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            setTimeout(() => {
-                notificationEl.removeChild(notification);
-            }, 300);
-        }, 5000);
+        
+        try {
+            const date = new Date(dateString);
+            
+            // Verificar se a data é válida
+            if (isNaN(date.getTime())) {
+                return 'Data/Hora inválida';
+            }
+            
+            return date.toLocaleString('pt-BR');
+        } catch (error) {
+            console.error('Erro ao formatar data/hora:', error, 'Data:', dateString);
+            return 'Data/Hora inválida';
+        }
+    }
+
+    // Função para criar objeto Date de forma segura
+    createSafeDate(dateString) {
+        if (!dateString) {
+            return new Date();
+        }
+        
+        try {
+            let date;
+            
+            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                date = new Date(dateString + 'T00:00:00');
+            } else {
+                date = new Date(dateString);
+            }
+            
+            return isNaN(date.getTime()) ? new Date() : date;
+        } catch (error) {
+            console.error('Erro ao criar data:', error, 'Data:', dateString);
+            return new Date();
+        }
+    }
+
+    init() {
+        this.checkAuthentication();
+        this.setupEventListeners();
+        // Botão KPIs
+        const kpisBtn = document.getElementById('dashboard-kpis-button');
+        if (kpisBtn) {
+            kpisBtn.onclick = () => this.openKpisModal();
+        }
+        this.loadUserInfo();
+        this.loadAgendamentos();
+        this.setMinDate();
     }
 
     checkAuthentication() {
@@ -444,14 +662,14 @@ class CDDashboard {
         }
 
         try {
-            if (token.includes('.')) {
+            if (token.includes('.')) { // Token JWT
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 if (payload.exp && payload.exp * 1000 < Date.now()) {
                     sessionStorage.clear();
                     window.location.href = 'login.html';
                     return;
                 }
-            } else {
+            } else { // Token simples
                 const payload = JSON.parse(atob(token));
                 if (payload.exp && payload.exp < Date.now()) {
                     sessionStorage.clear();
@@ -465,44 +683,60 @@ class CDDashboard {
     }
 
     setupEventListeners() {
+        // User menu toggle
         document.getElementById('user-menu-button').addEventListener('click', this.toggleUserMenu);
+        
+        // Close user menu when clicking outside (LÓGICA CORRIGIDA)
         document.addEventListener('click', (e) => {
             const userMenu = document.getElementById('user-menu');
             const userMenuButton = document.getElementById('user-menu-button');
+            
+            // Só fecha se o clique for fora do botão E fora do menu
             if (!userMenuButton.contains(e.target) && !userMenu.contains(e.target)) {
                 userMenu.classList.add('hidden');
             }
         });
+
+        // Suggest date form
         document.getElementById('suggest-date-form').addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleSuggestDate();
         });
+        
+        // Atualizar horários disponíveis quando a data mudar
         document.getElementById('nova-data').addEventListener('change', () => {
             this.carregarHorariosDisponiveis();
         });
+
+        // Close modals when clicking outside
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-backdrop')) {
                 this.closeDetailModal();
                 this.closeSuggestDateModal();
             }
         });
+
+        // Setup consulta form
         const consultaForm = document.getElementById('consulta-form');
         if (consultaForm) {
             consultaForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                this.consultarAgendamento();
+                this.consultarAgendamento(); // Chama o método da classe
             });
         }
     }
 
+    // CORREÇÃO: Método loadUserInfo completo e correto
     loadUserInfo() {
         const usuario = sessionStorage.getItem('usuario');
+        // Preencher nome do usuário no menu
         const usuarioNomeEl = document.getElementById('usuario-nome');
         if (usuarioNomeEl && usuario) {
             usuarioNomeEl.textContent = usuario;
         }
         const cd = sessionStorage.getItem('cd');
         const cdInfo = sessionStorage.getItem('cdInfo');
+        // Preencher o nome do CD no header
         const cdNomeEl = document.getElementById('cd-nome');
         if (cdNomeEl) {
             let nome = 'Não identificado';
@@ -513,10 +747,93 @@ class CDDashboard {
                         nome = cdObj.nome;
                     }
                 } catch (e) {
+                    // Se der erro, mantém o padrão
                 }
             }
             cdNomeEl.textContent = nome;
         }
+    }
+
+    async loadAgendamentos() {
+        console.log('🔄 Recarregando agendamentos...');
+        this.showLoading(true);
+        
+        try {
+            const token = sessionStorage.getItem('token');
+            console.log('🔑 Token encontrado:', !!token);
+            
+            // Adicionar timestamp para evitar cache
+            const url = `${getApiBaseUrl()}/api/agendamentos?t=${Date.now()}`;
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                }
+            });
+
+            console.log('📡 Response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Erro na resposta:', errorText);
+                
+                // Verificar se é token expirado
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('📊 Dados recebidos:', data);
+            this.agendamentos = data.data || [];
+            this.filteredAgendamentos = [...this.agendamentos];
+            this.showLoading(false);
+            this.renderAgendamentos();
+        } catch (error) {
+            console.error('Erro ao carregar agendamentos:', error);
+            this.showNotification('Erro ao carregar agendamentos.', 'error');
+            this.showLoading(false);
+            return;
+        }
+
+        // Calcula as estatísticas para todos os cards
+        const stats = {
+            total: this.agendamentos.length,
+            pendente: this.agendamentos.filter(a => a.status === 'pendente').length,
+            confirmado: this.agendamentos.filter(a => a.status === 'confirmado').length,
+            entregue: this.agendamentos.filter(a => a.status === 'entregue').length,
+            'nao-veio': this.agendamentos.filter(a => a.status === 'nao-veio').length
+        };
+
+        Object.keys(stats).forEach(key => {
+            const element = document.getElementById(`stat-${key}`);
+            if (element) {
+                this.animateNumber(element, parseInt(element.textContent), stats[key]);
+            }
+        });
+    }
+
+    animateNumber(element, start, end) {
+        const duration = 1000;
+        const startTime = Date.now();
+        
+        const updateNumber = () => {
+            const now = Date.now();
+            const progress = Math.min((now - startTime) / duration, 1);
+            const current = Math.floor(start + (end - start) * progress);
+            
+            element.textContent = current;
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+            }
+        };
+        
+        updateNumber();
     }
 
     renderAgendamentos() {
@@ -538,9 +855,12 @@ class CDDashboard {
 
         this.filteredAgendamentos.forEach(agendamento => {
             let status = agendamento.status;
+            
+            // Mapear status que não têm coluna específica para status existentes
             if (status === 'aguardando_resposta_fornecedor') {
-                status = 'reagendamento';
+                status = 'reagendamento'; // Mapear para reagendamento
             }
+            
             if (agendamentosPorStatus[status]) {
                 agendamentosPorStatus[status].push(agendamento);
             }
@@ -579,6 +899,14 @@ class CDDashboard {
     }
 
     renderColumn(status, agendamentos) {
+        // Status válidos que têm colunas no dashboard
+        const statusValidos = ['pendente', 'confirmado', 'entregue', 'nao-veio', 'reagendamento'];
+        
+        if (!statusValidos.includes(status)) {
+            console.warn(`Status '${status}' não tem coluna correspondente no dashboard`);
+            return;
+        }
+        
         const container = document.getElementById(`column-${status}`);
         const badge = document.getElementById(`badge-${status}`);
         const moreButton = document.getElementById(`more-${status}`);
@@ -628,6 +956,7 @@ class CDDashboard {
         const hojeStr = new Date().toISOString().split('T')[0];
         const dataEntregaStr = (agendamento.dataEntrega || '').split('T')[0];
         const isToday = hojeStr === dataEntregaStr;
+        // Calcula diferença de dias apenas por string (YYYY-MM-DD)
         const hojeDate = new Date(hojeStr);
         const entregaDate = new Date(dataEntregaStr);
         const daysDiff = Math.floor((entregaDate - hojeDate) / (1000 * 60 * 60 * 24));
@@ -654,6 +983,7 @@ class CDDashboard {
             }
         }
 
+        // Verificar se a entrega foi incluída pelo CD
         const incluidoPeloCD = agendamento.incluidoPeloCD;
         const cdIndicator = incluidoPeloCD ? 
             `<div class="bg-yellow-100 text-yellow-800 font-bold text-xs p-2 rounded mb-2 flex items-center">
@@ -664,6 +994,8 @@ class CDDashboard {
         return `
             <div class="column-card bg-white rounded-xl p-4 border shadow-sm hover:shadow-md transition-all ${priorityClass} ${urgentClass}"
                  onclick="dashboard.showAgendamentoDetails(${agendamento.id})">
+                
+                <!-- Alerta de entrega para hoje removido conforme solicitado -->
                 
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex-1">
@@ -815,9 +1147,10 @@ class CDDashboard {
         const statusIcon = this.getStatusIcon(agendamento.status);
         const statusText = this.getStatusText(agendamento.status);
         
+        // Verificar se a entrega foi incluída pelo CD
         const incluidoPeloCD = agendamento.incluidoPeloCD;
         const cdIndicator = incluidoPeloCD ? 
-            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-2 flex items-center">
+            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-3 flex items-center">
                 <i class="fas fa-exclamation-circle mr-1"></i>
                 ENTREGA INCLUÍDA PELO CD
             </div>` : '';
@@ -829,6 +1162,7 @@ class CDDashboard {
                         <h3 class="text-lg font-bold text-gray-dark">${agendamento.codigo}</h3>
                         <p class="text-gray-medium">${agendamento.fornecedor.nome}</p>
                         <p class="text-sm text-gray-500">${agendamento.fornecedor.email}</p>
+                        <!-- Tipo de Veículo removido do card Transportadora -->
                     </div>
                     <div class="px-3 py-1 rounded-full text-white text-sm font-semibold ${statusClass}">
                         <i class="${statusIcon} mr-1"></i>
@@ -873,9 +1207,10 @@ class CDDashboard {
     }
 
     renderTodayCard(agendamento) {
+        // Verificar se a entrega foi incluída pelo CD
         const incluidoPeloCD = agendamento.incluidoPeloCD;
         const cdIndicator = incluidoPeloCD ? 
-            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-2 border border-yellow-400 flex items-center">
+            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-3 border border-yellow-400 flex items-center">
                 <i class="fas fa-exclamation-circle mr-1"></i>
                 ENTREGA INCLUÍDA PELO CD
             </div>` : '';
@@ -938,129 +1273,355 @@ class CDDashboard {
         `;
     }
 
-    getColumnCardActions(agendamento) {
-        if (agendamento.status === 'pendente') {
-            return `
-                <div class="flex space-x-1">
-                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
-                        class="flex-1 bg-green-500 text-white py-1 px-2 rounded text-xs hover:bg-green-600 transition-all">
-                        <i class="fas fa-check mr-1"></i>Aceitar
-                    </button>
-                    <button onclick="event.stopPropagation(); dashboard.suggestNewDate(${agendamento.id})" 
-                        class="flex-1 bg-blue-500 text-white py-1 px-2 rounded text-xs hover:bg-blue-600 transition-all">
-                        <i class="fas fa-calendar mr-1"></i>Reagendar
-                    </button>
-                </div>
-            `;
-        } else if (agendamento.status === 'confirmado') {
-            return `
-                <div class="flex space-x-1">
-                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
-                        class="flex-1 bg-blue-500 text-white py-1 px-2 rounded text-xs hover:bg-blue-600 transition-all">
-                        <i class="fas fa-truck mr-1"></i>Entregue
-                    </button>
-                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
-                        class="flex-1 bg-red-500 text-white py-1 px-2 rounded text-xs hover:bg-red-600 transition-all">
-                        <i class="fas fa-times mr-1"></i>Não Veio
-                    </button>
-                </div>
-            `;
+    renderList() {
+        if (this.filteredAgendamentos.length === 0) {
+            this.showEmptyState();
+            this.updateListInfo(0, 0, 0);
+            return;
         }
-        return `
-            <button onclick="event.stopPropagation(); dashboard.showAgendamentoDetails(${agendamento.id})" 
-                class="w-full bg-gray-500 text-white py-1 px-2 rounded text-xs hover:bg-gray-600 transition-all">
-                <i class="fas fa-eye mr-1"></i>Ver Detalhes
-            </button>
-        `;
+        
+        this.hideEmptyState();
+        
+        // Calcular paginação
+        this.totalPages = Math.ceil(this.filteredAgendamentos.length / this.itemsPerPage);
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        const currentPageItems = this.filteredAgendamentos.slice(startIndex, endIndex);
+        
+        // Renderizar tabela
+        const tbody = document.getElementById('list-tbody');
+        tbody.innerHTML = currentPageItems.map((agendamento, index) => {
+            const statusClass = `status-${agendamento.status}`;
+            const statusIcon = this.getStatusIcon(agendamento.status);
+            const statusText = this.getStatusText(agendamento.status);
+            const rowIndex = startIndex + index + 1;
+            
+            return `
+                <tr class="table-row hover:bg-gray-50 transition-colors">
+                    <td class="w-24 px-4 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <span class="text-xs text-gray-400 mr-2">${rowIndex}</span>
+                            <div>
+                                <div class="text-sm font-bold text-gray-900 truncate">${agendamento.codigo}</div>
+                                <div class="text-xs text-gray-500 truncate">${agendamento.tipoCarga || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="w-40 px-4 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8">
+                                <div class="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                    <i class="fas fa-building text-orange-600 text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="ml-3 min-w-0 flex-1">
+                                <div class="text-sm font-medium text-gray-900 truncate">${agendamento.fornecedor?.nome || 'N/A'}</div>
+                                <div class="text-xs text-gray-500 truncate">${agendamento.fornecedor?.email || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="w-28 px-4 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900 font-medium">${this.formatDate(agendamento.dataEntrega)}</div>
+                        <div class="text-xs text-gray-500">${this.formatDateTime(agendamento.createdAt) || 'Criação'}</div>
+                    </td>
+                    <td class="w-24 px-4 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-gray-400 mr-1"></i>
+                            <span class="text-xs text-gray-900 font-medium">${agendamento.horarioEntrega}</span>
+                        </div>
+                    </td>
+                    <td class="w-32 px-4 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-white text-xs font-bold ${statusClass}">
+                            <i class="${statusIcon} mr-1"></i>
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="w-24 px-4 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex items-center justify-center space-x-1">
+                            <button onclick="dashboard.showAgendamentoDetails(${agendamento.id})" 
+                                class="text-blue-600 hover:text-blue-900 p-1 rounded-lg hover:bg-blue-50 transition-colors"
+                                title="Ver Detalhes">
+                                <i class="fas fa-eye text-xs"></i>
+                            </button>
+                            ${this.getActionButtonsCompact(agendamento)}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        // Atualizar informações da página
+        this.updateListInfo(startIndex + 1, Math.min(endIndex, this.filteredAgendamentos.length), this.filteredAgendamentos.length);
+        
+        // Atualizar controles de paginação
+        this.updatePaginationControls();
     }
 
-    getPriorityIndicator(agendamento, daysDiff) {
-        const hojeStr = new Date().toISOString().split('T')[0];
-        const amanhaStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-        const dataEntregaStr = (agendamento.dataEntrega || '').split('T')[0];
-        const dataCriacaoStr = (agendamento.dataCriacao || '').split('T')[0];
-        const hojeDate = new Date(hojeStr);
-        const dataCriacaoDate = new Date(dataCriacaoStr);
-        const daysSinceCreated = Math.floor((hojeDate - dataCriacaoDate) / (1000 * 60 * 60 * 24));
-        if (agendamento.status === 'pendente' && daysSinceCreated >= 3) {
+    updateListInfo(start, end, total) {
+        document.getElementById('page-start').textContent = start;
+        document.getElementById('page-end').textContent = end;
+        document.getElementById('page-total').textContent = total;
+        document.getElementById('list-total-items').textContent = `${total} itens`;
+    }
+
+    updatePaginationControls() {
+        const firstBtn = document.getElementById('first-page-btn');
+        const prevBtn = document.getElementById('prev-page-btn');
+        const nextBtn = document.getElementById('next-page-btn');
+        const lastBtn = document.getElementById('last-page-btn');
+        
+        // Habilitar/desabilitar botões
+        firstBtn.disabled = this.currentPage === 1;
+        prevBtn.disabled = this.currentPage === 1;
+        nextBtn.disabled = this.currentPage === this.totalPages || this.totalPages === 0;
+        lastBtn.disabled = this.currentPage === this.totalPages || this.totalPages === 0;
+        
+        // Gerar números das páginas
+        this.generatePageNumbers();
+    }
+
+    generatePageNumbers() {
+        const pageNumbersContainer = document.getElementById('page-numbers');
+        pageNumbersContainer.innerHTML = '';
+        
+        if (this.totalPages <= 1) return;
+        
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+        
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const button = document.createElement('button');
+            button.className = `px-3 py-2 text-sm font-medium border ${
+                i === this.currentPage 
+                    ? 'bg-orange-primary text-white border-orange-primary' 
+                    : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50'
+            } transition-colors`;
+            button.textContent = i;
+            button.onclick = () => this.goToPage(i);
+            pageNumbersContainer.appendChild(button);
+        }
+    }
+
+    // Métodos de navegação de página
+    goToPage(page) {
+        if (page < 1 || page > this.totalPages) return;
+        this.currentPage = page;
+        this.renderList();
+    }
+
+    nextPage() {
+        if (this.currentPage < this.totalPages) {
+            this.currentPage++;
+            this.renderList();
+        }
+    }
+
+    previousPage() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.renderList();
+        }
+    }
+
+    changeItemsPerPage(newItemsPerPage) {
+        this.itemsPerPage = parseInt(newItemsPerPage);
+        this.currentPage = 1; // Resetar para primeira página
+        this.renderList();
+    }
+
+    // Método de ordenação
+    sortTable(column) {
+        const currentSort = this.currentSort || { column: null, direction: 'asc' };
+        
+        if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.direction = 'asc';
+        }
+        
+        this.currentSort = currentSort;
+        
+        this.filteredAgendamentos.sort((a, b) => {
+            let valueA, valueB;
+            
+            switch (column) {
+                case 'codigo':
+                    valueA = a.codigo;
+                    valueB = b.codigo;
+                    break;
+                case 'fornecedor':
+                    valueA = a.fornecedor?.nome || '';
+                    valueB = b.fornecedor?.nome || '';
+                    break;
+                case 'dataEntrega':
+                    valueA = new Date(a.dataEntrega);
+                    valueB = new Date(b.dataEntrega);
+                    break;
+                case 'status':
+                    valueA = a.status;
+                    valueB = b.status;
+                    break;
+                default:
+                    return 0;
+            }
+            
+            if (valueA < valueB) return currentSort.direction === 'asc' ? -1 : 1;
+            if (valueA > valueB) return currentSort.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+        
+        this.currentPage = 1; // Resetar para primeira página após ordenação
+        this.renderList();
+        
+        // Atualizar ícones de ordenação
+        this.updateSortIcons(column, currentSort.direction);
+    }
+
+    updateSortIcons(activeColumn, direction) {
+        // Resetar todos os ícones
+        document.querySelectorAll('th i.fas').forEach(icon => {
+            icon.className = 'fas fa-sort text-gray-400';
+        });
+        
+        // Atualizar ícone da coluna ativa
+        const activeHeader = document.querySelector(`th[onclick="dashboard.sortTable('${activeColumn}')"] i`);
+        if (activeHeader) {
+            activeHeader.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'} text-orange-primary`;
+        }
+    }
+
+    // --- MÉTODOS DE UTILIDADE E FORMATAÇÃO ---
+
+    getStatusIcon(status) {
+        const icons = {
+            'pendente': 'fas fa-clock',
+            'confirmado': 'fas fa-check-circle',
+            'entregue': 'fas fa-truck',
+            'nao-veio': 'fas fa-times-circle',
+            'reagendamento': 'fas fa-calendar-alt',
+            'aguardando_resposta_fornecedor': 'fas fa-hourglass-half'
+        };
+        return icons[status] || 'fas fa-question-circle';
+    }
+
+    getStatusText(status) {
+        // Permite exibir 'Pendente (reagendamento)' se observações contiverem 'reagend'
+        if (typeof this === 'object' && this.currentAgendamento && this.currentAgendamento.status === 'pendente' && this.currentAgendamento.observacoes && this.currentAgendamento.observacoes.toLowerCase().includes('reagend')) {
+            return 'Pendente (reagendamento)';
+        }
+        const texts = {
+            'pendente': 'Pendente',
+            'confirmado': 'Confirmado',
+            'entregue': 'Entregue',
+            'nao-veio': 'Não Veio',
+            'reagendamento': 'Reagendamento',
+            'aguardando_resposta_fornecedor': 'Aguardando Fornecedor'
+        };
+        return texts[status] || 'Desconhecido';
+    }
+
+    getStatusClass(status) {
+        const classes = {
+            'pendente': 'bg-orange-500 text-white',
+            'confirmado': 'bg-green-500 text-white',
+            'entregue': 'bg-blue-500 text-white',
+            'nao-veio': 'bg-red-500 text-white',
+            'reagendamento': 'bg-purple-500 text-white',
+            'aguardando_resposta_fornecedor': 'bg-yellow-500 text-white',
+            'reagendamento-solicitado': 'bg-purple-500 text-white',
+            'cancelado': 'bg-gray-500 text-white'
+        };
+        return classes[status] || 'bg-gray-400 text-white';
+    }
+
+    getTipoCargaText(tipo) {
+        const tipos = {
+            'equipamentos': 'Equipamentos de Rede',
+            'materiais': 'Materiais de Instalação',
+            'componentes': 'Componentes Eletrônicos',
+            'outros': 'Outros'
+        };
+        return tipos[tipo] || tipo;
+    }
+
+    getActionButtons(agendamento) {
+        if (agendamento.status === 'pendente') {
             return `
-                <div class="mt-2 text-xs text-red-600 font-semibold flex items-center">
-                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                    Há ${daysSinceCreated} dias
-                </div>
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
+                    class="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg hover:bg-green-600 transition-all text-sm btn-3d">
+                    <i class="fas fa-check mr-1"></i>Aceitar
+                </button>
+                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
+                    class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all text-sm btn-3d">
+                    <i class="fas fa-calendar mr-1"></i>Reagendar
+                </button>
             `;
         } else if (agendamento.status === 'confirmado') {
-            if (dataEntregaStr === hojeStr) {
-                return `
-                    <div class="mt-2 text-xs text-yellow-600 font-semibold flex items-center">
-                        <i class="fas fa-clock mr-1"></i>
-                        Hoje
-                    </div>
-                `;
-            } else if (dataEntregaStr === amanhaStr) {
-                return `
-                    <div class="mt-2 text-xs text-yellow-600 font-semibold flex items-center">
-                        <i class="fas fa-clock mr-1"></i>
-                        Amanhã
-                    </div>
-                `;
-            }
+            return `
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                    class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all text-sm btn-3d">
+                    <i class="fas fa-truck mr-1"></i>Entregue
+                </button>
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                    class="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg hover:bg-red-600 transition-all text-sm btn-3d">
+                    <i class="fas fa-times mr-1"></i>Não Veio
+                </button>
+            `;
         }
         return '';
     }
 
-    checkTodayDeliveries() {
-        const hojeStr = new Date().toISOString().split('T')[0];
-        this.todayDeliveries = this.agendamentos.filter(a => ((a.dataEntrega || '').split('T')[0] === hojeStr));
+    getActionButtonsCompact(agendamento) {
+        if (agendamento.status === 'pendente') {
+            return `
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
+                    class="text-green-500 hover:text-green-700" title="Aceitar">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
+                    class="text-blue-500 hover:text-blue-700" title="Reagendar">
+                    <i class="fas fa-calendar"></i>
+                </button>
+            `;
+        } else if (agendamento.status === 'confirmado') {
+            return `
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                    class="text-blue-500 hover:text-blue-700" title="Marcar como Entregue">
+                    <i class="fas fa-truck"></i>
+                </button>
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                    class="text-red-500 hover:text-red-700" title="Marcar como Não Veio">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        }
+        return '';
     }
 
-    showAllStatus(status) {
-        const agendamentos = this.filteredAgendamentos.filter(a => a.status === status);
-        const modal = document.getElementById('all-status-modal');
-        const title = document.getElementById('all-status-title');
-        const content = document.getElementById('all-status-list');
+    // --- MÉTODOS DE AÇÃO E MODAIS ---
 
-        title.textContent = `Todos os ${this.getStatusText(status)} (${agendamentos.length})`;
+    showAgendamentoDetails(id) {
+        const agendamento = this.agendamentos.find(a => a.id === id);
+        if (!agendamento) return;
 
-        content.innerHTML = agendamentos.map(agendamento => {
-            return this.renderDetailedCard(agendamento);
-        }).join('');
+        this.currentAgendamentoId = id;
 
-        modal.classList.remove('hidden');
-    }
-
-    showTodayDeliveries() {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        
-        const entregasHoje = this.agendamentos.filter(agendamento => {
-            const dataEntrega = this.createSafeDate(agendamento.dataEntrega);
-            return agendamento.status === 'confirmado' && dataEntrega.getTime() === hoje.getTime();
-        });
-
-        const modal = document.getElementById('today-deliveries-modal');
-        const content = document.getElementById('today-deliveries-list');
-
-        content.innerHTML = entregasHoje.map(agendamento => {
-            return this.renderTodayCard(agendamento);
-        }).join('');
-
-        modal.classList.remove('hidden');
-    }
-
-    renderDetailedCard(agendamento) {
-        const statusClass = `status-${agendamento.status}`;
-        const statusIcon = this.getStatusIcon(agendamento.status);
-        const statusText = this.getStatusText(agendamento.status);
-        
+        // Verificar se a entrega foi incluída pelo CD
         const incluidoPeloCD = agendamento.incluidoPeloCD;
-        const cdIndicator = incluidoPeloCD ? 
-            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-2 flex items-center">
-                <i class="fas fa-exclamation-circle mr-1"></i>
+        const cdIndicatorHtml = incluidoPeloCD ? 
+            `<div class="bg-yellow-100 border border-yellow-400 text-yellow-800 font-bold p-3 rounded-lg mb-4 flex items-center">
+                <i class="fas fa-exclamation-circle mr-2 text-yellow-600"></i>
                 ENTREGA INCLUÍDA PELO CD
             </div>` : '';
 
-        // Transportador
+        // ...existing code...
+
         const transportadorHtml = (agendamento.transportadorNome || agendamento.transportadorDocumento || agendamento.transportadorTelefone || agendamento.transportadorEmail) ? `
             <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
                 <div class="flex items-center mb-3">
@@ -1078,7 +1639,6 @@ class CDDashboard {
             </div>
         ` : '';
 
-        // Volumes
         const volumesHtml = (agendamento.quantidadeVolumes || agendamento.tipoVolume) ? `
             <div class="bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
                 <div class="flex items-center mb-3">
@@ -1111,7 +1671,7 @@ class CDDashboard {
         const dataCriacao = agendamento.createdAt ? this.formatDate(agendamento.createdAt) : 'Não informado';
         detailContent.innerHTML = `
             <div class="space-y-4">
-                ${cdIndicator}
+                ${cdIndicatorHtml}
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
                     <!-- Informações Gerais -->
                     <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
@@ -1345,6 +1905,7 @@ class CDDashboard {
     }
 
     renderCommunicationHistory(agendamento) {
+        // Usar apenas histórico real do banco de dados
         let historico = agendamento.historicoAcoes || [];
 
         if (historico.length === 0) {
@@ -1498,567 +2059,6 @@ class CDDashboard {
             'agendamento_confirmado': 'Agendamento Confirmado',
             'agendamento_entregue': 'Entrega Realizada',
             'agendamento_nao_veio': 'Ausência Registrada',
-            'data_aceita': 'Nova Data Aceita',
-            'data_rejeitada': 'Nova Data Rejeitada',
-            'fornecedor_nao_compareceu': 'Ausência Registrada',
-            'agendamento_cancelado': 'Agendamento Cancelado'
-        };
-        return titles[acao] || 'Evento do Sistema';
-    }
-
-    getDetailActionButtons(agendamento) {
-        if (agendamento.status === 'pendente') {
-            return `
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
-                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all font-medium text-sm">
-                    <i class="fas fa-check mr-1"></i>Aceitar Data
-                </button>
-                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
-                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
-                    <i class="fas fa-calendar mr-1"></i>Sugerir Nova Data
-                </button>
-            `;
-        } else if (agendamento.status === 'confirmado') {
-            return `
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
-                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
-                    <i class="fas fa-truck mr-1"></i>Marcar Entregue
-                </button>
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
-                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-medium text-sm">
-                    <i class="fas fa-times mr-1"></i>Não Veio
-                </button>
-            `;
-        } else if (agendamento.status === 'reagendamento') {
-            return `
-                <div class="w-full bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
-                    <i class="fas fa-hourglass-half text-yellow-600 text-lg mb-1"></i>
-                    <p class="text-yellow-800 font-medium text-sm">Aguardando resposta do fornecedor</p>
-                    <p class="text-yellow-700 text-xs">Nova data foi sugerida e notificação enviada</p>
-                </div>
-            `;
-        } else if (agendamento.status === 'nao-veio') {
-            return `
-                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
-                    class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-all font-medium text-sm">
-                    <i class="fas fa-redo mr-1"></i>Reagendar
-                </button>
-                <button onclick="dashboard.cancelAgendamento(${agendamento.id})" 
-                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-medium text-sm">
-                    <i class="fas fa-ban mr-1"></i>Cancelar
-                </button>
-            `;
-        } else if (agendamento.status === 'entregue') {
-            return `
-                <div class="w-full bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                    <i class="fas fa-check-circle text-green-600 text-lg mb-1"></i>
-                    <p class="text-green-800 font-medium text-sm">Entrega realizada com sucesso</p>
-                </div>
-            `;
-        }
-        return `
-            <div class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                <i class="fas fa-info-circle text-gray-600 text-lg mb-1"></i>
-                <p class="text-gray-700 text-sm">Nenhuma ação disponível para este status</p>
-            </div>
-        `;
-    }
-
-    async updateAgendamentoStatus(id, newStatus) {
-        try {
-            const token = sessionStorage.getItem('token');
-            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status: newStatus })
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                console.log('Status atualizado com sucesso:', result);
-                
-                await this.loadAgendamentos();
-                this.closeDetailModal();
-                this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)}`, 'success');
-                
-            } else {
-                if (handleTokenExpired(response)) {
-                    return;
-                }
-                
-                const errorData = await response.json().catch(() => ({}));
-                console.error('Erro na resposta:', response.status, errorData);
-                throw new Error(errorData.error || `Erro HTTP ${response.status}`);
-            }
-        } catch (error) {
-            console.error('Erro ao atualizar status:', error);
-            this.showNotification(`Erro ao atualizar status: ${error.message}`, 'error');
-        }
-    }
-
-    async cancelAgendamento(id) {
-        const motivo = prompt('Digite o motivo do cancelamento (obrigatório):');
-        
-        if (!motivo || motivo.trim() === '') {
-            this.showNotification('Motivo do cancelamento é obrigatório.', 'warning');
-            return;
-        }
-
-        if (!confirm('Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.')) {
-            return;
-        }
-
-        try {
-            const token = sessionStorage.getItem('token');
-            
-            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/cancelar`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ motivo: motivo.trim() })
-            });
-
-            if (response.ok) {
-                await this.loadAgendamentos();
-                this.closeDetailModal();
-                this.showNotification('Agendamento cancelado com sucesso.', 'success');
-            } else {
-                this.showNotification('Erro ao cancelar agendamento', 'error');
-            }
-        } catch (error) {
-            console.error('Erro ao cancelar agendamento:', error);
-            this.showNotification('Erro ao cancelar agendamento.', 'error');
-        }
-    }
-
-    async suggestNewDate(id) {
-        this.currentAgendamentoId = id;
-        document.getElementById('suggest-date-form').reset();
-        this.setMinDate();
-        
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('nova-data').min = today;
-        document.getElementById('nova-data').value = today;
-        
-        await this.carregarHorariosDisponiveis();
-        
-        document.getElementById('suggest-date-modal').classList.remove('hidden');
-    }
-    
-    async carregarHorariosDisponiveis() {
-        try {
-            const novaData = document.getElementById('nova-data').value;
-            const horarioSelect = document.getElementById('novo-horario');
-            
-            horarioSelect.innerHTML = '<option value="">Carregando horários...</option>';
-            
-            let cdId = this.cdId;
-            if (!cdId) {
-                console.log('this.cdId não encontrado, tentando recuperar de outras fontes');
-                
-                const cdInfo = sessionStorage.getItem('cdInfo');
-                if (cdInfo) {
-                    try {
-                        const cdInfoObj = JSON.parse(cdInfo);
-                        cdId = cdInfoObj.id;
-                        this.cdId = cdId;
-                        console.log('CD ID recuperado do cdInfo:', cdId);
-                    } catch (error) {
-                        console.error('Erro ao parsear cdInfo:', error);
-                    }
-                }
-                
-                cdId = cdId || this.getCDFromToken();
-                if (cdId) {
-                    this.cdId = cdId;
-                    console.log('CD ID recuperado do token:', cdId);
-                }
-                
-                cdId = cdId || sessionStorage.getItem('cdId');
-                if (cdId) {
-                    this.cdId = cdId;
-                    console.log('CD ID recuperado diretamente do sessionStorage:', cdId);
-                }
-            }
-            
-            if (!cdId) {
-                console.error('CD ID não encontrado em nenhuma fonte');
-                horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
-                const horariosDefault = [
-                    { valor: '08:00', label: '08:00' },
-                    { valor: '09:00', label: '09:00' },
-                    { valor: '10:00', label: '10:00' },
-                    { valor: '11:00', label: '11:00' },
-                    { valor: '13:00', label: '13:00' },
-                    { valor: '14:00', label: '14:00' },
-                    { valor: '15:00', label: '15:00' },
-                    { valor: '16:00', label: '16:00' }
-                ];
-                
-                horariosDefault.forEach(horario => {
-                    const option = document.createElement('option');
-                    option.value = horario.valor;
-                    option.textContent = horario.label;
-                    horarioSelect.appendChild(option);
-                });
-                
-                return;
-            }
-            
-            console.log('Carregando horários disponíveis para data:', novaData, 'CD ID:', cdId);
-            
-            const response = await fetch(`${getApiBaseUrl()}/api/horarios-disponiveis?date=${novaData}&cd=${cdId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-                }
-            });
-            
-            if (!response.ok) {
-                if (handleTokenExpired(response)) {
-                    return;
-                }
-                throw new Error(`Erro ao buscar horários: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('Horários disponíveis recebidos:', data);
-            
-            horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
-            
-            if (data.horarios && Array.isArray(data.horarios)) {
-                data.horarios.forEach(horario => {
-                    const option = document.createElement('option');
-                    option.value = horario.valor;
-                    option.textContent = horario.label;
-                    
-                    if (horario.disponivel === false) {
-                        option.disabled = true;
-                        option.textContent += ` (${horario.motivo || 'Indisponível'})`;
-                    }
-                    
-                    horarioSelect.appendChild(option);
-                });
-            } else {
-                const horariosDefault = [
-                    { valor: '08:00', label: '08:00' },
-                    { valor: '09:00', label: '09:00' },
-                    { valor: '10:00', label: '10:00' },
-                    { valor: '11:00', label: '11:00' },
-                    { valor: '13:00', label: '13:00' },
-                    { valor: '14:00', label: '14:00' },
-                    { valor: '15:00', label: '15:00' },
-                    { valor: '16:00', label: '16:00' }
-                ];
-                
-                horariosDefault.forEach(horario => {
-                    const option = document.createElement('option');
-                    option.value = horario.valor;
-                    option.textContent = horario.label;
-                    horarioSelect.appendChild(option);
-                });
-            }
-        } catch (error) {
-            console.error('Erro ao carregar horários disponíveis:', error);
-            
-            const horarioSelect = document.getElementById('novo-horario');
-            horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
-            const horariosDefault = [
-                { valor: '08:00', label: '08:00' },
-                { valor: '09:00', label: '09:00' },
-                { valor: '10:00', label: '10:00' },
-                { valor: '11:00', label: '11:00' },
-                { valor: '13:00', label: '13:00' },
-                { valor: '14:00', label: '14:00' },
-                { valor: '15:00', label: '15:00' },
-                { valor: '16:00', label: '16:00' }
-            ];
-            
-            horariosDefault.forEach(horario => {
-                const option = document.createElement('option');
-                option.value = horario.valor;
-                option.textContent = horario.label;
-                horarioSelect.appendChild(option);
-            });
-        }
-    }
-
-    async handleSuggestDate() {
-        const novaData = document.getElementById('nova-data').value;
-        const novoHorario = document.getElementById('novo-horario').value;
-        const motivo = document.getElementById('motivo-reagendamento').value;
-
-        if (!novaData || !novoHorario) {
-            this.showNotification('Preencha todos os campos obrigatórios.', 'error');
-            return;
-        }
-
-        try {
-            console.log(`🔄 Sugerindo nova data para agendamento ${this.currentAgendamentoId}:`, {
-                novaData,
-                novoHorario,
-                motivo
-            });
-
-            const token = sessionStorage.getItem('token');
-            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${this.currentAgendamentoId}/reagendar`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    novaData,
-                    novoHorario,
-                    motivo
-                })
-            });
-
-            const responseText = await response.text();
-            console.log('📋 Response body:', responseText);
-
-            if (response.ok) {
-                console.log('✅ Reagendamento sugerido com sucesso');
-                
-                await this.loadAgendamentos();
-                
-                this.closeSuggestDateModal();
-                this.closeDetailModal();
-                
-                this.showNotification('Sugestão de nova data enviada ao fornecedor.', 'success');
-            } else {
-                if (handleTokenExpired(response)) {
-                    return;
-                }
-                
-                let errorData;
-                try {
-                    errorData = JSON.parse(responseText);
-                } catch {
-                    errorData = { error: responseText };
-                }
-                console.error('❌ Erro na resposta:', errorData);
-                throw new Error(errorData.error || 'Erro ao enviar sugestão');
-            }
-        } catch (error) {
-            console.error('❌ Erro ao enviar sugestão:', error);
-            this.showNotification('Erro ao enviar sugestão: ' + error.message, 'error');
-        }
-    }
-
-    // Funções globais para abrir/fechar modais do dashboard
-    openConsultaModal() {
-        document.getElementById('consulta-modal')?.classList.remove('hidden');
-    }
-
-    closeConsultaModal() {
-        document.getElementById('consulta-modal')?.classList.add('hidden');
-    }
-
-    openRegistrarEntregaModal() {
-        const modal = document.getElementById('registrar-entrega-modal');
-        modal.classList.remove('hidden');
-        
-        // Reset do formulário
-        entregaCurrentStep = 1;
-        entregaPedidos = [];
-        entregaCurrentPedido = 0;
-        
-        // Mostrar apenas o primeiro step
-        mostrarStepEntrega(1);
-        
-        // Configurar data atual
-        const hoje = new Date().toISOString().split('T')[0];
-        document.getElementById('entrega-data').value = hoje;
-        
-        // Configurar horário atual
-        const agora = new Date();
-        const horaAtual = agora.getHours().toString().padStart(2, '0') + ':00';
-        const selectHorario = document.getElementById('entrega-horario');
-        if (selectHorario) {
-            selectHorario.value = horaAtual;
-        }
-        
-        // Configurar o submit do formulário
-        document.getElementById('registrar-entrega-form').onsubmit = handleRegistrarEntrega;
-    }
-
-    closeRegistrarEntregaModal() {
-        document.getElementById('registrar-entrega-modal')?.classList.add('hidden');
-    }
-
-    openBloqueioModal() {
-        const modal = document.getElementById('bloqueio-modal');
-        modal.classList.remove('hidden');
-        
-        // Configurar data mínima (amanhã)
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStr = tomorrow.toISOString().split('T')[0];
-        document.getElementById('data-bloqueio').min = tomorrowStr;
-        document.getElementById('data-bloqueio').value = tomorrowStr;
-        
-        // Reset do formulário
-        document.getElementById('bloqueio-form').reset();
-        document.getElementById('data-bloqueio').value = tomorrowStr;
-        
-        // Event listeners
-        this.setupBloqueioEventListeners();
-    }
-
-    closeBloqueioModal() {
-        const modal = document.getElementById('bloqueio-modal');
-        modal.classList.add('hidden');
-        
-        // Limpar formulário
-        document.getElementById('bloqueio-form').reset();
-        document.getElementById('motivo-outros').classList.add('hidden');
-        document.getElementById('preview-bloqueio').innerHTML = '<p>Selecione os dados acima para ver a prévia</p>';
-    }
-
-    setupBloqueioEventListeners() {
-        const form = document.getElementById('bloqueio-form');
-        const motivoSelect = document.getElementById('motivo-bloqueio');
-        const motivoOutros = document.getElementById('motivo-outros');
-        
-        // Mostrar/ocultar campo "outros"
-        motivoSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'outros') {
-                motivoOutros.classList.remove('hidden');
-            } else {
-                motivoOutros.classList.add('hidden');
-            }
-            this.updateBloqueioPreview();
-        });
-        
-        // Atualizar preview quando campos mudarem
-        const previewFields = ['data-bloqueio', 'hora-inicio', 'hora-fim', 'motivo-bloqueio', 'motivo-custom'];
-        previewFields.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field) {
-                field.addEventListener('change', this.updateBloqueioPreview);
-                field.addEventListener('input', this.updateBloqueioPreview);
-            }
-        });
-        
-        // Validação de horários
-        document.getElementById('hora-inicio').addEventListener('change', this.validateHorarios);
-        document.getElementById('hora-fim').addEventListener('change', this.validateHorarios);
-        
-        // Submit do formulário
-        form.onsubmit = function(e) {
-        console.log('[Frontend] bloqueio-form submit triggered (onsubmit bind)');
-        return handleBloqueioSubmit(e);
-    };
-
-    // Prevenir que a tecla Enter dispare um submit nativo (exceto em textarea)
-    form.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
-            if (tag !== 'textarea') {
-                e.preventDefault();
-                console.log('[Frontend] Enter pressed in bloqueio-form - prevented native submit');
-            }
-        }
-    });
-}
-
-    updateBloqueioPreview() {
-        const data = document.getElementById('data-bloqueio').value;
-        const horaInicio = document.getElementById('hora-inicio').value;
-        const horaFim = document.getElementById('hora-fim').value;
-        const motivo = document.getElementById('motivo-bloqueio').value;
-        const motivoCustom = document.getElementById('motivo-custom').value;
-        
-        const preview = document.getElementById('preview-bloqueio');
-        
-        if (!data || !horaInicio || !horaFim || !motivo) {
-            preview.innerHTML = '<p class="text-gray-500">Selecione os dados acima para ver a prévia</p>';
-            return;
-        }
-        
-        const dataFormatada = new Date(data + 'T00:00:00').toLocaleDateString('pt-BR');
-        const motivoTexto = motivo === 'outros' ? motivoCustom : 
-                           document.querySelector(`#motivo-bloqueio option[value="${motivo}"]`).textContent;
-        
-        preview.innerHTML = `
-            <div class="bg-red-50 border border-red-200 rounded-lg p-3">
-                <h5 class="font-semibold text-red-800 mb-2">
-                    <i class="fas fa-ban mr-2"></i>Bloqueio Programado
-                </h5>
-                <div class="text-red-700 space-y-1">
-                    <p><strong>Data:</strong> ${dataFormatada}</p>
-                    <p><strong>Período:</strong> ${horaInicio} às ${horaFim}</p>
-                    <p><strong>Motivo:</strong> ${motivoTexto}</p>
-                </div>
-                <div class="mt-2 text-sm text-red-600">
-                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                    Nenhum agendamento será permitido neste período.
-                </div>
-            </div>
-        `;
-    }
-
-    validateHorarios() {
-        const horaInicio = document.getElementById('hora-inicio').value;
-        const horaFim = document.getElementById('hora-fim').value;
-        
-        if (horaInicio && horaFim) {
-            const inicio = parseInt(horaInicio.replace(':', ''));
-            const fim = parseInt(horaFim.replace(':', ''));
-            
-            if (fim <= inicio) {
-                dashboard.showNotification('O horário de fim deve ser posterior ao horário de início', 'error');
-                document.getElementById('hora-fim').value = '';
-            }
-        }
-    }
-
-    async handleBloqueioSubmit(e) {
-        e.preventDefault();
-        console.debug('[Frontend] handleBloqueioSubmit invoked');
-        
-        const formData = new FormData(e.target);
-        const dataBloqueio = formData.get('dataBloqueio');
-        const horaInicio = formData.get('horaInicio');
-        const horaFim = formData.get('horaFim');
-        const motivo = formData.get('motivoBloqueio') === 'outros' ? formData.get('motivoCustom') : formData.get('motivoBloqueio');
-        // Validações
-        if (!dataBloqueio || !horaInicio || !horaFim || !motivo) {
-            dashboard.showNotification('Todos os campos são obrigatórios', 'error');
-            return;
-        }
-        // Validação de data futura (pode usar Date para comparar, mas envia string)
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0); // Zerar horas para comparação apenas de data
-        
-        // Criar data no fuso horário local para evitar problemas de UTC
-        const [ano, mes, dia] = dataBloqueio.split('-').map(Number);
-        const dataBloqueioDate = new Date(ano, mes - 1, dia); // mes - 1 porque Date usa 0-11 para meses
-        
-        console.log('📅 [Bloqueio] Data selecionada:', dataBloqueio);
-        console.log('📅 [Bloqueio] Data criada:', dataBloqueioDate);
-        console.log('📅 [Bloqueio] Dia da semana:', dataBloqueioDate.getDay(), '(0=Domingo, 1=Segunda, etc.)');
-        
-        if (dataBloqueioDate <= hoje) {
-            dashboard.showNotification('A data do bloqueio deve ser futura', 'error');
-            return;
-        }
-        // Verificar se é dia útil (1=Segunda a 5=Sexta)
-        const diaSemana = dataBloqueioDate.getDay();
-        if (diaSemana === 0 || diaSemana === 6) {
-            dashboard.showNotification('Bloqueios só podem ser feitos em dias úteis', 'error');
-            return;
-        }
-        try {
-            dashboard.showLoading(true);
-            const token = sessionStorage.getItem('token');
             'data_aceita': 'Nova Data Aceita',
             'data_rejeitada': 'Nova Data Rejeitada',
             'fornecedor_nao_compareceu': 'Ausência Registrada',
