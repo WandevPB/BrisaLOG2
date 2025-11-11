@@ -1924,6 +1924,9 @@ class CDDashboard {
             `;
         }
 
+        // Detect if supplier has responded
+        const hasSupplierResponse = historico.some(e => e.acao === 'fornecedor_respondeu' || e.acao === 'reagendamento_aceito' || e.acao === 'data_aceita' || e.acao === 'data_rejeitada');
+
         return `
             <div class="space-y-4">
                 ${historico.map((evento, index) => `
@@ -1936,7 +1939,7 @@ class CDDashboard {
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between mb-2">
                                 <p class="text-base font-semibold text-gray-900">
-                                    ${this.getHistoryTitle(evento.acao, evento.autor)}
+                                    ${this.getHistoryTitle(evento.acao, evento.autor, evento)}
                                 </p>
                                 <div class="flex items-center text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                                     <i class="fas fa-clock mr-1"></i>
@@ -1977,7 +1980,7 @@ class CDDashboard {
                 `).join('')}
             </div>
             
-            ${agendamento.status === 'reagendamento' ? `
+            ${(agendamento.status === 'reagendamento' && !hasSupplierResponse) ? `
                 <div class="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
                     <div class="flex items-center mb-3">
                         <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
@@ -2046,6 +2049,7 @@ class CDDashboard {
     }
 
     getHistoryTitle(acao, autor) {
+        // Accepts evento as third param for more context
         const titles = {
             'agendamento_criado': 'Agendamento Criado',
             'pendente': 'Status: Pendente',
@@ -2055,19 +2059,30 @@ class CDDashboard {
             'entregue': 'Entrega Realizada',
             'reagendamento_fornecedor': 'Fornecedor Solicitou Reagendamento',
             'reagendamento_sugerido': 'Nova Data Sugerida',
-            'reagendamento_aceito': 'Reagendamento Aceito',
+            'reagendamento_aceito': 'Fornecedor Aceitou Nova Data',
             'nao-veio': 'Fornecedor Não Compareceu',
             'cd_sugeriu_reagendamento': 'CD Solicitou Reagendamento',
-            'fornecedor_respondeu': 'Fornecedor Respondeu',
+            'fornecedor_respondeu': '', // handled below
             'status_alterado': 'Status Alterado',
             'agendamento_confirmado': 'Agendamento Confirmado',
             'agendamento_entregue': 'Entrega Realizada',
             'agendamento_nao_veio': 'Ausência Registrada',
-            'data_aceita': 'Nova Data Aceita',
-            'data_rejeitada': 'Nova Data Rejeitada',
+            'data_aceita': 'Fornecedor Aceitou Nova Data',
+            'data_rejeitada': 'Fornecedor Rejeitou Nova Data',
             'fornecedor_nao_compareceu': 'Ausência Registrada',
             'agendamento_cancelado': 'Agendamento Cancelado'
         };
+        // Custom logic for fornecedor_respondeu
+        if (acao === 'fornecedor_respondeu' && arguments.length > 2) {
+            const evento = arguments[2];
+            if (evento && evento.resposta === 'aceita') {
+                return 'Fornecedor Aceitou Nova Data';
+            } else if (evento && evento.resposta === 'rejeitada') {
+                return 'Fornecedor Rejeitou Nova Data';
+            } else {
+                return 'Fornecedor Respondeu';
+            }
+        }
         return titles[acao] || 'Evento do Sistema';
     }
 
