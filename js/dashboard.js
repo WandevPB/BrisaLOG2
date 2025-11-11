@@ -1892,6 +1892,10 @@ class CDDashboard {
                         </div>
                     </div>
                     ` : ''}
+                <!-- Bloco de botões de ação -->
+                <div class="flex flex-wrap gap-3 justify-end mt-6">
+                    ${this.getActionButtons(agendamento)}
+                </div>
             </div>
         `;
 
