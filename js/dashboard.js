@@ -1,10 +1,8 @@
 // Usa API_BASE_URL do config.js
-// Certifique-se que config.js está incluído antes deste arquivo
 function getApiBaseUrl() {
     return typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : window.location.origin;
 }
 
-// Função global para verificar token expirado
 function handleTokenExpired(response) {
     if (response.status === 403) {
         console.log('🔒 Token expirado, redirecionando para login...');
@@ -16,83 +14,2672 @@ function handleTokenExpired(response) {
     return false;
 }
 
-// Função utilitária para converter datas do backend para timezone local
 function parseLocalDate(dateInput) {
     if (!dateInput) return null;
-    
     if (typeof dateInput === 'string') {
         if (dateInput.includes('T')) {
-            // Formato ISO (ex: '2025-10-06T00:00:00.000Z') - extrair apenas YYYY-MM-DD
             const dateOnly = dateInput.split('T')[0];
             const [ano, mes, dia] = dateOnly.split('-').map(Number);
-            return new Date(ano, mes - 1, dia); // mes - 1 porque Date usa 0-11 para meses
+            return new Date(ano, mes - 1, dia);
         } else if (dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            // Formato YYYY-MM-DD simples
             const [ano, mes, dia] = dateInput.split('-').map(Number);
             return new Date(ano, mes - 1, dia);
         }
     }
-    
-    // Fallback para outros casos
     return new Date(dateInput);
 }
 
-// Funções globais de máscara para formatação automática
 function maskPhone(value) {
-    // Remove tudo que não é dígito
     value = value.replace(/\D/g, '');
-    
-    // Limita a 11 dígitos máximo
     value = value.substring(0, 11);
-    
-    // Aplica a máscara (83) 00000-0000
     if (value.length <= 10) {
         value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
     } else {
         value = value.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
     }
-    
     return value;
 }
 
 function maskCPF(value) {
-    // Remove tudo que não é dígito
     value = value.replace(/\D/g, '');
-    
-    // Limita a 11 dígitos máximo
     value = value.substring(0, 11);
-    
-    // Aplica a máscara 000.000.000-00
     value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
-    
     return value;
 }
 
 function maskCNPJ(value) {
-    // Remove tudo que não é dígito
     value = value.replace(/\D/g, '');
-    
-    // Limita a 14 dígitos máximo
     value = value.substring(0, 14);
-    
-    // Aplica a máscara 00.000.000/0000-00
     value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
-    
     return value;
 }
 
 function maskDocument(input) {
     let value = input.value.replace(/\D/g, '');
-    // Limita a 14 dígitos máximo (CNPJ)
     value = value.substring(0, 14);
+    input.value = value;
     return value;
+}
+
+function applyMasksToContainer(container) {
+    if (!container) return;
+    const phoneEls = container.querySelectorAll('input[data-mask="phone"], input.mask-phone');
+    phoneEls.forEach(el => {
+        el.value = maskPhone(el.value || '');
+        el.addEventListener('input', (e) => {
+            e.target.value = maskPhone(e.target.value || '');
+        });
+    });
+    const cpfEls = container.querySelectorAll('input[data-mask="cpf"], input.mask-cpf');
+    cpfEls.forEach(el => {
+        el.value = maskCPF(el.value || '');
+        el.addEventListener('input', (e) => {
+            e.target.value = maskCPF(e.target.value || '');
+        });
+    });
+    const cnpjEls = container.querySelectorAll('input[data-mask="cnpj"], input.mask-cnpj');
+    cnpjEls.forEach(el => {
+        el.value = maskCNPJ(el.value || '');
+        el.addEventListener('input', (e) => {
+            e.target.value = maskCNPJ(e.target.value || '');
+        });
+    });
+    const docEls = container.querySelectorAll('input[data-mask="document"], input.mask-document');
+    docEls.forEach(el => {
+        try {
+            maskDocument(el);
+        } catch (err) {}
+        el.addEventListener('input', (e) => {
+            try {
+                maskDocument(e.target);
+            } catch (err) {}
+        });
+    });
+    window.applyMasksToContainer = applyMasksToContainer;
+}
+
+class CDDashboard {
+    constructor() {
+        // Estado centralizado
+        this.entregaCurrentStep = 1;
+        this.entregaPedidos = [];
+        this.entregasData = [];
+        this.paginaAtual = 1;
+        this.itensPorPagina = 10;
+        this.currentView = 'cards';
+        this.currentAgendamentoId = null;
+        this.cdId = null; // CORREÇÃO: Inicializar cdId
+        this.currentPage = 1;
+        this.totalPages = 1;
+        this.currentSort = null;
+        this.init();
+    }
+
+    // Métodos principais
+    init() {
+        this.checkAuthentication();
+        this.setupEventListeners();
+        const kpisBtn = document.getElementById('dashboard-kpis-button');
+        if (kpisBtn) {
+            kpisBtn.onclick = () => this.openKpisModal();
+        }
+        this.loadUserInfo();
+        this.loadAgendamentos();
+        this.setMinDate();
+    }
+
+    loadAgendamentos() {
+        console.log('🔄 Recarregando agendamentos...');
+        this.showLoading(true);
+        
+        try {
+            const token = sessionStorage.getItem('token');
+            console.log('🔑 Token encontrado:', !!token);
+            
+            const url = `${getApiBaseUrl()}/api/agendamentos?t=${Date.now()}`;
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                }
+            });
+
+            console.log('📡 Response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Erro na resposta:', errorText);
+                
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('📊 Dados recebidos:', data);
+            this.agendamentos = data.data || [];
+            this.filteredAgendamentos = [...this.agendamentos];
+            this.showLoading(false);
+            this.renderAgendamentos();
+        } catch (error) {
+            console.error('Erro ao carregar agendamentos:', error);
+            this.showNotification('Erro ao carregar agendamentos.', 'error');
+            this.showLoading(false);
+            return;
+        }
+
+        const stats = {
+            total: this.agendamentos.length,
+            pendente: this.agendamentos.filter(a => a.status === 'pendente').length,
+            confirmado: this.agendamentos.filter(a => a.status === 'confirmado').length,
+            entregue: this.agendamentos.filter(a => a.status === 'entregue').length,
+            'nao-veio': this.agendamentos.filter(a => a.status === 'nao-veio').length
+        };
+
+        Object.keys(stats).forEach(key => {
+            const element = document.getElementById(`stat-${key}`);
+            if (element) {
+                this.animateNumber(element, parseInt(element.textContent), stats[key]);
+            }
+        });
+    }
+
+    openKpisModal() {
+        document.getElementById('dashboard-kpis-modal')?.classList.remove('hidden');
+        this.loadKpis();
+    }
+
+    closeKpisModal() {
+        document.getElementById('dashboard-kpis-modal')?.classList.add('hidden');
+    }
+
+    async loadKpis() {
+        const loading = document.getElementById('kpis-loading');
+        const content = document.getElementById('kpis-content');
+        loading.classList.remove('hidden');
+        content.innerHTML = '';
+        try {
+            const token = sessionStorage.getItem('token');
+            const res = await fetch(`${getApiBaseUrl()}/api/kpis`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Erro ao buscar KPIs');
+            const kpis = await res.json();
+            loading.classList.add('hidden');
+            content.innerHTML = this.renderKpisContent(kpis);
+            this.renderKpisCharts(kpis);
+        } catch (e) {
+            loading.classList.add('hidden');
+            content.innerHTML = `<div class='text-center text-red-600 font-bold'>Erro ao carregar KPIs</div>`;
+        }
+    }
+
+    renderKpisContent(kpis) {
+        return `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div class="bg-gradient-to-br from-orange-primary to-orange-accent text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                <div class="text-4xl font-bold mb-2">${kpis.totalAgendamentos ?? '-'}</div>
+                <div class="text-lg font-semibold">Total de Agendamentos</div>
+            </div>
+            <div class="bg-gradient-to-br from-green-500 to-green-400 text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                <div class="text-4xl font-bold mb-2">${kpis.percentEntregues ?? '-'}</div>
+                <div class="text-lg font-semibold">% Entregues</div>
+            </div>
+            <div class="bg-gradient-to-br from-red-500 to-orange-primary text-white rounded-2xl p-8 shadow-lg flex flex-col items-center">
+                <div class="text-4xl font-bold mb-2">${kpis.percentNaoVeio ?? '-'}</div>
+                <div class="text-lg font-semibold">% Não Veio</div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="font-bold text-orange-primary text-lg flex items-center"><i class="fas fa-chart-pie mr-2"></i>Status dos Agendamentos</div>
+                    <button onclick="dashboard.loadKpis()" class="bg-orange-primary text-white px-3 py-1 rounded hover:bg-orange-secondary"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <canvas id="kpi-status-pizza" height="180"></canvas>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-chart-line mr-2"></i>Agendamentos por Dia</div>
+                <canvas id="kpi-agendamentos-linha" height="180"></canvas>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-stopwatch mr-2"></i>Tempo Médio de Permanência</div>
+                <div class="text-3xl font-bold text-gray-700">${kpis.tempoMedioPermanencia ?? '-'}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-users mr-2"></i>Top 5 Fornecedores Não Veio</div>
+                <canvas id="kpi-top-fornecedores" height="180"></canvas>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow flex flex-col mb-8">
+            <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-chart-bar mr-2"></i>Não Veio por Dia</div>
+            <canvas id="kpi-nao-veio-linha" height="180"></canvas>
+        </div>
+        `;
+    }
+
+    renderKpisCharts(kpis) {
+        if (window.kpiStatusPizza) window.kpiStatusPizza.destroy();
+        window.kpiStatusPizza = new Chart(document.getElementById('kpi-status-pizza').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: kpis.statusLabels,
+                datasets: [{
+                    data: kpis.statusValores,
+                    backgroundColor: [
+                        '#FF6B35','#10B981','#3B82F6','#EF4444','#8B5CF6'
+                    ],
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#FF6B35', font: { weight: 'bold' } } }
+                }
+            }
+        });
+        if (window.kpiAgendLinha) window.kpiAgendLinha.destroy();
+        window.kpiAgendLinha = new Chart(document.getElementById('kpi-agendamentos-linha').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: kpis.agendamentosLabels,
+                datasets: [{
+                    label: 'Agendamentos',
+                    data: kpis.agendamentosValores,
+                    borderColor: '#FF6B35',
+                    backgroundColor: 'rgba(255,107,53,0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
+            }
+        });
+        if (window.kpiTopForn) window.kpiTopForn.destroy();
+        window.kpiTopForn = new Chart(document.getElementById('kpi-top-fornecedores').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: kpis.topFornecedoresLabels,
+                datasets: [{
+                    label: 'Não Veio',
+                    data: kpis.topFornecedoresValores,
+                    backgroundColor: '#EF4444',
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
+            }
+        });
+        if (window.kpiNaoVeioLinha) window.kpiNaoVeioLinha.destroy();
+        window.kpiNaoVeioLinha = new Chart(document.getElementById('kpi-nao-veio-linha').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: kpis.agendamentosLabels,
+                datasets: [{
+                    label: 'Não Veio',
+                    data: kpis.naoVeioPorDia,
+                    borderColor: '#EF4444',
+                    backgroundColor: 'rgba(239,68,68,0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#EF4444' } } }
+            }
+        });
+    }
+
+    toggleUserMenu() {
+        const userMenu = document.getElementById('user-menu');
+        if (userMenu) {
+            userMenu.classList.toggle('hidden');
+        }
+    }
+
+    setMinDate() {
+        const today = new Date();
+        const isWeekday = (date) => {
+            const day = date.getDay();
+            return day !== 0 && day !== 6;
+        };
+        const getNextWeekday = (date) => {
+            const nextDay = new Date(date);
+            while (!isWeekday(nextDay)) {
+                nextDay.setDate(nextDay.getDate() + 1);
+            }
+            return nextDay;
+        };
+        const minDate = isWeekday(today) ? today : getNextWeekday(today);
+        const minDateString = minDate.toISOString().split('T')[0];
+        
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            input.min = minDateString;
+            if (!input.hasAttribute('data-weekday-validator')) {
+                input.addEventListener('change', function() {
+                    const selectedDate = new Date(this.value + 'T00:00:00');
+                    if (!isWeekday(selectedDate)) {
+                        alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
+                        const nextWeekday = getNextWeekday(selectedDate);
+                        this.value = nextWeekday.toISOString().split('T')[0];
+                    }
+                });
+                input.setAttribute('data-weekday-validator', 'true');
+            }
+            if (!input.value) {
+                const defaultDate = getNextWeekday(new Date());
+                input.value = defaultDate.toISOString().split('T')[0];
+            }
+        });
+    }
+
+    showNotification(message, type = 'info') {
+        console.log(`Notificação (${type}): ${message}`);
+        let notificationEl = document.getElementById('notification-container');
+        if (!notificationEl) {
+            notificationEl = document.createElement('div');
+            notificationEl.id = 'notification-container';
+            notificationEl.style.position = 'fixed';
+            notificationEl.style.top = '20px';
+            notificationEl.style.right = '20px';
+            notificationEl.style.zIndex = '9999';
+            document.body.appendChild(notificationEl);
+        }
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.style.padding = '15px 20px';
+        notification.style.marginBottom = '10px';
+        notification.style.borderRadius = '5px';
+        notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+        notification.style.fontWeight = 'bold';
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s ease-in-out';
+        switch (type) {
+            case 'error':
+                notification.style.backgroundColor = '#f44336';
+                notification.style.color = 'white';
+                break;
+            case 'success':
+                notification.style.backgroundColor = '#4CAF50';
+                notification.style.color = 'white';
+                break;
+            case 'warning':
+                notification.style.backgroundColor = '#ff9800';
+                notification.style.color = 'white';
+                break;
+            default:
+                notification.style.backgroundColor = '#2196F3';
+                notification.style.color = 'white';
+        }
+        notification.textContent = message;
+        notificationEl.appendChild(notification);
+        setTimeout(() => {
+            notification.style.opacity = '1';
+        }, 10);
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                notificationEl.removeChild(notification);
+            }, 300);
+        }, 5000);
+    }
+
+    checkAuthentication() {
+        const token = sessionStorage.getItem('token');
+        const usuario = sessionStorage.getItem('usuario');
+        
+        if (!token || !usuario) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        try {
+            if (token.includes('.')) {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (payload.exp && payload.exp * 1000 < Date.now()) {
+                    sessionStorage.clear();
+                    window.location.href = 'login.html';
+                    return;
+                }
+            } else {
+                const payload = JSON.parse(atob(token));
+                if (payload.exp && payload.exp < Date.now()) {
+                    sessionStorage.clear();
+                    window.location.href = 'login.html';
+                    return;
+                }
+            }
+        } catch (error) {
+            console.warn('Token não pôde ser decodificado, mantendo sessão:', error);
+        }
+    }
+
+    setupEventListeners() {
+        document.getElementById('user-menu-button').addEventListener('click', this.toggleUserMenu);
+        document.addEventListener('click', (e) => {
+            const userMenu = document.getElementById('user-menu');
+            const userMenuButton = document.getElementById('user-menu-button');
+            if (!userMenuButton.contains(e.target) && !userMenu.contains(e.target)) {
+                userMenu.classList.add('hidden');
+            }
+        });
+        document.getElementById('suggest-date-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleSuggestDate();
+        });
+        document.getElementById('nova-data').addEventListener('change', () => {
+            this.carregarHorariosDisponiveis();
+        });
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-backdrop')) {
+                this.closeDetailModal();
+                this.closeSuggestDateModal();
+            }
+        });
+        const consultaForm = document.getElementById('consulta-form');
+        if (consultaForm) {
+            consultaForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.consultarAgendamento();
+            });
+        }
+    }
+
+    loadUserInfo() {
+        const usuario = sessionStorage.getItem('usuario');
+        const usuarioNomeEl = document.getElementById('usuario-nome');
+        if (usuarioNomeEl && usuario) {
+            usuarioNomeEl.textContent = usuario;
+        }
+        const cd = sessionStorage.getItem('cd');
+        const cdInfo = sessionStorage.getItem('cdInfo');
+        const cdNomeEl = document.getElementById('cd-nome');
+        if (cdNomeEl) {
+            let nome = 'Não identificado';
+            if (cdInfo) {
+                try {
+                    const cdObj = JSON.parse(cdInfo);
+                    if (cdObj && cdObj.nome) {
+                        nome = cdObj.nome;
+                    }
+                } catch (e) {
+                }
+            }
+            cdNomeEl.textContent = nome;
+        }
+    }
+
+    renderAgendamentos() {
+        if (this.currentView === 'cards') {
+            this.renderKanbanColumns();
+        } else {
+            this.renderList();
+        }
+    }
+
+    renderKanbanColumns() {
+        const agendamentosPorStatus = {
+            'pendente': [],
+            'confirmado': [],
+            'entregue': [],
+            'nao-veio': [],
+            'reagendamento': []
+        };
+
+        this.filteredAgendamentos.forEach(agendamento => {
+            let status = agendamento.status;
+            if (status === 'aguardando_resposta_fornecedor') {
+                status = 'reagendamento';
+            }
+            if (agendamentosPorStatus[status]) {
+                agendamentosPorStatus[status].push(agendamento);
+            }
+        });
+
+        Object.keys(agendamentosPorStatus).forEach(status => {
+            agendamentosPorStatus[status] = this.sortByPriority(agendamentosPorStatus[status], status);
+        });
+
+        Object.keys(agendamentosPorStatus).forEach(status => {
+            this.renderColumn(status, agendamentosPorStatus[status]);
+        });
+
+        this.checkTodayDeliveries();
+        this.hideEmptyState();
+    }
+
+    sortByPriority(agendamentos, status) {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        return agendamentos.sort((a, b) => {
+            const dataA = this.createSafeDate(a.dataEntrega);
+            const dataB = this.createSafeDate(b.dataEntrega);
+
+            if (status === 'pendente') {
+                return this.createSafeDate(a.dataCriacao) - this.createSafeDate(b.dataCriacao);
+            } else if (status === 'confirmado') {
+                const diffA = Math.abs(dataA - hoje);
+                const diffB = Math.abs(dataB - hoje);
+                return diffA - diffB;
+            } else {
+                return dataA - dataB;
+            }
+        });
+    }
+
+    renderColumn(status, agendamentos) {
+        const container = document.getElementById(`column-${status}`);
+        const badge = document.getElementById(`badge-${status}`);
+        const moreButton = document.getElementById(`more-${status}`);
+
+        if (!badge) {
+            console.error(`Badge element not found: badge-${status}`);
+            return;
+        }
+
+        if (!container) {
+            console.error(`Container element not found: column-${status}`);
+            return;
+        }
+
+        badge.textContent = agendamentos.length;
+
+        const visibleAgendamentos = agendamentos.slice(0, 3);
+        const hasMore = agendamentos.length > 3;
+
+        if (hasMore && moreButton) {
+            moreButton.classList.remove('hidden');
+            moreButton.querySelector('span') ? 
+                moreButton.querySelector('span').textContent = `+${agendamentos.length - 3} mais` :
+                moreButton.innerHTML = `<i class="fas fa-plus mr-1"></i>+${agendamentos.length - 3} mais`;
+        } else if (moreButton) {
+            moreButton.classList.add('hidden');
+        }
+
+        if (visibleAgendamentos.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-inbox text-3xl mb-2"></i>
+                    <p>Nenhum agendamento</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = visibleAgendamentos.map(agendamento => {
+            return this.renderColumnCard(agendamento);
+        }).join('');
+    }
+
+    renderColumnCard(agendamento) {
+        const statusClass = `status-${agendamento.status}`;
+        const statusIcon = this.getStatusIcon(agendamento.status);
+        const hojeStr = new Date().toISOString().split('T')[0];
+        const dataEntregaStr = (agendamento.dataEntrega || '').split('T')[0];
+        const isToday = hojeStr === dataEntregaStr;
+        const hojeDate = new Date(hojeStr);
+        const entregaDate = new Date(dataEntregaStr);
+        const daysDiff = Math.floor((entregaDate - hojeDate) / (1000 * 60 * 60 * 24));
+        let priorityClass = '';
+        let urgentClass = '';
+        if (agendamento.status === 'confirmado') {
+            if (isToday) {
+                urgentClass = '';
+            } else if (daysDiff <= 1) {
+                priorityClass = 'priority-high';
+            } else if (daysDiff <= 3) {
+                priorityClass = 'priority-medium';
+            } else {
+                priorityClass = 'priority-low';
+            }
+        } else if (agendamento.status === 'pendente') {
+            const dataCriacaoStr = (agendamento.dataCriacao || '').split('T')[0];
+            const dataCriacaoDate = new Date(dataCriacaoStr);
+            const daysSinceCreated = Math.floor((hojeDate - dataCriacaoDate) / (1000 * 60 * 60 * 24));
+            if (daysSinceCreated >= 3) {
+                priorityClass = 'priority-high';
+            } else if (daysSinceCreated >= 1) {
+                priorityClass = 'priority-medium';
+            }
+        }
+
+        const incluidoPeloCD = agendamento.incluidoPeloCD;
+        const cdIndicator = incluidoPeloCD ? 
+            `<div class="bg-yellow-100 text-yellow-800 font-bold text-xs p-2 rounded mb-2 flex items-center">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                ENTREGA INCLUÍDA PELO CD
+            </div>` : '';
+
+        return `
+            <div class="column-card bg-white rounded-xl p-4 border shadow-sm hover:shadow-md transition-all ${priorityClass} ${urgentClass}"
+                 onclick="dashboard.showAgendamentoDetails(${agendamento.id})">
+                
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-dark text-sm">${agendamento.codigo}</h4>
+                        <p class="text-gray-600 text-xs truncate">${agendamento.fornecedor.nome}</p>
+                    </div>
+                    <div class="px-2 py-1 rounded text-white text-xs font-semibold ${statusClass}">
+                        <i class="${statusIcon}"></i>
+                    </div>
+                </div>
+                
+                ${cdIndicator}
+                
+                <div class="space-y-1 mb-3 text-xs text-gray-600">
+                    <div class="flex items-center">
+                        <i class="fas fa-calendar w-3 mr-2 text-orange-primary"></i>
+                        <span class="${isToday ? 'font-bold text-gray-700' : ''}">${this.formatDate(agendamento.dataEntrega)}</span>
+                        ${isToday ? '<i class="fas fa-exclamation-circle text-gray-600 ml-1"></i>' : ''}
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-clock w-3 mr-2 text-orange-primary"></i>
+                        <span>${agendamento.horarioEntrega}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-boxes w-3 mr-2 text-orange-primary"></i>
+                        <span class="truncate">${this.getTipoCargaText(agendamento.tipoCarga)}</span>
+                    </div>
+                </div>
+                
+                ${this.getColumnCardActions(agendamento)}
+                
+                ${this.getPriorityIndicator(agendamento, daysDiff)}
+            </div>
+        `;
+    }
+
+    getColumnCardActions(agendamento) {
+        if (agendamento.status === 'pendente') {
+            return `
+                <div class="flex space-x-1">
+                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
+                        class="flex-1 bg-green-500 text-white py-1 px-2 rounded text-xs hover:bg-green-600 transition-all">
+                        <i class="fas fa-check mr-1"></i>Aceitar
+                    </button>
+                    <button onclick="event.stopPropagation(); dashboard.suggestNewDate(${agendamento.id})" 
+                        class="flex-1 bg-blue-500 text-white py-1 px-2 rounded text-xs hover:bg-blue-600 transition-all">
+                        <i class="fas fa-calendar mr-1"></i>Reagendar
+                    </button>
+                </div>
+            `;
+        } else if (agendamento.status === 'confirmado') {
+            return `
+                <div class="flex space-x-1">
+                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                        class="flex-1 bg-blue-500 text-white py-1 px-2 rounded text-xs hover:bg-blue-600 transition-all">
+                        <i class="fas fa-truck mr-1"></i>Entregue
+                    </button>
+                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                        class="flex-1 bg-red-500 text-white py-1 px-2 rounded text-xs hover:bg-red-600 transition-all">
+                        <i class="fas fa-times mr-1"></i>Não Veio
+                    </button>
+                </div>
+            `;
+        }
+        return `
+            <button onclick="event.stopPropagation(); dashboard.showAgendamentoDetails(${agendamento.id})" 
+                class="w-full bg-gray-500 text-white py-1 px-2 rounded text-xs hover:bg-gray-600 transition-all">
+                <i class="fas fa-eye mr-1"></i>Ver Detalhes
+            </button>
+        `;
+    }
+
+    getPriorityIndicator(agendamento, daysDiff) {
+        const hojeStr = new Date().toISOString().split('T')[0];
+        const amanhaStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+        const dataEntregaStr = (agendamento.dataEntrega || '').split('T')[0];
+        const dataCriacaoStr = (agendamento.dataCriacao || '').split('T')[0];
+        const hojeDate = new Date(hojeStr);
+        const dataCriacaoDate = new Date(dataCriacaoStr);
+        const daysSinceCreated = Math.floor((hojeDate - dataCriacaoDate) / (1000 * 60 * 60 * 24));
+        if (agendamento.status === 'pendente' && daysSinceCreated >= 3) {
+            return `
+                <div class="mt-2 text-xs text-red-600 font-semibold flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Há ${daysSinceCreated} dias
+                </div>
+            `;
+        } else if (agendamento.status === 'confirmado') {
+            if (dataEntregaStr === hojeStr) {
+                return `
+                    <div class="mt-2 text-xs text-yellow-600 font-semibold flex items-center">
+                        <i class="fas fa-clock mr-1"></i>
+                        Hoje
+                    </div>
+                `;
+            } else if (dataEntregaStr === amanhaStr) {
+                return `
+                    <div class="mt-2 text-xs text-yellow-600 font-semibold flex items-center">
+                        <i class="fas fa-clock mr-1"></i>
+                        Amanhã
+                    </div>
+                `;
+            }
+        }
+        return '';
+    }
+
+    checkTodayDeliveries() {
+        const hojeStr = new Date().toISOString().split('T')[0];
+        this.todayDeliveries = this.agendamentos.filter(a => ((a.dataEntrega || '').split('T')[0] === hojeStr));
+    }
+
+    showAllStatus(status) {
+        const agendamentos = this.filteredAgendamentos.filter(a => a.status === status);
+        const modal = document.getElementById('all-status-modal');
+        const title = document.getElementById('all-status-title');
+        const content = document.getElementById('all-status-list');
+
+        title.textContent = `Todos os ${this.getStatusText(status)} (${agendamentos.length})`;
+
+        content.innerHTML = agendamentos.map(agendamento => {
+            return this.renderDetailedCard(agendamento);
+        }).join('');
+
+        modal.classList.remove('hidden');
+    }
+
+    showTodayDeliveries() {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        
+        const entregasHoje = this.agendamentos.filter(agendamento => {
+            const dataEntrega = this.createSafeDate(agendamento.dataEntrega);
+            return agendamento.status === 'confirmado' && dataEntrega.getTime() === hoje.getTime();
+        });
+
+        const modal = document.getElementById('today-deliveries-modal');
+        const content = document.getElementById('today-deliveries-list');
+
+        content.innerHTML = entregasHoje.map(agendamento => {
+            return this.renderTodayCard(agendamento);
+        }).join('');
+
+        modal.classList.remove('hidden');
+    }
+
+    renderDetailedCard(agendamento) {
+        const statusClass = `status-${agendamento.status}`;
+        const statusIcon = this.getStatusIcon(agendamento.status);
+        const statusText = this.getStatusText(agendamento.status);
+        
+        const incluidoPeloCD = agendamento.incluidoPeloCD;
+        const cdIndicator = incluidoPeloCD ? 
+            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-2 flex items-center">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                ENTREGA INCLUÍDA PELO CD
+            </div>` : '';
+        
+        return `
+            <div class="bg-white rounded-xl p-6 border shadow-sm hover:shadow-md transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-dark">${agendamento.codigo}</h3>
+                        <p class="text-gray-medium">${agendamento.fornecedor.nome}</p>
+                        <p class="text-sm text-gray-500">${agendamento.fornecedor.email}</p>
+                    </div>
+                    <div class="px-3 py-1 rounded-full text-white text-sm font-semibold ${statusClass}">
+                        <i class="${statusIcon} mr-1"></i>
+                        ${statusText}
+                    </div>
+                </div>
+                
+                ${cdIndicator}
+                
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div class="space-y-2">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-calendar mr-2 text-orange-primary w-4"></i>
+                            <span>${this.formatDate(agendamento.dataEntrega)}</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-clock mr-2 text-orange-primary w-4"></i>
+                            <span>${agendamento.horarioEntrega}</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-boxes mr-2 text-orange-primary w-4"></i>
+                            <span>${this.getTipoCargaText(agendamento.tipoCarga)}</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-file-invoice mr-2 text-orange-primary w-4"></i>
+                            <span>${agendamento.pedidos.length} pedido(s)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button onclick="dashboard.showAgendamentoDetails(${agendamento.id})" 
+                        class="flex-1 bg-orange-primary text-white py-2 px-4 rounded-lg hover:bg-orange-secondary transition-all">
+                        <i class="fas fa-eye mr-2"></i>Ver Detalhes
+                    </button>
+                    ${this.getActionButtons(agendamento)}
+                </div>
+            </div>
+        `;
+    }
+
+    renderTodayCard(agendamento) {
+        const incluidoPeloCD = agendamento.incluidoPeloCD;
+        const cdIndicator = incluidoPeloCD ? 
+            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-2 border border-yellow-400 flex items-center">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                ENTREGA INCLUÍDA PELO CD
+            </div>` : '';
+        
+        return `
+            <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-500 rounded-xl p-6 shadow-sm">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-dark flex items-center">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>
+                            ${agendamento.codigo}
+                        </h3>
+                        <p class="text-gray-dark font-semibold">${agendamento.fornecedor.nome}</p>
+                        <p class="text-sm text-gray-600">${agendamento.fornecedor.telefone}</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-semibold mb-2">
+                            HOJE
+                        </div>
+                        <div class="text-lg font-bold text-yellow-700">${agendamento.horarioEntrega}</div>
+                    </div>
+                </div>
+                
+                ${cdIndicator}
+                
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div class="space-y-2">
+                        <div class="flex items-center text-gray-700">
+                            <i class="fas fa-boxes mr-2 text-yellow-600 w-4"></i>
+                            <span>${this.getTipoCargaText(agendamento.tipoCarga)}</span>
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <i class="fas fa-file-invoice mr-2 text-yellow-600 w-4"></i>
+                            <span>${agendamento.pedidos.length} pedido(s)</span>
+                        </div>
+                    </div>
+                    ${agendamento.observacoes ? `
+                        <div>
+                            <p class="text-sm text-gray-600"><strong>Observações:</strong></p>
+                            <p class="text-sm text-gray-700">${agendamento.observacoes}</p>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button onclick="dashboard.showAgendamentoDetails(${agendamento.id})" 
+                        class="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-all">
+                        <i class="fas fa-eye mr-2"></i>Ver Detalhes
+                    </button>
+                    <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                        class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all">
+                        <i class="fas fa-truck mr-2"></i>Marcar Entregue
+                    </button>
+                    <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                        class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-all">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    getColumnCardActions(agendamento) {
+        if (agendamento.status === 'pendente') {
+            return `
+                <div class="flex space-x-1">
+                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
+                        class="flex-1 bg-green-500 text-white py-1 px-2 rounded text-xs hover:bg-green-600 transition-all">
+                        <i class="fas fa-check mr-1"></i>Aceitar
+                    </button>
+                    <button onclick="event.stopPropagation(); dashboard.suggestNewDate(${agendamento.id})" 
+                        class="flex-1 bg-blue-500 text-white py-1 px-2 rounded text-xs hover:bg-blue-600 transition-all">
+                        <i class="fas fa-calendar mr-1"></i>Reagendar
+                    </button>
+                </div>
+            `;
+        } else if (agendamento.status === 'confirmado') {
+            return `
+                <div class="flex space-x-1">
+                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                        class="flex-1 bg-blue-500 text-white py-1 px-2 rounded text-xs hover:bg-blue-600 transition-all">
+                        <i class="fas fa-truck mr-1"></i>Entregue
+                    </button>
+                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                        class="flex-1 bg-red-500 text-white py-1 px-2 rounded text-xs hover:bg-red-600 transition-all">
+                        <i class="fas fa-times mr-1"></i>Não Veio
+                    </button>
+                </div>
+            `;
+        }
+        return `
+            <button onclick="event.stopPropagation(); dashboard.showAgendamentoDetails(${agendamento.id})" 
+                class="w-full bg-gray-500 text-white py-1 px-2 rounded text-xs hover:bg-gray-600 transition-all">
+                <i class="fas fa-eye mr-1"></i>Ver Detalhes
+            </button>
+        `;
+    }
+
+    getPriorityIndicator(agendamento, daysDiff) {
+        const hojeStr = new Date().toISOString().split('T')[0];
+        const amanhaStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+        const dataEntregaStr = (agendamento.dataEntrega || '').split('T')[0];
+        const dataCriacaoStr = (agendamento.dataCriacao || '').split('T')[0];
+        const hojeDate = new Date(hojeStr);
+        const dataCriacaoDate = new Date(dataCriacaoStr);
+        const daysSinceCreated = Math.floor((hojeDate - dataCriacaoDate) / (1000 * 60 * 60 * 24));
+        if (agendamento.status === 'pendente' && daysSinceCreated >= 3) {
+            return `
+                <div class="mt-2 text-xs text-red-600 font-semibold flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Há ${daysSinceCreated} dias
+                </div>
+            `;
+        } else if (agendamento.status === 'confirmado') {
+            if (dataEntregaStr === hojeStr) {
+                return `
+                    <div class="mt-2 text-xs text-yellow-600 font-semibold flex items-center">
+                        <i class="fas fa-clock mr-1"></i>
+                        Hoje
+                    </div>
+                `;
+            } else if (dataEntregaStr === amanhaStr) {
+                return `
+                    <div class="mt-2 text-xs text-yellow-600 font-semibold flex items-center">
+                        <i class="fas fa-clock mr-1"></i>
+                        Amanhã
+                    </div>
+                `;
+            }
+        }
+        return '';
+    }
+
+    checkTodayDeliveries() {
+        const hojeStr = new Date().toISOString().split('T')[0];
+        this.todayDeliveries = this.agendamentos.filter(a => ((a.dataEntrega || '').split('T')[0] === hojeStr));
+    }
+
+    showAllStatus(status) {
+        const agendamentos = this.filteredAgendamentos.filter(a => a.status === status);
+        const modal = document.getElementById('all-status-modal');
+        const title = document.getElementById('all-status-title');
+        const content = document.getElementById('all-status-list');
+
+        title.textContent = `Todos os ${this.getStatusText(status)} (${agendamentos.length})`;
+
+        content.innerHTML = agendamentos.map(agendamento => {
+            return this.renderDetailedCard(agendamento);
+        }).join('');
+
+        modal.classList.remove('hidden');
+    }
+
+    showTodayDeliveries() {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        
+        const entregasHoje = this.agendamentos.filter(agendamento => {
+            const dataEntrega = this.createSafeDate(agendamento.dataEntrega);
+            return agendamento.status === 'confirmado' && dataEntrega.getTime() === hoje.getTime();
+        });
+
+        const modal = document.getElementById('today-deliveries-modal');
+        const content = document.getElementById('today-deliveries-list');
+
+        content.innerHTML = entregasHoje.map(agendamento => {
+            return this.renderTodayCard(agendamento);
+        }).join('');
+
+        modal.classList.remove('hidden');
+    }
+
+    renderDetailedCard(agendamento) {
+        const statusClass = `status-${agendamento.status}`;
+        const statusIcon = this.getStatusIcon(agendamento.status);
+        const statusText = this.getStatusText(agendamento.status);
+        
+        const incluidoPeloCD = agendamento.incluidoPeloCD;
+        const cdIndicator = incluidoPeloCD ? 
+            `<div class="bg-yellow-100 text-yellow-800 font-bold text-sm p-2 rounded mb-2 flex items-center">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                ENTREGA INCLUÍDA PELO CD
+            </div>` : '';
+
+        // Transportador
+        const transportadorHtml = (agendamento.transportadorNome || agendamento.transportadorDocumento || agendamento.transportadorTelefone || agendamento.transportadorEmail) ? `
+            <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
+                <div class="flex items-center mb-3">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                        <i class="fas fa-truck-moving text-green-600 text-sm"></i>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800">Transportador</h3>
+                </div>
+                <div class="space-y-2 text-sm">
+                    ${agendamento.transportadorNome ? `<div><span class="text-gray-600 text-xs">Nome</span><p class="font-semibold">${agendamento.transportadorNome}</p></div>` : ''}
+                    ${agendamento.transportadorDocumento ? `<div><span class="text-gray-600 text-xs">CNPJ</span><p class="font-semibold">${agendamento.transportadorDocumento}</p></div>` : ''}
+                    ${agendamento.transportadorTelefone ? `<div><span class="text-gray-600 text-xs">Telefone</span><p class="font-semibold">${agendamento.transportadorTelefone}</p></div>` : ''}
+                    ${agendamento.transportadorEmail ? `<div><span class="text-gray-600 text-xs">E-mail</span><p class="font-semibold">${agendamento.transportadorEmail}</p></div>` : ''}
+                </div>
+            </div>
+        ` : '';
+
+        // Volumes
+        const volumesHtml = (agendamento.quantidadeVolumes || agendamento.tipoVolume) ? `
+            <div class="bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
+                <div class="flex items-center mb-3">
+                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-2">
+                        <i class="fas fa-boxes text-orange-600 text-sm"></i>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800">Volumes</h3>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div><span class="text-gray-600 text-xs">Quantidade</span><p class="font-semibold">${agendamento.quantidadeVolumes || 'Não informado'}</p></div>
+                    <div><span class="text-gray-600 text-xs">Tipo</span><p class="font-semibold">${agendamento.tipoVolume || 'Não informado'}</p></div>
+                </div>
+            </div>
+        ` : '';
+
+        const detailContent = document.getElementById('detail-content');
+        // Corrigir valor total das NFs
+        let valorTotal = 0;
+        if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
+            agendamento.notasFiscais.forEach(nf => {
+                let v = nf.valor;
+                if (typeof v === 'string') {
+                    v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
+                    v = parseFloat(v);
+                }
+                if (!isNaN(v)) valorTotal += v;
+            });
+        }
+        // Corrigir data de criação
+        const dataCriacao = agendamento.createdAt ? this.formatDate(agendamento.createdAt) : 'Não informado';
+        detailContent.innerHTML = `
+            <div class="space-y-4">
+                ${cdIndicator}
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    <!-- Informações Gerais -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-info-circle text-blue-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Informações Gerais</h3>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Código:</span>
+                                <span class="font-semibold">${agendamento.codigo}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Status:</span>
+                                <span class="status-${agendamento.status} px-2 py-1 rounded-full text-xs font-medium">
+                                    <i class="${this.getStatusIcon(agendamento.status)} mr-1"></i>
+                                    ${this.getStatusText(agendamento.status)}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Data:</span>
+                                <span class="font-semibold">${this.formatDate(agendamento.dataEntrega)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Horário:</span>
+                                <span class="font-semibold">${agendamento.horarioEntrega}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tipo:</span>
+                                <span class="font-semibold text-xs">${this.getTipoCargaText(agendamento.tipoCarga)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Transportador -->
+                    ${transportadorHtml}
+                    <!-- Volumes -->
+                    ${volumesHtml}
+                    <!-- Dados do Fornecedor -->
+                    <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-truck-moving text-green-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Transportadora</h3>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="text-gray-600 text-xs">Empresa</span>
+                                <p class="font-semibold truncate" title="${agendamento.fornecedor.nome}">${agendamento.fornecedor.nome}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 text-xs">E-mail</span>
+                                <p class="font-semibold truncate" title="${agendamento.fornecedor.email}">${agendamento.fornecedor.email}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 text-xs">Telefone</span>
+                                <p class="font-semibold">${agendamento.fornecedor.telefone}</p>
+                            </div>
+                            ${agendamento.fornecedor.documento ? `
+                                <div>
+                                    <span class="text-gray-600 text-xs">CNPJ</span>
+                                    <p class="font-semibold text-xs">${agendamento.fornecedor.documento}</p>
+                                </div>
+                            ` : ''}
+                               <div>
+                                   <!-- Tipo de Veículo removido do card Transportadora -->
+                               </div>
+                        </div>
+                    </div>
+                    <!-- Motorista -->
+                        <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                                    <i class="fas fa-user-tie text-blue-600 text-sm"></i>
+                                </div>
+                                <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div>
+                                    <span class="text-gray-600 text-xs">Nome</span>
+                                    <p class="font-semibold">${agendamento.motoristaNome || agendamento.fornecedor?.nomeResponsavel || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">CPF</span>
+                                    <p class="font-semibold">${agendamento.motoristaCpf || agendamento.fornecedor?.cpfMotorista || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">Telefone</span>
+                                    <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.fornecedor?.telefoneMotorista || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">Placa</span>
+                                    <p class="font-semibold">${agendamento.placaVeiculo || agendamento.fornecedor?.placaVeiculo || 'Não informado'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600 text-xs">Tipo de Veículo</span>
+                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.fornecedor?.tipoVeiculo || 'Não informado'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    <!-- Resumo de Notas -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-file-invoice text-purple-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Resumo</h3>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Notas Fiscais:</span>
+                                <span class="font-semibold">${agendamento.notasFiscais ? agendamento.notasFiscais.length : 0}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Valor Total:</span>
+                                <span class="font-semibold text-green-600 text-xs">
+                                    R$ ${isNaN(valorTotal) ? '0,00' : valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Criado em:</span>
+                                <span class="font-semibold text-xs">${dataCriacao}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Histórico de Comunicação -->
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <div class="border-b border-gray-200 p-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-comments text-yellow-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Histórico de Comunicação</h3>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        ${this.renderCommunicationHistory(agendamento)}
+                    </div>
+                </div>
+
+                <!-- Notas Fiscais Detalhadas -->
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <div class="border-b border-gray-200 p-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-file-invoice-dollar text-indigo-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Notas Fiscais</h3>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        ${agendamento.notasFiscais && agendamento.notasFiscais.length > 0 ? `
+                            <div class="space-y-3">
+                                ${agendamento.notasFiscais.map(nf => {
+                                    let valorFormatado = 'Valor não informado';
+                                    if (nf.valor) {
+                                        let v = nf.valor;
+                                        if (typeof v === 'string') {
+                                            v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
+                                            v = parseFloat(v);
+                                        }
+                                        valorFormatado = isNaN(v) ? 'Valor não informado' : `R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                                    }
+                                    return `
+                                    <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex-1">
+                                                <div class="flex items-center space-x-3 mb-1">
+                                                    <span class="font-semibold text-gray-900">NF: ${nf.numeroNF}</span>
+                                                    <span class="text-xs text-gray-500">Pedido: ${nf.numeroPedido}</span>
+                                                    ${nf.serie ? `<span class="text-xs text-gray-500">Série: ${nf.serie}</span>` : ''}
+                                                </div>
+                                                <div class="text-lg font-bold text-green-600">
+                                                    ${valorFormatado}
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                ${nf.arquivoPath ? `
+                                                    <button onclick="dashboard.viewPDF('${nf.arquivoPath}')" 
+                                                        class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium hover:bg-green-200 transition-colors">
+                                                        <i class="fas fa-file-pdf mr-1"></i>PDF
+                                                    </button>
+                                                ` : `
+                                                    <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-medium">
+                                                        <i class="fas fa-exclamation-triangle mr-1"></i>Sem PDF
+                                                    </span>
+                                                `}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : `
+                            <div class="text-center py-6 text-gray-500">
+                                <i class="fas fa-inbox text-2xl mb-2"></i>
+                                <p class="text-sm">Nenhuma nota fiscal encontrada</p>
+                            </div>
+                        `}
+                    </div>
+                </div>
+
+                <!-- Observações -->
+                    ${agendamento.observacoes ? `
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-comment-alt text-gray-600 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-800">Observações da Carga</h3>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <p class="font-semibold text-gray-700">${agendamento.observacoes}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+            </div>
+        `;
+
+        document.getElementById('detail-modal').classList.remove('hidden');
+    }
+
+    shouldShowCommunicationHistory(agendamento) {
+        return agendamento.status === 'reagendamento' || agendamento.status === 'nao-veio' || 
+               (agendamento.historicoAcoes && agendamento.historicoAcoes.some(h => 
+                   h.acao.includes('reagendamento') || h.acao.includes('sugestao')));
+    }
+
+    renderCommunicationHistory(agendamento) {
+        let historico = agendamento.historicoAcoes || [];
+
+        if (historico.length === 0) {
+            return `
+                <div class="text-center py-8 text-gray-500">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-comments text-2xl text-gray-400"></i>
+                    </div>
+                    <p class="text-lg font-medium text-gray-600">Nenhuma comunicação registrada</p>
+                    <p class="text-sm text-gray-500 mt-1">As atualizações do agendamento aparecerão aqui</p>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="space-y-4">
+                ${historico.map((evento, index) => `
+                    <div class="flex items-start space-x-4 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-4' : ''}">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 rounded-full ${this.getHistoryIconClass(evento.acao)} flex items-center justify-center shadow-sm">
+                                <i class="${this.getHistoryIcon(evento.acao)} text-white text-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-base font-semibold text-gray-900">
+                                    ${this.getHistoryTitle(evento.acao, evento.autor)}
+                                </p>
+                                <div class="flex items-center text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    ${evento.createdAt ? this.formatDateTime(evento.createdAt) : 'Agora'}
+                                </div>
+                            </div>
+                            ${evento.descricao ? `
+                                <p class="text-sm text-gray-700 leading-relaxed mb-2">
+                                    ${evento.descricao}
+                                </p>
+                            ` : ''}
+                            ${evento.novaData ? `
+                                <div class="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
+                                        <span class="font-medium text-blue-900">Nova Data Proposta</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 text-sm">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-calendar mr-2 text-blue-600"></i>
+                                            <span class="font-medium text-blue-800">${this.formatDate(evento.novaData)}</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-clock mr-2 text-blue-600"></i>
+                                            <span class="font-medium text-blue-800">${evento.novoHorario}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${evento.autor ? `
+                                <div class="mt-2 flex items-center text-xs text-gray-500">
+                                    <i class="fas fa-user mr-1"></i>
+                                    <span>Por: ${evento.autor}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            
+            ${agendamento.status === 'reagendamento' ? `
+                <div class="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
+                    <div class="flex items-center mb-3">
+                        <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-hourglass-half text-white text-sm"></i>
+                        </div>
+                        <span class="font-semibold text-yellow-800">Aguardando resposta do fornecedor</span>
+                    </div>
+                    <p class="text-sm text-yellow-700 leading-relaxed">
+                        O fornecedor foi notificado sobre a solicitação de reagendamento e deve responder em breve.
+                    </p>
+                </div>
+            ` : ''}
+        `;
+    }
+
+    getHistoryIconClass(acao) {
+        const classes = {
+            'agendamento_criado': 'bg-blue-500',
+            'pendente': 'bg-yellow-500',
+            'confirmado': 'bg-green-500',
+            'agendado': 'bg-blue-600',
+            'em-transito': 'bg-indigo-500',
+            'entregue': 'bg-emerald-600',
+            'reagendamento_fornecedor': 'bg-orange-500',
+            'reagendamento_sugerido': 'bg-purple-500',
+            'reagendamento_aceito': 'bg-green-600',
+            'nao-veio': 'bg-red-500',
+            'cd_sugeriu_reagendamento': 'bg-orange-600',
+            'fornecedor_respondeu': 'bg-purple-600',
+            'status_alterado': 'bg-indigo-600',
+            'agendamento_confirmado': 'bg-green-500',
+            'agendamento_entregue': 'bg-emerald-600',
+            'agendamento_nao_veio': 'bg-red-500',
+            'data_aceita': 'bg-green-600',
+            'data_rejeitada': 'bg-red-600',
+            'fornecedor_nao_compareceu': 'bg-red-500',
+            'agendamento_cancelado': 'bg-gray-600'
+        };
+        return classes[acao] || 'bg-gray-500';
+    }
+
+    getHistoryIcon(acao) {
+        const icons = {
+            'agendamento_criado': 'fas fa-plus-circle',
+            'pendente': 'fas fa-clock',
+            'confirmado': 'fas fa-check-circle',
+            'agendado': 'fas fa-calendar-check',
+            'em-transito': 'fas fa-shipping-fast',
+            'entregue': 'fas fa-truck-loading',
+            'reagendamento_fornecedor': 'fas fa-calendar-times',
+            'reagendamento_sugerido': 'fas fa-calendar-plus',
+            'reagendamento_aceito': 'fas fa-handshake',
+            'nao-veio': 'fas fa-user-times',
+            'cd_sugeriu_reagendamento': 'fas fa-calendar-alt',
+            'fornecedor_respondeu': 'fas fa-reply-all',
+            'status_alterado': 'fas fa-edit',
+            'agendamento_confirmado': 'fas fa-check-double',
+            'agendamento_entregue': 'fas fa-truck',
+            'agendamento_nao_veio': 'fas fa-user-slash',
+            'data_aceita': 'fas fa-thumbs-up',
+            'data_rejeitada': 'fas fa-thumbs-down',
+            'fornecedor_nao_compareceu': 'fas fa-exclamation-triangle',
+            'agendamento_cancelado': 'fas fa-ban'
+        };
+        return icons[acao] || 'fas fa-info-circle';
+    }
+
+    getHistoryTitle(acao, autor) {
+        const titles = {
+            'agendamento_criado': 'Agendamento Criado',
+            'pendente': 'Status: Pendente',
+            'confirmado': 'Status: Confirmado',
+            'agendado': 'Status: Agendado',
+            'em-transito': 'Em Trânsito',
+            'entregue': 'Entrega Realizada',
+            'reagendamento_fornecedor': 'Fornecedor Solicitou Reagendamento',
+            'reagendamento_sugerido': 'Nova Data Sugerida',
+            'reagendamento_aceito': 'Reagendamento Aceito',
+            'nao-veio': 'Fornecedor Não Compareceu',
+            'cd_sugeriu_reagendamento': 'CD Solicitou Reagendamento',
+            'fornecedor_respondeu': 'Fornecedor Respondeu',
+            'status_alterado': 'Status Alterado',
+            'agendamento_confirmado': 'Agendamento Confirmado',
+            'agendamento_entregue': 'Entrega Realizada',
+            'agendamento_nao_veio': 'Ausência Registrada',
+            'data_aceita': 'Nova Data Aceita',
+            'data_rejeitada': 'Nova Data Rejeitada',
+            'fornecedor_nao_compareceu': 'Ausência Registrada',
+            'agendamento_cancelado': 'Agendamento Cancelado'
+        };
+        return titles[acao] || 'Evento do Sistema';
+    }
+
+    getDetailActionButtons(agendamento) {
+        if (agendamento.status === 'pendente') {
+            return `
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all font-medium text-sm">
+                    <i class="fas fa-check mr-1"></i>Aceitar Data
+                </button>
+                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
+                    <i class="fas fa-calendar mr-1"></i>Sugerir Nova Data
+                </button>
+            `;
+        } else if (agendamento.status === 'confirmado') {
+            return `
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
+                    <i class="fas fa-truck mr-1"></i>Marcar Entregue
+                </button>
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-medium text-sm">
+                    <i class="fas fa-times mr-1"></i>Não Veio
+                </button>
+            `;
+        } else if (agendamento.status === 'reagendamento') {
+            return `
+                <div class="w-full bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
+                    <i class="fas fa-hourglass-half text-yellow-600 text-lg mb-1"></i>
+                    <p class="text-yellow-800 font-medium text-sm">Aguardando resposta do fornecedor</p>
+                    <p class="text-yellow-700 text-xs">Nova data foi sugerida e notificação enviada</p>
+                </div>
+            `;
+        } else if (agendamento.status === 'nao-veio') {
+            return `
+                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
+                    class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-all font-medium text-sm">
+                    <i class="fas fa-redo mr-1"></i>Reagendar
+                </button>
+                <button onclick="dashboard.cancelAgendamento(${agendamento.id})" 
+                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-medium text-sm">
+                    <i class="fas fa-ban mr-1"></i>Cancelar
+                </button>
+            `;
+        } else if (agendamento.status === 'entregue') {
+            return `
+                <div class="w-full bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                    <i class="fas fa-check-circle text-green-600 text-lg mb-1"></i>
+                    <p class="text-green-800 font-medium text-sm">Entrega realizada com sucesso</p>
+                </div>
+            `;
+        }
+        return `
+            <div class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                <i class="fas fa-info-circle text-gray-600 text-lg mb-1"></i>
+                <p class="text-gray-700 text-sm">Nenhuma ação disponível para este status</p>
+            </div>
+        `;
+    }
+
+    async updateAgendamentoStatus(id, newStatus) {
+        try {
+            const token = sessionStorage.getItem('token');
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Status atualizado com sucesso:', result);
+                
+                await this.loadAgendamentos();
+                this.closeDetailModal();
+                this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)}`, 'success');
+                
+            } else {
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Erro na resposta:', response.status, errorData);
+                throw new Error(errorData.error || `Erro HTTP ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar status:', error);
+            this.showNotification(`Erro ao atualizar status: ${error.message}`, 'error');
+        }
+    }
+
+    async cancelAgendamento(id) {
+        const motivo = prompt('Digite o motivo do cancelamento (obrigatório):');
+        
+        if (!motivo || motivo.trim() === '') {
+            this.showNotification('Motivo do cancelamento é obrigatório.', 'warning');
+            return;
+        }
+
+        if (!confirm('Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.')) {
+            return;
+        }
+
+        try {
+            const token = sessionStorage.getItem('token');
+            
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/cancelar`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ motivo: motivo.trim() })
+            });
+
+            if (response.ok) {
+                await this.loadAgendamentos();
+                this.closeDetailModal();
+                this.showNotification('Agendamento cancelado com sucesso.', 'success');
+            } else {
+                this.showNotification('Erro ao cancelar agendamento', 'error');
+            }
+        } catch (error) {
+            console.error('Erro ao cancelar agendamento:', error);
+            this.showNotification('Erro ao cancelar agendamento.', 'error');
+        }
+    }
+
+    async suggestNewDate(id) {
+        this.currentAgendamentoId = id;
+        document.getElementById('suggest-date-form').reset();
+        this.setMinDate();
+        
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('nova-data').min = today;
+        document.getElementById('nova-data').value = today;
+        
+        await this.carregarHorariosDisponiveis();
+        
+        document.getElementById('suggest-date-modal').classList.remove('hidden');
+    }
+    
+    async carregarHorariosDisponiveis() {
+        try {
+            const novaData = document.getElementById('nova-data').value;
+            const horarioSelect = document.getElementById('novo-horario');
+            
+            horarioSelect.innerHTML = '<option value="">Carregando horários...</option>';
+            
+            let cdId = this.cdId;
+            if (!cdId) {
+                console.log('this.cdId não encontrado, tentando recuperar de outras fontes');
+                
+                const cdInfo = sessionStorage.getItem('cdInfo');
+                if (cdInfo) {
+                    try {
+                        const cdInfoObj = JSON.parse(cdInfo);
+                        cdId = cdInfoObj.id;
+                        this.cdId = cdId;
+                        console.log('CD ID recuperado do cdInfo:', cdId);
+                    } catch (error) {
+                        console.error('Erro ao parsear cdInfo:', error);
+                    }
+                }
+                
+                cdId = cdId || this.getCDFromToken();
+                if (cdId) {
+                    this.cdId = cdId;
+                    console.log('CD ID recuperado do token:', cdId);
+                }
+                
+                cdId = cdId || sessionStorage.getItem('cdId');
+                if (cdId) {
+                    this.cdId = cdId;
+                    console.log('CD ID recuperado diretamente do sessionStorage:', cdId);
+                }
+            }
+            
+            if (!cdId) {
+                console.error('CD ID não encontrado em nenhuma fonte');
+                horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
+                const horariosDefault = [
+                    { valor: '08:00', label: '08:00' },
+                    { valor: '09:00', label: '09:00' },
+                    { valor: '10:00', label: '10:00' },
+                    { valor: '11:00', label: '11:00' },
+                    { valor: '13:00', label: '13:00' },
+                    { valor: '14:00', label: '14:00' },
+                    { valor: '15:00', label: '15:00' },
+                    { valor: '16:00', label: '16:00' }
+                ];
+                
+                horariosDefault.forEach(horario => {
+                    const option = document.createElement('option');
+                    option.value = horario.valor;
+                    option.textContent = horario.label;
+                    horarioSelect.appendChild(option);
+                });
+                
+                return;
+            }
+            
+            console.log('Carregando horários disponíveis para data:', novaData, 'CD ID:', cdId);
+            
+            const response = await fetch(`${getApiBaseUrl()}/api/horarios-disponiveis?date=${novaData}&cd=${cdId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                }
+            });
+            
+            if (!response.ok) {
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                throw new Error(`Erro ao buscar horários: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Horários disponíveis recebidos:', data);
+            
+            horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
+            
+            if (data.horarios && Array.isArray(data.horarios)) {
+                data.horarios.forEach(horario => {
+                    const option = document.createElement('option');
+                    option.value = horario.valor;
+                    option.textContent = horario.label;
+                    
+                    if (horario.disponivel === false) {
+                        option.disabled = true;
+                        option.textContent += ` (${horario.motivo || 'Indisponível'})`;
+                    }
+                    
+                    horarioSelect.appendChild(option);
+                });
+            } else {
+                const horariosDefault = [
+                    { valor: '08:00', label: '08:00' },
+                    { valor: '09:00', label: '09:00' },
+                    { valor: '10:00', label: '10:00' },
+                    { valor: '11:00', label: '11:00' },
+                    { valor: '13:00', label: '13:00' },
+                    { valor: '14:00', label: '14:00' },
+                    { valor: '15:00', label: '15:00' },
+                    { valor: '16:00', label: '16:00' }
+                ];
+                
+                horariosDefault.forEach(horario => {
+                    const option = document.createElement('option');
+                    option.value = horario.valor;
+                    option.textContent = horario.label;
+                    horarioSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao carregar horários disponíveis:', error);
+            
+            const horarioSelect = document.getElementById('novo-horario');
+            horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
+            const horariosDefault = [
+                { valor: '08:00', label: '08:00' },
+                { valor: '09:00', label: '09:00' },
+                { valor: '10:00', label: '10:00' },
+                { valor: '11:00', label: '11:00' },
+                { valor: '13:00', label: '13:00' },
+                { valor: '14:00', label: '14:00' },
+                { valor: '15:00', label: '15:00' },
+                { valor: '16:00', label: '16:00' }
+            ];
+            
+            horariosDefault.forEach(horario => {
+                const option = document.createElement('option');
+                option.value = horario.valor;
+                option.textContent = horario.label;
+                horarioSelect.appendChild(option);
+            });
+        }
+    }
+
+    async handleSuggestDate() {
+        const novaData = document.getElementById('nova-data').value;
+        const novoHorario = document.getElementById('novo-horario').value;
+        const motivo = document.getElementById('motivo-reagendamento').value;
+
+        if (!novaData || !novoHorario) {
+            this.showNotification('Preencha todos os campos obrigatórios.', 'error');
+            return;
+        }
+
+        try {
+            console.log(`🔄 Sugerindo nova data para agendamento ${this.currentAgendamentoId}:`, {
+                novaData,
+                novoHorario,
+                motivo
+            });
+
+            const token = sessionStorage.getItem('token');
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${this.currentAgendamentoId}/reagendar`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    novaData,
+                    novoHorario,
+                    motivo
+                })
+            });
+
+            const responseText = await response.text();
+            console.log('📋 Response body:', responseText);
+
+            if (response.ok) {
+                console.log('✅ Reagendamento sugerido com sucesso');
+                
+                await this.loadAgendamentos();
+                
+                this.closeSuggestDateModal();
+                this.closeDetailModal();
+                
+                this.showNotification('Sugestão de nova data enviada ao fornecedor.', 'success');
+            } else {
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                
+                let errorData;
+                try {
+                    errorData = JSON.parse(responseText);
+                } catch {
+                    errorData = { error: responseText };
+                }
+                console.error('❌ Erro na resposta:', errorData);
+                throw new Error(errorData.error || 'Erro ao enviar sugestão');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao enviar sugestão:', error);
+            this.showNotification('Erro ao enviar sugestão: ' + error.message, 'error');
+        }
+    }
+
+    // Funções globais para abrir/fechar modais do dashboard
+    openConsultaModal() {
+        document.getElementById('consulta-modal')?.classList.remove('hidden');
+    }
+
+    closeConsultaModal() {
+        document.getElementById('consulta-modal')?.classList.add('hidden');
+    }
+
+    openRegistrarEntregaModal() {
+        const modal = document.getElementById('registrar-entrega-modal');
+        modal.classList.remove('hidden');
+        
+        // Reset do formulário
+        entregaCurrentStep = 1;
+        entregaPedidos = [];
+        entregaCurrentPedido = 0;
+        
+        // Mostrar apenas o primeiro step
+        mostrarStepEntrega(1);
+        
+        // Configurar data atual
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('entrega-data').value = hoje;
+        
+        // Configurar horário atual
+        const agora = new Date();
+        const horaAtual = agora.getHours().toString().padStart(2, '0') + ':00';
+        const selectHorario = document.getElementById('entrega-horario');
+        if (selectHorario) {
+            selectHorario.value = horaAtual;
+        }
+        
+        // Configurar o submit do formulário
+        document.getElementById('registrar-entrega-form').onsubmit = handleRegistrarEntrega;
+    }
+
+    closeRegistrarEntregaModal() {
+        document.getElementById('registrar-entrega-modal')?.classList.add('hidden');
+    }
+
+    openBloqueioModal() {
+        const modal = document.getElementById('bloqueio-modal');
+        modal.classList.remove('hidden');
+        
+        // Configurar data mínima (amanhã)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        document.getElementById('data-bloqueio').min = tomorrowStr;
+        document.getElementById('data-bloqueio').value = tomorrowStr;
+        
+        // Reset do formulário
+        document.getElementById('bloqueio-form').reset();
+        document.getElementById('data-bloqueio').value = tomorrowStr;
+        
+        // Event listeners
+        this.setupBloqueioEventListeners();
+    }
+
+    closeBloqueioModal() {
+        const modal = document.getElementById('bloqueio-modal');
+        modal.classList.add('hidden');
+        
+        // Limpar formulário
+        document.getElementById('bloqueio-form').reset();
+        document.getElementById('motivo-outros').classList.add('hidden');
+        document.getElementById('preview-bloqueio').innerHTML = '<p>Selecione os dados acima para ver a prévia</p>';
+    }
+
+    setupBloqueioEventListeners() {
+        const form = document.getElementById('bloqueio-form');
+        const motivoSelect = document.getElementById('motivo-bloqueio');
+        const motivoOutros = document.getElementById('motivo-outros');
+        
+        // Mostrar/ocultar campo "outros"
+        motivoSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'outros') {
+                motivoOutros.classList.remove('hidden');
+            } else {
+                motivoOutros.classList.add('hidden');
+            }
+            this.updateBloqueioPreview();
+        });
+        
+        // Atualizar preview quando campos mudarem
+        const previewFields = ['data-bloqueio', 'hora-inicio', 'hora-fim', 'motivo-bloqueio', 'motivo-custom'];
+        previewFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.addEventListener('change', this.updateBloqueioPreview);
+                field.addEventListener('input', this.updateBloqueioPreview);
+            }
+        });
+        
+        // Validação de horários
+        document.getElementById('hora-inicio').addEventListener('change', this.validateHorarios);
+        document.getElementById('hora-fim').addEventListener('change', this.validateHorarios);
+        
+        // Submit do formulário
+        form.onsubmit = function(e) {
+        console.log('[Frontend] bloqueio-form submit triggered (onsubmit bind)');
+        return handleBloqueioSubmit(e);
+    };
+
+    // Prevenir que a tecla Enter dispare um submit nativo (exceto em textarea)
+    form.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+            if (tag !== 'textarea') {
+                e.preventDefault();
+                console.log('[Frontend] Enter pressed in bloqueio-form - prevented native submit');
+            }
+        }
+    });
+}
+
+    updateBloqueioPreview() {
+        const data = document.getElementById('data-bloqueio').value;
+        const horaInicio = document.getElementById('hora-inicio').value;
+        const horaFim = document.getElementById('hora-fim').value;
+        const motivo = document.getElementById('motivo-bloqueio').value;
+        const motivoCustom = document.getElementById('motivo-custom').value;
+        
+        const preview = document.getElementById('preview-bloqueio');
+        
+        if (!data || !horaInicio || !horaFim || !motivo) {
+            preview.innerHTML = '<p class="text-gray-500">Selecione os dados acima para ver a prévia</p>';
+            return;
+        }
+        
+        const dataFormatada = new Date(data + 'T00:00:00').toLocaleDateString('pt-BR');
+        const motivoTexto = motivo === 'outros' ? motivoCustom : 
+                           document.querySelector(`#motivo-bloqueio option[value="${motivo}"]`).textContent;
+        
+        preview.innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                <h5 class="font-semibold text-red-800 mb-2">
+                    <i class="fas fa-ban mr-2"></i>Bloqueio Programado
+                </h5>
+                <div class="text-red-700 space-y-1">
+                    <p><strong>Data:</strong> ${dataFormatada}</p>
+                    <p><strong>Período:</strong> ${horaInicio} às ${horaFim}</p>
+                    <p><strong>Motivo:</strong> ${motivoTexto}</p>
+                </div>
+                <div class="mt-2 text-sm text-red-600">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Nenhum agendamento será permitido neste período.
+                </div>
+            </div>
+        `;
+    }
+
+    validateHorarios() {
+        const horaInicio = document.getElementById('hora-inicio').value;
+        const horaFim = document.getElementById('hora-fim').value;
+        
+        if (horaInicio && horaFim) {
+            const inicio = parseInt(horaInicio.replace(':', ''));
+            const fim = parseInt(horaFim.replace(':', ''));
+            
+            if (fim <= inicio) {
+                dashboard.showNotification('O horário de fim deve ser posterior ao horário de início', 'error');
+                document.getElementById('hora-fim').value = '';
+            }
+        }
+    }
+
+    async handleBloqueioSubmit(e) {
+        e.preventDefault();
+        console.debug('[Frontend] handleBloqueioSubmit invoked');
+        
+        const formData = new FormData(e.target);
+        const dataBloqueio = formData.get('dataBloqueio');
+        const horaInicio = formData.get('horaInicio');
+        const horaFim = formData.get('horaFim');
+        const motivo = formData.get('motivoBloqueio') === 'outros' ? formData.get('motivoCustom') : formData.get('motivoBloqueio');
+        // Validações
+        if (!dataBloqueio || !horaInicio || !horaFim || !motivo) {
+            dashboard.showNotification('Todos os campos são obrigatórios', 'error');
+            return;
+        }
+        // Validação de data futura (pode usar Date para comparar, mas envia string)
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0); // Zerar horas para comparação apenas de data
+        
+        // Criar data no fuso horário local para evitar problemas de UTC
+        const [ano, mes, dia] = dataBloqueio.split('-').map(Number);
+        const dataBloqueioDate = new Date(ano, mes - 1, dia); // mes - 1 porque Date usa 0-11 para meses
+        
+        console.log('📅 [Bloqueio] Data selecionada:', dataBloqueio);
+        console.log('📅 [Bloqueio] Data criada:', dataBloqueioDate);
+        console.log('📅 [Bloqueio] Dia da semana:', dataBloqueioDate.getDay(), '(0=Domingo, 1=Segunda, etc.)');
+        
+        if (dataBloqueioDate <= hoje) {
+            dashboard.showNotification('A data do bloqueio deve ser futura', 'error');
+            return;
+        }
+        // Verificar se é dia útil (1=Segunda a 5=Sexta)
+        const diaSemana = dataBloqueioDate.getDay();
+        if (diaSemana === 0 || diaSemana === 6) {
+            dashboard.showNotification('Bloqueios só podem ser feitos em dias úteis', 'error');
+            return;
+        }
+        try {
+            dashboard.showLoading(true);
+            const token = sessionStorage.getItem('token');
+            'data_aceita': 'Nova Data Aceita',
+            'data_rejeitada': 'Nova Data Rejeitada',
+            'fornecedor_nao_compareceu': 'Ausência Registrada',
+            'agendamento_cancelado': 'Agendamento Cancelado'
+        };
+        return titles[acao] || 'Evento do Sistema';
+    }
+
+    getDetailActionButtons(agendamento) {
+        if (agendamento.status === 'pendente') {
+            return `
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all font-medium text-sm">
+                    <i class="fas fa-check mr-1"></i>Aceitar Data
+                </button>
+                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
+                    <i class="fas fa-calendar mr-1"></i>Sugerir Nova Data
+                </button>
+            `;
+        } else if (agendamento.status === 'confirmado') {
+            return `
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
+                    <i class="fas fa-truck mr-1"></i>Marcar Entregue
+                </button>
+                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-medium text-sm">
+                    <i class="fas fa-times mr-1"></i>Não Veio
+                </button>
+            `;
+        } else if (agendamento.status === 'reagendamento') {
+            return `
+                <div class="w-full bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
+                    <i class="fas fa-clock text-yellow-600 text-lg mb-1"></i>
+                    <p class="text-yellow-800 font-medium text-sm">Aguardando resposta do fornecedor</p>
+                    <p class="text-yellow-700 text-xs">Nova data foi sugerida e notificação enviada</p>
+                </div>
+            `;
+        } else if (agendamento.status === 'nao-veio') {
+            return `
+                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
+                    class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-all font-medium text-sm">
+                    <i class="fas fa-redo mr-1"></i>Reagendar
+                </button>
+                <button onclick="dashboard.cancelAgendamento(${agendamento.id})" 
+                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-medium text-sm">
+                    <i class="fas fa-ban mr-1"></i>Cancelar
+                </button>
+            `;
+        } else if (agendamento.status === 'entregue') {
+            return `
+                <div class="w-full bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                    <i class="fas fa-check-circle text-green-600 text-lg mb-1"></i>
+                    <p class="text-green-800 font-medium text-sm">Entrega realizada com sucesso</p>
+                </div>
+            `;
+        }
+        return `
+            <div class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                <i class="fas fa-info-circle text-gray-600 text-lg mb-1"></i>
+                <p class="text-gray-700 text-sm">Nenhuma ação disponível para este status</p>
+            </div>
+        `;
+    }
+
+    async updateAgendamentoStatus(id, newStatus) {
+        try {
+            const token = sessionStorage.getItem('token');
+            
+            console.log('Atualizando status:', { id, newStatus, token: token ? 'presente' : 'ausente' });
+            
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            console.log('Response status:', response.status, response.statusText);
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Status atualizado com sucesso:', result);
+                
+                // Recarregar dados do dashboard
+                await this.loadAgendamentos();
+                
+                // Fechar modal se estiver aberto
+                this.closeDetailModal();
+                
+                // Mostrar notificação de sucesso
+                this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)}`, 'success');
+                
+            } else {
+                // Verificar se é token expirado
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Erro na resposta:', response.status, errorData);
+                throw new Error(errorData.error || `Erro HTTP ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar status:', error);
+            this.showNotification(`Erro ao atualizar status: ${error.message}`, 'error');
+        }
+    }
+
+    async cancelAgendamento(id) {
+        const motivo = prompt('Digite o motivo do cancelamento (obrigatório):');
+        
+        if (!motivo || motivo.trim() === '') {
+            this.showNotification('Motivo do cancelamento é obrigatório.', 'warning');
+            return;
+        }
+
+        if (!confirm('Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.')) {
+            return;
+        }
+
+        try {
+            const token = sessionStorage.getItem('token');
+            
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/cancelar`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ motivo: motivo.trim() })
+            });
+
+            if (response.ok) {
+                await this.loadAgendamentos();
+                this.closeDetailModal();
+                this.showNotification('Agendamento cancelado com sucesso.', 'success');
+            } else {
+                throw new Error('Erro ao cancelar agendamento');
+            }
+        } catch (error) {
+            console.error('Erro ao cancelar agendamento:', error);
+            this.showNotification('Erro ao cancelar agendamento.', 'error');
+        }
+    }
+
+    async suggestNewDate(id) {
+        this.currentAgendamentoId = id;
+        document.getElementById('suggest-date-form').reset();
+        this.setMinDate();
+        
+        // Configurar data mínima como hoje
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('nova-data').min = today;
+        document.getElementById('nova-data').value = today;
+        
+        // Carregar horários disponíveis para o CD logado
+        await this.carregarHorariosDisponiveis();
+        
+        document.getElementById('suggest-date-modal').classList.remove('hidden');
+    }
+    
+    // Função para carregar horários disponíveis do CD logado
+    async carregarHorariosDisponiveis() {
+        try {
+            const novaData = document.getElementById('nova-data').value;
+            const horarioSelect = document.getElementById('novo-horario');
+            
+            // Limpar opções existentes
+            horarioSelect.innerHTML = '<option value="">Carregando horários...</option>';
+            
+            // Obter ID do CD logado
+            let cdId = this.cdId;
+            
+            // Se não tiver o cdId na instância, tentar recuperar do sessionStorage
+            if (!cdId) {
+                console.log('this.cdId não encontrado, tentando recuperar de outras fontes');
+                
+                // Tentar obter do cdInfo
+                const cdInfo = sessionStorage.getItem('cdInfo');
+                if (cdInfo) {
+                    try {
+                        const cdInfoObj = JSON.parse(cdInfo);
+                        cdId = cdInfoObj.id;
+                        this.cdId = cdId; // Salvar na instância
+                        console.log('CD ID recuperado do cdInfo:', cdId);
+                    } catch (error) {
+                        console.error('Erro ao parsear cdInfo:', error);
+                    }
+                }
+                
+                // Tentar obter do token usando o novo método
+                if (!cdId) {
+                    cdId = this.getCDFromToken();
+                    if (cdId) {
+                        this.cdId = cdId; // Salvar na instância
+                        console.log('CD ID recuperado do token:', cdId);
+                    }
+                }
+                
+                // Tentar obter diretamente do sessionStorage
+                if (!cdId) {
+                    cdId = sessionStorage.getItem('cdId');
+                    if (cdId) {
+                        this.cdId = cdId; // Salvar na instância
+                        console.log('CD ID recuperado diretamente do sessionStorage:', cdId);
+                    }
+                }
+            }
+            
+            // Se ainda não tiver o cdId, usar um valor padrão ou avisar o usuário
+            if (!cdId) {
+                console.error('CD ID não encontrado em nenhuma fonte');
+                
+                // Usar horários padrão
+                horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
+                const horariosDefault = [
+                    { valor: '08:00', label: '08:00' },
+                    { valor: '09:00', label: '09:00' },
+                    { valor: '10:00', label: '10:00' },
+                    { valor: '11:00', label: '11:00' },
+                    { valor: '13:00', label: '13:00' },
+                    { valor: '14:00', label: '14:00' },
+                    { valor: '15:00', label: '15:00' },
+                    { valor: '16:00', label: '16:00' }
+                ];
+                
+                horariosDefault.forEach(horario => {
+                    const option = document.createElement('option');
+                    option.value = horario.valor;
+                    option.textContent = horario.label;
+                    horarioSelect.appendChild(option);
+                });
+                
+                return;
+            }
+            
+            console.log('Carregando horários disponíveis para data:', novaData, 'CD ID:', cdId);
+            
+            // Chamar API para obter horários disponíveis
+            const response = await fetch(`${getApiBaseUrl()}/api/horarios-disponiveis?date=${novaData}&cd=${cdId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                }
+            });
+            
+            if (!response.ok) {
+                // Verificar se é token expirado
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                throw new Error(`Erro ao buscar horários: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Horários disponíveis recebidos:', data);
+            
+            // Limpar opções existentes novamente
+            horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
+            
+            // Adicionar horários à lista
+            if (data.horarios && Array.isArray(data.horarios)) {
+                data.horarios.forEach(horario => {
+                    const option = document.createElement('option');
+                    option.value = horario.valor;
+                    option.textContent = horario.label;
+                    
+                    // Desabilitar horários indisponíveis
+                    if (horario.disponivel === false) {
+                        option.disabled = true;
+                        option.textContent += ` (${horario.motivo || 'Indisponível'})`;
+                    }
+                    
+                    horarioSelect.appendChild(option);
+                });
+            } else {
+                // Horários padrão caso a API não retorne dados
+                const horariosDefault = [
+                    { valor: '08:00', label: '08:00' },
+                    { valor: '09:00', label: '09:00' },
+                    { valor: '10:00', label: '10:00' },
+                    { valor: '11:00', label: '11:00' },
+                    { valor: '13:00', label: '13:00' },
+                    { valor: '14:00', label: '14:00' },
+                    { valor: '15:00', label: '15:00' },
+                    { valor: '16:00', label: '16:00' }
+                ];
+                
+                horariosDefault.forEach(horario => {
+                    const option = document.createElement('option');
+                    option.value = horario.valor;
+                    option.textContent = horario.label;
+                    horarioSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao carregar horários disponíveis:', error);
+            
+            // Em caso de erro, carregar horários padrão
+            const horarioSelect = document.getElementById('novo-horario');
+            horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
+            const horariosDefault = [
+                { valor: '08:00', label: '08:00' },
+                { valor: '09:00', label: '09:00' },
+                { valor: '10:00', label: '10:00' },
+                { valor: '11:00', label: '11:00' },
+                { valor: '13:00', label: '13:00' },
+                { valor: '14:00', label: '14:00' },
+                { valor: '15:00', label: '15:00' },
+                { valor: '16:00', label: '16:00' }
+            ];
+            
+            horariosDefault.forEach(horario => {
+                const option = document.createElement('option');
+                option.value = horario.valor;
+                option.textContent = horario.label;
+                horarioSelect.appendChild(option);
+            });
+        }
+    }
+
+    async handleSuggestDate() {
+        const novaData = document.getElementById('nova-data').value;
+        const novoHorario = document.getElementById('novo-horario').value;
+        const motivo = document.getElementById('motivo-reagendamento').value;
+
+        if (!novaData || !novoHorario) {
+            this.showNotification('Preencha todos os campos obrigatórios.', 'error');
+            return;
+        }
+
+        try {
+            console.log(`🔄 Sugerindo nova data para agendamento ${this.currentAgendamentoId}:`, {
+                novaData,
+                novoHorario,
+                motivo
+            });
+
+            const token = sessionStorage.getItem('token');
+            // Envia a string 'YYYY-MM-DD' pura, sem manipulação
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${this.currentAgendamentoId}/reagendar`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    novaData,
+                    novoHorario,
+                    motivo
+                })
+            });
+
+            console.log('📡 Response status:', response.status);
+            const responseText = await response.text();
+            console.log('📋 Response body:', responseText);
+
+            if (response.ok) {
+                console.log('✅ Reagendamento sugerido com sucesso');
+                
+                // Recarregar dados do dashboard para pegar os dados atualizados do banco
+                await this.loadAgendamentos();
+                
+                this.closeSuggestDateModal();
+                this.closeDetailModal();
+                
+                this.showNotification('Sugestão de nova data enviada ao fornecedor.', 'success');
+            } else {
+                // Verificar se é token expirado
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                
+                let errorData;
+                try {
+                    errorData = JSON.parse(responseText);
+                } catch {
+                    errorData = { error: responseText };
+                }
+                console.error('❌ Erro na resposta:', errorData);
+                throw new Error(errorData.error || 'Erro ao enviar sugestão');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao enviar sugestão:', error);
+            this.showNotification('Erro ao enviar sugestão: ' + error.message, 'error');
+        }
+    }
+
+    viewPDF(filename) {
+        if (!filename) {
+            console.log('Nenhum arquivo para visualizar');
+            return;
+        }
+        
+        // Construir URL do arquivo usando a rota da API
+    const fileUrl = `${getApiBaseUrl()}/api/files/${filename}`;
+        console.log('Abrindo PDF:', fileUrl);
+        
+        // Abrir em nova aba
+        window.open(fileUrl, '_blank');
+    }
+
+    // --- CONTROLES DE VISUALIZAÇÃO E FILTROS ---
+
+    changeView(view) {
+        this.currentView = view;
+        
+        document.getElementById('view-cards').className = view === 'cards' ? 
+            'px-4 py-2 rounded-md bg-orange-primary text-white transition-all' :
+            'px-4 py-2 rounded-md text-gray-600 hover:bg-white transition-all';
+            
+        document.getElementById('view-list').className = view === 'list' ? 
+            'px-4 py-2 rounded-md bg-orange-primary text-white transition-all' :
+            'px-4 py-2 rounded-md text-gray-600 hover:bg-white transition-all';
+        
+        document.getElementById('cards-view').classList.toggle('hidden', view !== 'cards');
+        document.getElementById('list-view').classList.toggle('hidden', view !== 'list');
+        
+        this.renderAgendamentos();
+    }
+
+    applyFilters() {
+        const statusFilter = document.getElementById('filter-status').value;
+        const searchText = document.getElementById('search-input').value.toLowerCase();
+        
+        this.filteredAgendamentos = this.agendamentos.filter(agendamento => {
+            const matchesStatus = !statusFilter || agendamento.status === statusFilter;
+            const matchesSearch = !searchText || 
+                agendamento.codigo.toLowerCase().includes(searchText) ||
+                agendamento.fornecedor.nome.toLowerCase().includes(searchText) ||
+                agendamento.fornecedor.email.toLowerCase().includes(searchText);
+                
+            return matchesStatus && matchesSearch;
+        });
+        
+        // Resetar para primeira página quando aplicar filtros
+        this.currentPage = 1;
+        
+        this.renderAgendamentos();
+    }
+
+    async exportData(format) {
+        try {
+            this.showNotification(`Exportando dados em formato ${format.toUpperCase()}...`, 'info');
+            
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Simular exportação
+            
+            const data = this.filteredAgendamentos.map(a => ({
+                'Código': a.codigo,
+                'Fornecedor': a.fornecedor.nome,
+                'Email': a.fornecedor.email,
+                'Telefone': a.fornecedor.telefone,
+                'Data': this.formatDate(a.dataEntrega),
+                'Horário': a.horarioEntrega,
+                'Status': this.getStatusText(a.status),
+                'Tipo de Carga': this.getTipoCargaText(a.tipoCarga),
+                'Observações': a.observacoes || ''
+            }));
+            
+            if (format === 'excel') {
+                this.downloadCSV(data, 'agendamentos.csv');
+            } else {
+                this.showNotification('Funcionalidade de export PDF será implementada.', 'info');
+            }
+            
+        } catch (error) {
+            this.showNotification('Erro ao exportar dados.', 'error');
+        }
+    }
+
+    downloadCSV(data, filename) {
+        if (data.length === 0) {
+            this.showNotification('Não há dados para exportar.', 'warning');
+            return;
+        }
+        const headers = Object.keys(data[0]);
+        const csvContent = [
+            headers.join(','),
+            ...data.map(row => headers.map(header => `"${row[header]}"`).join(','))
+        ].join('\n');
+        
+        const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); // BOM para Excel
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        this.showNotification('Arquivo CSV baixado com sucesso!', 'success');
+    }
+
+    // --- CONTROLES DE ESTADO (LOADING, EMPTY) E NOTIFICAÇÕES ---
+
+    showLoading(show) {
+        const loadingState = document.getElementById('loading-state');
+        const container = document.getElementById('agendamentos-container');
+        
+        if (show) {
+            loadingState.classList.remove('hidden');
+            container.classList.add('hidden');
+        } else {
+            loadingState.classList.add('hidden');
+            container.classList.remove('hidden');
+        }
+    }
+
+    showEmptyState() {
+        document.getElementById('empty-state').classList.remove('hidden');
+        document.getElementById('cards-view').classList.add('hidden');
+        document.getElementById('list-view').classList.add('hidden');
+    }
+
+    hideEmptyState() {
+        document.getElementById('empty-state').classList.add('hidden');
+        if (this.filteredAgendamentos.length > 0) {
+            document.getElementById('cards-view').classList.toggle('hidden', this.currentView !== 'cards');
+            document.getElementById('list-view').classList.toggle('hidden', this.currentView !== 'list');
+        } else {
+            this.showEmptyState();
+        }
+    }
+    
+    showNotification(message, type = 'info') {
+        const colors = {
+            success: 'bg-green-500', error: 'bg-red-500',
+            warning: 'bg-yellow-500', info: 'bg-blue-500'
+        };
+        const icons = {
+            success: 'fa-check-circle', error: 'fa-exclamation-circle',
+            warning: 'fa-exclamation-triangle', info: 'fa-info-circle'
+        };
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${colors[type]} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3`;
+        notification.innerHTML = `
+            <i class="fas ${icons[type]}"></i>
+            <span>${message}</span>
+            <button onclick="this.parentElement.remove()" class="ml-4 hover:bg-white hover:bg-opacity-20 rounded p-1">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        document.getElementById('notification-container').appendChild(notification);
+        
+        setTimeout(() => notification.classList.add('show'), 100);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 500);
+        }, 5000); // Notificação some após 5 segundos
+    }
+
+    // --- MODAL DE CONSULTA PÚBLICA ---
+
+    async consultarAgendamento() {
+        const codigo = document.getElementById('codigo-consulta').value.trim();
+        
+        if (!codigo) {
+            this.showNotification('Digite o código do agendamento', 'error');
+            return;
+        }
+
+        try {
+            // Buscar agendamento diretamente da API para garantir dados atualizados
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/consultar/${codigo}`);
+            const result = await response.json();
+            if (result.success && result.data) {
+                this.closeConsultaModal();
+                this.showStatusModal(result.data);
+            } else {
+                this.showNotification('Agendamento não encontrado', 'error');
+            }
+        } catch (error) {
+            console.error('Erro ao consultar agendamento:', error);
+            this.showNotification('Erro ao consultar agendamento', 'error');
+        }
+    }
+
+    showStatusModal(agendamento) {
+        const statusContent = document.getElementById('status-content');
+        const statusClass = this.getStatusClass(agendamento.status);
+        const statusIcon = this.getStatusIcon(agendamento.status);
+        const statusText = this.getStatusText(agendamento.status);
+    
+        statusContent.innerHTML = `
+            <div class="space-y-6">
+                <div class="bg-gradient-to-r from-orange-primary to-orange-secondary rounded-xl p-6 text-white text-center">
+                    <h3 class="text-2xl font-bold mb-2">Status do Agendamento</h3>
+                    <p class="text-lg"><strong>Código:</strong> ${agendamento.codigo}</p>
+                </div>
+                <div class="text-center">
+                    <span class="px-4 py-2 rounded-full text-white text-lg font-semibold ${statusClass}">
+                        <i class="${statusIcon} mr-2"></i>${statusText}
+                    </span>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-6 space-y-3">
+                    <p><strong>Fornecedor:</strong> ${agendamento.fornecedor.nome}</p>
+                    <p><strong>Data Programada:</strong> ${this.formatDate(agendamento.dataEntrega)}</p>
+                    <p><strong>Horário:</strong> ${agendamento.horarioEntrega}</p>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('status-modal').classList.remove('hidden');
+    }
 }
 
 // --- FIM DA CLASSE ---
 
 // --- INICIALIZAÇÃO E FUNÇÕES GLOBAIS ---
 
-document.addEventListener('DOMContentLoaded', () => {
+let dashboard;
 // Função que aplica máscaras a inputs dentro de um container
 function applyMasksToContainer(container) {
     if (!container) return;
@@ -144,7 +2731,6 @@ function applyMasksToContainer(container) {
     window.applyMasksToContainer = applyMasksToContainer;
 }
 
-let dashboard;
 document.addEventListener('DOMContentLoaded', () => {
     dashboard = new CDDashboard();
     applyMasksToContainer(document);
@@ -1328,167 +3914,6 @@ function atualizarNotaFiscalEntrega(pedidoIndex, nfIndex, campo, valor) {
     entregaPedidos[pedidoIndex].notasFiscais[nfIndex][campo] = valor;
 }
 
-function adicionarPedidoEntrega() {
-    const numeroPedido = entregaPedidos.length + 1;
-    const pedido = {
-        numero: '',
-        notasFiscais: []
-    };
-    
-    entregaPedidos.push(pedido);
-    entregaCurrentPedido = entregaPedidos.length - 1;
-    
-    criarTabPedidoEntrega(entregaCurrentPedido);
-    criarFormularioPedidoEntrega(entregaCurrentPedido);
-    selecionarTabPedidoEntrega(entregaCurrentPedido);
-}
-
-function criarTabPedidoEntrega(index) {
-    const tabsContainer = document.getElementById('entrega-pedidos-tabs');
-    
-    const tab = document.createElement('div');
-    tab.className = 'tab-pedido-entrega px-4 py-2 rounded-lg cursor-pointer transition-colors bg-gray-200 text-gray-600';
-    tab.dataset.index = index;
-    tab.innerHTML = `
-        <span>Pedido ${index + 1}</span>
-        ${index > 0 ? '<button onclick="removerPedidoEntrega(' + index + ')" class="ml-2 text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>' : ''}
-    `;
-    
-    tab.addEventListener('click', () => selecionarTabPedidoEntrega(index));
-    tabsContainer.appendChild(tab);
-}
-
-function selecionarTabPedidoEntrega(index) {
-    entregaCurrentPedido = index;
-    
-    // Atualizar appearance das tabs
-    document.querySelectorAll('.tab-pedido-entrega').forEach((tab, i) => {
-        if (i === index) {
-            tab.className = 'tab-pedido-entrega px-4 py-2 rounded-lg cursor-pointer transition-colors bg-orange-500 text-white';
-        } else {
-            tab.className = 'tab-pedido-entrega px-4 py-2 rounded-lg cursor-pointer transition-colors bg-gray-200 text-gray-600';
-        }
-    });
-    
-    // Mostrar formulário do pedido
-    document.querySelectorAll('.pedido-entrega-form').forEach((form, i) => {
-        if (i === index) {
-            form.classList.remove('hidden');
-        } else {
-            form.classList.add('hidden');
-        }
-    });
-}
-
-function criarFormularioPedidoEntrega(index) {
-    const container = document.getElementById('entrega-pedidos-container');
-    
-    const formHtml = `
-        <div class="pedido-entrega-form bg-white border border-gray-200 rounded-lg p-6 ${index > 0 ? 'hidden' : ''}" data-index="${index}">
-            <div class="mb-6">
-                <label class="block text-gray-dark font-semibold mb-2">
-                    <i class="fas fa-hashtag mr-2 text-orange-primary"></i>
-                    Número do Pedido *
-                </label>
-                <input type="text" 
-                       id="entrega-pedido-numero-${index}" 
-                       placeholder="Ex: PED-2024-001" 
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                       onchange="atualizarNumeroPedidoEntrega(${index}, this.value)">
-            </div>
-
-            <!-- Notas Fiscais -->
-            <div class="mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-lg font-semibold text-gray-dark">
-                        <i class="fas fa-file-invoice mr-2 text-orange-primary"></i>
-                        Notas Fiscais
-                    </h4>
-                    <button type="button" onclick="adicionarNotaFiscalEntrega(${index})" 
-                            class="bg-orange-primary text-white px-4 py-2 rounded-lg hover:bg-orange-secondary transition-all">
-                        <i class="fas fa-plus mr-2"></i>Adicionar NF
-                    </button>
-                </div>
-                
-                <div id="entrega-notas-fiscais-${index}" class="space-y-4">
-                    <!-- Notas fiscais serão adicionadas aqui -->
-                </div>
-            </div>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', formHtml);
-}
-
-function atualizarNumeroPedidoEntrega(pedidoIndex, numero) {
-    entregaPedidos[pedidoIndex].numero = numero;
-}
-
-function adicionarNotaFiscalEntrega(pedidoIndex) {
-    const nf = {
-        numero: '',
-        valor: '',
-        arquivo: null
-    };
-    
-    entregaPedidos[pedidoIndex].notasFiscais.push(nf);
-    
-    const nfIndex = entregaPedidos[pedidoIndex].notasFiscais.length - 1;
-    criarFormularioNotaFiscalEntrega(pedidoIndex, nfIndex);
-}
-
-function criarFormularioNotaFiscalEntrega(pedidoIndex, nfIndex) {
-    const container = document.getElementById(`entrega-notas-fiscais-${pedidoIndex}`);
-    
-    const nfHtml = `
-        <div class="nota-fiscal-entrega bg-gray-50 border border-gray-200 rounded-lg p-4" data-pedido="${pedidoIndex}" data-nf="${nfIndex}">
-            <div class="flex justify-between items-start mb-4">
-                <h5 class="font-semibold text-gray-dark">Nota Fiscal ${nfIndex + 1}</h5>
-                <button type="button" onclick="removerNotaFiscalEntrega(${pedidoIndex}, ${nfIndex})" 
-                        class="text-red-500 hover:text-red-700 transition-colors">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Número da NF *</label>
-                    <input type="text" 
-                           id="entrega-nf-numero-${pedidoIndex}-${nfIndex}"
-                           placeholder="Ex: 123456"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary transition-all"
-                           onchange="atualizarNotaFiscalEntrega(${pedidoIndex}, ${nfIndex}, 'numero', this.value)">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$) *</label>
-                    <input type="number" 
-                           id="entrega-nf-valor-${pedidoIndex}-${nfIndex}"
-                           step="0.01" 
-                           placeholder="0,00"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary transition-all"
-                           onchange="atualizarNotaFiscalEntrega(${pedidoIndex}, ${nfIndex}, 'valor', this.value)">
-                </div>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Arquivo PDF da NF</label>
-                <input type="file" 
-                       id="entrega-nf-arquivo-${pedidoIndex}-${nfIndex}"
-                       accept=".pdf"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary transition-all"
-                       onchange="atualizarArquivoNotaFiscalEntrega(${pedidoIndex}, ${nfIndex}, this)">
-                <p class="text-xs text-gray-500 mt-1">Apenas arquivos PDF (opcional)</p>
-            </div>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', nfHtml);
-}
-
-function atualizarNotaFiscalEntrega(pedidoIndex, nfIndex, campo, valor) {
-    entregaPedidos[pedidoIndex].notasFiscais[nfIndex][campo] = valor;
-}
-
 // CORREÇÃO: Melhor validação de upload de arquivos
 function atualizarArquivoNotaFiscalEntrega(pedidoIndex, nfIndex, input) {
     const file = input.files[0];
@@ -2210,34 +4635,4 @@ function irParaPagina(pagina) {
     paginaAtual = pagina;
     renderizarEntregas();
     atualizarPaginacao();
-}
-
-// Esqueleto mínimo da classe CDDashboard para evitar erro de referência
-class CDDashboard {
-    constructor() {
-        // Inicialização básica
-    }
-    loadAgendamentos() {}
-    changeView(view) {}
-    applyFilters() {}
-    exportData(format) {}
-    showAllStatus(status) {}
-    showTodayDeliveries() {}
-    closeTodayDeliveriesModal() {}
-    openConsultaModal() {}
-    closeConsultaModal() {}
-    closeStatusModal() {}
-    closeDetailModal() {}
-    closeSuggestDateModal() {}
-    openKpisModal() {}
-    closeKpisModal() {}
-    loadKpis() {}
-    showNotification(msg, type) {}
-}
-
-// Função global para fechar todos os modais de status
-function closeAllStatusModal() {
-    document.querySelectorAll('.status-modal').forEach(modal => {
-        modal.classList.add('hidden');
-    });
 }
