@@ -2117,28 +2117,33 @@
                 let html = historico.map((evento, index) => {
                     let icon = iconMap[evento.acao] || 'fa-info-circle text-gray-400';
                     let title = titleMap[evento.acao] || evento.acao || 'Evento do Sistema';
-                    // Se for resposta genérica, tenta detalhar pelo campo descricao
-                    if (evento.acao === 'fornecedor_respondeu') {
-                        if (evento.descricao && evento.descricao.toLowerCase().includes('aceit')) {
-                            title = 'Fornecedor Aceitou Nova Data';
-                            icon = iconMap['fornecedor_aceitou_reagendamento'];
-                        } else if (evento.descricao && evento.descricao.toLowerCase().includes('rejeit')) {
-                            title = 'Fornecedor Rejeitou Nova Data';
-                            icon = iconMap['fornecedor_rejeitou_reagendamento'];
-                        }
-                    }
+                    let iconColor = 'text-gray-400';
+                    // Ícones coloridos e padronizados
                     if (evento.acao.toLowerCase().includes('fornecedor') && evento.acao.toLowerCase().includes('sugeriu')) {
                         title = 'Fornecedor Sugeriu Nova Data';
-                        icon = iconMap['fornecedor_sugeriu_reagendamento'];
+                        icon = 'fa-calendar';
+                        iconColor = 'text-purple-500';
+                    } else if (evento.acao.toLowerCase().includes('criado')) {
+                        title = 'Agendamento Criado';
+                        icon = 'fa-plus-circle';
+                        iconColor = 'text-blue-500';
+                    } else if (evento.acao.toLowerCase().includes('aceitou')) {
+                        title = 'Fornecedor Aceitou Nova Data';
+                        icon = 'fa-thumbs-up';
+                        iconColor = 'text-green-500';
+                    } else if (evento.acao.toLowerCase().includes('rejeitou')) {
+                        title = 'Fornecedor Rejeitou Nova Data';
+                        icon = 'fa-thumbs-down';
+                        iconColor = 'text-red-500';
                     }
                     return `
                         <div class="flex items-start space-x-3 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-3 mb-3' : ''}">
                             <div class="flex-shrink-0">
                                 <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                    <i class="fas ${icon} text-lg"></i>
+                                    <i class="fas ${icon} ${iconColor} text-lg"></i>
                                 </div>
                             </div>
-                            <div class="flex-1">
+                            <div class="flex-1 min-w-0">
                                 <div class="flex items-center justify-between mb-1">
                                     <p class="text-sm font-medium text-gray-900">${title}</p>
                                     <p class="text-xs text-gray-500">${evento.data ? this.formatDateBrFromISO(evento.data) : 'Agora'}</p>

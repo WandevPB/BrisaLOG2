@@ -1935,17 +1935,29 @@ class CDDashboard {
                     let iconClass = this.getHistoryIconClass(acao);
                     let icon = this.getHistoryIcon(acao);
                     let title = this.getHistoryTitle(acao, evento.autor, evento);
-                    // Se for texto customizado do backend
+                    // Ícones coloridos e padronizados
                     if (acao && acao.toLowerCase().includes('fornecedor') && acao.toLowerCase().includes('sugeriu')) {
                         iconClass = 'bg-purple-500';
-                        icon = 'fas fa-calendar text-white';
+                        icon = 'fas fa-calendar text-purple-400';
                         title = 'Nova Data Sugerida';
+                    } else if (acao && acao.toLowerCase().includes('criado')) {
+                        iconClass = 'bg-blue-500';
+                        icon = 'fas fa-plus-circle text-blue-400';
+                        title = 'Agendamento Criado';
+                    } else if (acao && acao.toLowerCase().includes('aceitou')) {
+                        iconClass = 'bg-green-500';
+                        icon = 'fas fa-thumbs-up text-green-400';
+                        title = 'Fornecedor Aceitou Nova Data';
+                    } else if (acao && acao.toLowerCase().includes('rejeitou')) {
+                        iconClass = 'bg-red-500';
+                        icon = 'fas fa-thumbs-down text-red-400';
+                        title = 'Fornecedor Rejeitou Nova Data';
                     }
                     return `
                         <div class="flex items-start space-x-4 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-4' : ''}">
                             <div class="flex-shrink-0">
                                 <div class="w-12 h-12 rounded-full ${iconClass} flex items-center justify-center shadow-sm">
-                                    <i class="${icon} text-white text-lg"></i>
+                                    <i class="${icon} text-lg"></i>
                                 </div>
                             </div>
                             <div class="flex-1 min-w-0">
