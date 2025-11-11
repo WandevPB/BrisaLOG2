@@ -1896,6 +1896,33 @@ class CDDashboard {
         `;
 
         document.getElementById('detail-modal').classList.remove('hidden');
+            // Adicionar área de ação para o CD
+            const acaoContainer = document.createElement('div');
+            acaoContainer.className = "flex justify-end space-x-4 mt-6";
+            // Só mostra se status permitir ação
+            if (["pendente", "reagendamento"].includes(agendamento.status)) {
+                acaoContainer.innerHTML = `
+                    <button type="button" onclick="dashboard.aceitarAgendamento(${agendamento.id})" class="btn-3d bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-all">
+                        <i class="fas fa-check mr-2"></i>Aceitar Agendamento
+                    </button>
+                    <button type="button" onclick="dashboard.abrirModalReagendamento(${agendamento.id})" class="btn-3d bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-all">
+                        <i class="fas fa-calendar-alt mr-2"></i>Sugerir Reagendamento
+                    </button>
+                `;
+                document.getElementById('detail-content').appendChild(acaoContainer);
+            }
+    }
+    aceitarAgendamento(id) {
+        // Implementar chamada API para aceitar agendamento
+        alert('Agendamento ' + id + ' aceito!');
+        // TODO: Chamar API e atualizar status
+        this.closeDetailModal();
+    }
+
+    abrirModalReagendamento(id) {
+        // Abrir modal de sugestão de nova data
+        document.getElementById('suggest-agendamento-id').value = id;
+        document.getElementById('suggest-date-modal').classList.remove('hidden');
     }
 
     shouldShowCommunicationHistory(agendamento) {
