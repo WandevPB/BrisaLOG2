@@ -1841,16 +1841,17 @@ class CDDashboard {
                                     let valorFormatado = 'Valor não informado';
                                     if (nf.valor) {
                                         let v = nf.valor;
-                                        if (typeof v === 'string') {
-                                            // Remove tudo exceto dígitos, vírgulas e pontos
-                                            v = v.replace(/[^\d,\.]/g, '');
-                                            // Remove pontos (separadores de milhar)
-                                            v = v.replace(/\./g, '');
-                                            // Substitui vírgula por ponto (separador decimal)
+                                        // Se já é número, usa direto
+                                        if (typeof v === 'number') {
+                                            valorFormatado = `R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                                        } else if (typeof v === 'string') {
+                                            // Remove tudo exceto dígitos e vírgula
+                                            v = v.replace(/[^\d,]/g, '');
+                                            // Substitui vírgula por ponto
                                             v = v.replace(',', '.');
-                                            v = parseFloat(v);
+                                            const valorNumerico = parseFloat(v);
+                                            valorFormatado = isNaN(valorNumerico) ? 'Valor não informado' : `R$ ${valorNumerico.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                                         }
-                                        valorFormatado = isNaN(v) ? 'Valor não informado' : `R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                                     }
                                     return `
                                     <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
