@@ -1842,7 +1842,12 @@ class CDDashboard {
                                     if (nf.valor) {
                                         let v = nf.valor;
                                         if (typeof v === 'string') {
-                                            v = v.replace(/[^\d,\.]/g, '').replace(',', '.');
+                                            // Remove tudo exceto dígitos, vírgulas e pontos
+                                            v = v.replace(/[^\d,\.]/g, '');
+                                            // Remove pontos (separadores de milhar)
+                                            v = v.replace(/\./g, '');
+                                            // Substitui vírgula por ponto (separador decimal)
+                                            v = v.replace(',', '.');
                                             v = parseFloat(v);
                                         }
                                         valorFormatado = isNaN(v) ? 'Valor não informado' : `R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
