@@ -1840,18 +1840,25 @@ class CDDashboard {
                                 ${agendamento.notasFiscais.map(nf => {
                                     let valorFormatado = 'Valor não informado';
                                     if (nf.valor) {
-                                        let v = nf.valor;
-                                        // Se já é número, usa direto
-                                        if (typeof v === 'number') {
-                                            valorFormatado = `R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                                        } else if (typeof v === 'string') {
-                                            // Remove tudo exceto dígitos e vírgula
-                                            v = v.replace(/[^\d,]/g, '');
-                                            // Substitui vírgula por ponto
-                                            v = v.replace(',', '.');
-                                            const valorNumerico = parseFloat(v);
-                                            valorFormatado = isNaN(valorNumerico) ? 'Valor não informado' : `R$ ${valorNumerico.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                                        // O valor vem do banco como string
+                                        let valorStr = String(nf.valor).trim();
+                                        
+                                        // Remove espaços, R$, e outros caracteres não numéricos exceto vírgula e ponto
+                                        valorStr = valorStr.replace(/[^\d,.]/g, '');
+                                        
+                                        // Se tem vírgula E ponto, assumir formato BR: 1.234,56
+                                        if (valorStr.includes(',') && valorStr.includes('.')) {
+                                            // Remove pontos (milhar) e substitui vírgula por ponto (decimal)
+                                            valorStr = valorStr.replace(/\./g, '').replace(',', '.');
+                                        } 
+                                        // Se tem apenas vírgula, substituir por ponto
+                                        else if (valorStr.includes(',')) {
+                                            valorStr = valorStr.replace(',', '.');
                                         }
+                                        // Se tem apenas ponto ou nada, já está OK
+                                        
+                                        const valorNumerico = parseFloat(valorStr);
+                                        valorFormatado = isNaN(valorNumerico) ? 'Valor não informado' : `R$ ${valorNumerico.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                                     }
                                     return `
                                     <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
