@@ -2081,102 +2081,139 @@
                 const historico = agendamento.historico || [];
                 if (historico.length === 0) {
                     return `
-                        <div class="text-center py-4 text-gray-500">
-                            <i class="fas fa-comments text-2xl mb-2"></i>
-                            <p class="text-sm">Nenhuma comunicação registrada</p>
+                        <div class="text-center py-8 text-gray-500">
+                            <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-comments text-2xl text-gray-400"></i>
+                            </div>
+                            <p class="text-lg font-medium text-gray-600">Nenhuma comunicação registrada</p>
+                            <p class="text-sm text-gray-500 mt-1">As atualizações do agendamento aparecerão aqui</p>
                         </div>
                     `;
                 }
-                // Mapeamento de ícones e títulos
-                const iconMap = {
-                    'agendamento_criado': 'fa-plus-circle',
-                    'cd_sugeriu_reagendamento': 'fa-calendar-alt',
-                    'fornecedor_sugeriu_reagendamento': 'fa-calendar',
-                    'fornecedor_aceitou_reagendamento': 'fa-thumbs-up',
-                    'fornecedor_rejeitou_reagendamento': 'fa-thumbs-down',
-                    'fornecedor_respondeu': 'fa-reply-all',
-                    'entrega_realizada': 'fa-truck',
-                    'ausencia_registrada': 'fa-user-slash'
-                };
-                const titleMap = {
-                    'agendamento_criado': 'Agendamento Criado',
-                    'cd_sugeriu_reagendamento': 'CD Sugeriu Nova Data',
-                    'fornecedor_sugeriu_reagendamento': 'Fornecedor Sugeriu Nova Data',
-                    'fornecedor_aceitou_reagendamento': 'Fornecedor Aceitou Nova Data',
-                    'fornecedor_rejeitou_reagendamento': 'Fornecedor Rejeitou Nova Data',
-                    'fornecedor_respondeu': 'Fornecedor Respondeu',
-                    'entrega_realizada': 'Entrega Realizada',
-                    'ausencia_registrada': 'Ausência Registrada'
-                };
+
+                // Métodos auxiliares para cor, ícone e título
+                function getHistoryIconClass(acao) {
+                    const classes = {
+                        'agendamento_criado': 'bg-blue-500',
+                        'cd_sugeriu_reagendamento': 'bg-orange-600',
+                        'fornecedor_sugeriu_reagendamento': 'bg-purple-500',
+                        'fornecedor_aceitou_reagendamento': 'bg-green-500',
+                        'fornecedor_rejeitou_reagendamento': 'bg-red-500',
+                        'fornecedor_respondeu': 'bg-purple-600',
+                        'entrega_realizada': 'bg-blue-600',
+                        'ausencia_registrada': 'bg-red-500'
+                    };
+                    return classes[acao] || 'bg-gray-500';
+                }
+                function getHistoryIcon(acao) {
+                    const icons = {
+                        'agendamento_criado': 'fas fa-plus-circle',
+                        'cd_sugeriu_reagendamento': 'fas fa-calendar-alt',
+                        'fornecedor_sugeriu_reagendamento': 'fas fa-calendar',
+                        'fornecedor_aceitou_reagendamento': 'fas fa-thumbs-up',
+                        'fornecedor_rejeitou_reagendamento': 'fas fa-thumbs-down',
+                        'fornecedor_respondeu': 'fas fa-reply-all',
+                        'entrega_realizada': 'fas fa-truck',
+                        'ausencia_registrada': 'fas fa-user-slash'
+                    };
+                    return icons[acao] || 'fas fa-info-circle';
+                }
+                function getHistoryTitle(acao) {
+                    const titles = {
+                        'agendamento_criado': 'Agendamento Criado',
+                        'cd_sugeriu_reagendamento': 'CD Sugeriu Nova Data',
+                        'fornecedor_sugeriu_reagendamento': 'Fornecedor Sugeriu Nova Data',
+                        'fornecedor_aceitou_reagendamento': 'Fornecedor Aceitou Nova Data',
+                        'fornecedor_rejeitou_reagendamento': 'Fornecedor Rejeitou Nova Data',
+                        'fornecedor_respondeu': 'Fornecedor Respondeu',
+                        'entrega_realizada': 'Entrega Realizada',
+                        'ausencia_registrada': 'Ausência Registrada'
+                    };
+                    return titles[acao] || 'Evento do Sistema';
+                }
                 // Detecta resposta do fornecedor
                 const hasSupplierResponse = historico.some(ev =>
                     ev.acao === 'fornecedor_aceitou_reagendamento' ||
                     ev.acao === 'fornecedor_rejeitou_reagendamento' ||
                     ev.acao === 'fornecedor_respondeu'
                 );
-                let html = historico.map((evento, index) => {
-                    let icon = iconMap[evento.acao] || 'fa-info-circle';
-                    let title = titleMap[evento.acao] || evento.acao || 'Evento do Sistema';
-                    let iconColor = 'text-gray-400';
-                    let faClass = 'fas';
-                    // Ícones coloridos e padronizados
-                    if (evento.acao === 'fornecedor_sugeriu_reagendamento') {
-                        title = 'Fornecedor Sugeriu Nova Data';
-                        icon = 'fa-calendar';
-                        iconColor = 'text-purple-500';
-                    } else if (evento.acao === 'agendamento_criado') {
-                        title = 'Agendamento Criado';
-                        icon = 'fa-plus-circle';
-                        iconColor = 'text-blue-500';
-                    } else if (evento.acao === 'fornecedor_aceitou_reagendamento') {
-                        title = 'Fornecedor Aceitou Nova Data';
-                        icon = 'fa-thumbs-up';
-                        iconColor = 'text-green-500';
-                    } else if (evento.acao === 'fornecedor_rejeitou_reagendamento') {
-                        title = 'Fornecedor Rejeitou Nova Data';
-                        icon = 'fa-thumbs-down';
-                        iconColor = 'text-red-500';
-                    } else if (evento.acao === 'cd_sugeriu_reagendamento') {
-                        title = 'CD Sugeriu Nova Data';
-                        icon = 'fa-calendar-alt';
-                        iconColor = 'text-yellow-500';
-                    } else if (evento.acao === 'entrega_realizada') {
-                        title = 'Entrega Realizada';
-                        icon = 'fa-truck';
-                        iconColor = 'text-blue-600';
-                    } else if (evento.acao === 'ausencia_registrada') {
-                        title = 'Ausência Registrada';
-                        icon = 'fa-user-slash';
-                        iconColor = 'text-red-500';
-                    } else if (evento.acao === 'fornecedor_respondeu') {
-                        title = 'Fornecedor Respondeu';
-                        icon = 'fa-reply-all';
-                        iconColor = 'text-purple-600';
-                    }
-                    // Garante que todos os ícones usem 'fas fa-...'
-                    if (!icon.startsWith('fa-')) {
-                        icon = 'fa-info-circle';
-                    }
-                    return `
-                        <div class="flex items-start space-x-3 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-3 mb-3' : ''}">
-                            <div class="flex-shrink-0">
-                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                    <i class="${faClass} ${icon} ${iconColor} text-lg"></i>
+                return `
+                    <div class="space-y-4">
+                        ${historico.map((evento, index) => {
+                            let acao = evento.acao;
+                            let iconClass = getHistoryIconClass(acao);
+                            let icon = getHistoryIcon(acao);
+                            let title = getHistoryTitle(acao);
+                            // Ícones coloridos e padronizados
+                            if (acao && acao.toLowerCase().includes('fornecedor') && acao.toLowerCase().includes('sugeriu')) {
+                                iconClass = 'bg-purple-500';
+                                icon = 'fas fa-calendar text-purple-400';
+                                title = 'Nova Data Sugerida';
+                            } else if (acao && acao.toLowerCase().includes('criado')) {
+                                iconClass = 'bg-blue-500';
+                                icon = 'fas fa-plus-circle text-blue-400';
+                                title = 'Agendamento Criado';
+                            } else if (acao && acao.toLowerCase().includes('aceitou')) {
+                                iconClass = 'bg-green-500';
+                                icon = 'fas fa-thumbs-up text-green-400';
+                                title = 'Fornecedor Aceitou Nova Data';
+                            } else if (acao && acao.toLowerCase().includes('rejeitou')) {
+                                iconClass = 'bg-red-500';
+                                icon = 'fas fa-thumbs-down text-red-400';
+                                title = 'Fornecedor Rejeitou Nova Data';
+                            }
+                            return `
+                                <div class="flex items-start space-x-4 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-4' : ''}">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-12 h-12 rounded-full ${iconClass} flex items-center justify-center shadow-sm">
+                                            <i class="${icon} text-lg"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <p class="text-base font-semibold text-gray-900">
+                                                ${title}
+                                            </p>
+                                            <div class="flex items-center text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                ${evento.data ? this.formatDateBrFromISO(evento.data) : 'Agora'}
+                                            </div>
+                                        </div>
+                                        ${evento.descricao ? `
+                                            <p class="text-sm text-gray-700 leading-relaxed mb-2">
+                                                ${evento.descricao}
+                                            </p>
+                                        ` : ''}
+                                        ${evento.novaData ? `
+                                            <div class="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                                                <div class="flex items-center mb-2">
+                                                    <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
+                                                    <span class="font-medium text-blue-900">Nova Data Proposta</span>
+                                                </div>
+                                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-calendar mr-2 text-blue-600"></i>
+                                                        <span class="font-medium text-blue-800">${this.formatDateBrFromISO(evento.novaData)}</span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-clock mr-2 text-blue-600"></i>
+                                                        <span class="font-medium text-blue-800">${evento.novoHorario}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        ${evento.autor ? `
+                                            <div class="mt-2 flex items-center text-xs text-gray-500">
+                                                <i class="fas fa-user mr-1"></i>
+                                                <span>Por: ${evento.autor}</span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between mb-1">
-                                    <p class="text-sm font-medium text-gray-900">${title}</p>
-                                    <p class="text-xs text-gray-500">${evento.data ? this.formatDateBrFromISO(evento.data) : 'Agora'}</p>
-                                </div>
-                                <p class="text-sm text-gray-600">${evento.descricao || ''}</p>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                // Box aguardando resposta
-                if (agendamento.status === 'reagendamento' && !hasSupplierResponse) {
-                    html += `
+                            `;
+                        }).join('')}
+                    </div>
+                    ${(agendamento.status === 'reagendamento' && !hasSupplierResponse) ? `
                         <div class="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
                             <div class="flex items-center mb-3">
                                 <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
@@ -2188,9 +2225,8 @@
                                 O fornecedor foi notificado sobre a solicitação de reagendamento e deve responder em breve.
                             </p>
                         </div>
-                    `;
-                }
-                return html;
+                    ` : ''}
+                `;
             }
 
             getHistoryIconClass(acao) {
