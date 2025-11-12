@@ -1796,7 +1796,7 @@ class CDDashboard {
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Valor Total:</span>
                                 <span class="font-semibold text-green-600 text-xs">
-                                    R$ ${valorTotal || 0}
+                                    R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                 </span>
                             </div>
                             <div class="flex justify-between">
