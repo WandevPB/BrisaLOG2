@@ -598,6 +598,7 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
     const agendamentos = await prisma.agendamento.findMany({
       where: where,
       include: {
+        fornecedor: true, // Manter temporariamente para compatibilidade
         notasFiscais: true,
         historicoAcoes: {
           include: {
@@ -615,7 +616,7 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
       take: parseInt(limit)
     });
 
-    // Adicionar objeto fornecedor virtual a cada agendamento
+    // Adicionar objeto fornecedor virtual a cada agendamento (se necessário)
     agendamentos.forEach(agendamento => addFornecedorVirtual(agendamento));
 
     // Contar total
@@ -941,7 +942,13 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
 function addFornecedorVirtual(agendamento) {
   if (!agendamento) return agendamento;
   
-  // Criar objeto fornecedor a partir dos campos do agendamento
+  // Se já tem o objeto fornecedor (dados antigos ainda no banco), usar ele
+  if (agendamento.fornecedor && !agendamento.fornecedorNome) {
+    // Mantém compatibilidade com estrutura antiga
+    return agendamento;
+  }
+  
+  // Criar objeto fornecedor a partir dos campos do agendamento (nova estrutura)
   agendamento.fornecedor = {
     nome: agendamento.fornecedorNome,
     email: agendamento.fornecedorEmail,
@@ -967,6 +974,7 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
         codigo: codigo
       },
       include: {
+        fornecedor: true, // Manter temporariamente para compatibilidade
         cd: true,
         notasFiscais: true,
         historicoAcoes: {
@@ -982,7 +990,7 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
       });
     }
 
-    // Adicionar objeto fornecedor virtual
+    // Adicionar objeto fornecedor virtual (se necessário)
     addFornecedorVirtual(agendamento);
 
     // Formatar dados para o frontend
