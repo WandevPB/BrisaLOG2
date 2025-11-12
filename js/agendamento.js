@@ -648,7 +648,11 @@ class AgendamentoForm {
             'tambor': 'Tambor'
         };
 
-        const totalGeral = this.calcularTotalGeral();
+        // STEP 4: Usar o valor já calculado e salvo no Step 3
+        const totalGeral = this.formData.valorTotal || this.calcularTotalGeral();
+        if (!this.formData.valorTotal) {
+            this.formData.valorTotal = totalGeral; // Salvar se ainda não foi salvo
+        }
         const totalFormatado = isNaN(totalGeral) ? 'R$ 0,00' : totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const notasFiscaisCount = this.formData.pedidos.reduce((acc, pedido) => acc + (pedido.notasFiscais?.length || 0), 0);
         
