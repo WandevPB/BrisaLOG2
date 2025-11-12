@@ -1655,27 +1655,14 @@ class CDDashboard {
         ` : '';
 
         const detailContent = document.getElementById('detail-content');
-        // Corrigir valor total das NFs
+        // Calcular valor total das NFs (simples: apenas soma os valores como números)
         let valorTotal = 0;
         if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
             agendamento.notasFiscais.forEach(nf => {
-                let valorStr = String(nf.valor || '').trim();
-                
-                // Remove apenas caracteres não numéricos, mantém dígitos, vírgula e ponto
-                valorStr = valorStr.replace(/[^\d,.]/g, '');
-                
-                // Determinar se é formato BR ou US/simples
-                if (valorStr.includes(',')) {
-                    // Tem vírgula, é formato BR
-                    valorStr = valorStr.replace(/\./g, '').replace(',', '.');
-                }
-                // Se não tem vírgula, mantém como está
-                
-                const v = parseFloat(valorStr) || 0;
-                console.log(`[DEBUG SOMA] NF ${nf.numeroNF}: valor original="${nf.valor}", processado="${valorStr}", numérico=${v}`);
+                // Converte o valor diretamente para número (vem como "2000", "1500", etc)
+                const v = parseFloat(nf.valor) || 0;
                 valorTotal += v;
             });
-            console.log(`[DEBUG] Valor total calculado: ${valorTotal}`);
         }
         // Corrigir data de criação
         const dataCriacao = agendamento.createdAt ? this.formatDate(agendamento.createdAt) : 'Não informado';
