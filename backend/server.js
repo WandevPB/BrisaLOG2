@@ -808,7 +808,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       observacoesFinal = observacoesFinal ? `${observacaoEspecial} | ${observacoesFinal}` : observacaoEspecial;
     }
 
-    // Criar agendamento
+    // Criar agendamento (SEM relação fornecedor - usando snapshot)
     const agendamento = await prisma.agendamento.create({
       data: {
         codigo: codigo,
@@ -829,7 +829,9 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         motoristaCpf: agendamentoData.fornecedor?.cpfMotorista || '',
         motoristaTelefone: agendamentoData.fornecedor?.telefoneMotorista || '',
         placaVeiculo: agendamentoData.fornecedor?.placaVeiculo || '',
-        tipoVeiculo: agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo || ''
+        tipoVeiculo: agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo || '',
+        // NÃO incluir fornecedorId - deixar null (migration já aplicada no schema)
+        fornecedorId: null
       }
     });
 

@@ -469,20 +469,17 @@ class AgendamentoForm {
         let valorStr = String(valor).replace(/[^\d,.]/g, '');
         console.log('[parseCurrency] Após limpeza:', valorStr);
         
-        // Detectar formato: se tem vírgula E ponto, é formato brasileiro (1.234,56)
-        // Se tem só vírgula, vírgula é decimal (1234,56)
-        // Se tem só ponto(s), último ponto é decimal (1.234.56)
-        
-        if (valorStr.includes(',') && valorStr.includes('.')) {
-            // Formato brasileiro: 8.900,00 -> remover pontos, trocar vírgula por ponto
-            valorStr = valorStr.replace(/\./g, '').replace(',', '.');
-            console.log('[parseCurrency] Formato BR (ponto+vírgula):', valorStr);
-        } else if (valorStr.includes(',')) {
-            // Só tem vírgula: vírgula é decimal
+        // FORMATO BRASILEIRO: se tem vírgula, ela é o separador decimal
+        // Pontos são separadores de milhares (remover)
+        if (valorStr.includes(',')) {
+            // Remove TODOS os pontos (separadores de milhares)
+            valorStr = valorStr.split('.').join('');
+            console.log('[parseCurrency] Após remover pontos (milhares):', valorStr);
+            // Troca vírgula por ponto (decimal)
             valorStr = valorStr.replace(',', '.');
-            console.log('[parseCurrency] Formato com vírgula decimal:', valorStr);
-        } else {
-            // Só tem ponto(s): último é decimal
+            console.log('[parseCurrency] Após trocar vírgula por ponto:', valorStr);
+        } else if (valorStr.includes('.')) {
+            // FORMATO US/OUTRO: se tem só ponto(s), último é decimal
             const lastDotIndex = valorStr.lastIndexOf('.');
             if (lastDotIndex !== -1) {
                 valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + '.' + valorStr.substring(lastDotIndex + 1);
