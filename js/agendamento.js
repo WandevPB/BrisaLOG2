@@ -463,8 +463,11 @@ class AgendamentoForm {
     parseCurrency(valor) {
         if (!valor) return 0;
         
+        console.log('[parseCurrency] Valor recebido:', valor, 'Tipo:', typeof valor);
+        
         // Remove caracteres não numéricos exceto ponto e vírgula
         let valorStr = String(valor).replace(/[^\d,.]/g, '');
+        console.log('[parseCurrency] Após limpeza:', valorStr);
         
         // Lógica igual aos modais: último ponto é decimal, outros são milhares
         const lastDotIndex = valorStr.lastIndexOf('.');
@@ -472,12 +475,15 @@ class AgendamentoForm {
             // Substitui o último ponto por vírgula temporária
             // Remove todos os outros pontos (milhares)
             valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + ',' + valorStr.substring(lastDotIndex + 1);
+            console.log('[parseCurrency] Após tratar pontos:', valorStr);
         }
         
         // Agora converte vírgula para ponto decimal
         valorStr = valorStr.replace(',', '.');
+        console.log('[parseCurrency] Valor final antes de parseFloat:', valorStr);
         
         const valorNumerico = parseFloat(valorStr);
+        console.log('[parseCurrency] Resultado numérico:', valorNumerico);
         return isNaN(valorNumerico) ? 0 : valorNumerico;
     }
 
@@ -497,22 +503,31 @@ class AgendamentoForm {
 
     calcularTotalGeral() {
         let totalGeral = 0;
+        console.log('[calcularTotalGeral] Iniciando cálculo...');
         
         // Lógica para o novo template (agendamento.html)
         const notasContainer = document.getElementById('notas-container');
         if (notasContainer) {
-             notasContainer.querySelectorAll('[name="valorNF"]').forEach(input => {
-                totalGeral += this.parseCurrency(input.value);
+            const inputs = notasContainer.querySelectorAll('[name="valorNF"]');
+            console.log('[calcularTotalGeral] Encontrados', inputs.length, 'inputs de valor');
+            
+            inputs.forEach((input, index) => {
+                const valorParsed = this.parseCurrency(input.value);
+                console.log(`[calcularTotalGeral] Input ${index}: valor="${input.value}" parsed=${valorParsed}`);
+                totalGeral += valorParsed;
             });
         } else {
+            console.log('[calcularTotalGeral] Usando lógica legada (abas)');
             // Lógica legada (sistema de abas)
             document.querySelectorAll('.pedido-content').forEach(pedidoDiv => {
                 const pedidoId = pedidoDiv.id;
                 const totalPedido = this.calcularTotalPedido(pedidoId);
+                console.log(`[calcularTotalGeral] Pedido ${pedidoId}: ${totalPedido}`);
                 totalGeral += totalPedido;
             });
         }
         
+        console.log('[calcularTotalGeral] TOTAL FINAL:', totalGeral);
         return totalGeral;
     }
 
