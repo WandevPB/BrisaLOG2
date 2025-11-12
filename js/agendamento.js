@@ -469,17 +469,27 @@ class AgendamentoForm {
         let valorStr = String(valor).replace(/[^\d,.]/g, '');
         console.log('[parseCurrency] Após limpeza:', valorStr);
         
-        // Lógica igual aos modais: último ponto é decimal, outros são milhares
-        const lastDotIndex = valorStr.lastIndexOf('.');
-        if (lastDotIndex !== -1) {
-            // Substitui o último ponto por vírgula temporária
-            // Remove todos os outros pontos (milhares)
-            valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + ',' + valorStr.substring(lastDotIndex + 1);
-            console.log('[parseCurrency] Após tratar pontos:', valorStr);
+        // Detectar formato: se tem vírgula E ponto, é formato brasileiro (1.234,56)
+        // Se tem só vírgula, vírgula é decimal (1234,56)
+        // Se tem só ponto(s), último ponto é decimal (1.234.56)
+        
+        if (valorStr.includes(',') && valorStr.includes('.')) {
+            // Formato brasileiro: 8.900,00 -> remover pontos, trocar vírgula por ponto
+            valorStr = valorStr.replace(/\./g, '').replace(',', '.');
+            console.log('[parseCurrency] Formato BR (ponto+vírgula):', valorStr);
+        } else if (valorStr.includes(',')) {
+            // Só tem vírgula: vírgula é decimal
+            valorStr = valorStr.replace(',', '.');
+            console.log('[parseCurrency] Formato com vírgula decimal:', valorStr);
+        } else {
+            // Só tem ponto(s): último é decimal
+            const lastDotIndex = valorStr.lastIndexOf('.');
+            if (lastDotIndex !== -1) {
+                valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + '.' + valorStr.substring(lastDotIndex + 1);
+                console.log('[parseCurrency] Formato com pontos (último=decimal):', valorStr);
+            }
         }
         
-        // Agora converte vírgula para ponto decimal
-        valorStr = valorStr.replace(',', '.');
         console.log('[parseCurrency] Valor final antes de parseFloat:', valorStr);
         
         const valorNumerico = parseFloat(valorStr);
