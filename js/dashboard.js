@@ -1659,10 +1659,10 @@ class CDDashboard {
         let valorTotal = 0;
         if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
             agendamento.notasFiscais.forEach(nf => {
-                // Remove TODOS os pontos (separadores de milhar) e converte para número
-                // "2.000.00" -> "200000" -> 2000.00
+                // Remove TODOS os pontos: "2.000.00" -> "200000"
+                // Divide por 100 para obter valor correto: 200000 / 100 = 2000
                 let valorStr = String(nf.valor || '0').replace(/\./g, '');
-                const v = parseFloat(valorStr) || 0;
+                const v = (parseFloat(valorStr) || 0) / 100;
                 valorTotal += v;
             });
         }
