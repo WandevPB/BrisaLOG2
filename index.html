@@ -2063,24 +2063,22 @@
                 
                 let total = 0;
                 agendamento.notasFiscais.forEach(nf => {
-                    let v = nf.valor;
-                    if (typeof v === 'string') {
-                        // Remove tudo exceto dígitos, vírgulas e pontos
-                        v = v.replace(/[^\d,\.]/g, '');
-                        // Remove pontos (separadores de milhar)
-                        v = v.replace(/\./g, '');
-                        // Substitui vírgula por ponto (separador decimal)
-                        v = v.replace(',', '.');
-                        v = parseFloat(v);
-                    } else if (typeof v === 'number') {
-                        // Se já é número, usa direto
-                        v = v;
+                    // Valor vem como "2.000.00" onde o último .00 são centavos
+                    // Troca o último ponto por vírgula, remove os outros pontos
+                    let valorStr = String(nf.valor || '0');
+                    // Encontra o último ponto e troca por vírgula
+                    const lastDotIndex = valorStr.lastIndexOf('.');
+                    if (lastDotIndex !== -1) {
+                        valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + ',' + valorStr.substring(lastDotIndex + 1);
                     }
-                    if (!isNaN(v) && v !== null && v !== undefined) total += v;
+                    // Agora converte: "2000,00" -> "2000.00"
+                    valorStr = valorStr.replace(',', '.');
+                    const v = parseFloat(valorStr) || 0;
+                    total += v;
                 });
                 
                 return total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            }
+            } 
 
             shouldShowCommunicationHistory(agendamento) {
                 return agendamento.status === 'reagendamento' || agendamento.status === 'nao-veio' || 
