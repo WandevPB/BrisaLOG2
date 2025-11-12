@@ -1844,14 +1844,12 @@ class CDDashboard {
                                     if (nf.valor) {
                                         // O valor vem do banco como string
                                         let valorStr = String(nf.valor).trim();
+                                        console.log(`[DEBUG EXIBIÇÃO] NF ${nf.numeroNF}: valor ORIGINAL do banco="${nf.valor}" (tipo: ${typeof nf.valor})`);
                                         
                                         // Remove apenas caracteres não numéricos, mantém dígitos, vírgula e ponto
                                         valorStr = valorStr.replace(/[^\d,.]/g, '');
                                         
                                         // Determinar se é formato BR ou US/simples
-                                        // Formato BR: 1.234,56 (ponto para milhar, vírgula para decimal)
-                                        // Formato US/simples: 1234.56 ou 1234
-                                        
                                         if (valorStr.includes(',')) {
                                             // Tem vírgula, é formato BR
                                             // Remove pontos (milhares) e troca vírgula por ponto (decimal)
@@ -1860,7 +1858,7 @@ class CDDashboard {
                                         // Se não tem vírgula, mantém como está (pode ser 2000 ou 2000.50)
                                         
                                         const valorNumerico = parseFloat(valorStr) || 0;
-                                        console.log(`[DEBUG EXIBIÇÃO] NF ${nf.numeroNF}: original="${nf.valor}", processado="${valorStr}", numérico=${valorNumerico}`);
+                                        console.log(`[DEBUG EXIBIÇÃO] NF ${nf.numeroNF}: após limpeza="${valorStr}", convertido=${valorNumerico}`);
                                         valorFormatado = `R$ ${valorNumerico.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                                     }
                                     return `
