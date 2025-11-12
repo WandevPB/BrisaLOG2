@@ -1840,27 +1840,8 @@ class CDDashboard {
                         ${agendamento.notasFiscais && agendamento.notasFiscais.length > 0 ? `
                             <div class="space-y-3">
                                 ${agendamento.notasFiscais.map(nf => {
-                                    let valorFormatado = 'Valor não informado';
-                                    if (nf.valor) {
-                                        // O valor vem do banco como string
-                                        let valorStr = String(nf.valor).trim();
-                                        console.log(`[DEBUG EXIBIÇÃO] NF ${nf.numeroNF}: valor ORIGINAL do banco="${nf.valor}" (tipo: ${typeof nf.valor})`);
-                                        
-                                        // Remove apenas caracteres não numéricos, mantém dígitos, vírgula e ponto
-                                        valorStr = valorStr.replace(/[^\d,.]/g, '');
-                                        
-                                        // Determinar se é formato BR ou US/simples
-                                        if (valorStr.includes(',')) {
-                                            // Tem vírgula, é formato BR
-                                            // Remove pontos (milhares) e troca vírgula por ponto (decimal)
-                                            valorStr = valorStr.replace(/\./g, '').replace(',', '.');
-                                        }
-                                        // Se não tem vírgula, mantém como está (pode ser 2000 ou 2000.50)
-                                        
-                                        const valorNumerico = parseFloat(valorStr) || 0;
-                                        console.log(`[DEBUG EXIBIÇÃO] NF ${nf.numeroNF}: após limpeza="${valorStr}", convertido=${valorNumerico}`);
-                                        valorFormatado = `R$ ${valorNumerico.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                                    }
+                                    // SIMPLIFICADO: Exibe o valor exatamente como vem do banco, sem formatação
+                                    let valorFormatado = nf.valor ? `R$ ${nf.valor}` : 'Valor não informado';
                                     return `
                                     <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
                                         <div class="flex justify-between items-center">
