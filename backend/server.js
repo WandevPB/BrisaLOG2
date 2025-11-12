@@ -1018,17 +1018,10 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
       enderecoCD: `Centro de Distribuição ${agendamento.cd.nome}`,
       status: agendamento.status,
       observacoes: agendamento.observacoes || 'Nenhuma observação',
-      valorTotal: agendamento.notasFiscais.reduce((total, nf) => {
-        let valor = 0;
-        if (typeof nf.valor === 'string') {
-          valor = parseFloat(nf.valor.replace(/[^\d,\.]/g, '').replace(',', '.')) || 0;
-        } else if (typeof nf.valor === 'number') {
-          valor = nf.valor;
-        }
-        return total + valor;
-      }, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      // Apenas repassa o valor total do frontend (step 3), sem recalcular
+      valorTotal: agendamento.valorTotal || '',
       tipoCarga: agendamento.tipoCarga,
-  dataCriacao: formatarDataBrasilia(agendamento.createdAt),
+      dataCriacao: formatarDataBrasilia(agendamento.createdAt),
       // Agrupar notas fiscais por pedido para compatibilidade com o frontend
       pedidos: agendamento.notasFiscais.reduce((pedidos, nf) => {
         let numeroPedidoStr = nf.numeroPedido?.toString();
@@ -1054,7 +1047,7 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
       historico: agendamento.historicoAcoes.map(acao => ({
         acao: acao.acao,
         descricao: acao.descricao,
-  data: formatarDataBrasilia(acao.createdAt)
+        data: formatarDataBrasilia(acao.createdAt)
       }))
     };
 
@@ -1140,7 +1133,7 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
 
     // Enviar emails automáticos conforme o novo status
     try {
-  const consultaUrl = `${process.env.FRONTEND_URL || 'http://18.231.237.253'}/consultar-status.html?codigo=${agendamento.codigo}`;
+  const consultaUrl = `${process.env.FRONTEND_URL || 'http://  npx prisma migrate resolve --applied 20241006000000_init'}/consultar-status.html?codigo=${agendamento.codigo}`;
       if (status === 'confirmado') {
         await emailService.sendConfirmadoEmail({
           to: agendamento.fornecedor.email,
@@ -1838,7 +1831,7 @@ app.post('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais', upload
     await prisma.notaFiscal.create({
       data: {
         numeroPedido: numeroPedido,
-        numeroNF: numeroNF,
+        numeroNF: nf.numero,
         valor: valor,
         arquivoPath: arquivo ? arquivo.filename : null,
         agendamentoId: agendamento.id
