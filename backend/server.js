@@ -942,19 +942,20 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
 function addFornecedorVirtual(agendamento) {
   if (!agendamento) return agendamento;
   
-  // Se já tem o objeto fornecedor (dados antigos ainda no banco), usar ele
-  if (agendamento.fornecedor && !agendamento.fornecedorNome) {
-    // Mantém compatibilidade com estrutura antiga
+  // Se já tem o objeto fornecedor (dados antigos da relação), não sobrescrever
+  if (agendamento.fornecedor) {
     return agendamento;
   }
   
-  // Criar objeto fornecedor a partir dos campos do agendamento (nova estrutura)
-  agendamento.fornecedor = {
-    nome: agendamento.fornecedorNome,
-    email: agendamento.fornecedorEmail,
-    telefone: agendamento.fornecedorTelefone,
-    documento: agendamento.fornecedorDocumento
-  };
+  // Se tem os novos campos, criar objeto fornecedor a partir deles
+  if (agendamento.fornecedorNome) {
+    agendamento.fornecedor = {
+      nome: agendamento.fornecedorNome,
+      email: agendamento.fornecedorEmail,
+      telefone: agendamento.fornecedorTelefone,
+      documento: agendamento.fornecedorDocumento
+    };
+  }
   
   return agendamento;
 }
