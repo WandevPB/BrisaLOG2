@@ -1655,17 +1655,16 @@ class CDDashboard {
         ` : '';
 
         const detailContent = document.getElementById('detail-content');
-        // Calcular valor total das NFs (simples: apenas soma os valores como números)
+        // Calcular valor total das NFs
         let valorTotal = 0;
         if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
             agendamento.notasFiscais.forEach(nf => {
-                console.log(`[DEBUG SOMA] NF ${nf.numeroNF}: valor="${nf.valor}" (tipo: ${typeof nf.valor})`);
-                // Converte o valor diretamente para número (vem como "2000", "1500", etc)
-                const v = parseFloat(nf.valor) || 0;
-                console.log(`[DEBUG SOMA] NF ${nf.numeroNF}: convertido=${v}`);
+                // Remove TODOS os pontos (separadores de milhar) e converte para número
+                // "2.000.00" -> "200000" -> 2000.00
+                let valorStr = String(nf.valor || '0').replace(/\./g, '');
+                const v = parseFloat(valorStr) || 0;
                 valorTotal += v;
             });
-            console.log(`[DEBUG SOMA] Total final: ${valorTotal}`);
         }
         // Corrigir data de criação
         const dataCriacao = agendamento.createdAt ? this.formatDate(agendamento.createdAt) : 'Não informado';
