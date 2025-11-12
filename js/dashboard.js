@@ -1661,27 +1661,19 @@ class CDDashboard {
             agendamento.notasFiscais.forEach(nf => {
                 let valorStr = String(nf.valor || '').trim();
                 
-                // Remove espaços, R$, e outros caracteres não numéricos exceto vírgula e ponto
+                // Remove apenas caracteres não numéricos, mantém dígitos, vírgula e ponto
                 valorStr = valorStr.replace(/[^\d,.]/g, '');
                 
-                // Se tem vírgula E ponto, assumir formato BR: 1.234,56
-                if (valorStr.includes(',') && valorStr.includes('.')) {
+                // Determinar se é formato BR ou US/simples
+                if (valorStr.includes(',')) {
+                    // Tem vírgula, é formato BR
                     valorStr = valorStr.replace(/\./g, '').replace(',', '.');
-                } 
-                // Se tem apenas vírgula, substituir por ponto
-                else if (valorStr.includes(',')) {
-                    valorStr = valorStr.replace(',', '.');
                 }
-                // Se tem apenas ponto(s), assumir que são separadores de milhar e remover
-                else if (valorStr.includes('.')) {
-                    valorStr = valorStr.replace(/\./g, '');
-                }
+                // Se não tem vírgula, mantém como está
                 
-                const v = parseFloat(valorStr);
-                if (!isNaN(v) && v !== null && v !== undefined) {
-                    console.log(`[DEBUG] NF ${nf.numeroNF}: valor original="${nf.valor}", processado="${valorStr}", numérico=${v}`);
-                    valorTotal += v;
-                }
+                const v = parseFloat(valorStr) || 0;
+                console.log(`[DEBUG SOMA] NF ${nf.numeroNF}: valor original="${nf.valor}", processado="${valorStr}", numérico=${v}`);
+                valorTotal += v;
             });
             console.log(`[DEBUG] Valor total calculado: ${valorTotal}`);
         }
@@ -1853,26 +1845,23 @@ class CDDashboard {
                                         // O valor vem do banco como string
                                         let valorStr = String(nf.valor).trim();
                                         
-                                        // Remove espaços, R$, e outros caracteres não numéricos exceto vírgula e ponto
+                                        // Remove apenas caracteres não numéricos, mantém dígitos, vírgula e ponto
                                         valorStr = valorStr.replace(/[^\d,.]/g, '');
                                         
-                                        // Se tem vírgula E ponto, assumir formato BR: 1.234,56
-                                        if (valorStr.includes(',') && valorStr.includes('.')) {
-                                            // Remove pontos (milhar) e substitui vírgula por ponto (decimal)
-                                            valorStr = valorStr.replace(/\./g, '').replace(',', '.');
-                                        } 
-                                        // Se tem apenas vírgula, substituir por ponto
-                                        else if (valorStr.includes(',')) {
-                                            valorStr = valorStr.replace(',', '.');
-                                        }
-                                        // Se tem apenas ponto(s), assumir que são separadores de milhar e remover
-                                        else if (valorStr.includes('.')) {
-                                            valorStr = valorStr.replace(/\./g, '');
-                                        }
-                                        // Se não tem nada, é só número simples
+                                        // Determinar se é formato BR ou US/simples
+                                        // Formato BR: 1.234,56 (ponto para milhar, vírgula para decimal)
+                                        // Formato US/simples: 1234.56 ou 1234
                                         
-                                        const valorNumerico = parseFloat(valorStr);
-                                        valorFormatado = isNaN(valorNumerico) ? 'Valor não informado' : `R$ ${valorNumerico.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                                        if (valorStr.includes(',')) {
+                                            // Tem vírgula, é formato BR
+                                            // Remove pontos (milhares) e troca vírgula por ponto (decimal)
+                                            valorStr = valorStr.replace(/\./g, '').replace(',', '.');
+                                        }
+                                        // Se não tem vírgula, mantém como está (pode ser 2000 ou 2000.50)
+                                        
+                                        const valorNumerico = parseFloat(valorStr) || 0;
+                                        console.log(`[DEBUG EXIBIÇÃO] NF ${nf.numeroNF}: original="${nf.valor}", processado="${valorStr}", numérico=${valorNumerico}`);
+                                        valorFormatado = `R$ ${valorNumerico.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                                     }
                                     return `
                                     <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
