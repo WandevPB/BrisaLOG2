@@ -1659,10 +1659,13 @@ class CDDashboard {
         let valorTotal = 0;
         if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
             agendamento.notasFiscais.forEach(nf => {
+                console.log(`[DEBUG SOMA] NF ${nf.numeroNF}: valor="${nf.valor}" (tipo: ${typeof nf.valor})`);
                 // Converte o valor diretamente para número (vem como "2000", "1500", etc)
                 const v = parseFloat(nf.valor) || 0;
+                console.log(`[DEBUG SOMA] NF ${nf.numeroNF}: convertido=${v}`);
                 valorTotal += v;
             });
+            console.log(`[DEBUG SOMA] Total final: ${valorTotal}`);
         }
         // Corrigir data de criação
         const dataCriacao = agendamento.createdAt ? this.formatDate(agendamento.createdAt) : 'Não informado';
