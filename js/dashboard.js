@@ -1787,7 +1787,7 @@ class CDDashboard {
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Valor Total:</span>
                                 <span class="font-semibold text-green-600 text-xs">
-                                    R$ ${isNaN(valorTotal) ? '0,00' : valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                    R$ ${valorTotal || 0}
                                 </span>
                             </div>
                             <div class="flex justify-between">
