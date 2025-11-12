@@ -820,10 +820,10 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         tipoRegistro: agendamentoData.tipoRegistro || 'agendamento',
         cdId: cd.id,
         // Dados do fornecedor (snapshot)
-        fornecedorNome: agendamentoData.fornecedor.nomeEmpresa,
-        fornecedorEmail: agendamentoData.fornecedor.email,
-        fornecedorTelefone: agendamentoData.fornecedor.telefone,
-        fornecedorDocumento: agendamentoData.fornecedor.documento,
+  fornecedorNome: agendamentoData.fornecedor.nomeEmpresa || agendamentoData.fornecedor.nome || '',
+  fornecedorEmail: agendamentoData.fornecedor.email || '',
+  fornecedorTelefone: agendamentoData.fornecedor.telefone || '',
+  fornecedorDocumento: agendamentoData.fornecedor.documento || '',
         // Motorista fields from step 1 (agendamentoData.fornecedor)
         motoristaNome: agendamentoData.fornecedor?.nomeResponsavel || '',
         motoristaCpf: agendamentoData.fornecedor?.cpfMotorista || '',
