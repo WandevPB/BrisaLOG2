@@ -587,8 +587,8 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
     if (search) {
       where.OR = [
         { codigo: { contains: search } },
-        { fornecedor: { nome: { contains: search } } },
-        { fornecedor: { email: { contains: search } } }
+        { fornecedorNome: { contains: search } },
+        { fornecedorEmail: { contains: search } }
       ];
     }
 
@@ -598,7 +598,6 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
     const agendamentos = await prisma.agendamento.findMany({
       where: where,
       include: {
-        fornecedor: true,
         notasFiscais: true,
         historicoAcoes: {
           include: {
@@ -615,6 +614,9 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
       skip: (page - 1) * limit,
       take: parseInt(limit)
     });
+
+    // Adicionar objeto fornecedor virtual a cada agendamento
+    agendamentos.forEach(agendamento => addFornecedorVirtual(agendamento));
 
     // Contar total
     const total = await prisma.agendamento.count({ where });
@@ -765,57 +767,9 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
 
     // Buscar ou criar fornecedor
     console.log('🔍 [POST /api/agendamentos] Buscando fornecedor com CNPJ:', agendamentoData.fornecedor.documento);
-    let fornecedor = await prisma.fornecedor.findUnique({
-      where: { documento: agendamentoData.fornecedor.documento }
-    });
-
-    if (!fornecedor) {
-      console.log('➕ [POST /api/agendamentos] Fornecedor não encontrado pelo CNPJ, verificando por email...');
-      
-      // Verificar se já existe fornecedor com este email
-      const fornecedorExistente = await prisma.fornecedor.findUnique({
-        where: { email: agendamentoData.fornecedor.email }
-      });
-      
-      if (fornecedorExistente) {
-        console.log('🔄 [POST /api/agendamentos] Encontrado fornecedor com mesmo email, atualizando dados...');
-        // Atualizar o fornecedor existente com os novos dados
-        fornecedor = await prisma.fornecedor.update({
-          where: { email: agendamentoData.fornecedor.email },
-          data: {
-            nome: agendamentoData.fornecedor.nomeEmpresa,
-            telefone: agendamentoData.fornecedor.telefone,
-            documento: agendamentoData.fornecedor.documento
-          }
-        });
-        console.log('✅ [POST /api/agendamentos] Fornecedor atualizado:', fornecedor);
-      } else {
-        console.log('➕ [POST /api/agendamentos] Criando novo fornecedor:', agendamentoData.fornecedor);
-        fornecedor = await prisma.fornecedor.create({
-          data: {
-            nome: agendamentoData.fornecedor.nomeEmpresa,
-            email: agendamentoData.fornecedor.email,
-            telefone: agendamentoData.fornecedor.telefone,
-            documento: agendamentoData.fornecedor.documento
-          }
-        });
-        console.log('✅ [POST /api/agendamentos] Novo fornecedor criado:', fornecedor);
-      }
-    } else {
-      console.log('📋 [POST /api/agendamentos] Fornecedor existente encontrado pelo CNPJ:', fornecedor);
-      console.log('🔄 [POST /api/agendamentos] Dados do formulário:', agendamentoData.fornecedor);
-      // Atualizar dados do fornecedor existente com os dados mais recentes
-      console.log('🔄 [POST /api/agendamentos] Atualizando dados do fornecedor...');
-      fornecedor = await prisma.fornecedor.update({
-        where: { documento: agendamentoData.fornecedor.documento },
-        data: {
-          nome: agendamentoData.fornecedor.nomeEmpresa,
-          email: agendamentoData.fornecedor.email,
-          telefone: agendamentoData.fornecedor.telefone
-        }
-      });
-      console.log('✅ [POST /api/agendamentos] Fornecedor atualizado:', fornecedor);
-    }
+    // Não mais usar tabela fornecedores separada
+    // Os dados do fornecedor são salvos diretamente no agendamento (snapshot)
+    console.log('� [POST /api/agendamentos] Salvando dados do fornecedor diretamente no agendamento');
 
     // Gerar código único
     const ultimoAgendamento = await prisma.agendamento.findFirst({
@@ -864,7 +818,11 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         status: statusFinal,
         tipoRegistro: agendamentoData.tipoRegistro || 'agendamento',
         cdId: cd.id,
-        fornecedorId: fornecedor.id,
+        // Dados do fornecedor (snapshot)
+        fornecedorNome: agendamentoData.fornecedor.nomeEmpresa,
+        fornecedorEmail: agendamentoData.fornecedor.email,
+        fornecedorTelefone: agendamentoData.fornecedor.telefone,
+        fornecedorDocumento: agendamentoData.fornecedor.documento,
         // Motorista fields from step 1 (agendamentoData.fornecedor)
         motoristaNome: agendamentoData.fornecedor?.nomeResponsavel || '',
         motoristaCpf: agendamentoData.fornecedor?.cpfMotorista || '',
@@ -924,7 +882,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
 
     // Enviar emails automáticos
     // Enviar apenas um e-mail para o fornecedor após solicitação de agendamento
-    if (fornecedor.email && !isEntregaPeloCD) {
+    if (agendamento.fornecedorEmail && !isEntregaPeloCD) {
       emailService.sendSolicitacaoRecebidaFornecedor({
         agendamento: {
           codigo: codigo,
@@ -933,7 +891,12 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
           observacoes: observacoesFinal,
           cd: cd
         },
-        fornecedor: fornecedor
+        fornecedor: {
+          nome: agendamento.fornecedorNome,
+          email: agendamento.fornecedorEmail,
+          telefone: agendamento.fornecedorTelefone,
+          documento: agendamento.fornecedorDocumento
+        }
       })
       .then(result => {
         if (result.success) {
@@ -974,6 +937,21 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
   }
 });
 
+// Função helper para adicionar objeto fornecedor virtual aos agendamentos
+function addFornecedorVirtual(agendamento) {
+  if (!agendamento) return agendamento;
+  
+  // Criar objeto fornecedor a partir dos campos do agendamento
+  agendamento.fornecedor = {
+    nome: agendamento.fornecedorNome,
+    email: agendamento.fornecedorEmail,
+    telefone: agendamento.fornecedorTelefone,
+    documento: agendamento.fornecedorDocumento
+  };
+  
+  return agendamento;
+}
+
 // Consultar agendamento por código (público)
 app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
     // Função para extrair apenas a data (YYYY-MM-DD) do ISO original, sem alterar fuso
@@ -989,7 +967,6 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
         codigo: codigo
       },
       include: {
-        fornecedor: true,
         cd: true,
         notasFiscais: true,
         historicoAcoes: {
@@ -1004,6 +981,9 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
         message: 'Agendamento não encontrado' 
       });
     }
+
+    // Adicionar objeto fornecedor virtual
+    addFornecedorVirtual(agendamento);
 
     // Formatar dados para o frontend
     const agendamentoFormatado = {

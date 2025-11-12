@@ -63,11 +63,16 @@ model Agendamento {
   transportadorDocumento String?
   transportadorTelefone  String?
   transportadorEmail     String?
+  // Campos do fornecedor (snapshot no momento do agendamento)
+  fornecedorNome         String
+  fornecedorEmail        String
+  fornecedorTelefone     String
+  fornecedorDocumento    String
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   cdId                   Int
-  fornecedorId           Int
-  fornecedor             Fornecedor              @relation(fields: [fornecedorId], references: [id])
+  fornecedorId           Int?                    // Agora opcional, será removido futuramente
+  fornecedor             Fornecedor?             @relation(fields: [fornecedorId], references: [id])
   cd                     Cd                      @relation(fields: [cdId], references: [id])
   historicoAcoes         HistoricoAcao[]
   notasFiscais           NotaFiscal[]
