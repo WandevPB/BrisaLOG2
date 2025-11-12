@@ -462,18 +462,22 @@ class AgendamentoForm {
     // Helper para converter string 'R$ 1.234,56' para número 1234.56
     parseCurrency(valor) {
         if (!valor) return 0;
-        // Remove tudo que não for número, vírgula ou ponto
-        valor = valor.replace(/[^0-9,\.]/g, '');
-        // Se houver mais de uma vírgula, pega só a última como decimal
-        const partes = valor.split(',');
-        if (partes.length > 2) {
-            valor = partes.slice(0, -1).join('') + '.' + partes[partes.length - 1];
-        } else if (partes.length === 2) {
-            valor = partes[0].replace(/\./g, '') + '.' + partes[1];
+        
+        // Remove caracteres não numéricos exceto ponto e vírgula
+        let valorStr = String(valor).replace(/[^\d,.]/g, '');
+        
+        // Lógica igual aos modais: último ponto é decimal, outros são milhares
+        const lastDotIndex = valorStr.lastIndexOf('.');
+        if (lastDotIndex !== -1) {
+            // Substitui o último ponto por vírgula temporária
+            // Remove todos os outros pontos (milhares)
+            valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + ',' + valorStr.substring(lastDotIndex + 1);
         }
-        // Se não houver vírgula, só remove pontos
-        valor = valor.replace(/\./g, '');
-        const valorNumerico = parseFloat(valor);
+        
+        // Agora converte vírgula para ponto decimal
+        valorStr = valorStr.replace(',', '.');
+        
+        const valorNumerico = parseFloat(valorStr);
         return isNaN(valorNumerico) ? 0 : valorNumerico;
     }
 
@@ -521,8 +525,23 @@ class AgendamentoForm {
         // Função helper para analisar o valor monetário
         const parseCurrency = (valStr) => {
             if (!valStr) return 0;
-            let num = valStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
-            return parseFloat(num) || 0;
+            
+            // Remove caracteres não numéricos exceto ponto e vírgula
+            let valorStr = String(valStr).replace(/[^\d,.]/g, '');
+            
+            // Lógica: último ponto é decimal, outros são milhares
+            const lastDotIndex = valorStr.lastIndexOf('.');
+            if (lastDotIndex !== -1) {
+                // Substitui o último ponto por vírgula temporária
+                // Remove todos os outros pontos (milhares)
+                valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + ',' + valorStr.substring(lastDotIndex + 1);
+            }
+            
+            // Agora converte vírgula para ponto decimal
+            valorStr = valorStr.replace(',', '.');
+            
+            const valorNumerico = parseFloat(valorStr);
+            return isNaN(valorNumerico) ? 0 : valorNumerico;
         };
 
         // Lógica para o novo template (agendamento.html)
