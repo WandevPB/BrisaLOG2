@@ -1659,21 +1659,31 @@ class CDDashboard {
         let valorTotal = 0;
         if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
             agendamento.notasFiscais.forEach(nf => {
-                let v = nf.valor;
-                if (typeof v === 'string') {
-                    // Remove tudo exceto dígitos, vírgulas e pontos
-                    v = v.replace(/[^\d,\.]/g, '');
-                    // Remove pontos (separadores de milhar)
-                    v = v.replace(/\./g, '');
-                    // Substitui vírgula por ponto (separador decimal)
-                    v = v.replace(',', '.');
-                    v = parseFloat(v);
-                } else if (typeof v === 'number') {
-                    // Se já é número, usa direto
-                    v = v;
+                let valorStr = String(nf.valor || '').trim();
+                
+                // Remove espaços, R$, e outros caracteres não numéricos exceto vírgula e ponto
+                valorStr = valorStr.replace(/[^\d,.]/g, '');
+                
+                // Se tem vírgula E ponto, assumir formato BR: 1.234,56
+                if (valorStr.includes(',') && valorStr.includes('.')) {
+                    valorStr = valorStr.replace(/\./g, '').replace(',', '.');
+                } 
+                // Se tem apenas vírgula, substituir por ponto
+                else if (valorStr.includes(',')) {
+                    valorStr = valorStr.replace(',', '.');
                 }
-                if (!isNaN(v) && v !== null && v !== undefined) valorTotal += v;
+                // Se tem apenas ponto(s), assumir que são separadores de milhar e remover
+                else if (valorStr.includes('.')) {
+                    valorStr = valorStr.replace(/\./g, '');
+                }
+                
+                const v = parseFloat(valorStr);
+                if (!isNaN(v) && v !== null && v !== undefined) {
+                    console.log(`[DEBUG] NF ${nf.numeroNF}: valor original="${nf.valor}", processado="${valorStr}", numérico=${v}`);
+                    valorTotal += v;
+                }
             });
+            console.log(`[DEBUG] Valor total calculado: ${valorTotal}`);
         }
         // Corrigir data de criação
         const dataCriacao = agendamento.createdAt ? this.formatDate(agendamento.createdAt) : 'Não informado';
