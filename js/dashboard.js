@@ -991,7 +991,7 @@ class CDDashboard {
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex-1">
                         <h4 class="font-bold text-gray-dark text-sm">${agendamento.codigo}</h4>
-                        <p class="text-gray-600 text-xs truncate">${agendamento.Transportador.nome}</p>
+                        <p class="text-gray-600 text-xs truncate">${agendamento.transportador.nome}</p>
                     </div>
                     <div class="px-2 py-1 rounded text-white text-xs font-semibold ${statusClass}">
                         <i class="${statusIcon}"></i>
@@ -1151,8 +1151,8 @@ class CDDashboard {
                 <div class="flex justify-between items-start mb-4">
                     <div>
                         <h3 class="text-lg font-bold text-gray-dark">${agendamento.codigo}</h3>
-                        <p class="text-gray-medium">${agendamento.Transportador.nome}</p>
-                        <p class="text-sm text-gray-500">${agendamento.Transportador.email}</p>
+                        <p class="text-gray-medium">${agendamento.transportador.nome}</p>
+                        <p class="text-sm text-gray-500">${agendamento.transportador.email}</p>
                         <!-- Tipo de Veículo removido do card Transportadora -->
                     </div>
                     <div class="px-3 py-1 rounded-full text-white text-sm font-semibold ${statusClass}">
@@ -1214,8 +1214,8 @@ class CDDashboard {
                             <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>
                             ${agendamento.codigo}
                         </h3>
-                        <p class="text-gray-dark font-semibold">${agendamento.Transportador.nome}</p>
-                        <p class="text-sm text-gray-600">${agendamento.Transportador.telefone}</p>
+                        <p class="text-gray-dark font-semibold">${agendamento.transportador.nome}</p>
+                        <p class="text-sm text-gray-600">${agendamento.transportador.telefone}</p>
                     </div>
                     <div class="text-right">
                         <div class="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-semibold mb-2">
@@ -1306,8 +1306,8 @@ class CDDashboard {
                                 </div>
                             </div>
                             <div class="ml-3 min-w-0 flex-1">
-                                <div class="text-sm font-medium text-gray-900 truncate">${agendamento.Transportador?.nome || 'N/A'}</div>
-                                <div class="text-xs text-gray-500 truncate">${agendamento.Transportador?.email || 'N/A'}</div>
+                                <div class="text-sm font-medium text-gray-900 truncate">${agendamento.transportador?.nome || 'N/A'}</div>
+                                <div class="text-xs text-gray-500 truncate">${agendamento.transportador?.email || 'N/A'}</div>
                             </div>
                         </div>
                     </td>
@@ -1447,8 +1447,8 @@ class CDDashboard {
                     valueB = b.codigo;
                     break;
                 case 'Transportador':
-                    valueA = a.Transportador?.nome || '';
-                    valueB = b.Transportador?.nome || '';
+                    valueA = a.transportador?.nome || '';
+                    valueB = b.transportador?.nome || '';
                     break;
                 case 'dataEntrega':
                     valueA = new Date(a.dataEntrega);
@@ -1719,20 +1719,20 @@ class CDDashboard {
                         <div class="space-y-2 text-sm">
                             <div>
                                 <span class="text-gray-600 text-xs">Empresa</span>
-                                <p class="font-semibold truncate" title="${agendamento.Transportador.nome}">${agendamento.Transportador.nome}</p>
+                                <p class="font-semibold truncate" title="${agendamento.transportador.nome}">${agendamento.transportador.nome}</p>
                             </div>
                             <div>
                                 <span class="text-gray-600 text-xs">E-mail</span>
-                                <p class="font-semibold truncate" title="${agendamento.Transportador.email}">${agendamento.Transportador.email}</p>
+                                <p class="font-semibold truncate" title="${agendamento.transportador.email}">${agendamento.transportador.email}</p>
                             </div>
                             <div>
                                 <span class="text-gray-600 text-xs">Telefone</span>
-                                <p class="font-semibold">${agendamento.Transportador.telefone}</p>
+                                <p class="font-semibold">${agendamento.transportador.telefone}</p>
                             </div>
-                            ${agendamento.Transportador.documento ? `
+                            ${agendamento.transportador.documento ? `
                                 <div>
                                     <span class="text-gray-600 text-xs">CNPJ</span>
-                                    <p class="font-semibold text-xs">${agendamento.Transportador.documento}</p>
+                                    <p class="font-semibold text-xs">${agendamento.transportador.documento}</p>
                                 </div>
                             ` : ''}
                                <div>
@@ -1751,23 +1751,23 @@ class CDDashboard {
                             <div class="space-y-2 text-sm">
                                 <div>
                                     <span class="text-gray-600 text-xs">Nome</span>
-                                    <p class="font-semibold">${agendamento.motoristaNome || agendamento.Transportador?.nomeResponsavel || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaNome || agendamento.transportador?.nomeResponsavel || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">CPF</span>
-                                    <p class="font-semibold">${agendamento.motoristaCpf || agendamento.Transportador?.cpfMotorista || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaCpf || agendamento.transportador?.cpfMotorista || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Telefone</span>
-                                    <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.Transportador?.telefoneMotorista || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.transportador?.telefoneMotorista || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Placa</span>
-                                    <p class="font-semibold">${agendamento.placaVeiculo || agendamento.Transportador?.placaVeiculo || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.placaVeiculo || agendamento.transportador?.placaVeiculo || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Tipo de Veículo</span>
-                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.Transportador?.tipoVeiculo || 'Não informado'}</p>
+                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.transportador?.tipoVeiculo || 'Não informado'}</p>
                                 </div>
                             </div>
                         </div>
@@ -2464,7 +2464,7 @@ class CDDashboard {
                 this.closeSuggestDateModal();
                 this.closeDetailModal();
                 
-                this.showNotification('Sugestão de nova data enviada ao Transportador.', 'success');
+                this.showNotification('Sugestão de nova data enviada ao transportador.', 'success');
             } else {
                 // Verificar se é token expirado
                 if (handleTokenExpired(response)) {
@@ -2527,8 +2527,8 @@ class CDDashboard {
             const matchesStatus = !statusFilter || agendamento.status === statusFilter;
             const matchesSearch = !searchText || 
                 agendamento.codigo.toLowerCase().includes(searchText) ||
-                agendamento.Transportador.nome.toLowerCase().includes(searchText) ||
-                agendamento.Transportador.email.toLowerCase().includes(searchText);
+                agendamento.transportador.nome.toLowerCase().includes(searchText) ||
+                agendamento.transportador.email.toLowerCase().includes(searchText);
                 
             return matchesStatus && matchesSearch;
         });
@@ -2547,9 +2547,9 @@ class CDDashboard {
             
             const data = this.filteredAgendamentos.map(a => ({
                 'Código': a.codigo,
-                'Transportador': a.Transportador.nome,
-                'Email': a.Transportador.email,
-                'Telefone': a.Transportador.telefone,
+                'Transportador': a.transportador.nome,
+                'Email': a.transportador.email,
+                'Telefone': a.transportador.telefone,
                 'Data': this.formatDate(a.dataEntrega),
                 'Horário': a.horarioEntrega,
                 'Status': this.getStatusText(a.status),
@@ -2698,7 +2698,7 @@ class CDDashboard {
                     </span>
                 </div>
                 <div class="bg-gray-50 rounded-lg p-6 space-y-3">
-                    <p><strong>Transportador:</strong> ${agendamento.Transportador.nome}</p>
+                    <p><strong>Transportador:</strong> ${agendamento.transportador.nome}</p>
                     <p><strong>Data Programada:</strong> ${this.formatDate(agendamento.dataEntrega)}</p>
                     <p><strong>Horário:</strong> ${agendamento.horarioEntrega}</p>
                 </div>
@@ -4014,7 +4014,7 @@ function gerarResumoEntrega() {
     const dadosBasicos = {
         data: document.getElementById('entrega-data').value,
         horario: document.getElementById('entrega-horario').value,
-        Transportador: document.getElementById('entrega-nome-Transportador').value,
+        transportador: document.getElementById('entrega-nome-Transportador').value,
         cnpj: document.getElementById('entrega-cnpj-Transportador').value,
         email: document.getElementById('entrega-email-Transportador').value,
         telefone: document.getElementById('entrega-telefone-Transportador').value,
@@ -4110,7 +4110,7 @@ async function handleRegistrarEntrega(e) {
     
     // Dados básicos da entrega
     const dadosEntrega = {
-        Transportador: {
+        transportador: {
             nomeEmpresa: document.getElementById('entrega-nome-Transportador').value,
             email: document.getElementById('entrega-email-Transportador').value,
             telefone: document.getElementById('entrega-telefone-Transportador').value,
@@ -4424,7 +4424,7 @@ function aplicarFiltrosEntregas() {
     if (textoPesquisa) {
         entregasFiltradas = entregasFiltradas.filter(entrega => {
             return (
-                entrega.Transportador?.nome?.toLowerCase().includes(textoPesquisa) ||
+                entrega.transportador?.nome?.toLowerCase().includes(textoPesquisa) ||
                 entrega.codigo?.toLowerCase().includes(textoPesquisa) ||
                 entrega.tipoCarga?.toLowerCase().includes(textoPesquisa) ||
                 entrega.observacoes?.toLowerCase().includes(textoPesquisa)
@@ -4526,7 +4526,7 @@ function criarCardEntrega(entrega) {
             </div>
             
             <h4 class="font-semibold text-gray-800 mb-2 line-clamp-2">
-                ${entrega.Transportador?.nome || 'Transportador não informado'}
+                ${entrega.transportador?.nome || 'Transportador não informado'}
             </h4>
             
             <div class="space-y-2 text-sm text-gray-600">

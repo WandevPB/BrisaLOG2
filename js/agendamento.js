@@ -686,15 +686,15 @@ class AgendamentoForm {
                     <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
                         <div>
                             <div class="text-xs text-gray-medium">CNPJ</div>
-                            <div class="font-semibold">${this.formData.Transportador.documento || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.transportador.documento || 'Não informado'}</div>
                             <div class="text-xs text-gray-medium mt-2">Telefone</div>
-                            <div class="font-semibold">${this.formData.Transportador.telefone || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.transportador.telefone || 'Não informado'}</div>
                         </div>
                         <div>
                             <div class="text-xs text-gray-medium">Nome do Transportador</div>
-                            <div class="font-semibold">${this.formData.Transportador.nomeEmpresa || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.transportador.nomeEmpresa || 'Não informado'}</div>
                             <div class="text-xs text-gray-medium mt-2">E-mail</div>
-                            <div class="font-semibold">${this.formData.Transportador.email || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.transportador.email || 'Não informado'}</div>
                         </div>
                     </div>
                 </div>
@@ -703,15 +703,15 @@ class AgendamentoForm {
                     <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
                         <div>
                             <div class="text-xs text-gray-medium">Nome</div>
-                            <div class="font-semibold">${this.formData.Transportador.nomeResponsavel || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.transportador.nomeResponsavel || 'Não informado'}</div>
                             <div class="text-xs text-gray-medium mt-2">CPF</div>
-                            <div class="font-semibold">${this.formData.Transportador.cpfMotorista || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.transportador.cpfMotorista || 'Não informado'}</div>
                         </div>
                         <div>
                             <div class="text-xs text-gray-medium">Telefone</div>
-                            <div class="font-semibold">${this.formData.Transportador.telefoneMotorista || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.transportador.telefoneMotorista || 'Não informado'}</div>
                             <div class="text-xs text-gray-medium mt-2">Placa do Veículo</div>
-                            <div class="font-semibold">${this.formData.Transportador.placaVeiculo || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.transportador.placaVeiculo || 'Não informado'}</div>
                         </div>
                     </div>
                 </div>
@@ -788,16 +788,16 @@ class AgendamentoForm {
             
             // Adicionar dados do agendamento
             formData.append('agendamento', JSON.stringify({
-                Transportador: {
-                    nomeEmpresa: this.formData.Transportador?.nomeEmpresa || '',
-                    nomeResponsavel: this.formData.Transportador?.nomeResponsavel || '',
-                    email: this.formData.Transportador?.email || '',
-                    telefone: this.formData.Transportador?.telefone || '',
-                    documento: this.formData.Transportador?.documento || '',
-                    telefoneMotorista: this.formData.Transportador?.telefoneMotorista || '',
-                    cpfMotorista: this.formData.Transportador?.cpfMotorista || '',
-                    placaVeiculo: this.formData.Transportador?.placaVeiculo || '',
-                    tipoVeiculo: this.formData.Transportador?.tipoVeiculo || ''
+                transportador: {
+                    nomeEmpresa: this.formData.transportador?.nomeEmpresa || '',
+                    nomeResponsavel: this.formData.transportador?.nomeResponsavel || '',
+                    email: this.formData.transportador?.email || '',
+                    telefone: this.formData.transportador?.telefone || '',
+                    documento: this.formData.transportador?.documento || '',
+                    telefoneMotorista: this.formData.transportador?.telefoneMotorista || '',
+                    cpfMotorista: this.formData.transportador?.cpfMotorista || '',
+                    placaVeiculo: this.formData.transportador?.placaVeiculo || '',
+                    tipoVeiculo: this.formData.transportador?.tipoVeiculo || ''
                 },
                 entrega: this.formData.entrega,
                 pedidos: this.formData.pedidos.map(p => ({
@@ -808,7 +808,7 @@ class AgendamentoForm {
                         valor: nf.valor
                     }))
                 })),
-                tipoVeiculo: this.formData.Transportador?.tipoVeiculo || ''
+                tipoVeiculo: this.formData.transportador?.tipoVeiculo || ''
             }));
             
             // Adicionar arquivos
