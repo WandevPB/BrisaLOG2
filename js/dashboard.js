@@ -16,25 +16,58 @@ function handleTokenExpired(response) {
     return false;
 }
 
-// Função utilitária para converter datas do backend para timezone local
-function parseLocalDate(dateInput) {
-    if (!dateInput) return null;
-    
-    if (typeof dateInput === 'string') {
-        if (dateInput.includes('T')) {
-            // Formato ISO (ex: '2025-10-06T00:00:00.000Z') - extrair apenas YYYY-MM-DD
-            const dateOnly = dateInput.split('T')[0];
-            const [ano, mes, dia] = dateOnly.split('-').map(Number);
-            return new Date(ano, mes - 1, dia); // mes - 1 porque Date usa 0-11 para meses
-        } else if (dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            // Formato YYYY-MM-DD simples
-            const [ano, mes, dia] = dateInput.split('-').map(Number);
-            return new Date(ano, mes - 1, dia);
+// Wrapper para usar DateFormatter se disponível, senão fallback para funções locais
+const DateUtils = typeof DateFormatter !== 'undefined' ? DateFormatter : {
+    formatDate: function(dateString) {
+        if (!dateString) return '';
+        const [isoDate] = dateString.split('T');
+        if (!isoDate || isoDate.length < 10) return '';
+        const [ano, mes, dia] = isoDate.split('-');
+        return `${dia}/${mes}/${ano}`;
+    },
+    formatDateTime: function(dateString) {
+        if (!dateString) return 'Data/Hora não informada';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Data/Hora inválida';
+            return date.toLocaleString('pt-BR');
+        } catch (error) {
+            return 'Data/Hora inválida';
         }
+    },
+    createSafeDate: function(dateString) {
+        if (!dateString) return new Date();
+        try {
+            let date;
+            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                date = new Date(dateString + 'T00:00:00');
+            } else {
+                date = new Date(dateString);
+            }
+            return isNaN(date.getTime()) ? new Date() : date;
+        } catch (error) {
+            return new Date();
+        }
+    },
+    parseLocalDate: function(dateInput) {
+        if (!dateInput) return null;
+        if (typeof dateInput === 'string') {
+            if (dateInput.includes('T')) {
+                const dateOnly = dateInput.split('T')[0];
+                const [ano, mes, dia] = dateOnly.split('-').map(Number);
+                return new Date(ano, mes - 1, dia);
+            } else if (dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const [ano, mes, dia] = dateInput.split('-').map(Number);
+                return new Date(ano, mes - 1, dia);
+            }
+        }
+        return new Date(dateInput);
     }
-    
-    // Fallback para outros casos
-    return new Date(dateInput);
+};
+
+// Manter funções originais como alias para compatibilidade total
+function parseLocalDate(dateInput) {
+    return DateUtils.parseLocalDate(dateInput);
 }
 
 // Funções globais de máscara para formatação automática
@@ -588,55 +621,17 @@ class CDDashboard {
 
     // Função para formatar datas de forma segura
     formatDate(dateString) {
-    // Extrai 'YYYY-MM-DD' de ISO ou já recebe 'YYYY-MM-DD', retorna 'DD/MM/YYYY'
-    if (!dateString) return '';
-    const [isoDate] = dateString.split('T');
-    if (!isoDate || isoDate.length < 10) return '';
-    const [ano, mes, dia] = isoDate.split('-');
-    return `${dia}/${mes}/${ano}`;
+        return DateUtils.formatDate(dateString);
     }
 
     // Função para formatar data e hora de forma segura
     formatDateTime(dateString) {
-        if (!dateString) {
-            return 'Data/Hora não informada';
-        }
-        
-        try {
-            const date = new Date(dateString);
-            
-            // Verificar se a data é válida
-            if (isNaN(date.getTime())) {
-                return 'Data/Hora inválida';
-            }
-            
-            return date.toLocaleString('pt-BR');
-        } catch (error) {
-            console.error('Erro ao formatar data/hora:', error, 'Data:', dateString);
-            return 'Data/Hora inválida';
-        }
+        return DateUtils.formatDateTime(dateString);
     }
 
     // Função para criar objeto Date de forma segura
     createSafeDate(dateString) {
-        if (!dateString) {
-            return new Date();
-        }
-        
-        try {
-            let date;
-            
-            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                date = new Date(dateString + 'T00:00:00');
-            } else {
-                date = new Date(dateString);
-            }
-            
-            return isNaN(date.getTime()) ? new Date() : date;
-        } catch (error) {
-            console.error('Erro ao criar data:', error, 'Data:', dateString);
-            return new Date();
-        }
+        return DateUtils.createSafeDate(dateString);
     }
 
     init() {
@@ -755,12 +750,10 @@ class CDDashboard {
     }
 
     async loadAgendamentos() {
-        console.log('🔄 Recarregando agendamentos...');
         this.showLoading(true);
         
         try {
             const token = sessionStorage.getItem('token');
-            console.log('🔑 Token encontrado:', !!token);
             
             // Adicionar timestamp para evitar cache
             const url = `${getApiBaseUrl()}/api/agendamentos?t=${Date.now()}`;
@@ -773,11 +766,9 @@ class CDDashboard {
                 }
             });
 
-            console.log('📡 Response status:', response.status);
-
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('❌ Erro na resposta:', errorText);
+                console.error('❌ Erro ao carregar agendamentos:', errorText);
                 
                 // Verificar se é token expirado
                 if (handleTokenExpired(response)) {
