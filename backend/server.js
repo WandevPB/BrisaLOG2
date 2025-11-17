@@ -1603,6 +1603,11 @@ app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
 
     console.log('[REAGENDAR-FORNECEDOR] Dados recebidos:', { codigo, novaData, novoHorario, motivo });
 
+    // Validar dados obrigatórios
+    if (!novaData || !novoHorario) {
+      return res.status(400).json({ error: 'Data e horário são obrigatórios' });
+    }
+
     // Buscar agendamento
     const agendamento = await prisma.agendamento.findFirst({
       where: { codigo: codigo },
@@ -1626,11 +1631,33 @@ app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
       });
     }
 
+    // Converter data para UTC Date
+    let dataEntregaUTC;
+    try {
+      // Se novaData já é ISO string (2025-11-19T00:00:00.000Z)
+      if (novaData.includes('T')) {
+        dataEntregaUTC = new Date(novaData);
+      } else {
+        // Se é string YYYY-MM-DD, converter para UTC
+        const [year, month, day] = novaData.split('-').map(Number);
+        dataEntregaUTC = new Date(Date.UTC(year, month - 1, day));
+      }
+      
+      console.log('[REAGENDAR-FORNECEDOR] Data convertida:', dataEntregaUTC);
+      
+      if (isNaN(dataEntregaUTC.getTime())) {
+        throw new Error('Data inválida');
+      }
+    } catch (error) {
+      console.error('[REAGENDAR-FORNECEDOR] Erro ao converter data:', error);
+      return res.status(400).json({ error: 'Formato de data inválido' });
+    }
+
     // Atualizar agendamento
     await prisma.agendamento.update({
       where: { id: agendamento.id },
       data: {
-        dataEntrega: toUTCDateOnly(novaData),
+        dataEntrega: dataEntregaUTC,
         horarioEntrega: novoHorario,
         status: 'pendente',
         observacoes: motivo ? `${agendamento.observacoes || ''} | Reagendado pelo fornecedor: ${motivo}`.trim() : agendamento.observacoes
@@ -1641,9 +1668,9 @@ app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
     await prisma.historicoAcao.create({
       data: {
         acao: 'reagendamento_fornecedor',
-        descricao: `Fornecedor reagendou para: ${formatDateBr(novaData)} às ${novoHorario}`,
+        descricao: `Fornecedor reagendou para: ${dataEntregaUTC.toLocaleDateString('pt-BR')} às ${novoHorario}`,
         dataAnterior: agendamento.dataEntrega,
-        dataNova: new Date(novaData + 'T00:00:00'),
+        dataNova: dataEntregaUTC,
         agendamentoId: agendamento.id,
         cdId: agendamento.cdId
       }
@@ -1657,8 +1684,11 @@ app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erro ao reagendar entrega:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('[REAGENDAR-FORNECEDOR] Erro completo:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
