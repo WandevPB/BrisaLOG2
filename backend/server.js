@@ -1601,18 +1601,29 @@ app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
     const { codigo } = req.params;
     const { novaData, novoHorario, motivo } = req.body;
 
+    console.log('[REAGENDAR-FORNECEDOR] Dados recebidos:', { codigo, novaData, novoHorario, motivo });
+
     // Buscar agendamento
     const agendamento = await prisma.agendamento.findFirst({
-      where: { codigo: codigo }
+      where: { codigo: codigo },
+      include: { cd: true }
     });
 
     if (!agendamento) {
       return res.status(404).json({ error: 'Agendamento não encontrado' });
     }
 
+    console.log('[REAGENDAR-FORNECEDOR] Status atual:', agendamento.status);
+
     // Verificar se status permite reagendamento
-    if (agendamento.status !== 'nao-veio') {
-      return res.status(400).json({ error: 'Agendamento não pode ser reagendado' });
+    // Permitir reagendamento para: nao-veio, reagendamento, pendente
+    const statusPermitidos = ['nao-veio', 'reagendamento', 'pendente'];
+    if (!statusPermitidos.includes(agendamento.status)) {
+      return res.status(400).json({ 
+        error: 'Agendamento não pode ser reagendado',
+        statusAtual: agendamento.status,
+        statusPermitidos: statusPermitidos
+      });
     }
 
     // Atualizar agendamento
@@ -1637,6 +1648,8 @@ app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
         cdId: agendamento.cdId
       }
     });
+
+    console.log('[REAGENDAR-FORNECEDOR] Reagendamento realizado com sucesso');
 
     res.json({
       success: true,
