@@ -780,7 +780,15 @@ class CDDashboard {
 
             const data = await response.json();
             console.log('📊 Dados recebidos:', data);
-            this.agendamentos = data.data || [];
+            
+            // Mapear fornecedor para transportador (compatibilidade backend)
+            this.agendamentos = (data.data || []).map(agendamento => {
+                if (agendamento.fornecedor && !agendamento.transportador) {
+                    agendamento.transportador = agendamento.fornecedor;
+                }
+                return agendamento;
+            });
+            
             this.filteredAgendamentos = [...this.agendamentos];
             this.showLoading(false);
             this.renderAgendamentos();
