@@ -287,22 +287,27 @@ async function corrigirAgendamentosExistentes() {
 
 // ...restante do código do servidor...
 const app = express();
-// Rota para teste de envio de e-mail no ambiente de produção
-app.post('/api/test-email', async (req, res) => {
-  try {
-    const to = req.body.to || 'wandevpb@gmail.com';
-  const subject = req.body.subject || 'Teste de envio de e-mail Produção';
-  const html = req.body.html || '<b>Este é um teste de envio de e-mail pelo servidor de produção.</b>';
-    const result = await emailService.sendEmail({ to, subject, html });
-    if (result.success) {
-      res.json({ success: true, messageId: result.messageId, response: result.response });
-    } else {
-      res.status(500).json({ success: false, error: result.error, code: result.code });
+
+// NOTA: Endpoint de teste de email disponível apenas em desenvolvimento
+// Para usar em produção, adicione authenticateToken middleware
+if (process.env.NODE_ENV === 'development') {
+  app.post('/api/test-email', async (req, res) => {
+    try {
+      const to = req.body.to || 'wandevpb@gmail.com';
+      const subject = req.body.subject || 'Teste de envio de e-mail Produção';
+      const html = req.body.html || '<b>Este é um teste de envio de e-mail pelo servidor de produção.</b>';
+      const result = await emailService.sendEmail({ to, subject, html });
+      if (result.success) {
+        res.json({ success: true, messageId: result.messageId, response: result.response });
+      } else {
+        res.status(500).json({ success: false, error: result.error, code: result.code });
+      }
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
     }
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+  });
+}
+
 const PORT = process.env.PORT || 9999;
 const JWT_SECRET = process.env.JWT_SECRET || 'brisalog_secret_key_2025';
 const EMAIL_FROM = process.env.EMAIL_FROM;
@@ -2632,47 +2637,8 @@ app.get('/api/cds', authenticateToken, async (req, res) => {
 
 app.use(errorHandler);
 
-// Endpoint temporário para forçar seed (remover após primeira execução)
-app.post('/api/force-seed', async (req, res) => {
-  console.log('🌱 [FORCE SEED] Executando seed forçado...');
-  
-  try {
-    // Verificar quantos CDs existem
-    const cdCount = await prisma.cd.count();
-    console.log(`🔍 [FORCE SEED] CDs existentes: ${cdCount}`);
-    
-    if (cdCount > 0) {
-      console.log('✅ [FORCE SEED] CDs já existem, não executando seed');
-      return res.json({ message: 'CDs já existem', count: cdCount });
-    }
-    
-    // Executar seed
-    console.log('🌱 [FORCE SEED] Executando seed...');
-    execSync('node prisma/seed.js', { 
-      stdio: 'inherit',
-      cwd: process.cwd()
-    });
-    
-    // Verificar se foram criados
-    const newCdCount = await prisma.cd.count();
-    const cds = await prisma.cd.findMany({
-      select: { id: true, nome: true, usuario: true, ativo: true }
-    });
-    
-    console.log('✅ [FORCE SEED] Seed executado com sucesso!');
-    console.log(`📊 [FORCE SEED] CDs criados: ${newCdCount}`);
-    
-    res.json({ 
-      message: 'Seed executado com sucesso',
-      cdsCreated: newCdCount,
-      cds: cds
-    });
-    
-  } catch (error) {
-    console.error('❌ [FORCE SEED] Erro:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+// NOTA: Endpoints de teste e debug removidos por segurança
+// Se precisar executar seed, use: npx prisma db seed
 
 // Endpoint de teste para verificar envio de emails
 app.post('/api/test-email/:email', async (req, res) => {
@@ -2893,20 +2859,7 @@ app.post('/api/test-gmail-direct/:email', async (req, res) => {
   }
 });
 
-// Debug das variáveis de ambiente
-app.get('/api/debug-env', (req, res) => {
-  console.log('🔍 [ENV DEBUG] Verificando variáveis de ambiente...');
-  
-  res.json({
-    GMAIL_APP_PASSWORD: !!process.env.GMAIL_APP_PASSWORD,
-    FROM_EMAIL: process.env.FROM_EMAIL,
-    RESEND_API_KEY: !!process.env.RESEND_API_KEY,
-    NODE_ENV: process.env.NODE_ENV,
-    PORT: process.env.PORT,
-    DATABASE_URL: !!process.env.DATABASE_URL,
-    timestamp: new Date().toISOString()
-  });
-});
+// Debug endpoint removido por segurança (expunha variáveis de ambiente)
 
 // Endpoint para demonstrar sistema com domínio
 app.post('/api/demo-with-domain/:email', async (req, res) => {
