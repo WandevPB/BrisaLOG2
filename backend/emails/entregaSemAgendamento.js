@@ -3,8 +3,7 @@ module.exports = ({
     agendamentoCodigo, 
     cdNome, 
     dataEntrega, 
-    horarioEntrega, 
-    agendamentoUrl 
+    horarioEntrega 
 }) => {
     return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -40,7 +39,7 @@ module.exports = ({
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${agendamentoUrl}" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🌐 Acessar Portal BrisaLOG</a>
+          <a href="https://brisalog-agenda.online/" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🌐 Acessar Portal BrisaLOG</a>
         </div>
         
         <p style="font-size: 15px; color: #666; text-align: center;">Acesse o portal para fazer novos agendamentos e consultar o status das suas entregas.</p>

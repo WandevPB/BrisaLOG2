@@ -1596,13 +1596,13 @@
                     <div class="flex justify-between items-center">
                         <h2 class="text-xl font-bold text-gray-800">
                             <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>
-                            Sugerir Nova Data
+                            <span id="modal-reagendar-titulo">Sugerir Nova Data</span>
                         </h2>
                         <button type="button" onclick="consultaStatus.fecharContraPropostaModal()" class="text-gray-500 hover:text-gray-700 text-xl">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <p class="text-gray-600 mt-2">Sugira uma nova data e horário para o agendamento</p>
+                    <p class="text-gray-600 mt-2" id="modal-reagendar-descricao">Sugira uma nova data e horário para o agendamento</p>
                 </div>
                 
                 <div class="p-6">
@@ -2574,46 +2574,8 @@
             
             // Funções para status "nao-veio"
             async reagendarEntrega(codigo) {
-                // Criar modal simples para reagendamento
-                const novaData = prompt('Digite a nova data (YYYY-MM-DD):');
-                const novoHorario = prompt('Digite o novo horário (ex: 14:00-16:00):');
-                const motivo = prompt('Motivo do reagendamento (opcional):');
-                
-                if (novaData && novoHorario) {
-                    // Converter para UTC ISO string
-                    const [year, month, day] = novaData.split('-').map(Number);
-                    const utcDate = new Date(Date.UTC(year, month - 1, day));
-                    const novaDataUTC = utcDate.toISOString();
-                    try {
-                        const response = await fetch(`/api/agendamentos/${codigo}/reagendar-fornecedor`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                novaData: novaDataUTC,
-                                novoHorario: novoHorario,
-                                motivo: motivo || ''
-                            })
-                        });
-                        
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            this.showNotification(result.message, 'success');
-                            
-                            // Recarregar agendamento atualizado
-                            await this.recarregarAgendamento();
-                            
-                        } else {
-                            this.showNotification(result.error || 'Erro ao reagendar', 'error');
-                        }
-                        
-                    } catch (error) {
-                        console.error('Erro ao reagendar:', error);
-                        this.showNotification('Erro ao reagendar entrega', 'error');
-                    }
-                }
+                // Usar o mesmo modal padronizado com calendário e validação
+                this.abrirContraProposta(codigo);
             }
 
             async cancelarAgendamento(codigo) {
@@ -3036,6 +2998,22 @@
 
             abrirContraProposta(codigo) {
                 this.currentCodigoReagendamento = codigo;
+                
+                // Detectar contexto baseado no status atual do agendamento
+                const isNaoVeio = this.currentAgendamento && this.currentAgendamento.status === 'nao-veio';
+                
+                // Ajustar texto do modal baseado no contexto
+                const titulo = document.getElementById('modal-reagendar-titulo');
+                const descricao = document.getElementById('modal-reagendar-descricao');
+                
+                if (isNaoVeio) {
+                    titulo.textContent = 'Reagendar Entrega';
+                    descricao.textContent = 'Escolha uma nova data e horário para realizar a entrega';
+                } else {
+                    titulo.textContent = 'Sugerir Nova Data';
+                    descricao.textContent = 'Sugira uma nova data e horário para o agendamento';
+                }
+                
                 const modal = document.getElementById('contra-proposta-modal');
                 modal.classList.remove('hidden');
                 // Garante z-index máximo e força no topo
@@ -3045,6 +3023,8 @@
                 const selectHorario = document.getElementById('contra-proposta-horario');
                 selectHorario.innerHTML = '<option value="">Selecione o horário</option>';
                 document.getElementById('contra-proposta-data').value = '';
+                document.getElementById('contra-proposta-comentario').value = '';
+                
                 // Adiciona listener para buscar horários ao selecionar data
                 const inputData = document.getElementById('contra-proposta-data');
                 if (!inputData.dataset.listener) {
@@ -3092,35 +3072,62 @@
                     return;
                 }
 
+                // Detectar contexto baseado no status atual do agendamento
+                const isNaoVeio = this.currentAgendamento && this.currentAgendamento.status === 'nao-veio';
+                
                 try {
-                    const response = await fetch(`/api/agendamentos/${this.currentCodigoReagendamento}/responder-reagendamento`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
+                    let response, apiUrl, requestBody, successMessage;
+                    
+                    if (isNaoVeio) {
+                        // Para "não veio", usar API de reagendar fornecedor
+                        apiUrl = `/api/agendamentos/${this.currentCodigoReagendamento}/reagendar-fornecedor`;
+                        
+                        // Converter data para UTC ISO string
+                        const [year, month, day] = novaData.split('-').map(Number);
+                        const utcDate = new Date(Date.UTC(year, month - 1, day));
+                        const novaDataUTC = utcDate.toISOString();
+                        
+                        requestBody = {
+                            novaData: novaDataUTC,
+                            novoHorario: novoHorario,
+                            motivo: comentario || ''
+                        };
+                        successMessage = 'Reagendamento solicitado! O CD foi notificado e analisará sua proposta.';
+                    } else {
+                        // Para reagendamento, usar API de responder reagendamento
+                        apiUrl = `/api/agendamentos/${this.currentCodigoReagendamento}/responder-reagendamento`;
+                        requestBody = {
                             resposta: 'contra_proposta',
                             comentario: comentario,
                             novaData: novaData, // Envia a string 'YYYY-MM-DD' pura
                             novoHorario: novoHorario
-                        })
+                        };
+                        successMessage = 'Nova data sugerida! O CD foi notificado e analisará sua proposta.';
+                    }
+                    
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody)
                     });
                     
                     const result = await response.json();
-                    console.log('[DEBUG] Resposta da contra-proposta:', result);
+                    console.log('[DEBUG] Resposta da proposta:', result);
                     
                     if (result.success) {
-                        this.showNotification('Nova data sugerida! O CD foi notificado e analisará sua proposta.', 'success');
+                        this.showNotification(successMessage, 'success');
                         this.fecharContraPropostaModal();
                         console.log('[DEBUG] Iniciando recarregamento do agendamento...');
                         await this.recarregarAgendamento();
                     } else {
-                        this.showNotification(result.error || 'Erro ao enviar contra-proposta', 'error');
+                        this.showNotification(result.error || result.message || 'Erro ao enviar proposta', 'error');
                     }
                     
                 } catch (error) {
-                    console.error('Erro ao enviar contra-proposta:', error);
-                    this.showNotification('Erro ao enviar contra-proposta', 'error');
+                    console.error('Erro ao enviar proposta:', error);
+                    this.showNotification('Erro ao enviar proposta', 'error');
                 }
             }
 

@@ -1,5 +1,5 @@
 // Template: Confirmação de Agendamento
-module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, consultaUrl, motoristaNome, veiculoPlaca, dataAgendamento, horarioAgendamento }) {
+module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motoristaNome, veiculoPlaca, dataAgendamento, horarioAgendamento }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%); color: white; border-radius: 10px; padding: 30px 20px; text-align: center;">
@@ -17,9 +17,9 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, consul
           <strong>⏰ Horário:</strong> ${horarioAgendamento || 'Não informado'}
         </div>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${consultaUrl}" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🔍 Consultar Status do Agendamento</a>
+          <a href="https://brisalog-agenda.online/" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🌐 Acessar Portal BrisaLOG</a>
         </div>
-        <p style="font-size: 15px; color: #666;">Para consultar, acesse o link acima e informe o código: <b>${agendamentoCodigo}</b></p>
+        <p style="font-size: 15px; color: #666;">Acesse o portal para consultar o status dos seus agendamentos.</p>
       </div>
       <div style="text-align: center; margin-top: 40px; color: #999; font-size: 13px;">
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
