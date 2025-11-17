@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -1835,24 +1835,24 @@
                                     <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
                                         <i class="fas fa-truck-moving text-green-600 text-sm"></i>
                                     </div>
-                                    <h3 class="text-md font-semibold text-gray-800">Fornecedor</h3>
+                                    <h3 class="text-md font-semibold text-gray-800">Transportador</h3>
                                 </div>
                                 <div class="space-y-2 text-sm">
                                     <div>
                                         <span class="text-gray-600 text-xs">Empresa</span>
-                                        <p class="font-semibold truncate" title="${agendamento.fornecedor?.nome || agendamento.nomeEmpresa || 'N/A'}">${agendamento.fornecedor?.nome || agendamento.nomeEmpresa || 'N/A'}</p>
+                                        <p class="font-semibold truncate" title="${agendamento.Transportador?.nome || agendamento.nomeEmpresa || 'N/A'}">${agendamento.Transportador?.nome || agendamento.nomeEmpresa || 'N/A'}</p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600 text-xs">E-mail</span>
-                                        <p class="font-semibold truncate" title="${agendamento.fornecedor?.email || agendamento.email || 'N/A'}">${agendamento.fornecedor?.email || agendamento.email || 'N/A'}</p>
+                                        <p class="font-semibold truncate" title="${agendamento.Transportador?.email || agendamento.email || 'N/A'}">${agendamento.Transportador?.email || agendamento.email || 'N/A'}</p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600 text-xs">Telefone</span>
-                                        <p class="font-semibold">${agendamento.fornecedor?.telefone || agendamento.telefone || 'N/A'}</p>
+                                        <p class="font-semibold">${agendamento.Transportador?.telefone || agendamento.telefone || 'N/A'}</p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600 text-xs">CNPJ</span>
-                                        <p class="font-semibold text-xs">${agendamento.fornecedor?.documento || agendamento.cnpj || 'N/A'}</p>
+                                        <p class="font-semibold text-xs">${agendamento.Transportador?.documento || agendamento.cnpj || 'N/A'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -1866,23 +1866,23 @@
                                 <div class="space-y-2 text-sm">
                                     <div>
                                         <span class="text-gray-600 text-xs">Nome</span>
-                                        <p class="font-semibold">${agendamento.motoristaNome || agendamento.fornecedor?.nomeResponsavel || 'Não informado'}</p>
+                                        <p class="font-semibold">${agendamento.motoristaNome || agendamento.Transportador?.nomeResponsavel || 'Não informado'}</p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600 text-xs">CPF</span>
-                                        <p class="font-semibold">${agendamento.motoristaCpf || agendamento.fornecedor?.cpfMotorista || 'Não informado'}</p>
+                                        <p class="font-semibold">${agendamento.motoristaCpf || agendamento.Transportador?.cpfMotorista || 'Não informado'}</p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600 text-xs">Telefone</span>
-                                        <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.fornecedor?.telefoneMotorista || 'Não informado'}</p>
+                                        <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.Transportador?.telefoneMotorista || 'Não informado'}</p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600 text-xs">Placa</span>
-                                        <p class="font-semibold">${agendamento.placaVeiculo || agendamento.fornecedor?.placaVeiculo || 'Não informado'}</p>
+                                        <p class="font-semibold">${agendamento.placaVeiculo || agendamento.Transportador?.placaVeiculo || 'Não informado'}</p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600 text-xs">Tipo de Veículo</span>
-                                        <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.fornecedor?.tipoVeiculo || 'Não informado'}</p>
+                                        <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.Transportador?.tipoVeiculo || 'Não informado'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -1978,7 +1978,7 @@
                                 </h3>
                                 ${agendamento.motivoNaoVeio ? `<p class="text-red-700 mb-4"><strong>Motivo:</strong> ${agendamento.motivoNaoVeio}</p>` : ''}
                                 
-                                <div class="fornecedor-options mb-4">
+                                <div class="Transportador-options mb-4">
                                     <h4 class="text-md font-semibold text-red-700 mb-3">Opções Disponíveis:</h4>
                                     <div class="flex flex-wrap gap-3">
                                         <button onclick="consultaStatus.reagendarEntrega('${agendamento.codigo}')" 
@@ -2105,10 +2105,10 @@
                     const classes = {
                         'agendamento_criado': 'bg-blue-500',
                         'cd_sugeriu_reagendamento': 'bg-orange-600',
-                        'fornecedor_sugeriu_reagendamento': 'bg-purple-500',
-                        'fornecedor_aceitou_reagendamento': 'bg-green-500',
-                        'fornecedor_rejeitou_reagendamento': 'bg-red-500',
-                        'fornecedor_respondeu': 'bg-purple-600',
+                        'Transportador_sugeriu_reagendamento': 'bg-purple-500',
+                        'Transportador_aceitou_reagendamento': 'bg-green-500',
+                        'Transportador_rejeitou_reagendamento': 'bg-red-500',
+                        'Transportador_respondeu': 'bg-purple-600',
                         'entrega_realizada': 'bg-blue-600',
                         'ausencia_registrada': 'bg-red-500'
                     };
@@ -2118,10 +2118,10 @@
                     const icons = {
                         'agendamento_criado': 'fas fa-plus-circle',
                         'cd_sugeriu_reagendamento': 'fas fa-calendar-alt',
-                        'fornecedor_sugeriu_reagendamento': 'fas fa-calendar',
-                        'fornecedor_aceitou_reagendamento': 'fas fa-thumbs-up',
-                        'fornecedor_rejeitou_reagendamento': 'fas fa-thumbs-down',
-                        'fornecedor_respondeu': 'fas fa-reply-all',
+                        'Transportador_sugeriu_reagendamento': 'fas fa-calendar',
+                        'Transportador_aceitou_reagendamento': 'fas fa-thumbs-up',
+                        'Transportador_rejeitou_reagendamento': 'fas fa-thumbs-down',
+                        'Transportador_respondeu': 'fas fa-reply-all',
                         'entrega_realizada': 'fas fa-truck',
                         'ausencia_registrada': 'fas fa-user-slash'
                     };
@@ -2131,20 +2131,20 @@
                     const titles = {
                         'agendamento_criado': 'Agendamento Criado',
                         'cd_sugeriu_reagendamento': 'CD Sugeriu Nova Data',
-                        'fornecedor_sugeriu_reagendamento': 'Fornecedor Sugeriu Nova Data',
-                        'fornecedor_aceitou_reagendamento': 'Fornecedor Aceitou Nova Data',
-                        'fornecedor_rejeitou_reagendamento': 'Fornecedor Rejeitou Nova Data',
-                        'fornecedor_respondeu': 'Fornecedor Respondeu',
+                        'Transportador_sugeriu_reagendamento': 'Transportador Sugeriu Nova Data',
+                        'Transportador_aceitou_reagendamento': 'Transportador Aceitou Nova Data',
+                        'Transportador_rejeitou_reagendamento': 'Transportador Rejeitou Nova Data',
+                        'Transportador_respondeu': 'Transportador Respondeu',
                         'entrega_realizada': 'Entrega Realizada',
                         'ausencia_registrada': 'Ausência Registrada'
                     };
                     return titles[acao] || 'Evento do Sistema';
                 }
-                // Detecta resposta do fornecedor
+                // Detecta resposta do Transportador
                 const hasSupplierResponse = historico.some(ev =>
-                    ev.acao === 'fornecedor_aceitou_reagendamento' ||
-                    ev.acao === 'fornecedor_rejeitou_reagendamento' ||
-                    ev.acao === 'fornecedor_respondeu'
+                    ev.acao === 'Transportador_aceitou_reagendamento' ||
+                    ev.acao === 'Transportador_rejeitou_reagendamento' ||
+                    ev.acao === 'Transportador_respondeu'
                 );
                 return `
                     <div class="space-y-4">
@@ -2154,7 +2154,7 @@
                             let icon = getHistoryIcon(acao);
                             let title = getHistoryTitle(acao);
                             // Ícones coloridos e padronizados
-                            if (acao && acao.toLowerCase().includes('fornecedor') && acao.toLowerCase().includes('sugeriu')) {
+                            if (acao && acao.toLowerCase().includes('Transportador') && acao.toLowerCase().includes('sugeriu')) {
                                 iconClass = 'bg-purple-500';
                                 icon = 'fas fa-calendar';
                                 title = 'Nova Data Sugerida';
@@ -2165,11 +2165,11 @@
                             } else if (acao && acao.toLowerCase().includes('aceitou')) {
                                 iconClass = 'bg-green-500';
                                 icon = 'fas fa-thumbs-up';
-                                title = 'Fornecedor Aceitou Nova Data';
+                                title = 'Transportador Aceitou Nova Data';
                             } else if (acao && acao.toLowerCase().includes('rejeitou')) {
                                 iconClass = 'bg-red-500';
                                 icon = 'fas fa-thumbs-down';
-                                title = 'Fornecedor Rejeitou Nova Data';
+                                title = 'Transportador Rejeitou Nova Data';
                             }
                             return `
                                 <div class="flex items-start space-x-4 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-4' : ''}">
@@ -2228,10 +2228,10 @@
                                 <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
                                     <i class="fas fa-hourglass-half text-white text-sm"></i>
                                 </div>
-                                <span class="font-semibold text-yellow-800">Aguardando resposta do fornecedor</span>
+                                <span class="font-semibold text-yellow-800">Aguardando resposta do Transportador</span>
                             </div>
                             <p class="text-sm text-yellow-700 leading-relaxed">
-                                O fornecedor foi notificado sobre a solicitação de reagendamento e deve responder em breve.
+                                O Transportador foi notificado sobre a solicitação de reagendamento e deve responder em breve.
                             </p>
                         </div>
                     ` : ''}
@@ -2242,7 +2242,7 @@
                 const classes = {
                     'agendamento_criado': 'bg-green-500',
                     'cd_sugeriu_reagendamento': 'bg-blue-500',
-                    'fornecedor_respondeu': 'bg-purple-500'
+                    'Transportador_respondeu': 'bg-purple-500'
                 };
                 return classes[acao] || 'bg-gray-500';
             }
@@ -2251,7 +2251,7 @@
                 const icons = {
                     'agendamento_criado': 'fas fa-plus',
                     'cd_sugeriu_reagendamento': 'fas fa-calendar-alt',
-                    'fornecedor_respondeu': 'fas fa-reply'
+                    'Transportador_respondeu': 'fas fa-reply'
                 };
                 return icons[acao] || 'fas fa-comment';
             }
@@ -2260,7 +2260,7 @@
                 const titles = {
                     'agendamento_criado': 'Agendamento Criado',
                     'cd_sugeriu_reagendamento': 'CD Sugeriu Nova Data',
-                    'fornecedor_respondeu': 'Fornecedor Respondeu'
+                    'Transportador_respondeu': 'Transportador Respondeu'
                 };
                 return titles[acao] || 'Evento';
             }
@@ -2319,9 +2319,9 @@
                 console.log('Editar informações gerais');
             }
 
-            editarFornecedor() {
-                // Implementar modal de edição de dados do fornecedor
-                console.log('Editar fornecedor');
+            editarTransportador() {
+                // Implementar modal de edição de dados do Transportador
+                console.log('Editar Transportador');
             }
 
             adicionarNF() {
@@ -3079,8 +3079,8 @@
                     let response, apiUrl, requestBody, successMessage;
                     
                     if (isNaoVeio) {
-                        // Para "não veio", usar API de reagendar fornecedor
-                        apiUrl = `/api/agendamentos/${this.currentCodigoReagendamento}/reagendar-fornecedor`;
+                        // Para "não veio", usar API de reagendar Transportador
+                        apiUrl = `/api/agendamentos/${this.currentCodigoReagendamento}/reagendar-Transportador`;
                         
                         // Converter data para UTC ISO string
                         const [year, month, day] = novaData.split('-').map(Number);

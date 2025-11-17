@@ -1,4 +1,4 @@
-        // Função global para obter URL base da API
+﻿        // Função global para obter URL base da API
         function getApiBaseUrl() {
             return API_BASE_URL;
         }
@@ -447,7 +447,7 @@
                 const mockData = {
                     'AGD000001': {
                         codigo: 'AGD000001',
-                        fornecedor: 'TechCorp Ltda',
+                        Transportador: 'TechCorp Ltda',
                         cnpj: '12.345.678/0001-90',
                         email: 'contato@techcorp.com',
                         telefone: '(84) 3333-1111',
@@ -475,7 +475,7 @@
                                 data: '2025-08-30 14:30',
                                 acao: 'Agendamento criado',
                                 usuario: 'Sistema',
-                                detalhes: 'Agendamento criado pelo fornecedor TechCorp Ltda'
+                                detalhes: 'Agendamento criado pelo Transportador TechCorp Ltda'
                             },
                             {
                                 data: '2025-09-01 09:15',
@@ -487,7 +487,7 @@
                     },
                     'AGD000002': {
                         codigo: 'AGD000002',
-                        fornecedor: 'InfraTech Solutions',
+                        Transportador: 'InfraTech Solutions',
                         cnpj: '98.765.432/0001-10',
                         email: 'vendas@infratech.com',
                         telefone: '(81) 2222-3333',
@@ -516,7 +516,7 @@
                                 data: '2025-08-28 16:45',
                                 acao: 'Agendamento criado',
                                 usuario: 'Sistema',
-                                detalhes: 'Agendamento criado pelo fornecedor InfraTech Solutions'
+                                detalhes: 'Agendamento criado pelo Transportador InfraTech Solutions'
                             },
                             {
                                 data: '2025-09-02 11:30',
@@ -528,7 +528,7 @@
                     },
                     'AGD000003': {
                         codigo: 'AGD000003',
-                        fornecedor: 'Equipamentos Norte Ltda',
+                        Transportador: 'Equipamentos Norte Ltda',
                         cnpj: '11.222.333/0001-44',
                         email: 'comercial@equipnorte.com',
                         telefone: '(84) 4444-5555',
@@ -558,7 +558,7 @@
                                 data: '2025-08-25 10:15',
                                 acao: 'Agendamento criado',
                                 usuario: 'Sistema',
-                                detalhes: 'Agendamento criado pelo fornecedor Equipamentos Norte Ltda'
+                                detalhes: 'Agendamento criado pelo Transportador Equipamentos Norte Ltda'
                             },
                             {
                                 data: '2025-08-27 14:20',
@@ -645,7 +645,7 @@
                             <div class="flex items-center justify-between flex-wrap gap-4">
                                 <div>
                                     <h2 class="text-3xl font-bold mb-2">Agendamento ${agendamento.codigo}</h2>
-                                    <p class="text-orange-100 text-lg">${agendamento.fornecedor}</p>
+                                    <p class="text-orange-100 text-lg">${agendamento.Transportador}</p>
                                 </div>
                                 <div class="text-right">
                                     <div class="${statusClass} status-badge">
@@ -711,17 +711,17 @@
                                     ` : ''}
                                 </div>
 
-                                <!-- Dados do Fornecedor -->
+                                <!-- Dados do Transportador -->
                                 <div class="bg-white rounded-2xl p-6 shadow-3d">
                                     <h3 class="text-xl font-bold text-gray-dark mb-4 flex items-center">
                                         <i class="fas fa-building text-orange-primary mr-3"></i>
-                                        Dados do Fornecedor
+                                        Dados do Transportador
                                     </h3>
                                     <div class="grid md:grid-cols-2 gap-4">
                                         <div class="space-y-3">
                                             <div>
                                                 <label class="text-gray-medium font-semibold text-sm">Empresa</label>
-                                                <p class="text-gray-dark text-lg">${agendamento.fornecedor}</p>
+                                                <p class="text-gray-dark text-lg">${agendamento.Transportador}</p>
                                             </div>
                                             <div>
                                                 <label class="text-gray-medium font-semibold text-sm">CNPJ</label>
@@ -807,9 +807,9 @@
                                                 'Agendamento criado': 'fa-plus-circle text-blue-500',
                                                 'Agendamento confirmado': 'fa-check-circle text-green-500',
                                                 'Reagendamento solicitado': 'fa-calendar-alt text-yellow-500',
-                                                'Fornecedor aceitou reagendamento': 'fa-thumbs-up text-green-600',
-                                                'Fornecedor rejeitou reagendamento': 'fa-thumbs-down text-red-600',
-                                                'Fornecedor respondeu': 'fa-reply-all text-purple-600',
+                                                'Transportador aceitou reagendamento': 'fa-thumbs-up text-green-600',
+                                                'Transportador rejeitou reagendamento': 'fa-thumbs-down text-red-600',
+                                                'Transportador respondeu': 'fa-reply-all text-purple-600',
                                                 'Entrega realizada': 'fa-truck text-blue-600',
                                                 'Ausência registrada': 'fa-user-slash text-red-500'
                                             };
@@ -817,29 +817,29 @@
                                                 'Agendamento criado': 'Agendamento Criado',
                                                 'Agendamento confirmado': 'Agendamento Confirmado',
                                                 'Reagendamento solicitado': 'CD Sugeriu Nova Data',
-                                                'Fornecedor aceitou reagendamento': 'Fornecedor Aceitou Nova Data',
-                                                'Fornecedor rejeitou reagendamento': 'Fornecedor Rejeitou Nova Data',
-                                                'Fornecedor respondeu': 'Fornecedor Respondeu',
+                                                'Transportador aceitou reagendamento': 'Transportador Aceitou Nova Data',
+                                                'Transportador rejeitou reagendamento': 'Transportador Rejeitou Nova Data',
+                                                'Transportador respondeu': 'Transportador Respondeu',
                                                 'Entrega realizada': 'Entrega Realizada',
                                                 'Ausência registrada': 'Ausência Registrada'
                                             };
-                                            // Detecta resposta do fornecedor
+                                            // Detecta resposta do Transportador
                                             const hasSupplierResponse = agendamento.historico.some(ev =>
-                                                ev.acao === 'Fornecedor aceitou reagendamento' ||
-                                                ev.acao === 'Fornecedor rejeitou reagendamento' ||
-                                                ev.acao === 'Fornecedor respondeu'
+                                                ev.acao === 'Transportador aceitou reagendamento' ||
+                                                ev.acao === 'Transportador rejeitou reagendamento' ||
+                                                ev.acao === 'Transportador respondeu'
                                             );
                                             let html = agendamento.historico.map((item, index) => {
                                                 let icon = iconMap[item.acao] || 'fa-info-circle text-gray-400';
                                                 let title = titleMap[item.acao] || item.acao;
                                                 // Se for resposta genérica, tenta detalhar pelo campo detalhes
-                                                if (item.acao === 'Fornecedor respondeu') {
+                                                if (item.acao === 'Transportador respondeu') {
                                                     if (item.detalhes && item.detalhes.toLowerCase().includes('aceit')) {
-                                                        title = 'Fornecedor Aceitou Nova Data';
-                                                        icon = iconMap['Fornecedor aceitou reagendamento'];
+                                                        title = 'Transportador Aceitou Nova Data';
+                                                        icon = iconMap['Transportador aceitou reagendamento'];
                                                     } else if (item.detalhes && item.detalhes.toLowerCase().includes('rejeit')) {
-                                                        title = 'Fornecedor Rejeitou Nova Data';
-                                                        icon = iconMap['Fornecedor rejeitou reagendamento'];
+                                                        title = 'Transportador Rejeitou Nova Data';
+                                                        icon = iconMap['Transportador rejeitou reagendamento'];
                                                     }
                                                 }
                                                 return `
@@ -864,10 +864,10 @@
                                                             <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
                                                                 <i class="fas fa-hourglass-half text-white text-sm"></i>
                                                             </div>
-                                                            <span class="font-semibold text-yellow-800">Aguardando resposta do fornecedor</span>
+                                                            <span class="font-semibold text-yellow-800">Aguardando resposta do Transportador</span>
                                                         </div>
                                                         <p class="text-sm text-yellow-700 leading-relaxed">
-                                                            O fornecedor foi notificado sobre a solicitação de reagendamento e deve responder em breve.
+                                                            O Transportador foi notificado sobre a solicitação de reagendamento e deve responder em breve.
                                                         </p>
                                                     </div>
                                                 `;

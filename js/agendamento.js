@@ -1,4 +1,4 @@
-// Função para obter a URL base da API
+﻿// Função para obter a URL base da API
 function getApiBaseUrl() {
     return typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://brisalog-agenda.online';
 }
@@ -261,7 +261,7 @@ class AgendamentoForm {
 
         // Atualizar descrição da etapa
         const descriptions = {
-            1: 'Dados do Fornecedor',
+            1: 'Dados do Transportador',
             2: 'Dados da Entrega',
             3: 'Pedidos e Notas Fiscais',
             4: 'Resumo e Confirmação'
@@ -327,7 +327,7 @@ class AgendamentoForm {
 
         switch (this.currentStep) {
             case 1:
-                this.formData.fornecedor = {
+                this.formData.Transportador = {
                     nomeEmpresa: getElValue('nome-empresa'),
                     nomeResponsavel: getElValue('nome-responsavel'),
                     email: getElValue('email'),
@@ -686,15 +686,15 @@ class AgendamentoForm {
                     <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
                         <div>
                             <div class="text-xs text-gray-medium">CNPJ</div>
-                            <div class="font-semibold">${this.formData.fornecedor.documento || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.Transportador.documento || 'Não informado'}</div>
                             <div class="text-xs text-gray-medium mt-2">Telefone</div>
-                            <div class="font-semibold">${this.formData.fornecedor.telefone || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.Transportador.telefone || 'Não informado'}</div>
                         </div>
                         <div>
                             <div class="text-xs text-gray-medium">Nome do Transportador</div>
-                            <div class="font-semibold">${this.formData.fornecedor.nomeEmpresa || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.Transportador.nomeEmpresa || 'Não informado'}</div>
                             <div class="text-xs text-gray-medium mt-2">E-mail</div>
-                            <div class="font-semibold">${this.formData.fornecedor.email || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.Transportador.email || 'Não informado'}</div>
                         </div>
                     </div>
                 </div>
@@ -703,15 +703,15 @@ class AgendamentoForm {
                     <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
                         <div>
                             <div class="text-xs text-gray-medium">Nome</div>
-                            <div class="font-semibold">${this.formData.fornecedor.nomeResponsavel || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.Transportador.nomeResponsavel || 'Não informado'}</div>
                             <div class="text-xs text-gray-medium mt-2">CPF</div>
-                            <div class="font-semibold">${this.formData.fornecedor.cpfMotorista || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.Transportador.cpfMotorista || 'Não informado'}</div>
                         </div>
                         <div>
                             <div class="text-xs text-gray-medium">Telefone</div>
-                            <div class="font-semibold">${this.formData.fornecedor.telefoneMotorista || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.Transportador.telefoneMotorista || 'Não informado'}</div>
                             <div class="text-xs text-gray-medium mt-2">Placa do Veículo</div>
-                            <div class="font-semibold">${this.formData.fornecedor.placaVeiculo || 'Não informado'}</div>
+                            <div class="font-semibold">${this.formData.Transportador.placaVeiculo || 'Não informado'}</div>
                         </div>
                     </div>
                 </div>
@@ -788,16 +788,16 @@ class AgendamentoForm {
             
             // Adicionar dados do agendamento
             formData.append('agendamento', JSON.stringify({
-                fornecedor: {
-                    nomeEmpresa: this.formData.fornecedor?.nomeEmpresa || '',
-                    nomeResponsavel: this.formData.fornecedor?.nomeResponsavel || '',
-                    email: this.formData.fornecedor?.email || '',
-                    telefone: this.formData.fornecedor?.telefone || '',
-                    documento: this.formData.fornecedor?.documento || '',
-                    telefoneMotorista: this.formData.fornecedor?.telefoneMotorista || '',
-                    cpfMotorista: this.formData.fornecedor?.cpfMotorista || '',
-                    placaVeiculo: this.formData.fornecedor?.placaVeiculo || '',
-                    tipoVeiculo: this.formData.fornecedor?.tipoVeiculo || ''
+                Transportador: {
+                    nomeEmpresa: this.formData.Transportador?.nomeEmpresa || '',
+                    nomeResponsavel: this.formData.Transportador?.nomeResponsavel || '',
+                    email: this.formData.Transportador?.email || '',
+                    telefone: this.formData.Transportador?.telefone || '',
+                    documento: this.formData.Transportador?.documento || '',
+                    telefoneMotorista: this.formData.Transportador?.telefoneMotorista || '',
+                    cpfMotorista: this.formData.Transportador?.cpfMotorista || '',
+                    placaVeiculo: this.formData.Transportador?.placaVeiculo || '',
+                    tipoVeiculo: this.formData.Transportador?.tipoVeiculo || ''
                 },
                 entrega: this.formData.entrega,
                 pedidos: this.formData.pedidos.map(p => ({
@@ -808,7 +808,7 @@ class AgendamentoForm {
                         valor: nf.valor
                     }))
                 })),
-                tipoVeiculo: this.formData.fornecedor?.tipoVeiculo || ''
+                tipoVeiculo: this.formData.Transportador?.tipoVeiculo || ''
             }));
             
             // Adicionar arquivos

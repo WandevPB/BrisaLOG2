@@ -1,4 +1,4 @@
-// Usa API_BASE_URL do config.js
+﻿// Usa API_BASE_URL do config.js
 // Certifique-se que config.js está incluído antes deste arquivo
 function getApiBaseUrl() {
     return typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : window.location.origin;
@@ -419,8 +419,8 @@ class CDDashboard {
                 <div class="text-3xl font-bold text-gray-700">${kpis.tempoMedioPermanencia ?? '-'}</div>
             </div>
             <div class="bg-white rounded-2xl p-6 shadow flex flex-col">
-                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-users mr-2"></i>Top 5 Fornecedores Não Veio</div>
-                <canvas id="kpi-top-fornecedores" height="180"></canvas>
+                <div class="font-bold text-orange-primary text-lg mb-2 flex items-center"><i class="fas fa-users mr-2"></i>Top 5 Transportadores Não Veio</div>
+                <canvas id="kpi-top-Transportadores" height="180"></canvas>
             </div>
         </div>
         <div class="bg-white rounded-2xl p-6 shadow flex flex-col mb-8">
@@ -470,15 +470,15 @@ class CDDashboard {
                 scales: { x: { ticks: { color: '#FF6B35' } }, y: { ticks: { color: '#FF6B35' } } }
             }
         });
-        // Top fornecedores não veio
+        // Top Transportadores não veio
         if (window.kpiTopForn) window.kpiTopForn.destroy();
-        window.kpiTopForn = new Chart(document.getElementById('kpi-top-fornecedores').getContext('2d'), {
+        window.kpiTopForn = new Chart(document.getElementById('kpi-top-Transportadores').getContext('2d'), {
             type: 'bar',
             data: {
-                labels: kpis.topFornecedoresLabels,
+                labels: kpis.topTransportadoresLabels,
                 datasets: [{
                     label: 'Não Veio',
-                    data: kpis.topFornecedoresValores,
+                    data: kpis.topTransportadoresValores,
                     backgroundColor: '#EF4444',
                 }]
             },
@@ -848,7 +848,7 @@ class CDDashboard {
             let status = agendamento.status;
             
             // Mapear status que não têm coluna específica para status existentes
-            if (status === 'aguardando_resposta_fornecedor') {
+            if (status === 'aguardando_resposta_Transportador') {
                 status = 'reagendamento'; // Mapear para reagendamento
             }
             
@@ -991,7 +991,7 @@ class CDDashboard {
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex-1">
                         <h4 class="font-bold text-gray-dark text-sm">${agendamento.codigo}</h4>
-                        <p class="text-gray-600 text-xs truncate">${agendamento.fornecedor.nome}</p>
+                        <p class="text-gray-600 text-xs truncate">${agendamento.Transportador.nome}</p>
                     </div>
                     <div class="px-2 py-1 rounded text-white text-xs font-semibold ${statusClass}">
                         <i class="${statusIcon}"></i>
@@ -1151,8 +1151,8 @@ class CDDashboard {
                 <div class="flex justify-between items-start mb-4">
                     <div>
                         <h3 class="text-lg font-bold text-gray-dark">${agendamento.codigo}</h3>
-                        <p class="text-gray-medium">${agendamento.fornecedor.nome}</p>
-                        <p class="text-sm text-gray-500">${agendamento.fornecedor.email}</p>
+                        <p class="text-gray-medium">${agendamento.Transportador.nome}</p>
+                        <p class="text-sm text-gray-500">${agendamento.Transportador.email}</p>
                         <!-- Tipo de Veículo removido do card Transportadora -->
                     </div>
                     <div class="px-3 py-1 rounded-full text-white text-sm font-semibold ${statusClass}">
@@ -1214,8 +1214,8 @@ class CDDashboard {
                             <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>
                             ${agendamento.codigo}
                         </h3>
-                        <p class="text-gray-dark font-semibold">${agendamento.fornecedor.nome}</p>
-                        <p class="text-sm text-gray-600">${agendamento.fornecedor.telefone}</p>
+                        <p class="text-gray-dark font-semibold">${agendamento.Transportador.nome}</p>
+                        <p class="text-sm text-gray-600">${agendamento.Transportador.telefone}</p>
                     </div>
                     <div class="text-right">
                         <div class="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-semibold mb-2">
@@ -1306,8 +1306,8 @@ class CDDashboard {
                                 </div>
                             </div>
                             <div class="ml-3 min-w-0 flex-1">
-                                <div class="text-sm font-medium text-gray-900 truncate">${agendamento.fornecedor?.nome || 'N/A'}</div>
-                                <div class="text-xs text-gray-500 truncate">${agendamento.fornecedor?.email || 'N/A'}</div>
+                                <div class="text-sm font-medium text-gray-900 truncate">${agendamento.Transportador?.nome || 'N/A'}</div>
+                                <div class="text-xs text-gray-500 truncate">${agendamento.Transportador?.email || 'N/A'}</div>
                             </div>
                         </div>
                     </td>
@@ -1446,9 +1446,9 @@ class CDDashboard {
                     valueA = a.codigo;
                     valueB = b.codigo;
                     break;
-                case 'fornecedor':
-                    valueA = a.fornecedor?.nome || '';
-                    valueB = b.fornecedor?.nome || '';
+                case 'Transportador':
+                    valueA = a.Transportador?.nome || '';
+                    valueB = b.Transportador?.nome || '';
                     break;
                 case 'dataEntrega':
                     valueA = new Date(a.dataEntrega);
@@ -1496,7 +1496,7 @@ class CDDashboard {
             'entregue': 'fas fa-truck',
             'nao-veio': 'fas fa-times-circle',
             'reagendamento': 'fas fa-calendar-alt',
-            'aguardando_resposta_fornecedor': 'fas fa-hourglass-half'
+            'aguardando_resposta_Transportador': 'fas fa-hourglass-half'
         };
         return icons[status] || 'fas fa-question-circle';
     }
@@ -1512,7 +1512,7 @@ class CDDashboard {
             'entregue': 'Entregue',
             'nao-veio': 'Não Veio',
             'reagendamento': 'Reagendamento',
-            'aguardando_resposta_fornecedor': 'Aguardando Fornecedor'
+            'aguardando_resposta_Transportador': 'Aguardando Transportador'
         };
         return texts[status] || 'Desconhecido';
     }
@@ -1524,7 +1524,7 @@ class CDDashboard {
             'entregue': 'bg-blue-500 text-white',
             'nao-veio': 'bg-red-500 text-white',
             'reagendamento': 'bg-purple-500 text-white',
-            'aguardando_resposta_fornecedor': 'bg-yellow-500 text-white',
+            'aguardando_resposta_Transportador': 'bg-yellow-500 text-white',
             'reagendamento-solicitado': 'bg-purple-500 text-white',
             'cancelado': 'bg-gray-500 text-white'
         };
@@ -1708,7 +1708,7 @@ class CDDashboard {
                     ${transportadorHtml}
                     <!-- Volumes -->
                     ${volumesHtml}
-                    <!-- Dados do Fornecedor -->
+                    <!-- Dados do Transportador -->
                     <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-3">
                             <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
@@ -1719,20 +1719,20 @@ class CDDashboard {
                         <div class="space-y-2 text-sm">
                             <div>
                                 <span class="text-gray-600 text-xs">Empresa</span>
-                                <p class="font-semibold truncate" title="${agendamento.fornecedor.nome}">${agendamento.fornecedor.nome}</p>
+                                <p class="font-semibold truncate" title="${agendamento.Transportador.nome}">${agendamento.Transportador.nome}</p>
                             </div>
                             <div>
                                 <span class="text-gray-600 text-xs">E-mail</span>
-                                <p class="font-semibold truncate" title="${agendamento.fornecedor.email}">${agendamento.fornecedor.email}</p>
+                                <p class="font-semibold truncate" title="${agendamento.Transportador.email}">${agendamento.Transportador.email}</p>
                             </div>
                             <div>
                                 <span class="text-gray-600 text-xs">Telefone</span>
-                                <p class="font-semibold">${agendamento.fornecedor.telefone}</p>
+                                <p class="font-semibold">${agendamento.Transportador.telefone}</p>
                             </div>
-                            ${agendamento.fornecedor.documento ? `
+                            ${agendamento.Transportador.documento ? `
                                 <div>
                                     <span class="text-gray-600 text-xs">CNPJ</span>
-                                    <p class="font-semibold text-xs">${agendamento.fornecedor.documento}</p>
+                                    <p class="font-semibold text-xs">${agendamento.Transportador.documento}</p>
                                 </div>
                             ` : ''}
                                <div>
@@ -1751,23 +1751,23 @@ class CDDashboard {
                             <div class="space-y-2 text-sm">
                                 <div>
                                     <span class="text-gray-600 text-xs">Nome</span>
-                                    <p class="font-semibold">${agendamento.motoristaNome || agendamento.fornecedor?.nomeResponsavel || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaNome || agendamento.Transportador?.nomeResponsavel || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">CPF</span>
-                                    <p class="font-semibold">${agendamento.motoristaCpf || agendamento.fornecedor?.cpfMotorista || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaCpf || agendamento.Transportador?.cpfMotorista || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Telefone</span>
-                                    <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.fornecedor?.telefoneMotorista || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.Transportador?.telefoneMotorista || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Placa</span>
-                                    <p class="font-semibold">${agendamento.placaVeiculo || agendamento.fornecedor?.placaVeiculo || 'Não informado'}</p>
+                                    <p class="font-semibold">${agendamento.placaVeiculo || agendamento.Transportador?.placaVeiculo || 'Não informado'}</p>
                                 </div>
                                 <div>
                                     <span class="text-gray-600 text-xs">Tipo de Veículo</span>
-                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.fornecedor?.tipoVeiculo || 'Não informado'}</p>
+                                    <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.Transportador?.tipoVeiculo || 'Não informado'}</p>
                                 </div>
                             </div>
                         </div>
@@ -1915,18 +1915,18 @@ class CDDashboard {
         }
 
         // Detect if supplier has responded
-        const hasSupplierResponse = historico.some(e => e.acao === 'fornecedor_respondeu' || e.acao === 'reagendamento_aceito' || e.acao === 'data_aceita' || e.acao === 'data_rejeitada');
+        const hasSupplierResponse = historico.some(e => e.acao === 'Transportador_respondeu' || e.acao === 'reagendamento_aceito' || e.acao === 'data_aceita' || e.acao === 'data_rejeitada');
 
         return `
             <div class="space-y-4">
                 ${historico.map((evento, index) => {
-                    // Detecta reagendamento do fornecedor por nome da ação
+                    // Detecta reagendamento do Transportador por nome da ação
                     let acao = evento.acao;
                     let iconClass = this.getHistoryIconClass(acao);
                     let icon = this.getHistoryIcon(acao);
                     let title = this.getHistoryTitle(acao, evento.autor, evento);
                     // Ícones coloridos e padronizados
-                    if (acao && acao.toLowerCase().includes('fornecedor') && acao.toLowerCase().includes('sugeriu')) {
+                    if (acao && acao.toLowerCase().includes('Transportador') && acao.toLowerCase().includes('sugeriu')) {
                         iconClass = 'bg-purple-500';
                         icon = 'fas fa-calendar text-purple-400';
                         title = 'Nova Data Sugerida';
@@ -1937,11 +1937,11 @@ class CDDashboard {
                     } else if (acao && acao.toLowerCase().includes('aceitou')) {
                         iconClass = 'bg-green-500';
                         icon = 'fas fa-thumbs-up text-green-400';
-                        title = 'Fornecedor Aceitou Nova Data';
+                        title = 'Transportador Aceitou Nova Data';
                     } else if (acao && acao.toLowerCase().includes('rejeitou')) {
                         iconClass = 'bg-red-500';
                         icon = 'fas fa-thumbs-down text-red-400';
-                        title = 'Fornecedor Rejeitou Nova Data';
+                        title = 'Transportador Rejeitou Nova Data';
                     }
                     return `
                         <div class="flex items-start space-x-4 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-4' : ''}">
@@ -2001,10 +2001,10 @@ class CDDashboard {
                         <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
                             <i class="fas fa-hourglass-half text-white text-sm"></i>
                         </div>
-                        <span class="font-semibold text-yellow-800">Aguardando resposta do fornecedor</span>
+                        <span class="font-semibold text-yellow-800">Aguardando resposta do Transportador</span>
                     </div>
                     <p class="text-sm text-yellow-700 leading-relaxed">
-                        O fornecedor foi notificado sobre a solicitação de reagendamento e deve responder em breve.
+                        O Transportador foi notificado sobre a solicitação de reagendamento e deve responder em breve.
                     </p>
                 </div>
             ` : ''}
@@ -2019,19 +2019,19 @@ class CDDashboard {
             'agendado': 'bg-blue-600',
             'em-transito': 'bg-indigo-500',
             'entregue': 'bg-emerald-600',
-            'reagendamento_fornecedor': 'bg-orange-500',
+            'reagendamento_Transportador': 'bg-orange-500',
             'reagendamento_sugerido': 'bg-purple-500',
             'reagendamento_aceito': 'bg-green-600',
             'nao-veio': 'bg-red-500',
             'cd_sugeriu_reagendamento': 'bg-orange-600',
-            'fornecedor_respondeu': 'bg-purple-600',
+            'Transportador_respondeu': 'bg-purple-600',
             'status_alterado': 'bg-indigo-600',
             'agendamento_confirmado': 'bg-green-500',
             'agendamento_entregue': 'bg-emerald-600',
             'agendamento_nao_veio': 'bg-red-500',
             'data_aceita': 'bg-green-600',
             'data_rejeitada': 'bg-red-600',
-            'fornecedor_nao_compareceu': 'bg-red-500',
+            'Transportador_nao_compareceu': 'bg-red-500',
             'agendamento_cancelado': 'bg-gray-600'
         };
         return classes[acao] || 'bg-gray-500';
@@ -2045,19 +2045,19 @@ class CDDashboard {
             'agendado': 'fas fa-calendar-check',
             'em-transito': 'fas fa-shipping-fast',
             'entregue': 'fas fa-truck-loading',
-            'reagendamento_fornecedor': 'fas fa-calendar-times',
+            'reagendamento_Transportador': 'fas fa-calendar-times',
             'reagendamento_sugerido': 'fas fa-calendar-plus',
             'reagendamento_aceito': 'fas fa-handshake',
             'nao-veio': 'fas fa-user-times',
             'cd_sugeriu_reagendamento': 'fas fa-calendar-alt',
-            'fornecedor_respondeu': 'fas fa-reply-all',
+            'Transportador_respondeu': 'fas fa-reply-all',
             'status_alterado': 'fas fa-edit',
             'agendamento_confirmado': 'fas fa-check-double',
             'agendamento_entregue': 'fas fa-truck',
             'agendamento_nao_veio': 'fas fa-user-slash',
             'data_aceita': 'fas fa-thumbs-up',
             'data_rejeitada': 'fas fa-thumbs-down',
-            'fornecedor_nao_compareceu': 'fas fa-exclamation-triangle',
+            'Transportador_nao_compareceu': 'fas fa-exclamation-triangle',
             'agendamento_cancelado': 'fas fa-ban'
         };
         return icons[acao] || 'fas fa-info-circle';
@@ -2072,30 +2072,30 @@ class CDDashboard {
             'agendado': 'Status: Agendado',
             'em-transito': 'Em Trânsito',
             'entregue': 'Entrega Realizada',
-            'reagendamento_fornecedor': 'Fornecedor Solicitou Reagendamento',
+            'reagendamento_Transportador': 'Transportador Solicitou Reagendamento',
             'reagendamento_sugerido': 'Nova Data Sugerida',
-            'reagendamento_aceito': 'Fornecedor Aceitou Nova Data',
-            'nao-veio': 'Fornecedor Não Compareceu',
+            'reagendamento_aceito': 'Transportador Aceitou Nova Data',
+            'nao-veio': 'Transportador Não Compareceu',
             'cd_sugeriu_reagendamento': 'CD Solicitou Reagendamento',
-            'fornecedor_respondeu': '', // handled below
+            'Transportador_respondeu': '', // handled below
             'status_alterado': 'Status Alterado',
             'agendamento_confirmado': 'Agendamento Confirmado',
             'agendamento_entregue': 'Entrega Realizada',
             'agendamento_nao_veio': 'Ausência Registrada',
-            'data_aceita': 'Fornecedor Aceitou Nova Data',
-            'data_rejeitada': 'Fornecedor Rejeitou Nova Data',
-            'fornecedor_nao_compareceu': 'Ausência Registrada',
+            'data_aceita': 'Transportador Aceitou Nova Data',
+            'data_rejeitada': 'Transportador Rejeitou Nova Data',
+            'Transportador_nao_compareceu': 'Ausência Registrada',
             'agendamento_cancelado': 'Agendamento Cancelado'
         };
-        // Custom logic for fornecedor_respondeu
-        if (acao === 'fornecedor_respondeu' && arguments.length > 2) {
+        // Custom logic for Transportador_respondeu
+        if (acao === 'Transportador_respondeu' && arguments.length > 2) {
             const evento = arguments[2];
             if (evento && evento.resposta === 'aceita') {
-                return 'Fornecedor Aceitou Nova Data';
+                return 'Transportador Aceitou Nova Data';
             } else if (evento && evento.resposta === 'rejeitada') {
-                return 'Fornecedor Rejeitou Nova Data';
+                return 'Transportador Rejeitou Nova Data';
             } else {
-                return 'Fornecedor Respondeu';
+                return 'Transportador Respondeu';
             }
         }
         return titles[acao] || 'Evento do Sistema';
@@ -2128,7 +2128,7 @@ class CDDashboard {
             return `
                 <div class="w-full bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
                     <i class="fas fa-clock text-yellow-600 text-lg mb-1"></i>
-                    <p class="text-yellow-800 font-medium text-sm">Aguardando resposta do fornecedor</p>
+                    <p class="text-yellow-800 font-medium text-sm">Aguardando resposta do Transportador</p>
                     <p class="text-yellow-700 text-xs">Nova data foi sugerida e notificação enviada</p>
                 </div>
             `;
@@ -2464,7 +2464,7 @@ class CDDashboard {
                 this.closeSuggestDateModal();
                 this.closeDetailModal();
                 
-                this.showNotification('Sugestão de nova data enviada ao fornecedor.', 'success');
+                this.showNotification('Sugestão de nova data enviada ao Transportador.', 'success');
             } else {
                 // Verificar se é token expirado
                 if (handleTokenExpired(response)) {
@@ -2527,8 +2527,8 @@ class CDDashboard {
             const matchesStatus = !statusFilter || agendamento.status === statusFilter;
             const matchesSearch = !searchText || 
                 agendamento.codigo.toLowerCase().includes(searchText) ||
-                agendamento.fornecedor.nome.toLowerCase().includes(searchText) ||
-                agendamento.fornecedor.email.toLowerCase().includes(searchText);
+                agendamento.Transportador.nome.toLowerCase().includes(searchText) ||
+                agendamento.Transportador.email.toLowerCase().includes(searchText);
                 
             return matchesStatus && matchesSearch;
         });
@@ -2547,9 +2547,9 @@ class CDDashboard {
             
             const data = this.filteredAgendamentos.map(a => ({
                 'Código': a.codigo,
-                'Fornecedor': a.fornecedor.nome,
-                'Email': a.fornecedor.email,
-                'Telefone': a.fornecedor.telefone,
+                'Transportador': a.Transportador.nome,
+                'Email': a.Transportador.email,
+                'Telefone': a.Transportador.telefone,
                 'Data': this.formatDate(a.dataEntrega),
                 'Horário': a.horarioEntrega,
                 'Status': this.getStatusText(a.status),
@@ -2698,7 +2698,7 @@ class CDDashboard {
                     </span>
                 </div>
                 <div class="bg-gray-50 rounded-lg p-6 space-y-3">
-                    <p><strong>Fornecedor:</strong> ${agendamento.fornecedor.nome}</p>
+                    <p><strong>Transportador:</strong> ${agendamento.Transportador.nome}</p>
                     <p><strong>Data Programada:</strong> ${this.formatDate(agendamento.dataEntrega)}</p>
                     <p><strong>Horário:</strong> ${agendamento.horarioEntrega}</p>
                 </div>
@@ -3639,7 +3639,7 @@ function closeRegistrarEntregaModal() {
 
 function configurarMascarasEntrega() {
     // Configurar máscara para CNPJ
-    const cnpjInput = document.getElementById('entrega-cnpj-fornecedor');
+    const cnpjInput = document.getElementById('entrega-cnpj-Transportador');
     cnpjInput.addEventListener('input', function(e) {
         let value = e.target.value.replace(/\D/g, '');
         if (value.length <= 14) {
@@ -3652,7 +3652,7 @@ function configurarMascarasEntrega() {
     });
     
     // Configurar máscara para telefone
-    const telefoneInput = document.getElementById('entrega-telefone-fornecedor');
+    const telefoneInput = document.getElementById('entrega-telefone-Transportador');
     telefoneInput.addEventListener('input', function(e) {
         let value = e.target.value.replace(/\D/g, '');
         if (value.length <= 11) {
@@ -3732,10 +3732,10 @@ function validarStepEntrega(step) {
         const campos = [
             'entrega-data',
             'entrega-horario', 
-            'entrega-nome-fornecedor',
-            'entrega-cnpj-fornecedor',
-            'entrega-email-fornecedor',
-            'entrega-telefone-fornecedor',
+            'entrega-nome-Transportador',
+            'entrega-cnpj-Transportador',
+            'entrega-email-Transportador',
+            'entrega-telefone-Transportador',
             'entrega-tipo-carga'
         ];
         
@@ -3749,14 +3749,14 @@ function validarStepEntrega(step) {
         }
         
         // Validar CNPJ
-        const cnpj = document.getElementById('entrega-cnpj-fornecedor').value.replace(/\D/g, '');
+        const cnpj = document.getElementById('entrega-cnpj-Transportador').value.replace(/\D/g, '');
         if (cnpj.length !== 14) {
             dashboard.showNotification('CNPJ deve ter 14 dígitos', 'error');
             return false;
         }
         
         // Validar telefone
-        const telefone = document.getElementById('entrega-telefone-fornecedor').value.replace(/\D/g, '');
+        const telefone = document.getElementById('entrega-telefone-Transportador').value.replace(/\D/g, '');
         if (telefone.length < 10) {
             dashboard.showNotification('Telefone deve ter pelo menos 10 dígitos', 'error');
             return false;
@@ -4014,10 +4014,10 @@ function gerarResumoEntrega() {
     const dadosBasicos = {
         data: document.getElementById('entrega-data').value,
         horario: document.getElementById('entrega-horario').value,
-        fornecedor: document.getElementById('entrega-nome-fornecedor').value,
-        cnpj: document.getElementById('entrega-cnpj-fornecedor').value,
-        email: document.getElementById('entrega-email-fornecedor').value,
-        telefone: document.getElementById('entrega-telefone-fornecedor').value,
+        Transportador: document.getElementById('entrega-nome-Transportador').value,
+        cnpj: document.getElementById('entrega-cnpj-Transportador').value,
+        email: document.getElementById('entrega-email-Transportador').value,
+        telefone: document.getElementById('entrega-telefone-Transportador').value,
         tipoCarga: document.getElementById('entrega-tipo-carga').value,
         observacoes: document.getElementById('entrega-observacoes').value
     };
@@ -4029,7 +4029,7 @@ function gerarResumoEntrega() {
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div><strong>Data:</strong> ${parseLocalDate(dadosBasicos.data).toLocaleDateString('pt-BR')}</div>
                     <div><strong>Horário:</strong> ${dadosBasicos.horario}</div>
-                    <div><strong>Fornecedor:</strong> ${dadosBasicos.fornecedor}</div>
+                    <div><strong>Transportador:</strong> ${dadosBasicos.Transportador}</div>
                     <div><strong>CNPJ:</strong> ${dadosBasicos.cnpj}</div>
                     <div><strong>Email:</strong> ${dadosBasicos.email}</div>
                     <div><strong>Telefone:</strong> ${dadosBasicos.telefone}</div>
@@ -4110,11 +4110,11 @@ async function handleRegistrarEntrega(e) {
     
     // Dados básicos da entrega
     const dadosEntrega = {
-        fornecedor: {
-            nomeEmpresa: document.getElementById('entrega-nome-fornecedor').value,
-            email: document.getElementById('entrega-email-fornecedor').value,
-            telefone: document.getElementById('entrega-telefone-fornecedor').value,
-            documento: document.getElementById('entrega-cnpj-fornecedor').value
+        Transportador: {
+            nomeEmpresa: document.getElementById('entrega-nome-Transportador').value,
+            email: document.getElementById('entrega-email-Transportador').value,
+            telefone: document.getElementById('entrega-telefone-Transportador').value,
+            documento: document.getElementById('entrega-cnpj-Transportador').value
         },
         entrega: {
             cdDestino: 'Default CD', // Será usado o CD do usuário logado
@@ -4424,7 +4424,7 @@ function aplicarFiltrosEntregas() {
     if (textoPesquisa) {
         entregasFiltradas = entregasFiltradas.filter(entrega => {
             return (
-                entrega.fornecedor?.nome?.toLowerCase().includes(textoPesquisa) ||
+                entrega.Transportador?.nome?.toLowerCase().includes(textoPesquisa) ||
                 entrega.codigo?.toLowerCase().includes(textoPesquisa) ||
                 entrega.tipoCarga?.toLowerCase().includes(textoPesquisa) ||
                 entrega.observacoes?.toLowerCase().includes(textoPesquisa)
@@ -4526,7 +4526,7 @@ function criarCardEntrega(entrega) {
             </div>
             
             <h4 class="font-semibold text-gray-800 mb-2 line-clamp-2">
-                ${entrega.fornecedor?.nome || 'Fornecedor não informado'}
+                ${entrega.Transportador?.nome || 'Transportador não informado'}
             </h4>
             
             <div class="space-y-2 text-sm text-gray-600">
