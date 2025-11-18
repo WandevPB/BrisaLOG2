@@ -3624,8 +3624,17 @@ function openRegistrarEntregaModal() {
     // Configurar máscaras
     configurarMascarasEntrega();
     
+    // Prevenir Enter de submeter o formulário
+    const form = document.getElementById('registrar-entrega-form');
+    form.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
     // Event listener para submit
-    document.getElementById('registrar-entrega-form').onsubmit = handleRegistrarEntrega;
+    form.onsubmit = handleRegistrarEntrega;
 }
 
 function closeRegistrarEntregaModal() {
@@ -4222,17 +4231,20 @@ function gerarResumoEntrega() {
 
 async function handleRegistrarEntrega(e) {
     e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('📦 [Frontend] handleRegistrarEntrega chamado');
     
     // Verificar dados básicos primeiro (step 1)
     if (!validarStepEntrega(1)) {
-        return;
+        return false;
     }
     
     // Verificar se há token de autenticação
     const token = sessionStorage.getItem('token');
     if (!token) {
         dashboard.showNotification('Token de autenticação não encontrado. Faça login novamente.', 'error');
-        return;
+        return false;
     }
     
     // Coletar dados do step 1 - Transportador
@@ -4339,6 +4351,8 @@ async function handleRegistrarEntrega(e) {
     } finally {
         dashboard.showLoading(false);
     }
+    
+    return false;
 }
 
 // ========================================
