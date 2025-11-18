@@ -985,9 +985,9 @@ class CDDashboard {
         // Verificar se a entrega foi incluída pelo CD
         const incluidoPeloCD = agendamento.incluidoPeloCD;
         const cdIndicator = incluidoPeloCD ? 
-            `<div class="bg-yellow-100 text-yellow-800 font-bold text-xs p-2 rounded mb-2 flex items-center">
-                <i class="fas fa-exclamation-circle mr-1"></i>
-                ENTREGA INCLUÍDA PELO CD
+            `<div class="bg-blue-100 border-l-4 border-blue-500 text-blue-800 font-bold text-xs p-2 rounded mb-2 flex items-center">
+                <i class="fas fa-info-circle mr-2"></i>
+                INCLUÍDO PELO CD
             </div>` : '';
 
         return `
@@ -3606,6 +3606,7 @@ async function excluirBloqueio(id, dataFormatada) {
 var entregaCurrentStep = 1;
 var entregaPedidos = [];
 var entregaCurrentPedido = 0;
+var entregaNotasFiscais = []; // Array simples para notas fiscais do modal
 
 function openRegistrarEntregaModal() {
     const modal = document.getElementById('registrar-entrega-modal');
@@ -3615,13 +3616,10 @@ function openRegistrarEntregaModal() {
     entregaCurrentStep = 1;
     entregaPedidos = [];
     entregaCurrentPedido = 0;
+    entregaNotasFiscais = []; // Reset notas fiscais
     
     // Mostrar apenas o primeiro step
     mostrarStepEntrega(1);
-    
-    // Definir data atual como padrão
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('entrega-data').value = today;
     
     // Configurar máscaras
     configurarMascarasEntrega();
@@ -3698,7 +3696,7 @@ function mostrarStepEntrega(step) {
         btnAnterior.classList.add('hidden');
         btnProximo.classList.remove('hidden');
         btnFinalizar.classList.add('hidden');
-    } else if (step === 3) {
+    } else if (step === 4) {
         btnAnterior.classList.remove('hidden');
         btnProximo.classList.add('hidden');
         btnFinalizar.classList.remove('hidden');
@@ -3710,8 +3708,8 @@ function mostrarStepEntrega(step) {
     
     entregaCurrentStep = step;
     
-    // Se for step 3, gerar resumo
-    if (step === 3) {
+    // Se for step 4, gerar resumo
+    if (step === 4) {
         gerarResumoEntrega();
     }
 }
@@ -3724,13 +3722,8 @@ function entregaAnteriorStep() {
 
 function entregaProximoStep() {
     if (validarStepEntrega(entregaCurrentStep)) {
-        if (entregaCurrentStep < 3) {
+        if (entregaCurrentStep < 4) {
             mostrarStepEntrega(entregaCurrentStep + 1);
-            
-            // Se for step 2 e não há pedidos, adicionar o primeiro
-            if (entregaCurrentStep === 2 && entregaPedidos.length === 0) {
-                adicionarPedidoEntrega();
-            }
         }
     }
 }
@@ -3738,13 +3731,10 @@ function entregaProximoStep() {
 function validarStepEntrega(step) {
     if (step === 1) {
         const campos = [
-            'entrega-data',
-            'entrega-horario', 
             'entrega-nome-Transportador',
             'entrega-cnpj-Transportador',
             'entrega-email-Transportador',
-            'entrega-telefone-Transportador',
-            'entrega-tipo-carga'
+            'entrega-telefone-Transportador'
         ];
         
         for (const campo of campos) {
@@ -3772,27 +3762,104 @@ function validarStepEntrega(step) {
         
         return true;
     } else if (step === 2) {
-        if (entregaPedidos.length === 0) {
-            dashboard.showNotification('Adicione pelo menos um pedido', 'error');
+        const camposObrigatorios = [
+            'entrega-cd-destino',
+            'entrega-horario-preferencial',
+            'entrega-quantidade-volumes',
+            'entrega-tipo-volume'
+        ];
+        
+        for (const campo of camposObrigatorios) {
+            const elemento = document.getElementById(campo);
+            if (!elemento.value.trim()) {
+                dashboard.showNotification(`Por favor, preencha o campo: ${elemento.previousElementSibling?.textContent || campo}`, 'error');
+                elemento.focus();
+                return false;
+            }
+        }
+        
+        // Validar quantidade de volumes
+        const quantidade = parseInt(document.getElementById('entrega-quantidade-volumes').value);
+        if (isNaN(quantidade) || quantidade <= 0) {
+            dashboard.showNotification('Quantidade de volumes deve ser maior que zero', 'error');
             return false;
         }
         
-        // Validar cada pedido
-        for (const pedido of entregaPedidos) {
-            if (!pedido.numero.trim()) {
-                dashboard.showNotification('Número do pedido é obrigatório', 'error');
-                return false;
-            }
-            if (pedido.notasFiscais.length === 0) {
-                dashboard.showNotification(`Adicione pelo menos uma nota fiscal para o pedido ${pedido.numero}`, 'error');
-                return false;
-            }
+        return true;
+    } else if (step === 3) {
+        const notasFiscaisList = document.querySelectorAll('.nota-fiscal-entrega-item');
+        if (notasFiscaisList.length === 0) {
+            dashboard.showNotification('Adicione pelo menos uma nota fiscal', 'error');
+            return false;
         }
         
         return true;
     }
     
     return true;
+}
+
+// Funções para gerenciar notas fiscais no modal de Registrar Entrega
+function adicionarNotaFiscalEntregaModal() {
+    const notaFiscal = {
+        numero: '',
+        valor: 0
+    };
+    
+    entregaNotasFiscais.push(notaFiscal);
+    renderizarNotasFiscaisEntregaModal();
+}
+
+function removerNotaFiscalEntregaModal(index) {
+    entregaNotasFiscais.splice(index, 1);
+    renderizarNotasFiscaisEntregaModal();
+}
+
+function renderizarNotasFiscaisEntregaModal() {
+    const container = document.getElementById('entrega-notas-fiscais-list');
+    
+    if (entregaNotasFiscais.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma nota fiscal adicionada</p>';
+        return;
+    }
+    
+    container.innerHTML = entregaNotasFiscais.map((nf, index) => `
+        <div class="flex gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Número da NF *</label>
+                <input type="text" 
+                       value="${nf.numero}" 
+                       placeholder="Ex: 123456"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
+                       onchange="entregaNotasFiscais[${index}].numero = this.value">
+            </div>
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$) *</label>
+                <input type="number" 
+                       value="${nf.valor}" 
+                       step="0.01" 
+                       placeholder="0,00"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
+                       onchange="entregaNotasFiscais[${index}].valor = parseFloat(this.value) || 0; atualizarTotalEntrega()">
+            </div>
+            <div class="flex items-end">
+                <button type="button" onclick="removerNotaFiscalEntregaModal(${index})" 
+                        class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    atualizarTotalEntrega();
+}
+
+function atualizarTotalEntrega() {
+    const total = entregaNotasFiscais.reduce((sum, nf) => sum + (parseFloat(nf.valor) || 0), 0);
+    const totalElement = document.getElementById('entrega-total-notas');
+    if (totalElement) {
+        totalElement.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    }
 }
 
 function adicionarPedidoEntrega() {
@@ -4018,60 +4085,89 @@ function removerPedidoEntrega(index) {
 function gerarResumoEntrega() {
     const resumoContainer = document.getElementById('entrega-resumo');
     
-    // Coletar dados do step 1
-    const dadosBasicos = {
-        data: document.getElementById('entrega-data').value,
-        horario: document.getElementById('entrega-horario').value,
-        transportador: document.getElementById('entrega-nome-Transportador').value,
+    // Coletar dados do step 1 - Dados do Transportador
+    const dadosTransportador = {
+        nome: document.getElementById('entrega-nome-Transportador').value,
         cnpj: document.getElementById('entrega-cnpj-Transportador').value,
         email: document.getElementById('entrega-email-Transportador').value,
-        telefone: document.getElementById('entrega-telefone-Transportador').value,
-        tipoCarga: document.getElementById('entrega-tipo-carga').value,
-        observacoes: document.getElementById('entrega-observacoes').value
+        telefone: document.getElementById('entrega-telefone-Transportador').value
     };
+    
+    // Coletar dados do step 2 - Dados da Entrega
+    const dadosEntrega = {
+        cdDestino: document.getElementById('entrega-cd-destino').value,
+        horarioPreferencial: document.getElementById('entrega-horario-preferencial').value,
+        quantidadeVolumes: document.getElementById('entrega-quantidade-volumes').value,
+        tipoVolume: document.getElementById('entrega-tipo-volume').value,
+        observacoes: document.getElementById('entrega-observacoes-step2')?.value || ''
+    };
+    
+    // Calcular total das notas fiscais
+    const totalNotas = entregaNotasFiscais.reduce((sum, nf) => sum + (parseFloat(nf.valor) || 0), 0);
     
     let resumoHtml = `
         <div class="space-y-6">
+            <!-- Dados do Transportador -->
             <div>
-                <h4 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Dados da Entrega</h4>
+                <h4 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">
+                    <i class="fas fa-truck mr-2 text-orange-primary"></i>
+                    Dados do Transportador
+                </h4>
                 <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><strong>Data:</strong> ${parseLocalDate(dadosBasicos.data).toLocaleDateString('pt-BR')}</div>
-                    <div><strong>Horário:</strong> ${dadosBasicos.horario}</div>
-                    <div><strong>Transportador:</strong> ${dadosBasicos.transportador}</div>
-                    <div><strong>CNPJ:</strong> ${dadosBasicos.cnpj}</div>
-                    <div><strong>Email:</strong> ${dadosBasicos.email}</div>
-                    <div><strong>Telefone:</strong> ${dadosBasicos.telefone}</div>
-                    <div><strong>Tipo de Carga:</strong> ${dadosBasicos.tipoCarga}</div>
-                    ${dadosBasicos.observacoes ? `<div class="col-span-2"><strong>Observações:</strong> ${dadosBasicos.observacoes}</div>` : ''}
+                    <div><strong>Nome:</strong> ${dadosTransportador.nome}</div>
+                    <div><strong>CNPJ:</strong> ${dadosTransportador.cnpj}</div>
+                    <div><strong>Email:</strong> ${dadosTransportador.email}</div>
+                    <div><strong>Telefone:</strong> ${dadosTransportador.telefone}</div>
                 </div>
             </div>
             
+            <!-- Dados da Entrega -->
             <div>
-                <h4 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Pedidos e Notas Fiscais</h4>
-                <div class="space-y-4">
+                <h4 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">
+                    <i class="fas fa-box mr-2 text-orange-primary"></i>
+                    Dados da Entrega
+                </h4>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><strong>CD de Destino:</strong> ${dadosEntrega.cdDestino}</div>
+                    <div><strong>Horário Preferencial:</strong> ${dadosEntrega.horarioPreferencial}</div>
+                    <div><strong>Quantidade de Volumes:</strong> ${dadosEntrega.quantidadeVolumes}</div>
+                    <div><strong>Tipo de Volume:</strong> ${dadosEntrega.tipoVolume}</div>
+                    ${dadosEntrega.observacoes ? `<div class="col-span-2"><strong>Observações:</strong> ${dadosEntrega.observacoes}</div>` : ''}
+                </div>
+            </div>
+            
+            <!-- Notas Fiscais -->
+            <div>
+                <h4 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">
+                    <i class="fas fa-file-invoice mr-2 text-orange-primary"></i>
+                    Notas Fiscais (${entregaNotasFiscais.length})
+                </h4>
+                <div class="space-y-2">
     `;
     
-    entregaPedidos.forEach((pedido, index) => {
-        resumoHtml += `
-            <div class="bg-white border border-gray-200 rounded-lg p-4">
-                <h5 class="font-semibold mb-2">Pedido: ${pedido.numero}</h5>
-                <div class="space-y-2">
-        `;
-        
-        pedido.notasFiscais.forEach((nf, nfIndex) => {
+    if (entregaNotasFiscais.length === 0) {
+        resumoHtml += '<p class="text-gray-500 text-sm">Nenhuma nota fiscal adicionada</p>';
+    } else {
+        entregaNotasFiscais.forEach((nf, index) => {
             resumoHtml += `
-                <div class="flex justify-between items-center text-sm bg-gray-50 p-2 rounded">
-                    <span>NF: ${nf.numero} - R$ ${parseFloat(nf.valor || 0).toFixed(2)}</span>
-                    ${nf.arquivo ? '<span class="text-green-600"><i class="fas fa-file-pdf mr-1"></i>PDF anexado</span>' : '<span class="text-gray-500">Sem arquivo</span>'}
+                <div class="flex justify-between items-center text-sm bg-gray-50 p-3 rounded border border-gray-200">
+                    <div>
+                        <span class="font-medium">NF ${index + 1}:</span> ${nf.numero}
+                    </div>
+                    <div class="text-green-600 font-semibold">
+                        R$ ${parseFloat(nf.valor || 0).toFixed(2).replace('.', ',')}
+                    </div>
                 </div>
             `;
         });
         
         resumoHtml += `
-                </div>
+            <div class="flex justify-between items-center text-base font-bold bg-orange-50 p-3 rounded border-2 border-orange-200 mt-4">
+                <span>Total Geral:</span>
+                <span class="text-orange-primary">R$ ${totalNotas.toFixed(2).replace('.', ',')}</span>
             </div>
         `;
-    });
+    }
     
     resumoHtml += `
                 </div>
@@ -4090,22 +4186,6 @@ async function handleRegistrarEntrega(e) {
         return;
     }
     
-    // Se não há pedidos, criar um pedido básico para registro de entrega
-    if (entregaPedidos.length === 0) {
-        entregaPedidos = [
-            {
-                numero: 'ENTREGA-' + Date.now(),
-                notasFiscais: [
-                    {
-                        numero: 'NF-' + Date.now(),
-                        valor: 0
-                    }
-                ]
-            }
-        ];
-        console.log('📦 [Frontend] Criado pedido básico para entrega:', entregaPedidos);
-    }
-    
     // Verificar se há token de autenticação
     const token = sessionStorage.getItem('token');
     if (!token) {
@@ -4113,10 +4193,7 @@ async function handleRegistrarEntrega(e) {
         return;
     }
     
-    // Criar FormData para incluir arquivos
-    const formData = new FormData();
-    
-    // Dados básicos da entrega
+    // Coletar dados do step 1 - Transportador
     const transportadorData = {
         nomeEmpresa: document.getElementById('entrega-nome-Transportador').value,
         email: document.getElementById('entrega-email-Transportador').value,
@@ -4124,23 +4201,37 @@ async function handleRegistrarEntrega(e) {
         documento: document.getElementById('entrega-cnpj-Transportador').value
     };
     
+    // Coletar dados do step 2 - Dados da Entrega
+    const cdDestino = document.getElementById('entrega-cd-destino').value;
+    const horarioEntrega = document.getElementById('entrega-horario-preferencial').value;
+    const quantidadeVolumes = parseInt(document.getElementById('entrega-quantidade-volumes').value);
+    const tipoVolume = document.getElementById('entrega-tipo-volume').value;
+    const observacoesStep2 = document.getElementById('entrega-observacoes-step2')?.value || '';
+    
+    // Montar array de pedidos com notas fiscais (step 3)
+    const pedidos = [{
+        numero: 'ENTREGA-' + Date.now(),
+        notasFiscais: entregaNotasFiscais.map(nf => ({
+            numero: nf.numero,
+            valor: parseFloat(nf.valor || 0)
+        }))
+    }];
+    
+    // Criar data atual para a entrega
+    const dataAtual = new Date().toISOString().split('T')[0];
+    
     const dadosEntrega = {
         fornecedor: transportadorData, // Backend espera "fornecedor"
         transportador: transportadorData, // Mantém compatibilidade
         entrega: {
-            cdDestino: 'Default CD', // Será usado o CD do usuário logado
-            dataEntrega: document.getElementById('entrega-data').value,
-            horarioEntrega: document.getElementById('entrega-horario').value,
-            tipoCarga: document.getElementById('entrega-tipo-carga').value,
-            observacoes: document.getElementById('entrega-observacoes').value || ''
+            cdDestino: cdDestino,
+            dataEntrega: dataAtual,
+            horarioEntrega: horarioEntrega,
+            quantidadeVolumes: quantidadeVolumes,
+            tipoVolume: tipoVolume,
+            observacoes: observacoesStep2
         },
-        pedidos: entregaPedidos.map(pedido => ({
-            numero: pedido.numero,
-            notasFiscais: pedido.notasFiscais.map(nf => ({
-                numero: nf.numero,
-                valor: parseFloat(nf.valor || 0)
-            }))
-        })),
+        pedidos: pedidos,
         tipoRegistro: 'fora_agendamento',
         // Definindo o status como 'entregue' automaticamente
         status: 'entregue',
@@ -4152,24 +4243,6 @@ async function handleRegistrarEntrega(e) {
     
     console.log('📦 [Frontend] Dados da entrega a serem enviados:', dadosEntrega);
     
-    // Adicionar dados como JSON
-    formData.append('agendamento', JSON.stringify(dadosEntrega));
-    
-    // Adicionar arquivos das notas fiscais
-    let fileIndex = 0;
-    entregaPedidos.forEach((pedido, pedidoIndex) => {
-        pedido.notasFiscais.forEach((nf, nfIndex) => {
-            if (nf.arquivo) {
-                formData.append(`file_${fileIndex}`, nf.arquivo);
-                formData.append(`file_${fileIndex}_info`, JSON.stringify({
-                    pedido: pedido.numero,
-                    nf: nf.numero
-                }));
-                fileIndex++;
-            }
-        });
-    });
-    
     try {
         dashboard.showLoading(true);
         
@@ -4178,9 +4251,10 @@ async function handleRegistrarEntrega(e) {
     const response = await fetch(`${getApiBaseUrl()}/api/agendamentos`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             },
-            body: formData
+            body: JSON.stringify(dadosEntrega)
         });
         
         const result = await response.json();
