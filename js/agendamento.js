@@ -787,18 +787,21 @@ class AgendamentoForm {
             const formData = new FormData();
             
             // Adicionar dados do agendamento
+            const transportadorData = {
+                nomeEmpresa: this.formData.transportador?.nomeEmpresa || '',
+                nomeResponsavel: this.formData.transportador?.nomeResponsavel || '',
+                email: this.formData.transportador?.email || '',
+                telefone: this.formData.transportador?.telefone || '',
+                documento: this.formData.transportador?.documento || '',
+                telefoneMotorista: this.formData.transportador?.telefoneMotorista || '',
+                cpfMotorista: this.formData.transportador?.cpfMotorista || '',
+                placaVeiculo: this.formData.transportador?.placaVeiculo || '',
+                tipoVeiculo: this.formData.transportador?.tipoVeiculo || ''
+            };
+            
             formData.append('agendamento', JSON.stringify({
-                transportador: {
-                    nomeEmpresa: this.formData.transportador?.nomeEmpresa || '',
-                    nomeResponsavel: this.formData.transportador?.nomeResponsavel || '',
-                    email: this.formData.transportador?.email || '',
-                    telefone: this.formData.transportador?.telefone || '',
-                    documento: this.formData.transportador?.documento || '',
-                    telefoneMotorista: this.formData.transportador?.telefoneMotorista || '',
-                    cpfMotorista: this.formData.transportador?.cpfMotorista || '',
-                    placaVeiculo: this.formData.transportador?.placaVeiculo || '',
-                    tipoVeiculo: this.formData.transportador?.tipoVeiculo || ''
-                },
+                fornecedor: transportadorData, // Backend espera "fornecedor"
+                transportador: transportadorData, // Mantém compatibilidade
                 entrega: this.formData.entrega,
                 pedidos: this.formData.pedidos.map(p => ({
                     numero: p.numero,
