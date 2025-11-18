@@ -4321,10 +4321,13 @@ async function handleRegistrarEntrega(e) {
         dashboard.showLoading(true);
         
         console.log('🚀 [Frontend] Enviando requisição para /api/agendamentos');
+        console.log('🔧 [Frontend] VERSÃO: FormData v2 - usando FormData com campo agendamento');
         
         // Backend espera FormData com campo 'agendamento' como string JSON
         const formData = new FormData();
         formData.append('agendamento', JSON.stringify(dadosEntrega));
+        
+        console.log('📦 [Frontend] FormData criado, tipo:', typeof formData, formData instanceof FormData);
         
         // Adicionar arquivos se houver
         entregaNotasFiscais.forEach((nf, index) => {
