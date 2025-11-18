@@ -327,7 +327,7 @@ class AgendamentoForm {
 
         switch (this.currentStep) {
             case 1:
-                this.formData.Transportador = {
+                this.formData.transportador = {
                     nomeEmpresa: getElValue('nome-empresa'),
                     nomeResponsavel: getElValue('nome-responsavel'),
                     email: getElValue('email'),
