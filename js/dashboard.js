@@ -4037,7 +4037,7 @@ function gerarResumoEntrega() {
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div><strong>Data:</strong> ${parseLocalDate(dadosBasicos.data).toLocaleDateString('pt-BR')}</div>
                     <div><strong>Horário:</strong> ${dadosBasicos.horario}</div>
-                    <div><strong>Transportador:</strong> ${dadosBasicos.Transportador}</div>
+                    <div><strong>Transportador:</strong> ${dadosBasicos.transportador}</div>
                     <div><strong>CNPJ:</strong> ${dadosBasicos.cnpj}</div>
                     <div><strong>Email:</strong> ${dadosBasicos.email}</div>
                     <div><strong>Telefone:</strong> ${dadosBasicos.telefone}</div>
@@ -4117,13 +4117,16 @@ async function handleRegistrarEntrega(e) {
     const formData = new FormData();
     
     // Dados básicos da entrega
+    const transportadorData = {
+        nomeEmpresa: document.getElementById('entrega-nome-Transportador').value,
+        email: document.getElementById('entrega-email-Transportador').value,
+        telefone: document.getElementById('entrega-telefone-Transportador').value,
+        documento: document.getElementById('entrega-cnpj-Transportador').value
+    };
+    
     const dadosEntrega = {
-        transportador: {
-            nomeEmpresa: document.getElementById('entrega-nome-Transportador').value,
-            email: document.getElementById('entrega-email-Transportador').value,
-            telefone: document.getElementById('entrega-telefone-Transportador').value,
-            documento: document.getElementById('entrega-cnpj-Transportador').value
-        },
+        fornecedor: transportadorData, // Backend espera "fornecedor"
+        transportador: transportadorData, // Mantém compatibilidade
         entrega: {
             cdDestino: 'Default CD', // Será usado o CD do usuário logado
             dataEntrega: document.getElementById('entrega-data').value,
