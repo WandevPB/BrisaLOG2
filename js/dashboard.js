@@ -3737,6 +3737,16 @@ function entregaProximoStep() {
     }
 }
 
+function finalizarRegistroEntrega() {
+    console.log('🎯 finalizarRegistroEntrega chamado');
+    // Chamar diretamente o handleRegistrarEntrega
+    const fakeEvent = {
+        preventDefault: () => {},
+        stopPropagation: () => {}
+    };
+    handleRegistrarEntrega(fakeEvent);
+}
+
 function validarStepEntrega(step) {
     if (step === 1) {
         const campos = [
