@@ -478,6 +478,45 @@
               <p class="text-gray-medium">Informe as notas e anexe os PDFs</p>
             </div>
 
+            <!-- Instruções de Preenchimento -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-6 mb-8">
+              <div class="flex items-start">
+                <div class="flex-shrink-0">
+                  <i class="fas fa-info-circle text-blue-500 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                  <h3 class="text-lg font-bold text-blue-900 mb-3">
+                    <i class="fas fa-lightbulb mr-2"></i>Como preencher os dados
+                  </h3>
+                  <div class="space-y-2 text-sm text-blue-800">
+                    <div class="flex items-start">
+                      <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 flex-shrink-0"></i>
+                      <p><strong>Uma nota fiscal por linha:</strong> Cada linha representa UMA nota fiscal. Se você tiver 3 notas, adicione 3 linhas.</p>
+                    </div>
+                    <div class="flex items-start">
+                      <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 flex-shrink-0"></i>
+                      <p><strong>Mesmo pedido, múltiplas notas:</strong> Se um pedido tiver mais de uma nota fiscal, repita o número do pedido em cada linha (uma para cada nota).</p>
+                    </div>
+                    <div class="flex items-start">
+                      <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 flex-shrink-0"></i>
+                      <p><strong>Número do Pedido:</strong> É o número que começa com <span class="font-bold bg-yellow-200 px-2 py-1 rounded">450</span> (exemplo: 4501234567).</p>
+                    </div>
+                    <div class="flex items-start">
+                      <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 flex-shrink-0"></i>
+                      <p><strong>Anexo PDF:</strong> Cada nota fiscal deve ter seu arquivo PDF anexado.</p>
+                    </div>
+                  </div>
+                  <div class="mt-4 p-3 bg-blue-100 rounded-lg">
+                    <p class="text-xs text-blue-900">
+                      <i class="fas fa-example mr-1"></i><strong>Exemplo:</strong> Se você tem o pedido 4501234567 com 2 notas fiscais (NF 111 e NF 222), crie 2 linhas:
+                      <br>• Linha 1: NF 111 - Pedido 4501234567 - Valor - PDF
+                      <br>• Linha 2: NF 222 - Pedido 4501234567 - Valor - PDF
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div id="pedidos-container">
               <div id="pedido-unico" class="pedido-content">
                 <input type="text" name="numeroPedido" value="UNICO" class="hidden">
