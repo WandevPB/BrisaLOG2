@@ -3763,6 +3763,7 @@ function validarStepEntrega(step) {
         return true;
     } else if (step === 2) {
         const camposObrigatorios = [
+            'entrega-data-realizada',
             'entrega-horario-preferencial',
             'entrega-quantidade-volumes',
             'entrega-tipo-volume'
@@ -4243,6 +4244,7 @@ async function handleRegistrarEntrega(e) {
     };
     
     // Coletar dados do step 2 - Dados da Entrega
+    const dataEntrega = document.getElementById('entrega-data-realizada').value;
     const horarioEntrega = document.getElementById('entrega-horario-preferencial').value;
     const quantidadeVolumes = parseInt(document.getElementById('entrega-quantidade-volumes').value);
     const tipoVolume = document.getElementById('entrega-tipo-volume').value;
@@ -4262,23 +4264,20 @@ async function handleRegistrarEntrega(e) {
         }
         pedidosMap[nf.numeroPedido].notasFiscais.push({
             numero: nf.numero,
-            valor: parseFloat(nf.valor || 0),
-            arquivo: nf.arquivo || null
+            valor: parseFloat(nf.valor || 0)
+            // arquivo será enviado separadamente via FormData se necessário
         });
     });
     
     // Converter map para array
     const pedidos = Object.values(pedidosMap);
     
-    // Criar data atual para a entrega
-    const dataAtual = new Date().toISOString().split('T')[0];
-    
     const dadosEntrega = {
         fornecedor: transportadorData, // Backend espera "fornecedor"
         transportador: transportadorData, // Mantém compatibilidade
         entrega: {
             cdDestino: cdId, // Usa o CD do usuário logado
-            dataEntrega: dataAtual,
+            dataEntrega: dataEntrega,
             horarioEntrega: horarioEntrega,
             quantidadeVolumes: quantidadeVolumes,
             tipoVolume: tipoVolume,

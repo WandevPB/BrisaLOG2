@@ -1237,9 +1237,9 @@
     </div>
 
     <!-- Modal Registrar Entrega -->
-    <div id="registrar-entrega-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4">
-            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-t-lg">
+    <div id="registrar-entrega-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-t-lg flex-shrink-0">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-bold">
                         <i class="fas fa-truck mr-3"></i>
@@ -1263,102 +1263,14 @@
                 </div>
             </div>
             
-            <div class="p-6">
+            <div class="p-6 overflow-y-auto flex-1">
                 <form id="registrar-entrega-form">
-                    <!-- Step 1: Dados Básicos -->
+                    <!-- Step 1: Dados do Transportador -->
                     <div id="entrega-form-step-1" class="entrega-form-step">
                         <div class="space-y-6">
                             <div class="text-center mb-6">
-                                <h3 class="text-2xl font-bold text-gray-700 mb-2">Dados da Entrega</h3>
-                                <p class="text-gray-500">Informe os dados básicos da entrega realizada</p>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Data da Entrega -->
-                                <div>
-                                    <label for="entrega-data" class="block text-sm font-medium text-gray-700 mb-2">
-                                        <i class="fas fa-calendar-alt mr-2 text-orange-500"></i>
-                                        Data da Entrega *
-                                    </label>
-                                    <input type="date" id="entrega-data" name="dataEntrega" required
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
-                                    <script>
-                                    // Função para verificar se a data é um dia útil (segunda a sexta) - Dashboard
-                                    function isWeekdayDashboard(dateString) {
-                                        const date = new Date(dateString + 'T00:00:00');
-                                        const day = date.getDay();
-                                        return day !== 0 && day !== 6; // 0 = domingo, 6 = sábado
-                                    }
-                                    
-                                    // Função para encontrar o próximo dia útil - Dashboard
-                                    function getNextWeekdayDashboard(date) {
-                                        const nextDay = new Date(date);
-                                        nextDay.setDate(nextDay.getDate() + 1);
-                                        while (nextDay.getDay() === 0 || nextDay.getDay() === 6) {
-                                            nextDay.setDate(nextDay.getDate() + 1);
-                                        }
-                                        return nextDay;
-                                    }
-                                    
-                                    // Configurar campo de data do dashboard
-                                    document.addEventListener('DOMContentLoaded', function() {
-                                        var input = document.getElementById('entrega-data');
-                                        if (input) {
-                                            var today = new Date();
-                                            
-                                            // Se hoje for fim de semana, definir para próximo dia útil
-                                            if (today.getDay() === 0 || today.getDay() === 6) {
-                                                today = getNextWeekdayDashboard(today);
-                                            }
-                                            
-                                            var yyyy = today.getFullYear();
-                                            var mm = String(today.getMonth() + 1).padStart(2, '0');
-                                            var dd = String(today.getDate()).padStart(2, '0');
-                                            var minDate = yyyy + '-' + mm + '-' + dd;
-                                            input.setAttribute('min', minDate);
-                                            
-                                            // Definir valor padrão como próximo dia útil
-                                            var nextWeekday = getNextWeekdayDashboard(new Date());
-                                            var nextWeekdayStr = nextWeekday.getFullYear() + '-' + 
-                                                String(nextWeekday.getMonth() + 1).padStart(2, '0') + '-' + 
-                                                String(nextWeekday.getDate()).padStart(2, '0');
-                                            input.value = nextWeekdayStr;
-                                            
-                                            // Validação em tempo real para impedir seleção de fins de semana
-                                            input.addEventListener('change', function() {
-                                                if (!isWeekdayDashboard(this.value)) {
-                                                    alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
-                                                    var nextWeekday = getNextWeekdayDashboard(new Date(this.value + 'T00:00:00'));
-                                                    var nextWeekdayStr = nextWeekday.getFullYear() + '-' + 
-                                                        String(nextWeekday.getMonth() + 1).padStart(2, '0') + '-' + 
-                                                        String(nextWeekday.getDate()).padStart(2, '0');
-                                                    this.value = nextWeekdayStr;
-                                                }
-                                            });
-                                        }
-                                    });
-                                    </script>
-                                </div>
-
-                                <!-- Horário da Entrega -->
-                                <div>
-                                    <label for="entrega-horario" class="block text-sm font-medium text-gray-700 mb-2">
-                                        <i class="fas fa-clock mr-2 text-orange-500"></i>
-                                        Horário da Entrega *
-                                    </label>
-                                    <select id="entrega-horario" name="horarioEntrega" required
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
-                                        <option value="">Selecione o horário</option>
-                                        <option value="08:00">08:00</option>
-                                        <option value="09:00">09:00</option>
-                                        <option value="10:00">10:00</option>
-                                        <option value="11:00">11:00</option>
-                                        <option value="13:00">13:00</option>
-                                        <option value="14:00">14:00</option>
-                                        <option value="15:00">15:00</option>
-                                        <option value="16:00">16:00</option>
-                                    </select>
-                                </div>
+                                <h3 class="text-2xl font-bold text-gray-700 mb-2">Dados do Transportador</h3>
+                                <p class="text-gray-500">Informe os dados da empresa transportadora</p>
                             </div>
 
                             <!-- Dados do Transportador -->
@@ -1406,33 +1318,6 @@
                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
                                 </div>
                             </div>
-
-                            <!-- Tipo de Carga -->
-                            <div>
-                                <label for="entrega-tipo-carga" class="block text-sm font-medium text-gray-700 mb-2">
-                                    <i class="fas fa-boxes mr-2 text-orange-500"></i>
-                                    Tipo de Carga *
-                                </label>
-                                <select id="entrega-tipo-carga" name="tipoCarga" required
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
-                                    <option value="">Selecione o tipo</option>
-                                    <option value="equipamentos">Equipamentos de Rede</option>
-                                    <option value="materiais">Materiais de Instalação</option>
-                                    <option value="componentes">Componentes Eletrônicos</option>
-                                    <option value="outros">Outros</option>
-                                </select>
-                            </div>
-
-                            <!-- Observações -->
-                            <div>
-                                <label for="entrega-observacoes" class="block text-sm font-medium text-gray-700 mb-2">
-                                    <i class="fas fa-sticky-note mr-2 text-orange-500"></i>
-                                    Observações Adicionais
-                                </label>
-                                <textarea id="entrega-observacoes" name="observacoes" rows="3"
-                                          placeholder="Informações adicionais sobre a entrega (opcional)..."
-                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none"></textarea>
-                            </div>
                         </div>
                     </div>
 
@@ -1441,10 +1326,21 @@
                         <div class="space-y-6">
                             <div class="text-center mb-6">
                                 <h3 class="text-2xl font-bold text-gray-700 mb-2">Dados da Entrega Realizada</h3>
-                                <p class="text-gray-500">Informe os detalhes da entrega que já foi realizada</p>
+                                <p class="text-gray-500">Informe quando e como foi realizada a entrega</p>
                             </div>
 
                             <div class="grid md:grid-cols-2 gap-6">
+                                <!-- Data da Entrega -->
+                                <div>
+                                    <label class="block text-gray-dark font-semibold mb-2">
+                                        <i class="fas fa-calendar-alt mr-2 text-orange-500"></i>
+                                        Data da Entrega *
+                                    </label>
+                                    <input type="date" id="entrega-data-realizada" name="dataEntrega" required
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
+                                </div>
+
+                                <!-- Horário da Entrega -->
                                 <div>
                                     <label class="block text-gray-dark font-semibold mb-2">
                                         <i class="fas fa-clock mr-2 text-orange-500"></i>
@@ -1547,7 +1443,7 @@
                                 </div>
                             </div>
 
-                            <div id="entrega-notas-fiscais-list" class="space-y-4 mb-6">
+                            <div id="entrega-notas-fiscais-list" class="space-y-4 mb-6 max-h-96 overflow-y-auto pr-2">
                                 <!-- Notas fiscais serão adicionadas dinamicamente aqui -->
                             </div>
 
@@ -1577,51 +1473,36 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Step 3: Confirmação -->
-                    <div id="entrega-form-step-3" class="entrega-form-step hidden">
-                        <div class="space-y-6">
-                            <div class="text-center mb-6">
-                                <h3 class="text-2xl font-bold text-gray-700 mb-2">Confirmação dos Dados</h3>
-                                <p class="text-gray-500">Revise todas as informações antes de registrar a entrega</p>
-                            </div>
-
-                            <!-- Resumo dos Dados -->
-                            <div id="entrega-resumo" class="bg-gray-50 rounded-lg p-6">
-                                <!-- Resumo será preenchido dinamicamente -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Botões de Navegação -->
-                    <div class="flex justify-between space-x-4 pt-6 border-t border-gray-200 mt-6">
-                        <button type="button" id="entrega-btn-anterior" onclick="entregaAnteriorStep()" 
-                                class="hidden px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                            <i class="fas fa-arrow-left mr-2"></i>
-                            Anterior
-                        </button>
-                        
-                        <div class="flex-1"></div>
-                        
-                        <button type="button" onclick="closeRegistrarEntregaModal()"
-                                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                            <i class="fas fa-times mr-2"></i>
-                            Cancelar
-                        </button>
-                        
-                        <button type="button" id="entrega-btn-proximo" onclick="entregaProximoStep()"
-                                class="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all">
-                            Próximo
-                            <i class="fas fa-arrow-right ml-2"></i>
-                        </button>
-                        
-                        <button type="submit" id="entrega-btn-finalizar"
-                                class="hidden px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all">
-                            <i class="fas fa-save mr-2"></i>
-                            Registrar Entrega
-                        </button>
-                    </div>
                 </form>
+            </div>
+            
+            <!-- Botões de Navegação Fixos -->
+            <div class="flex justify-between space-x-4 p-6 border-t border-gray-200 bg-white rounded-b-lg flex-shrink-0">
+                <button type="button" id="entrega-btn-anterior" onclick="entregaAnteriorStep()" 
+                        class="hidden px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Anterior
+                </button>
+                
+                <div class="flex-1"></div>
+                
+                <button type="button" onclick="closeRegistrarEntregaModal()"
+                        class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancelar
+                </button>
+                
+                <button type="button" id="entrega-btn-proximo" onclick="entregaProximoStep()"
+                        class="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all">
+                    Próximo
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+                
+                <button type="submit" id="entrega-btn-finalizar" form="registrar-entrega-form"
+                        class="hidden px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all">
+                    <i class="fas fa-save mr-2"></i>
+                    Registrar Entrega
+                </button>
             </div>
         </div>
     </div>
