@@ -1440,38 +1440,18 @@
                     <div id="entrega-form-step-2" class="entrega-form-step hidden">
                         <div class="space-y-6">
                             <div class="text-center mb-6">
-                                <h3 class="text-2xl font-bold text-gray-700 mb-2">Dados da Entrega</h3>
-                                <p class="text-gray-500">Informe os detalhes da entrega</p>
+                                <h3 class="text-2xl font-bold text-gray-700 mb-2">Dados da Entrega Realizada</h3>
+                                <p class="text-gray-500">Informe os detalhes da entrega que já foi realizada</p>
                             </div>
 
                             <div class="grid md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-gray-dark font-semibold mb-2">
-                                        <i class="fas fa-map-marker-alt mr-2 text-orange-500"></i>
-                                        Centro de Distribuição *
-                                    </label>
-                                    <select id="entrega-cd-destino" name="cdDestino" required
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
-                                        <option value="">Selecione o CD</option>
-                                        <option value="Bahia">CD Bahia</option>
-                                        <option value="Pernambuco">CD Pernambuco</option>
-                                        <option value="Lagoa Nova">CD Lagoa Nova</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class="block text-gray-dark font-semibold mb-2">
                                         <i class="fas fa-clock mr-2 text-orange-500"></i>
-                                        Horário Preferencial *
+                                        Horário da Entrega *
                                     </label>
-                                    <select id="entrega-horario-preferencial" name="horarioEntrega" required
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
-                                        <option value="">Selecione o horário</option>
-                                        <option value="08:00-10:00">08:00 - 10:00</option>
-                                        <option value="10:00-12:00">10:00 - 12:00</option>
-                                        <option value="14:00-16:00">14:00 - 16:00</option>
-                                        <option value="16:00-17:00">16:00 - 17:00</option>
-                                    </select>
+                                    <input type="time" id="entrega-horario-preferencial" name="horarioEntrega" required
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
                                 </div>
 
                                 <div>
@@ -1520,8 +1500,8 @@
                     <div id="entrega-form-step-3" class="entrega-form-step hidden">
                         <div class="space-y-6">
                             <div class="text-center mb-6">
-                                <h3 class="text-2xl font-bold text-gray-700 mb-2">Notas Fiscais</h3>
-                                <p class="text-gray-500">Informe as notas e anexe os PDFs</p>
+                                <h3 class="text-2xl font-bold text-gray-700 mb-2">Notas Fiscais e Pedidos</h3>
+                                <p class="text-gray-500">Adicione as notas fiscais, pedidos e anexe os PDFs</p>
                             </div>
 
                             <!-- Instruções de Preenchimento -->
@@ -1541,22 +1521,26 @@
                                             </div>
                                             <div class="flex items-start">
                                                 <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 flex-shrink-0"></i>
-                                                <p><strong>Mesmo pedido, múltiplas notas:</strong> Se um pedido tiver mais de uma nota fiscal, repita o número do pedido em cada linha (uma para cada nota).</p>
+                                                <p><strong>Número do Pedido:</strong> Informe o número do pedido (exemplo: 4501234567). Se um pedido tiver múltiplas notas, repita o número do pedido em cada linha.</p>
                                             </div>
                                             <div class="flex items-start">
                                                 <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 flex-shrink-0"></i>
-                                                <p><strong>Número do Pedido:</strong> É o número que começa com <span class="font-bold bg-yellow-200 px-2 py-1 rounded">450</span> (exemplo: 4501234567).</p>
+                                                <p><strong>Número da NF:</strong> Número da nota fiscal correspondente.</p>
                                             </div>
                                             <div class="flex items-start">
                                                 <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 flex-shrink-0"></i>
-                                                <p><strong>Anexo PDF:</strong> Cada nota fiscal deve ter seu arquivo PDF anexado.</p>
+                                                <p><strong>Valor:</strong> Valor total da nota fiscal em reais.</p>
+                                            </div>
+                                            <div class="flex items-start">
+                                                <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 flex-shrink-0"></i>
+                                                <p><strong>PDF da Nota:</strong> Anexe o arquivo PDF da nota fiscal (opcional, mas recomendado).</p>
                                             </div>
                                         </div>
                                         <div class="mt-4 p-3 bg-blue-100 rounded-lg">
                                             <p class="text-xs text-blue-900">
-                                                <i class="fas fa-example mr-1"></i><strong>Exemplo:</strong> Se você tem o pedido 4501234567 com 2 notas fiscais (NF 111 e NF 222), crie 2 linhas:
-                                                <br>• Linha 1: NF 111 - Pedido 4501234567 - Valor - PDF
-                                                <br>• Linha 2: NF 222 - Pedido 4501234567 - Valor - PDF
+                                                <i class="fas fa-example mr-1"></i><strong>Exemplo:</strong> Pedido 4501234567 com 2 notas (NF 111 e NF 222):
+                                                <br>• Linha 1: Pedido 4501234567 - NF 111 - R$ 1.500,00 - [Anexar PDF]
+                                                <br>• Linha 2: Pedido 4501234567 - NF 222 - R$ 2.300,00 - [Anexar PDF]
                                             </p>
                                         </div>
                                     </div>

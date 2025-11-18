@@ -3763,7 +3763,6 @@ function validarStepEntrega(step) {
         return true;
     } else if (step === 2) {
         const camposObrigatorios = [
-            'entrega-cd-destino',
             'entrega-horario-preferencial',
             'entrega-quantidade-volumes',
             'entrega-tipo-volume'
@@ -3787,10 +3786,26 @@ function validarStepEntrega(step) {
         
         return true;
     } else if (step === 3) {
-        const notasFiscaisList = document.querySelectorAll('.nota-fiscal-entrega-item');
-        if (notasFiscaisList.length === 0) {
+        if (entregaNotasFiscais.length === 0) {
             dashboard.showNotification('Adicione pelo menos uma nota fiscal', 'error');
             return false;
+        }
+        
+        // Validar cada nota fiscal
+        for (let i = 0; i < entregaNotasFiscais.length; i++) {
+            const nf = entregaNotasFiscais[i];
+            if (!nf.numeroPedido || !nf.numeroPedido.trim()) {
+                dashboard.showNotification(`Nota Fiscal ${i + 1}: Informe o número do pedido`, 'error');
+                return false;
+            }
+            if (!nf.numero || !nf.numero.trim()) {
+                dashboard.showNotification(`Nota Fiscal ${i + 1}: Informe o número da NF`, 'error');
+                return false;
+            }
+            if (!nf.valor || parseFloat(nf.valor) <= 0) {
+                dashboard.showNotification(`Nota Fiscal ${i + 1}: Informe um valor válido`, 'error');
+                return false;
+            }
         }
         
         return true;
@@ -3802,8 +3817,10 @@ function validarStepEntrega(step) {
 // Funções para gerenciar notas fiscais no modal de Registrar Entrega
 function adicionarNotaFiscalEntregaModal() {
     const notaFiscal = {
+        numeroPedido: '',
         numero: '',
-        valor: 0
+        valor: 0,
+        arquivo: null
     };
     
     entregaNotasFiscais.push(notaFiscal);
@@ -3824,29 +3841,49 @@ function renderizarNotasFiscaisEntregaModal() {
     }
     
     container.innerHTML = entregaNotasFiscais.map((nf, index) => `
-        <div class="flex gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Número da NF *</label>
-                <input type="text" 
-                       value="${nf.numero}" 
-                       placeholder="Ex: 123456"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
-                       onchange="entregaNotasFiscais[${index}].numero = this.value">
-            </div>
-            <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$) *</label>
-                <input type="number" 
-                       value="${nf.valor}" 
-                       step="0.01" 
-                       placeholder="0,00"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
-                       onchange="entregaNotasFiscais[${index}].valor = parseFloat(this.value) || 0; atualizarTotalEntrega()">
-            </div>
-            <div class="flex items-end">
+        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="font-semibold text-gray-700">Nota Fiscal ${index + 1}</h4>
                 <button type="button" onclick="removerNotaFiscalEntregaModal(${index})" 
-                        class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                    <i class="fas fa-trash"></i>
+                        class="text-red-600 hover:bg-red-50 px-3 py-1 rounded transition-colors">
+                    <i class="fas fa-trash"></i> Remover
                 </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Número do Pedido *</label>
+                    <input type="text" 
+                           value="${nf.numeroPedido}" 
+                           placeholder="Ex: 4501234567"
+                           maxlength="10"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
+                           onchange="entregaNotasFiscais[${index}].numeroPedido = this.value">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Número da NF *</label>
+                    <input type="text" 
+                           value="${nf.numero}" 
+                           placeholder="Ex: 123456"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
+                           onchange="entregaNotasFiscais[${index}].numero = this.value">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$) *</label>
+                    <input type="number" 
+                           value="${nf.valor}" 
+                           step="0.01" 
+                           placeholder="0,00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
+                           onchange="entregaNotasFiscais[${index}].valor = parseFloat(this.value) || 0; atualizarTotalEntrega()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">PDF da Nota</label>
+                    <input type="file" 
+                           accept=".pdf"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary text-sm file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                           onchange="entregaNotasFiscais[${index}].arquivo = this.files[0]; console.log('Arquivo anexado:', this.files[0]?.name)">
+                    ${nf.arquivo ? `<p class="text-xs text-green-600 mt-1"><i class="fas fa-check-circle"></i> ${nf.arquivo.name}</p>` : ''}
+                </div>
             </div>
         </div>
     `).join('');
@@ -4095,8 +4132,7 @@ function gerarResumoEntrega() {
     
     // Coletar dados do step 2 - Dados da Entrega
     const dadosEntrega = {
-        cdDestino: document.getElementById('entrega-cd-destino').value,
-        horarioPreferencial: document.getElementById('entrega-horario-preferencial').value,
+        horarioEntrega: document.getElementById('entrega-horario-preferencial').value,
         quantidadeVolumes: document.getElementById('entrega-quantidade-volumes').value,
         tipoVolume: document.getElementById('entrega-tipo-volume').value,
         observacoes: document.getElementById('entrega-observacoes-step2')?.value || ''
@@ -4125,22 +4161,21 @@ function gerarResumoEntrega() {
             <div>
                 <h4 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">
                     <i class="fas fa-box mr-2 text-orange-primary"></i>
-                    Dados da Entrega
+                    Dados da Entrega Realizada
                 </h4>
                 <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><strong>CD de Destino:</strong> ${dadosEntrega.cdDestino}</div>
-                    <div><strong>Horário Preferencial:</strong> ${dadosEntrega.horarioPreferencial}</div>
+                    <div><strong>Horário da Entrega:</strong> ${dadosEntrega.horarioEntrega}</div>
                     <div><strong>Quantidade de Volumes:</strong> ${dadosEntrega.quantidadeVolumes}</div>
                     <div><strong>Tipo de Volume:</strong> ${dadosEntrega.tipoVolume}</div>
                     ${dadosEntrega.observacoes ? `<div class="col-span-2"><strong>Observações:</strong> ${dadosEntrega.observacoes}</div>` : ''}
                 </div>
             </div>
             
-            <!-- Notas Fiscais -->
+            <!-- Notas Fiscais e Pedidos -->
             <div>
                 <h4 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">
                     <i class="fas fa-file-invoice mr-2 text-orange-primary"></i>
-                    Notas Fiscais (${entregaNotasFiscais.length})
+                    Notas Fiscais e Pedidos (${entregaNotasFiscais.length})
                 </h4>
                 <div class="space-y-2">
     `;
@@ -4150,12 +4185,18 @@ function gerarResumoEntrega() {
     } else {
         entregaNotasFiscais.forEach((nf, index) => {
             resumoHtml += `
-                <div class="flex justify-between items-center text-sm bg-gray-50 p-3 rounded border border-gray-200">
-                    <div>
-                        <span class="font-medium">NF ${index + 1}:</span> ${nf.numero}
+                <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                    <div class="flex justify-between items-center text-sm mb-1">
+                        <div>
+                            <span class="font-medium">NF ${index + 1}:</span> ${nf.numero}
+                            ${nf.arquivo ? '<i class="fas fa-paperclip text-green-600 ml-2" title="PDF anexado"></i>' : ''}
+                        </div>
+                        <div class="text-green-600 font-semibold">
+                            R$ ${parseFloat(nf.valor || 0).toFixed(2).replace('.', ',')}
+                        </div>
                     </div>
-                    <div class="text-green-600 font-semibold">
-                        R$ ${parseFloat(nf.valor || 0).toFixed(2).replace('.', ',')}
+                    <div class="text-xs text-gray-600">
+                        <i class="fas fa-box mr-1"></i>Pedido: ${nf.numeroPedido}
                     </div>
                 </div>
             `;
@@ -4202,20 +4243,32 @@ async function handleRegistrarEntrega(e) {
     };
     
     // Coletar dados do step 2 - Dados da Entrega
-    const cdDestino = document.getElementById('entrega-cd-destino').value;
     const horarioEntrega = document.getElementById('entrega-horario-preferencial').value;
     const quantidadeVolumes = parseInt(document.getElementById('entrega-quantidade-volumes').value);
     const tipoVolume = document.getElementById('entrega-tipo-volume').value;
     const observacoesStep2 = document.getElementById('entrega-observacoes-step2')?.value || '';
     
-    // Montar array de pedidos com notas fiscais (step 3)
-    const pedidos = [{
-        numero: 'ENTREGA-' + Date.now(),
-        notasFiscais: entregaNotasFiscais.map(nf => ({
+    // Obter CD do usuário logado
+    const cdId = dashboard.getCDFromToken();
+    
+    // Agrupar notas fiscais por número de pedido
+    const pedidosMap = {};
+    entregaNotasFiscais.forEach(nf => {
+        if (!pedidosMap[nf.numeroPedido]) {
+            pedidosMap[nf.numeroPedido] = {
+                numero: nf.numeroPedido,
+                notasFiscais: []
+            };
+        }
+        pedidosMap[nf.numeroPedido].notasFiscais.push({
             numero: nf.numero,
-            valor: parseFloat(nf.valor || 0)
-        }))
-    }];
+            valor: parseFloat(nf.valor || 0),
+            arquivo: nf.arquivo || null
+        });
+    });
+    
+    // Converter map para array
+    const pedidos = Object.values(pedidosMap);
     
     // Criar data atual para a entrega
     const dataAtual = new Date().toISOString().split('T')[0];
@@ -4224,7 +4277,7 @@ async function handleRegistrarEntrega(e) {
         fornecedor: transportadorData, // Backend espera "fornecedor"
         transportador: transportadorData, // Mantém compatibilidade
         entrega: {
-            cdDestino: cdDestino,
+            cdDestino: cdId, // Usa o CD do usuário logado
             dataEntrega: dataAtual,
             horarioEntrega: horarioEntrega,
             quantidadeVolumes: quantidadeVolumes,
