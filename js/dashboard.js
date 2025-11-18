@@ -4322,13 +4322,30 @@ async function handleRegistrarEntrega(e) {
         
         console.log('🚀 [Frontend] Enviando requisição para /api/agendamentos');
         
+        // Backend espera FormData com campo 'agendamento' como string JSON
+        const formData = new FormData();
+        formData.append('agendamento', JSON.stringify(dadosEntrega));
+        
+        // Adicionar arquivos se houver
+        entregaNotasFiscais.forEach((nf, index) => {
+            if (nf.arquivo) {
+                formData.append(`arquivo_${index}`, nf.arquivo);
+                formData.append(`arquivo_${index}_info`, JSON.stringify({
+                    pedido: nf.numeroPedido,
+                    nf: nf.numero
+                }));
+            }
+        });
+        
+        console.log('📦 [Frontend] FormData preparado com agendamento e', entregaNotasFiscais.filter(nf => nf.arquivo).length, 'arquivos');
+        
     const response = await fetch(`${getApiBaseUrl()}/api/agendamentos`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${token}`
+                // Não definir Content-Type - deixar o browser definir com boundary do FormData
             },
-            body: JSON.stringify(dadosEntrega)
+            body: formData
         });
         
         const result = await response.json();
