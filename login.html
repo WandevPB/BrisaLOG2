@@ -101,28 +101,77 @@
 
     <!-- Login Card -->
     <div class="relative z-10 w-full max-w-md mx-4">
-        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden card-simple">
+        <!-- Profile Selection -->
+        <div id="profile-selection" class="bg-white rounded-3xl shadow-2xl overflow-hidden card-simple mb-6">
+            <div class="gradient-bg p-6 text-center text-white">
+                <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-2xl p-4 inline-block mb-3">
+                    <i class="fas fa-users text-white text-3xl"></i>
+                </div>
+                <h2 class="text-xl font-bold mb-1">Selecione seu Perfil</h2>
+                <p class="text-white text-sm">Escolha o tipo de acesso</p>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <button type="button" onclick="selectProfile('cd')" class="w-full profile-btn group">
+                    <div class="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl hover:border-orange-primary hover:bg-orange-50 transition-all">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-orange-100 p-3 rounded-lg group-hover:bg-orange-primary transition-all">
+                                <i class="fas fa-warehouse text-orange-primary group-hover:text-white text-2xl transition-all"></i>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-gray-dark text-lg">Centro de Distribuição</h3>
+                                <p class="text-sm text-gray-500">Bahia, Pernambuco, Lagoa Nova</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 group-hover:text-orange-primary transition-all"></i>
+                    </div>
+                </button>
+
+                <button type="button" onclick="selectProfile('consultivo')" class="w-full profile-btn group">
+                    <div class="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-blue-100 p-3 rounded-lg group-hover:bg-blue-500 transition-all">
+                                <i class="fas fa-chart-line text-blue-500 group-hover:text-white text-2xl transition-all"></i>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-gray-dark text-lg">Consultivo</h3>
+                                <p class="text-sm text-gray-500">PCM, Transporte, Compras</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 group-hover:text-blue-500 transition-all"></i>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Login Form Card (Initially Hidden) -->
+        <div id="login-card" class="bg-white rounded-3xl shadow-2xl overflow-hidden card-simple hidden">
             <!-- Header -->
             <div class="gradient-bg p-8 text-center text-white">
+                <button type="button" onclick="backToProfileSelection()" class="absolute top-4 left-4 text-white hover:text-gray-200 transition-colors">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </button>
                 <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-2xl p-4 inline-block mb-4">
-                    <i class="fas fa-shield-alt text-white text-3xl"></i>
+                    <i id="login-icon" class="fas fa-shield-alt text-white text-3xl"></i>
                 </div>
-                <h1 class="text-2xl font-bold mb-2">Login Centro de Distribuição</h1>
-                <p class="text-white">Acesse o dashboard administrativo</p>
+                <h1 id="login-title" class="text-2xl font-bold mb-2">Login Centro de Distribuição</h1>
+                <p id="login-subtitle" class="text-white">Acesse o dashboard administrativo</p>
             </div>
 
             <!-- Login Form -->
             <div class="p-8">
                 <form id="login-form" class="space-y-6">
+                    <input type="hidden" id="profile-type" value="cd">
+                    
                     <div>
                         <label for="usuario" class="block text-gray-dark font-semibold mb-2">
-                            <i class="fas fa-building mr-2 text-orange-primary"></i>
-                            Centro de Distribuição
+                            <i id="usuario-icon" class="fas fa-building mr-2 text-orange-primary"></i>
+                            <span id="usuario-label">Centro de Distribuição</span>
                         </label>
                         <div class="relative">
                             <select id="usuario" name="usuario" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all appearance-none bg-white">
-                                <option value="">Selecione o CD...</option>
+                                <option value="">Selecione...</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
                                 <i class="fas fa-chevron-down text-gray-400"></i>
@@ -259,6 +308,55 @@
     </div>
 
     <script>
+        // Funções globais para seleção de perfil
+        function selectProfile(type) {
+            const profileSelection = document.getElementById('profile-selection');
+            const loginCard = document.getElementById('login-card');
+            const profileTypeInput = document.getElementById('profile-type');
+            const loginTitle = document.getElementById('login-title');
+            const loginSubtitle = document.getElementById('login-subtitle');
+            const loginIcon = document.getElementById('login-icon');
+            const usuarioLabel = document.getElementById('usuario-label');
+            const usuarioIcon = document.getElementById('usuario-icon');
+            
+            // Armazenar tipo de perfil
+            profileTypeInput.value = type;
+            
+            // Atualizar textos baseado no perfil
+            if (type === 'cd') {
+                loginTitle.textContent = 'Login Centro de Distribuição';
+                loginSubtitle.textContent = 'Acesse o dashboard administrativo';
+                loginIcon.className = 'fas fa-warehouse text-white text-3xl';
+                usuarioLabel.textContent = 'Centro de Distribuição';
+                usuarioIcon.className = 'fas fa-building mr-2 text-orange-primary';
+            } else if (type === 'consultivo') {
+                loginTitle.textContent = 'Login Consultivo';
+                loginSubtitle.textContent = 'Acesse a visualização gerencial';
+                loginIcon.className = 'fas fa-chart-line text-white text-3xl';
+                usuarioLabel.textContent = 'Área Consultiva';
+                usuarioIcon.className = 'fas fa-user-tie mr-2 text-blue-500';
+            }
+            
+            // Esconder seleção e mostrar formulário
+            profileSelection.classList.add('hidden');
+            loginCard.classList.remove('hidden');
+            
+            // Recarregar lista de usuários baseado no perfil
+            loginCD.loadCDsByProfile(type);
+        }
+        
+        function backToProfileSelection() {
+            const profileSelection = document.getElementById('profile-selection');
+            const loginCard = document.getElementById('login-card');
+            
+            // Limpar formulário
+            document.getElementById('login-form').reset();
+            
+            // Mostrar seleção e esconder formulário
+            profileSelection.classList.remove('hidden');
+            loginCard.classList.add('hidden');
+        }
+    
         class LoginCD {
             constructor() {
                 this.init();
@@ -266,7 +364,7 @@
 
             init() {
                 this.setupEventListeners();
-                this.loadCDs();
+                // Não carregar CDs automaticamente - será feito após seleção de perfil
                 this.loadRememberedUser();
             }
 
@@ -580,6 +678,51 @@
                 } catch (error) {
                     console.error('Erro ao carregar CDs:', error);
                     this.showNotification('Erro ao carregar centros de distribuição', 'error');
+                }
+            }
+
+            async loadCDsByProfile(profileType) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/auth/cds`);
+                    if (!response.ok) {
+                        const text = await response.text();
+                        throw new Error(`Erro ao carregar usuários: ${response.status} - ${text}`);
+                    }
+                    const data = await response.json();
+                    if (data.success) {
+                        const select = document.getElementById('usuario');
+                        // Limpar opções existentes
+                        while (select.children.length > 1) {
+                            select.removeChild(select.lastChild);
+                        }
+                        
+                        // Filtrar por tipo de perfil
+                        const usuarios = data.data.filter(cd => {
+                            if (profileType === 'cd') {
+                                return cd.tipoPerfil === 'cd' || !cd.tipoPerfil;
+                            } else if (profileType === 'consultivo') {
+                                return cd.tipoPerfil === 'consultivo';
+                            }
+                            return false;
+                        });
+                        
+                        // Adicionar opções
+                        usuarios.forEach(cd => {
+                            const option = document.createElement('option');
+                            option.value = cd.usuario;
+                            option.textContent = cd.nome;
+                            select.appendChild(option);
+                        });
+                        
+                        if (usuarios.length === 0) {
+                            this.showNotification(`Nenhum usuário encontrado para o perfil ${profileType}`, 'warning');
+                        }
+                    } else {
+                        throw new Error(data.error || 'Erro desconhecido ao carregar usuários');
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar usuários:', error);
+                    this.showNotification('Erro ao carregar usuários', 'error');
                 }
             }
 

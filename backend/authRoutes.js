@@ -275,7 +275,8 @@ router.get('/cds', async (req, res) => {
             select: {
                 id: true,
                 nome: true,
-                usuario: true
+                usuario: true,
+                tipoPerfil: true
             },
             orderBy: { nome: 'asc' }
         });
