@@ -151,20 +151,33 @@ router.post('/', async (req, res) => {
         // Enviar e-mail de boas-vindas se houver email cadastrado
         if (email && usuario.cd) {
             try {
-                console.log(`📧 [Novo Usuário] Enviando e-mail de boas-vindas para ${email}`);
+                console.log('═══════════════════════════════════════════════════');
+                console.log(`📧 [Novo Usuário] Iniciando envio de e-mail de boas-vindas`);
+                console.log(`📧 [Novo Usuário] Destinatário: ${email}`);
+                console.log(`📧 [Novo Usuário] Nome: ${usuario.nome}`);
+                console.log(`📧 [Novo Usuário] Código: ${usuario.codigo}`);
+                console.log(`📧 [Novo Usuário] CD: ${usuario.cd.nome}`);
                 
-                await emailService.sendBoasVindasUsuario({
+                const emailResult = await emailService.sendBoasVindasUsuario({
                     to: email,
                     nome: usuario.nome,
                     codigo: usuario.codigo,
                     cdNome: usuario.cd.nome
                 });
 
-                console.log(`✅ [Novo Usuário] E-mail de boas-vindas enviado com sucesso`);
+                console.log(`✅ [Novo Usuário] E-mail enviado com sucesso!`);
+                console.log(`✅ [Novo Usuário] Message ID: ${emailResult.messageId || 'N/A'}`);
+                console.log('═══════════════════════════════════════════════════');
             } catch (emailError) {
                 // Não falhar a criação do usuário se o email falhar
-                console.error('⚠️ [Novo Usuário] Erro ao enviar e-mail de boas-vindas:', emailError.message);
+                console.error('═══════════════════════════════════════════════════');
+                console.error('⚠️ [Novo Usuário] ERRO ao enviar e-mail de boas-vindas!');
+                console.error('⚠️ [Novo Usuário] Mensagem:', emailError.message);
+                console.error('⚠️ [Novo Usuário] Stack:', emailError.stack);
+                console.error('═══════════════════════════════════════════════════');
             }
+        } else {
+            console.log(`ℹ️ [Novo Usuário] E-mail não enviado - Email: ${email ? 'OK' : 'FALTANDO'}, CD: ${usuario.cd ? 'OK' : 'FALTANDO'}`);
         }
 
         res.status(201).json(usuario);

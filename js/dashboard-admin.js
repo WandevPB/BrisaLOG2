@@ -385,6 +385,12 @@ class DashboardAdmin {
             }
 
             this.showNotification('Usuário excluído com sucesso!', 'success');
+            
+            // Remover usuário da lista local imediatamente
+            this.usuarios = this.usuarios.filter(u => u.id !== id);
+            this.renderUsuarios();
+            
+            // Recarregar lista do servidor
             await this.loadUsuarios();
 
         } catch (error) {
