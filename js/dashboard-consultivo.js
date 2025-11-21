@@ -250,68 +250,68 @@ class DashboardConsultivo {
         return `
             <!-- Informações Gerais -->
             <div class="mb-6">
-                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
+                <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-info-circle text-orange-primary mr-2"></i>
                     Informações Gerais
                 </h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Centro de Distribuição</label>
-                        <p class="text-gray-dark font-semibold">${agendamento.cd?.nome || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Centro de Distribuição</label>
+                        <p class="text-gray-900 font-semibold text-base">${agendamento.cd?.nome || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Código</label>
-                        <p class="text-gray-dark font-semibold">${agendamento.codigo || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Código</label>
+                        <p class="text-gray-900 font-semibold text-base">${agendamento.codigo || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Data de Entrega</label>
-                        <p class="text-gray-dark">${dataEntrega}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Data de Entrega</label>
+                        <p class="text-gray-900 text-base">${dataEntrega}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Horário</label>
-                        <p class="text-gray-dark">${agendamento.horarioEntrega || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Horário</label>
+                        <p class="text-gray-900 text-base">${agendamento.horarioEntrega || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Status</label>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Status</label>
                         <div class="mt-1">${this.getStatusBadge(agendamento.status)}</div>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Tipo de Carga</label>
-                        <p class="text-gray-dark">${agendamento.tipoCarga || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Tipo de Carga</label>
+                        <p class="text-gray-900 text-base">${agendamento.tipoCarga || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Tipo de Veículo</label>
-                        <p class="text-gray-dark">${agendamento.tipoVeiculo || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Tipo de Veículo</label>
+                        <p class="text-gray-900 text-base">${agendamento.tipoVeiculo || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Placa do Veículo</label>
-                        <p class="text-gray-dark font-mono">${agendamento.placaVeiculo || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Placa do Veículo</label>
+                        <p class="text-gray-900 font-mono text-base">${agendamento.placaVeiculo || 'N/A'}</p>
                     </div>
                 </div>
             </div>
 
             <!-- Informações do Fornecedor/Transportador -->
             <div class="mb-6">
-                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
+                <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-truck text-orange-primary mr-2"></i>
                     Dados do Transportador
                 </h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Nome</label>
-                        <p class="text-gray-dark">${agendamento.transportadorNome || agendamento.fornecedorNome || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Nome</label>
+                        <p class="text-gray-900 text-base">${agendamento.transportadorNome || agendamento.fornecedorNome || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">CNPJ</label>
-                        <p class="text-gray-dark">${agendamento.transportadorDocumento || agendamento.fornecedorDocumento || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">CNPJ</label>
+                        <p class="text-gray-900 text-base">${agendamento.transportadorDocumento || agendamento.fornecedorDocumento || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">E-mail</label>
-                        <p class="text-gray-dark">${agendamento.transportadorEmail || agendamento.fornecedorEmail || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">E-mail</label>
+                        <p class="text-gray-900 text-base">${agendamento.transportadorEmail || agendamento.fornecedorEmail || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Telefone</label>
-                        <p class="text-gray-dark">${agendamento.transportadorTelefone || agendamento.fornecedorTelefone || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Telefone</label>
+                        <p class="text-gray-900 text-base">${agendamento.transportadorTelefone || agendamento.fornecedorTelefone || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -319,22 +319,22 @@ class DashboardConsultivo {
             <!-- Informações do Motorista (se tiver) -->
             ${agendamento.motoristaNome ? `
             <div class="mb-6">
-                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
+                <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-id-card text-orange-primary mr-2"></i>
                     Dados do Motorista
                 </h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Nome</label>
-                        <p class="text-gray-dark">${agendamento.motoristaNome}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Nome</label>
+                        <p class="text-gray-900 text-base">${agendamento.motoristaNome}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">CPF</label>
-                        <p class="text-gray-dark font-mono">${agendamento.motoristaCpf || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">CPF</label>
+                        <p class="text-gray-900 font-mono text-base">${agendamento.motoristaCpf || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Telefone</label>
-                        <p class="text-gray-dark">${agendamento.motoristaTelefone || 'N/A'}</p>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Telefone</label>
+                        <p class="text-gray-900 text-base">${agendamento.motoristaTelefone || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -343,24 +343,43 @@ class DashboardConsultivo {
             <!-- Notas Fiscais -->
             ${notasFiscais.length > 0 ? `
             <div class="mb-6">
-                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
+                <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-file-invoice text-orange-primary mr-2"></i>
                     Notas Fiscais
                 </h4>
                 <div class="bg-gray-50 p-4 rounded-lg">
-                    <div class="space-y-2">
-                        ${notasFiscais.map(nf => `
-                            <div class="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
-                                <div class="flex items-center space-x-3">
-                                    <i class="fas fa-file-alt text-orange-primary text-xl"></i>
-                                    <div>
-                                        <p class="font-semibold text-gray-dark">NF: ${nf.numeroNF}</p>
-                                        <p class="text-sm text-gray-500">Pedido: ${nf.numeroPedido}${nf.serie ? ` | Série: ${nf.serie}` : ''}</p>
+                    <div class="space-y-3">
+                        ${notasFiscais.map(nf => {
+                            let valorFormatado = nf.valor ? `R$ ${nf.valor}` : 'Valor não informado';
+                            return `
+                            <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors bg-white">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-3 mb-1">
+                                            <span class="font-semibold text-gray-900">NF: ${nf.numeroNF}</span>
+                                            <span class="text-xs text-gray-600">Pedido: ${nf.numeroPedido}</span>
+                                            ${nf.serie ? `<span class="text-xs text-gray-600">Série: ${nf.serie}</span>` : ''}
+                                        </div>
+                                        <div class="text-lg font-bold text-green-600">
+                                            ${valorFormatado}
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        ${nf.arquivoPath ? `
+                                            <button onclick="dashboardConsultivo.viewPDF('${nf.arquivoPath}')" 
+                                                class="bg-green-100 text-green-700 px-3 py-2 rounded text-sm font-medium hover:bg-green-200 transition-colors">
+                                                <i class="fas fa-file-pdf mr-1"></i>Visualizar PDF
+                                            </button>
+                                        ` : `
+                                            <span class="bg-yellow-100 text-yellow-700 px-3 py-2 rounded text-sm font-medium">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i>Sem PDF
+                                            </span>
+                                        `}
                                     </div>
                                 </div>
-                                ${nf.valor ? `<span class="text-sm font-semibold text-green-600">R$ ${nf.valor}</span>` : ''}
                             </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             </div>
@@ -369,12 +388,12 @@ class DashboardConsultivo {
             <!-- Observações -->
             ${agendamento.observacoes ? `
             <div class="mb-6">
-                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
+                <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-comment-alt text-orange-primary mr-2"></i>
                     Observações
                 </h4>
                 <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-gray-dark whitespace-pre-wrap">${agendamento.observacoes}</p>
+                    <p class="text-gray-900 whitespace-pre-wrap text-base">${agendamento.observacoes}</p>
                 </div>
             </div>
             ` : ''}
@@ -382,7 +401,7 @@ class DashboardConsultivo {
             <!-- Histórico de Movimentações -->
             ${historicoAcoes.length > 0 ? `
             <div class="mb-6">
-                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
+                <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-history text-orange-primary mr-2"></i>
                     Histórico de Movimentações
                 </h4>
@@ -395,9 +414,9 @@ class DashboardConsultivo {
                                 </div>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-semibold text-gray-dark">${this.getAcaoLabel(acao.acao)}</p>
-                                ${acao.descricao ? `<p class="text-sm text-gray-600 mt-1">${acao.descricao}</p>` : ''}
-                                <div class="flex items-center mt-2 text-xs text-gray-500">
+                                <p class="text-sm font-semibold text-gray-900">${this.getAcaoLabel(acao.acao)}</p>
+                                ${acao.descricao ? `<p class="text-sm text-gray-700 mt-1">${acao.descricao}</p>` : ''}
+                                <div class="flex items-center mt-2 text-xs text-gray-600">
                                     <i class="fas fa-clock mr-1"></i>
                                     <span>${this.formatDateTime(acao.createdAt)}</span>
                                     ${acao.autor ? ` <span class="mx-2">•</span> <i class="fas fa-user mr-1"></i> <span>${acao.autor}</span>` : ''}
@@ -411,18 +430,18 @@ class DashboardConsultivo {
 
             <!-- Dados de Criação/Atualização -->
             <div class="mb-6">
-                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
+                <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-clock text-orange-primary mr-2"></i>
                     Registro
                 </h4>
                 <div class="bg-gray-50 p-4 rounded-lg space-y-2">
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Criado em:</span>
-                        <span class="text-sm font-semibold text-gray-dark">${dataCriacao}</span>
+                        <span class="text-sm text-gray-700">Criado em:</span>
+                        <span class="text-sm font-semibold text-gray-900">${dataCriacao}</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Última atualização:</span>
-                        <span class="text-sm font-semibold text-gray-dark">${dataAtualizacao}</span>
+                        <span class="text-sm text-gray-700">Última atualização:</span>
+                        <span class="text-sm font-semibold text-gray-900">${dataAtualizacao}</span>
                     </div>
                 </div>
             </div>
@@ -635,6 +654,19 @@ class DashboardConsultivo {
         } catch (error) {
             return 'N/A';
         }
+    }
+
+    viewPDF(filename) {
+        if (!filename) {
+            this.showNotification('Arquivo PDF não encontrado', 'error');
+            return;
+        }
+        
+        const baseUrl = API_BASE_URL;
+        const pdfUrl = `${baseUrl}/uploads/${filename}`;
+        
+        // Abrir PDF em nova aba
+        window.open(pdfUrl, '_blank');
     }
 
     showNotification(message, type = 'info') {
