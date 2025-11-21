@@ -373,7 +373,12 @@ class DashboardAdmin {
 
             if (!response.ok) throw new Error('Erro ao carregar dados');
 
-            const agendamentos = await response.json();
+            const result = await response.json();
+            
+            // Garantir que temos um array
+            const agendamentos = Array.isArray(result) ? result : (result.data || []);
+            
+            console.log('Agendamentos recebidos:', agendamentos);
             
             // Filtrar ações do período e agrupar por usuário
             const produtividadePorUsuario = {};
