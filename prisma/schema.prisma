@@ -12,6 +12,7 @@ model Cd {
   nome              String            @unique
   usuario           String            @unique
   senha             String
+  tipoPerfil        String            @default("cd") // cd, consultivo, admin
   emailRecuperacao  String?
   primeiroLogin     Boolean           @default(true)
   resetToken        String?

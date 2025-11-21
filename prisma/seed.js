@@ -35,6 +35,7 @@ async function main() {
         nome: 'Bahia',
         usuario: 'Bahia',
         senha: senhaHash,
+        tipoPerfil: 'cd',
         primeiroLogin: true,
         ativo: true
       }
@@ -44,6 +45,7 @@ async function main() {
         nome: 'Pernambuco',
         usuario: 'Pernambuco',
         senha: senhaHash,
+        tipoPerfil: 'cd',
         primeiroLogin: true,
         ativo: true
       }
@@ -53,6 +55,38 @@ async function main() {
         nome: 'Lagoa Nova',
         usuario: 'LagoaNova',
         senha: senhaHash,
+        tipoPerfil: 'cd',
+        primeiroLogin: true,
+        ativo: true
+      }
+    }),
+    // Perfis Consultivos
+    prisma.cd.create({
+      data: {
+        nome: 'PCM',
+        usuario: 'PCM',
+        senha: senhaHash,
+        tipoPerfil: 'consultivo',
+        primeiroLogin: true,
+        ativo: true
+      }
+    }),
+    prisma.cd.create({
+      data: {
+        nome: 'TRANSPORTE',
+        usuario: 'TRANSPORTE',
+        senha: senhaHash,
+        tipoPerfil: 'consultivo',
+        primeiroLogin: true,
+        ativo: true
+      }
+    }),
+    prisma.cd.create({
+      data: {
+        nome: 'COMPRAS',
+        usuario: 'COMPRAS',
+        senha: senhaHash,
+        tipoPerfil: 'consultivo',
         primeiroLogin: true,
         ativo: true
       }
@@ -68,10 +102,14 @@ async function main() {
   
   console.log('\n📊 Resumo dos dados criados:');
   console.log(`• CDs: ${totalCds}`);
-  console.log('\n🔑 Credenciais de login:');
+  console.log('\n🔑 Credenciais de login CD:');
   console.log('• Usuário: Bahia | Senha: Brisanet123');
   console.log('• Usuário: Pernambuco | Senha: Brisanet123');
   console.log('• Usuário: LagoaNova | Senha: Brisanet123');
+  console.log('\n🔑 Credenciais de login Consultivo:');
+  console.log('• Usuário: PCM | Senha: Brisanet123');
+  console.log('• Usuário: TRANSPORTE | Senha: Brisanet123');
+  console.log('• Usuário: COMPRAS | Senha: Brisanet123');
 }
 
 main()

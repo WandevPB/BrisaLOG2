@@ -452,7 +452,8 @@ app.post('/api/auth/login', async (req, res) => {
       { 
         id: cd.id, 
         usuario: cd.usuario, 
-        nome: cd.nome 
+        nome: cd.nome,
+        tipoPerfil: cd.tipoPerfil || 'cd'
       },
       JWT_SECRET,
       { expiresIn: '24h' }
@@ -465,7 +466,8 @@ app.post('/api/auth/login', async (req, res) => {
         id: cd.id,
         nome: cd.nome,
         usuario: cd.usuario,
-        primeiroLogin: cd.primeiroLogin
+        primeiroLogin: cd.primeiroLogin,
+        tipoPerfil: cd.tipoPerfil || 'cd'
       }
     });
 
@@ -547,7 +549,8 @@ app.post('/api/renew-token', async (req, res) => {
       { 
         id: cd.id, 
         usuario: cd.usuario, 
-        nome: cd.nome 
+        nome: cd.nome,
+        tipoPerfil: cd.tipoPerfil || 'cd'
       },
       JWT_SECRET,
       { expiresIn: '24h' }
@@ -559,7 +562,8 @@ app.post('/api/renew-token', async (req, res) => {
       cd: {
         id: cd.id,
         nome: cd.nome,
-        usuario: cd.usuario
+        usuario: cd.usuario,
+        tipoPerfil: cd.tipoPerfil || 'cd'
       }
     });
 
