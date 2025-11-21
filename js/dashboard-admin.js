@@ -197,13 +197,16 @@ class DashboardAdmin {
                         <i class="fas fa-edit"></i>
                     </button>
                     ${usuario.ativo 
-                        ? `<button onclick="dashboardAdmin.toggleStatusUsuario(${usuario.id}, false)" class="text-red-600 hover:text-red-800 mx-1" title="Desativar">
+                        ? `<button onclick="dashboardAdmin.toggleStatusUsuario(${usuario.id}, false)" class="text-yellow-600 hover:text-yellow-800 mx-1" title="Desativar">
                             <i class="fas fa-ban"></i>
                            </button>`
                         : `<button onclick="dashboardAdmin.toggleStatusUsuario(${usuario.id}, true)" class="text-green-600 hover:text-green-800 mx-1" title="Ativar">
                             <i class="fas fa-check-circle"></i>
                            </button>`
                     }
+                    <button onclick="dashboardAdmin.excluirUsuario(${usuario.id})" class="text-red-600 hover:text-red-800 mx-1" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             </tr>
         `).join('');
@@ -350,6 +353,42 @@ class DashboardAdmin {
 
         } catch (error) {
             console.error(`Erro ao ${acao} usuário:`, error);
+            this.showNotification(error.message, 'error');
+        }
+    }
+
+    async excluirUsuario(id) {
+        const usuario = this.usuarios.find(u => u.id === id);
+        if (!usuario) return;
+
+        const confirmacao = confirm(
+            `⚠️ ATENÇÃO!\n\nDeseja realmente EXCLUIR o usuário?\n\n` +
+            `Nome: ${usuario.nome}\n` +
+            `Código: ${usuario.codigo}\n` +
+            `CD: ${usuario.cd?.nome || 'N/A'}\n\n` +
+            `Esta ação NÃO pode ser desfeita!`
+        );
+
+        if (!confirmacao) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/usuarios/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao excluir usuário');
+            }
+
+            this.showNotification('Usuário excluído com sucesso!', 'success');
+            await this.loadUsuarios();
+
+        } catch (error) {
+            console.error('Erro ao excluir usuário:', error);
             this.showNotification(error.message, 'error');
         }
     }

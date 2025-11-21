@@ -1,4 +1,5 @@
 const templateRecuperacaoCadastrada = require('./emails/recuperacaoCadastrada');
+const templateBoasVindasUsuario = require('./emails/boasVindasUsuario');
 // Alteração fictícia para forçar deploy no Render
 const nodemailer = require('nodemailer');
 
@@ -419,6 +420,21 @@ class EmailService {
         return this.sendEmail({
             to: email,
             subject: '[BrisaLOG] Recuperação de Senha',
+            html
+        });
+    }
+
+    // E-mail de boas-vindas para novo usuário
+    async sendBoasVindasUsuario({ to, nome, codigo, cdNome }) {
+        const html = templateBoasVindasUsuario({
+            nome,
+            codigo,
+            cdNome,
+            email: to
+        });
+        return this.sendEmail({
+            to,
+            subject: '[BrisaLOG] Bem-vindo ao Sistema - Seu Acesso Foi Criado',
             html
         });
     }

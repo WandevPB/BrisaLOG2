@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
+const emailService = require('./emailService');
 const prisma = new PrismaClient();
 
 // Listar todos os usuários
@@ -147,6 +148,25 @@ router.post('/', async (req, res) => {
             }
         });
 
+        // Enviar e-mail de boas-vindas se houver email cadastrado
+        if (email && usuario.cd) {
+            try {
+                console.log(`📧 [Novo Usuário] Enviando e-mail de boas-vindas para ${email}`);
+                
+                await emailService.sendBoasVindasUsuario({
+                    to: email,
+                    nome: usuario.nome,
+                    codigo: usuario.codigo,
+                    cdNome: usuario.cd.nome
+                });
+
+                console.log(`✅ [Novo Usuário] E-mail de boas-vindas enviado com sucesso`);
+            } catch (emailError) {
+                // Não falhar a criação do usuário se o email falhar
+                console.error('⚠️ [Novo Usuário] Erro ao enviar e-mail de boas-vindas:', emailError.message);
+            }
+        }
+
         res.status(201).json(usuario);
     } catch (error) {
         console.error('Erro ao criar usuário:', error);
@@ -188,24 +208,55 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Desativar usuário (soft delete)
+// Excluir usuário permanentemente
 router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
 
-        const usuario = await prisma.usuario.update({
-            where: {
-                id: parseInt(id)
-            },
-            data: {
-                ativo: false
+        // Verificar se usuário existe
+        const usuario = await prisma.usuario.findUnique({
+            where: { id: parseInt(id) },
+            include: {
+                cd: {
+                    select: {
+                        nome: true
+                    }
+                }
             }
         });
 
-        res.json({ message: 'Usuário desativado com sucesso', usuario });
+        if (!usuario) {
+            return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+
+        // Excluir permanentemente
+        await prisma.usuario.delete({
+            where: {
+                id: parseInt(id)
+            }
+        });
+
+        console.log(`🗑️ [Usuário Excluído] ${usuario.nome} (${usuario.codigo}) - CD: ${usuario.cd?.nome || 'N/A'}`);
+
+        res.json({ 
+            message: 'Usuário excluído permanentemente com sucesso', 
+            usuario: {
+                id: usuario.id,
+                nome: usuario.nome,
+                codigo: usuario.codigo
+            }
+        });
     } catch (error) {
-        console.error('Erro ao desativar usuário:', error);
-        res.status(500).json({ error: 'Erro ao desativar usuário' });
+        console.error('Erro ao excluir usuário:', error);
+        
+        // Verificar se é erro de constraint (usuário tem relacionamentos)
+        if (error.code === 'P2003') {
+            return res.status(400).json({ 
+                error: 'Não é possível excluir este usuário pois existem registros vinculados a ele. Desative o usuário em vez de excluí-lo.' 
+            });
+        }
+        
+        res.status(500).json({ error: 'Erro ao excluir usuário' });
     }
 });
 
