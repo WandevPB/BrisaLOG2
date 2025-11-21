@@ -28,9 +28,6 @@ class DashboardConsultivo {
 
         // Setup event listeners
         this.setupEventListeners();
-
-        // Atualizar data de hoje
-        this.updateDataHoje();
     }
 
     checkAuth() {
@@ -106,7 +103,6 @@ class DashboardConsultivo {
                 this.updateStatistics();
                 this.updateCharts();
                 this.updateKPIs();
-                this.renderEntregasHoje();
                 this.loadTransportadorList();
                 this.renderAgendamentos();
             } else {
@@ -121,18 +117,17 @@ class DashboardConsultivo {
         }
     }
 
-    updateDataHoje() {
-        const hoje = new Date();
-        const dataFormatada = hoje.toLocaleDateString('pt-BR', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
-        document.getElementById('data-hoje').textContent = dataFormatada;
-    }
+    updateStatistics() {
+        const total = this.agendamentos.length;
+        const pendentes = this.agendamentos.filter(a => a.status === 'pendente').length;
+        const confirmados = this.agendamentos.filter(a => a.status === 'confirmado').length;
+        const entregues = this.agendamentos.filter(a => a.status === 'entregue').length;
 
-    loadTransportadorList() {
+        document.getElementById('total-agendamentos').textContent = total;
+        document.getElementById('total-pendentes').textContent = pendentes;
+        document.getElementById('total-confirmados').textContent = confirmados;
+        document.getElementById('total-entregues').textContent = entregues;
+    }
         // Extrair lista única de transportadores
         const transportadores = new Set();
         this.agendamentos.forEach(a => {
@@ -314,46 +309,6 @@ class DashboardConsultivo {
                 }
             }
         });
-    }
-
-    renderEntregasHoje() {
-        const container = document.getElementById('entregas-hoje-container');
-        if (!container) return;
-
-        const hoje = new Date().toISOString().split('T')[0];
-        const entregasHoje = this.agendamentos.filter(a => {
-            const dataEntrega = a.dataEntrega?.split('T')[0];
-            return dataEntrega === hoje;
-        });
-
-        if (entregasHoje.length === 0) {
-            container.innerHTML = `
-                <div class="col-span-full text-center py-8 text-white">
-                    <i class="fas fa-calendar-check text-6xl mb-3 opacity-50"></i>
-                    <p class="text-lg">Nenhuma entrega programada para hoje</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = entregasHoje.map(a => `
-            <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 hover:bg-opacity-30 transition-all cursor-pointer" onclick="dashboardConsultivo.verDetalhes(${a.id})">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-semibold bg-white bg-opacity-30 px-2 py-1 rounded">${a.cd?.nome || 'N/A'}</span>
-                    ${this.getStatusBadge(a.status)}
-                </div>
-                <p class="font-bold text-lg mb-1">${a.codigo || 'N/A'}</p>
-                <p class="text-sm opacity-90">${a.transportadorNome || a.fornecedorNome || 'N/A'}</p>
-                <p class="text-xs mt-2 opacity-80">
-                    <i class="fas fa-clock mr-1"></i>${a.horarioEntrega || 'N/A'}
-                </p>
-            </div>
-        `).join('');
-    }
-
-    atualizarDados() {
-        this.showNotification('Atualizando dados...', 'info');
-        this.loadAgendamentos();
     }
 
     exportarDados() {
