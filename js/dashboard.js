@@ -793,6 +793,11 @@ class CDDashboard {
             this.showLoading(false);
             this.renderAgendamentos();
             this.renderEntregasHoje();
+            
+            // Novas verificações
+            this.verificarAlertasAtrasados();
+            this.atualizarBadgeAcoesPendentes();
+            
         } catch (error) {
             console.error('Erro ao carregar agendamentos:', error);
             this.showNotification('Erro ao carregar agendamentos.', 'error');
@@ -2654,17 +2659,77 @@ class CDDashboard {
     }
 
     applyFilters() {
-        const statusFilter = document.getElementById('filter-status').value;
-        const searchText = document.getElementById('search-input').value.toLowerCase();
+        const statusFilter = document.getElementById('filter-status')?.value || '';
+        const periodoFilter = document.getElementById('filter-periodo')?.value || '';
+        const sortFilter = document.getElementById('filter-sort')?.value || 'data-asc';
+        const searchText = document.getElementById('search-input')?.value.toLowerCase() || '';
+        
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
         
         this.filteredAgendamentos = this.agendamentos.filter(agendamento => {
+            // Filtro de Status
             const matchesStatus = !statusFilter || agendamento.status === statusFilter;
+            
+            // Filtro de Período
+            let matchesPeriodo = true;
+            if (periodoFilter) {
+                const dataEntrega = new Date(agendamento.dataEntrega);
+                dataEntrega.setHours(0, 0, 0, 0);
+                
+                switch(periodoFilter) {
+                    case 'hoje':
+                        matchesPeriodo = dataEntrega.getTime() === hoje.getTime();
+                        break;
+                    case 'amanha':
+                        const amanha = new Date(hoje);
+                        amanha.setDate(amanha.getDate() + 1);
+                        matchesPeriodo = dataEntrega.getTime() === amanha.getTime();
+                        break;
+                    case 'semana':
+                        const fimSemana = new Date(hoje);
+                        fimSemana.setDate(fimSemana.getDate() + 7);
+                        matchesPeriodo = dataEntrega >= hoje && dataEntrega <= fimSemana;
+                        break;
+                    case 'mes':
+                        const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+                        matchesPeriodo = dataEntrega >= hoje && dataEntrega <= fimMes;
+                        break;
+                    case 'atrasados':
+                        matchesPeriodo = dataEntrega < hoje && agendamento.status !== 'entregue' && agendamento.status !== 'nao-veio';
+                        break;
+                }
+            }
+            
+            // Busca Avançada (múltiplos campos)
             const matchesSearch = !searchText || 
                 agendamento.codigo.toLowerCase().includes(searchText) ||
-                agendamento.transportador.nome.toLowerCase().includes(searchText) ||
-                agendamento.transportador.email.toLowerCase().includes(searchText);
+                (agendamento.transportadorNome && agendamento.transportadorNome.toLowerCase().includes(searchText)) ||
+                (agendamento.transportadorEmail && agendamento.transportadorEmail.toLowerCase().includes(searchText)) ||
+                (agendamento.fornecedorNome && agendamento.fornecedorNome.toLowerCase().includes(searchText)) ||
+                (agendamento.notasFiscais && agendamento.notasFiscais.some(nf => 
+                    nf.numeroNF.toLowerCase().includes(searchText) || 
+                    nf.numeroPedido.toString().includes(searchText)
+                ));
                 
-            return matchesStatus && matchesSearch;
+            return matchesStatus && matchesPeriodo && matchesSearch;
+        });
+        
+        // Ordenação
+        this.filteredAgendamentos.sort((a, b) => {
+            switch(sortFilter) {
+                case 'data-asc':
+                    return new Date(a.dataEntrega) - new Date(b.dataEntrega);
+                case 'data-desc':
+                    return new Date(b.dataEntrega) - new Date(a.dataEntrega);
+                case 'transportador':
+                    return (a.transportadorNome || '').localeCompare(b.transportadorNome || '');
+                case 'status':
+                    const statusOrder = { 'pendente': 1, 'confirmado': 2, 'entregue': 3, 'nao-veio': 4, 'reagendamento': 5 };
+                    return (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
+                default:
+                    return 0;
+            }
         });
         
         // Resetar para primeira página quando aplicar filtros
@@ -2902,6 +2967,14 @@ function applyMasksToContainer(container) {
 document.addEventListener('DOMContentLoaded', () => {
     dashboard = new CDDashboard();
     applyMasksToContainer(document);
+    
+    // Restaurar modo escuro se estava ativado
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    if (darkMode) {
+        document.body.classList.add('dark-mode');
+        const icon = document.querySelector('#toggle-dark-mode i');
+        if (icon) icon.className = 'fas fa-sun';
+    }
 });
 
 // Funções globais que delegam para a instância do dashboard
@@ -4977,3 +5050,166 @@ function irParaPagina(pagina) {
     renderizarEntregas();
     atualizarPaginacao();
 }
+
+// ========================================
+// NOVAS FUNCIONALIDADES - MELHORIAS V2
+// ========================================
+
+// Atalhos de Teclado
+document.addEventListener('keydown', function(e) {
+    // F - Focar na busca
+    if (e.key === 'f' || e.key === 'F') {
+        if (!e.target.matches('input, textarea')) {
+            e.preventDefault();
+            document.getElementById('search-input')?.focus();
+        }
+    }
+    
+    // R - Atualizar
+    if (e.key === 'r' || e.key === 'R') {
+        if (!e.target.matches('input, textarea')) {
+            e.preventDefault();
+            refreshData();
+        }
+    }
+    
+    // ESC - Limpar filtros
+    if (e.key === 'Escape') {
+        if (!document.querySelector('.modal-backdrop:not(.hidden)')) {
+            dashboard?.limparFiltros();
+        }
+    }
+});
+
+// Filtrar por Período
+dashboard.filtrarPorPeriodo = function(periodo) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    this.filteredAgendamentos = this.agendamentos.filter(agendamento => {
+        const dataEntrega = new Date(agendamento.dataEntrega);
+        dataEntrega.setHours(0, 0, 0, 0);
+        
+        switch(periodo) {
+            case 'hoje':
+                return dataEntrega.getTime() === hoje.getTime();
+            
+            case 'amanha':
+                const amanha = new Date(hoje);
+                amanha.setDate(amanha.getDate() + 1);
+                return dataEntrega.getTime() === amanha.getTime();
+            
+            case 'semana':
+                const fimSemana = new Date(hoje);
+                fimSemana.setDate(fimSemana.getDate() + 7);
+                return dataEntrega >= hoje && dataEntrega <= fimSemana;
+            
+            case 'mes':
+                const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+                return dataEntrega >= hoje && dataEntrega <= fimMes;
+            
+            case 'atrasados':
+                return dataEntrega < hoje && agendamento.status !== 'entregue' && agendamento.status !== 'nao-veio';
+            
+            default:
+                return true;
+        }
+    });
+    
+    this.renderAgendamentos();
+};
+
+// Quick Actions
+dashboard.filtrarPendentes = function() {
+    document.getElementById('filter-status').value = 'pendente';
+    this.applyFilters();
+};
+
+dashboard.filtrarHoje = function() {
+    document.getElementById('filter-periodo').value = 'hoje';
+    this.applyFilters();
+};
+
+dashboard.filtrarAtrasados = function() {
+    document.getElementById('filter-periodo').value = 'atrasados';
+    this.applyFilters();
+};
+
+dashboard.limparFiltros = function() {
+    document.getElementById('filter-status').value = '';
+    document.getElementById('filter-periodo').value = '';
+    document.getElementById('filter-sort').value = 'data-asc';
+    document.getElementById('search-input').value = '';
+    this.applyFilters();
+};
+
+// Modo Escuro
+dashboard.toggleDarkMode = function() {
+    const body = document.body;
+    const isDark = body.classList.toggle('dark-mode');
+    
+    const icon = document.querySelector('#toggle-dark-mode i');
+    if (icon) {
+        icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    
+    localStorage.setItem('darkMode', isDark);
+    this.showNotification(isDark ? 'Modo escuro ativado' : 'Modo claro ativado', 'info');
+};
+
+// Verificar alertas de entregas atrasadas
+dashboard.verificarAlertasAtrasados = function() {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    const atrasados = this.agendamentos.filter(ag => {
+        const dataEntrega = new Date(ag.dataEntrega);
+        dataEntrega.setHours(0, 0, 0, 0);
+        return dataEntrega < hoje && ag.status !== 'entregue' && ag.status !== 'nao-veio';
+    });
+    
+    const container = document.getElementById('alertas-atrasados');
+    if (!container) return;
+    
+    if (atrasados.length > 0) {
+        container.classList.remove('hidden');
+        container.innerHTML = `
+            <div class="bg-red-500 text-white rounded-2xl shadow-lg p-6 alert-atrasado">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                            <i class="fas fa-exclamation-triangle text-3xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">⚠️ Atenção: Entregas Atrasadas!</h3>
+                            <p class="text-red-100">Você tem ${atrasados.length} entrega(s) atrasada(s) que precisa(m) de atenção</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="dashboard.filtrarAtrasados()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-6 py-2 rounded-lg transition-all font-semibold">
+                            <i class="fas fa-eye mr-2"></i>
+                            Ver Atrasados
+                        </button>
+                        <button onclick="document.getElementById('alertas-atrasados').classList.add('hidden')" class="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        container.classList.add('hidden');
+    }
+};
+
+// Atualizar badge de ações pendentes
+dashboard.atualizarBadgeAcoesPendentes = function() {
+    const pendentes = this.agendamentos.filter(ag => ag.status === 'pendente').length;
+    const badge = document.getElementById('badge-acoes-pendentes');
+    if (badge) {
+        badge.textContent = pendentes;
+        badge.classList.toggle('badge-pulse', pendentes > 0);
+    }
+};
+
+// Modificar applyFilters para incluir novos filtros

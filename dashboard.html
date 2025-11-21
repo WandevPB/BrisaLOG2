@@ -170,6 +170,89 @@
             border-left: 4px solid #10B981;
         }
 
+        /* Modo Escuro */
+        body.dark-mode {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .bg-white {
+            background-color: #2d3748 !important;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .text-gray-dark {
+            color: #e2e8f0 !important;
+        }
+
+        body.dark-mode .text-gray-medium {
+            color: #cbd5e0 !important;
+        }
+
+        body.dark-mode .border-gray-300 {
+            border-color: #4a5568 !important;
+        }
+
+        body.dark-mode input,
+        body.dark-mode select {
+            background-color: #374151 !important;
+            color: #e2e8f0 !important;
+            border-color: #4a5568 !important;
+        }
+
+        body.dark-mode .card-3d {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Animação para alertas */
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .alert-atrasado {
+            animation: slideInDown 0.5s ease-out;
+        }
+
+        /* Badges com pulso */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .badge-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Highlight para busca */
+        .search-highlight {
+            background-color: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        body.dark-mode .search-highlight {
+            background-color: #78350f;
+            color: #fef3c7;
+        }
+
+        /* Kbd styling */
+        kbd {
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+
 /* Melhorias para modais fullscreen e responsividade - agora respeitando a classe hidden do Tailwind */
 .modal-backdrop:not(.hidden),
 .fixed.inset-0.bg-black.bg-opacity-50.flex.items-center.justify-center:not(.hidden) {
@@ -376,10 +459,44 @@
             </div>
         </div>
 
+        <!-- Alertas de Entregas Atrasadas -->
+        <div id="alertas-atrasados" class="mb-6 hidden">
+            <!-- Será preenchido via JS -->
+        </div>
+
+        <!-- Quick Actions Bar -->
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 text-white">
+                    <i class="fas fa-bolt text-xl"></i>
+                    <span class="font-semibold">Ações Rápidas:</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="dashboard.filtrarPendentes()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-white transition-all flex items-center space-x-2">
+                        <i class="fas fa-clock"></i>
+                        <span>Ver Pendentes</span>
+                        <span id="badge-acoes-pendentes" class="bg-orange-500 px-2 py-1 rounded-full text-xs font-bold">0</span>
+                    </button>
+                    <button onclick="dashboard.filtrarHoje()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-white transition-all">
+                        <i class="fas fa-calendar-day mr-2"></i>
+                        Entregas de Hoje
+                    </button>
+                    <button onclick="dashboard.filtrarAtrasados()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-white transition-all">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Atrasados
+                    </button>
+                    <button id="toggle-dark-mode" onclick="dashboard.toggleDarkMode()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-white transition-all">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Controls and Filters -->
         <div class="bg-white rounded-2xl p-6 mb-8 card-3d">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
-                <div class="flex flex-wrap items-center space-x-4 space-y-2 lg:space-y-0">
+            <div class="flex flex-col space-y-4">
+                <!-- Linha 1: Visualização e Filtros Principais -->
+                <div class="flex flex-wrap items-center gap-4">
                     <div class="flex items-center space-x-2">
                         <label class="text-gray-dark font-semibold">Visualização:</label>
                         <div class="bg-gray-100 rounded-lg p-1 flex">
@@ -393,6 +510,18 @@
                     </div>
                     
                     <div class="flex items-center space-x-2">
+                        <label class="text-gray-dark font-semibold">Período:</label>
+                        <select id="filter-periodo" onchange="applyFilters()" class="px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary">
+                            <option value="">Todos</option>
+                            <option value="hoje">Hoje</option>
+                            <option value="amanha">Amanhã</option>
+                            <option value="semana">Esta Semana</option>
+                            <option value="mes">Este Mês</option>
+                            <option value="atrasados">Atrasados</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
                         <label class="text-gray-dark font-semibold">Status:</label>
                         <select id="filter-status" onchange="applyFilters()" class="px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary">
                             <option value="">Todos</option>
@@ -403,21 +532,46 @@
                             <option value="reagendamento">Reagendamento</option>
                         </select>
                     </div>
-                    
+
                     <div class="flex items-center space-x-2">
-                        <label class="text-gray-dark font-semibold">Buscar:</label>
-                        <input type="text" id="search-input" onkeyup="applyFilters()" placeholder="Transportador, código..."
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary w-64">
+                        <label class="text-gray-dark font-semibold">Ordenar:</label>
+                        <select id="filter-sort" onchange="applyFilters()" class="px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary">
+                            <option value="data-asc">Data (Mais Antiga)</option>
+                            <option value="data-desc">Data (Mais Recente)</option>
+                            <option value="transportador">Transportador A-Z</option>
+                            <option value="status">Status</option>
+                        </select>
                     </div>
                 </div>
-                
-                <div class="flex items-center space-x-2">
-                    <button onclick="exportData('excel')" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all btn-3d">
-                        <i class="fas fa-file-excel mr-2"></i>Excel
-                    </button>
-                    <button onclick="exportData('pdf')" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all btn-3d">
-                        <i class="fas fa-file-pdf mr-2"></i>PDF
-                    </button>
+
+                <!-- Linha 2: Busca Avançada e Ações -->
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-2 flex-1">
+                        <label class="text-gray-dark font-semibold">
+                            <i class="fas fa-search mr-1"></i>Buscar:
+                        </label>
+                        <input type="text" id="search-input" onkeyup="applyFilters()" placeholder="Transportador, código, NF, fornecedor... (Pressione F para focar)"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary min-w-96">
+                        <button onclick="dashboard.limparFiltros()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all">
+                            <i class="fas fa-times mr-2"></i>Limpar
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <button onclick="exportData('excel')" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all btn-3d">
+                            <i class="fas fa-file-excel mr-2"></i>Excel
+                        </button>
+                        <button onclick="exportData('pdf')" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all btn-3d">
+                            <i class="fas fa-file-pdf mr-2"></i>PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Atalhos de Teclado Info -->
+                <div class="text-xs text-gray-500 flex items-center space-x-4">
+                    <span><kbd class="px-2 py-1 bg-gray-100 rounded">F</kbd> Buscar</span>
+                    <span><kbd class="px-2 py-1 bg-gray-100 rounded">R</kbd> Atualizar</span>
+                    <span><kbd class="px-2 py-1 bg-gray-100 rounded">Esc</kbd> Limpar filtros</span>
                 </div>
             </div>
         </div>
