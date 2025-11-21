@@ -308,6 +308,9 @@
     </div>
 
     <script>
+        // Variável global para instância do LoginCD
+        let loginCD;
+        
         // Funções globais para seleção de perfil
         function selectProfile(type) {
             const profileSelection = document.getElementById('profile-selection');
@@ -342,7 +345,9 @@
             loginCard.classList.remove('hidden');
             
             // Recarregar lista de usuários baseado no perfil
-            loginCD.loadCDsByProfile(type);
+            if (loginCD) {
+                loginCD.loadCDsByProfile(type);
+            }
         }
         
         function backToProfileSelection() {
@@ -793,7 +798,7 @@
 
         // Inicializar quando o DOM estiver carregado
         document.addEventListener('DOMContentLoaded', () => {
-            new LoginCD();
+            loginCD = new LoginCD();
         });
     </script>
 </body>
