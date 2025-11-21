@@ -1760,40 +1760,64 @@
         // Função para buscar transportador por CNPJ no modal
         async function buscarTransportadorPorCNPJModal() {
             const cnpjInput = document.getElementById('entrega-cnpj-Transportador');
-            if (!cnpjInput) return;
+            if (!cnpjInput) {
+                console.log('❌ [Modal] Campo CNPJ não encontrado');
+                return;
+            }
 
             const cnpj = cnpjInput.value.replace(/[^\d]/g, '');
             
-            if (cnpj.length < 14) return;
+            if (cnpj.length < 14) {
+                console.log('⚠️ [Modal] CNPJ incompleto:', cnpj, 'length:', cnpj.length);
+                return;
+            }
 
             try {
                 console.log('🔍 [Modal] Buscando transportador com CNPJ:', cnpj);
                 
-                const response = await fetch(`${getApiBaseUrl()}/api/transportador/buscar-por-cnpj/${cnpj}`);
+                const url = `${getApiBaseUrl()}/api/transportador/buscar-por-cnpj/${cnpj}`;
+                console.log('🌐 [Modal] URL da requisição:', url);
+                
+                const response = await fetch(url);
+                console.log('📡 [Modal] Response status:', response.status, response.statusText);
+                
                 const data = await response.json();
+                console.log('📦 [Modal] Dados recebidos:', data);
 
                 if (data.existe) {
                     console.log('✅ [Modal] Transportador encontrado:', data.nome);
+                    console.log('📧 [Modal] Email:', data.email);
+                    console.log('📞 [Modal] Telefone:', data.telefone);
                     
                     const nomeInput = document.getElementById('entrega-nome-Transportador');
                     const emailInput = document.getElementById('entrega-email-Transportador');
                     const telefoneInput = document.getElementById('entrega-telefone-Transportador');
 
+                    console.log('🔍 [Modal] Elementos encontrados:', {
+                        nomeInput: !!nomeInput,
+                        emailInput: !!emailInput,
+                        telefoneInput: !!telefoneInput
+                    });
+
                     if (nomeInput) {
+                        console.log('✏️ [Modal] Preenchendo nome:', data.nome);
                         nomeInput.value = data.nome;
                         nomeInput.readOnly = true;
                         nomeInput.classList.add('bg-gray-100', 'cursor-not-allowed');
                         nomeInput.title = 'Nome vinculado ao CNPJ (não editável)';
+                        console.log('✅ [Modal] Nome preenchido e bloqueado');
                     }
 
                     // Email e telefone são preenchidos mas permanecem editáveis
                     if (emailInput && data.email) {
+                        console.log('✏️ [Modal] Preenchendo email:', data.email);
                         emailInput.value = data.email;
                         emailInput.readOnly = false;
                         emailInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
                     }
 
                     if (telefoneInput && data.telefone) {
+                        console.log('✏️ [Modal] Preenchendo telefone:', data.telefone);
                         telefoneInput.value = data.telefone;
                         telefoneInput.readOnly = false;
                         telefoneInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
