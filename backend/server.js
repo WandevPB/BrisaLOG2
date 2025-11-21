@@ -2677,16 +2677,28 @@ app.get('/api/cds', authenticateToken, async (req, res) => {
 // Buscar dados do transportador por CNPJ (para autocomplete)
 app.get('/api/transportador/buscar-por-cnpj/:cnpj', async (req, res) => {
   try {
-    const cnpj = req.params.cnpj.replace(/[^\d]/g, ''); // Remove formatação
+    const cnpjOriginal = req.params.cnpj;
+    const cnpjLimpo = cnpjOriginal.replace(/[^\d]/g, ''); // Remove formatação
     
-    console.log('🔍 [GET /api/transportador/buscar-por-cnpj] Buscando CNPJ:', cnpj);
+    console.log('🔍 [GET /api/transportador/buscar-por-cnpj] Buscando CNPJ:', cnpjLimpo);
+    console.log('🔍 [GET /api/transportador/buscar-por-cnpj] CNPJ original:', cnpjOriginal);
     
-    // Buscar o agendamento mais recente com este CNPJ
+    // Buscar em TODOS os agendamentos (sem filtro de CD)
+    // Buscar tanto em fornecedorDocumento quanto em transportadorDocumento
     const agendamento = await prisma.agendamento.findFirst({
       where: {
-        fornecedorDocumento: {
-          contains: cnpj
-        }
+        OR: [
+          {
+            fornecedorDocumento: {
+              contains: cnpjLimpo
+            }
+          },
+          {
+            transportadorDocumento: {
+              contains: cnpjLimpo
+            }
+          }
+        ]
       },
       orderBy: {
         createdAt: 'desc'
@@ -2699,12 +2711,14 @@ app.get('/api/transportador/buscar-por-cnpj/:cnpj', async (req, res) => {
         transportadorNome: true,
         transportadorEmail: true,
         transportadorTelefone: true,
-        transportadorDocumento: true
+        transportadorDocumento: true,
+        cdId: true
       }
     });
     
     if (agendamento) {
-      console.log('✅ [GET /api/transportador/buscar-por-cnpj] Transportador encontrado:', agendamento.fornecedorNome || agendamento.transportadorNome);
+      console.log('✅ [GET /api/transportador/buscar-por-cnpj] Transportador encontrado:', agendamento.transportadorNome || agendamento.fornecedorNome);
+      console.log('📋 [GET /api/transportador/buscar-por-cnpj] Dados completos:', agendamento);
       
       // Priorizar dados de transportador se existirem, senão usar fornecedor
       const dados = {
@@ -2718,6 +2732,21 @@ app.get('/api/transportador/buscar-por-cnpj/:cnpj', async (req, res) => {
       res.json(dados);
     } else {
       console.log('ℹ️ [GET /api/transportador/buscar-por-cnpj] CNPJ não encontrado no sistema');
+      
+      // Debug: Listar alguns agendamentos para verificar
+      const todosAgendamentos = await prisma.agendamento.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          fornecedorDocumento: true,
+          transportadorDocumento: true,
+          fornecedorNome: true,
+          transportadorNome: true
+        }
+      });
+      console.log('🔍 [DEBUG] Últimos 5 agendamentos:', todosAgendamentos);
+      
       res.json({ existe: false });
     }
   } catch (err) {
