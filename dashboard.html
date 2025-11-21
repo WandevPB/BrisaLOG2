@@ -306,59 +306,71 @@
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <!-- Header -->
-    <header class="bg-white shadow-lg sticky top-0 z-40">
-        <nav class="container mx-auto px-6 py-4">
+    <!-- Header Moderno -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <nav class="container mx-auto px-6 py-3">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4 flex-nowrap overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style="white-space:nowrap; height:56px;">
-                    <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-3 rounded-xl">
-                        <i class="fas fa-tachometer-alt text-white text-2xl"></i>
+                <!-- Logo e Título -->
+                <div class="flex items-center space-x-4">
+                    <div class="bg-gradient-to-br from-orange-400 to-orange-600 p-2.5 rounded-xl shadow-sm">
+                        <i class="fas fa-tachometer-alt text-white text-xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-dark">Dashboard CD</h1>
-                        <p class="text-gray-medium text-sm" id="cd-nome">Carregando...</p>
+                        <h1 class="text-lg font-bold text-gray-800">Dashboard CD</h1>
+                        <p class="text-xs text-gray-500" id="cd-nome">Carregando...</p>
                     </div>
                 </div>
                 
-                <div class="flex items-center space-x-4">
-                    <button onclick="openConsultaModal()" class="bg-blue-500 text-white px-4 h-14 flex items-center rounded-lg hover:bg-blue-600 transition-all btn-3d" title="Consultar Agendamento">
-                        <i class="fas fa-search mr-2"></i>
-                        Consultar
+                <!-- Ações Principais -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="openConsultaModal()" class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all" title="Consultar Agendamento">
+                        <i class="fas fa-search text-gray-600"></i>
+                        <span class="hidden md:inline">Consultar</span>
                     </button>
-                    <button onclick="openRegistrarEntregaModal()" class="bg-orange-500 text-white px-4 h-14 flex items-center rounded-lg hover:bg-orange-600 transition-all btn-3d" title="Registrar Entrega Fora do Agendamento">
-                        <i class="fas fa-truck mr-2"></i>
-                        Registrar Entrega
+                    
+                    <button onclick="openRegistrarEntregaModal()" class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all" title="Registrar Entrega">
+                        <i class="fas fa-truck text-gray-600"></i>
+                        <span class="hidden md:inline">Registrar</span>
                     </button>
-                    <button onclick="openBloqueioModal()" class="bg-red-500 text-white px-4 h-14 flex items-center rounded-lg hover:bg-red-600 transition-all btn-3d" title="Bloquear Horários">
-                        <i class="fas fa-ban mr-2"></i>
-                        Bloquear Horário
+                    
+                    <button onclick="openBloqueioModal()" class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all" title="Bloquear Horários">
+                        <i class="fas fa-ban text-gray-600"></i>
+                        <span class="hidden md:inline">Bloquear</span>
                     </button>
-                    <button onclick="openGerenciarBloqueiosModal()" class="bg-purple-500 text-white px-4 h-14 flex items-center rounded-lg hover:bg-purple-600 transition-all btn-3d" title="Gerenciar Bloqueios">
-                        <i class="fas fa-cogs mr-2"></i>
-                        Gerenciar Bloqueios
+                    
+                    <button onclick="openGerenciarBloqueiosModal()" class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all" title="Gerenciar Bloqueios">
+                        <i class="fas fa-cogs text-gray-600"></i>
+                        <span class="hidden md:inline">Gerenciar</span>
                     </button>
-                    <button id="dashboard-kpis-button" class="bg-teal-500 text-white px-4 h-14 flex items-center rounded-lg hover:bg-teal-600 transition-all btn-3d" title="Dashboard KPIs">
-                        <i class="fas fa-chart-pie mr-2"></i>
-                        DASHBOARD KPIS
+                    
+                    <button id="dashboard-kpis-button" class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all" title="Dashboard KPIs">
+                        <i class="fas fa-chart-pie text-gray-600"></i>
+                        <span class="hidden md:inline">KPIs</span>
                     </button>
-                    <button onclick="refreshData()" class="bg-orange-primary text-white px-4 h-14 flex items-center rounded-lg hover:bg-orange-secondary transition-all btn-3d">
-                        <i class="fas fa-sync-alt mr-2"></i>
-                        Atualizar
+                    
+                    <div class="h-8 w-px bg-gray-200 mx-1"></div>
+                    
+                    <button onclick="refreshData()" class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-lg transition-all">
+                        <i class="fas fa-sync-alt"></i>
+                        <span class="hidden md:inline">Atualizar</span>
                     </button>
+                    
+                    <!-- Menu do Usuário -->
                     <div class="relative">
-                        <button id="user-menu-button" class="flex items-center space-x-2 text-gray-dark hover:text-orange-primary transition-colors">
-                            <div class="bg-orange-primary text-white w-10 h-10 rounded-full flex items-center justify-center">
-                                <i class="fas fa-user"></i>
+                        <button id="user-menu-button" class="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-all">
+                            <div class="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
                             </div>
-                            <i class="fas fa-chevron-down"></i>
+                            <i class="fas fa-chevron-down text-xs text-gray-500"></i>
                         </button>
-                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border">
-                            <div class="px-4 py-2 text-gray-700 font-semibold border-b flex items-center">
-                                <i class="fas fa-user mr-2"></i>
-                                <span id="usuario-nome">Usuário</span>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                            <div class="px-4 py-3 border-b border-gray-100">
+                                <p class="text-xs text-gray-500">Logado como</p>
+                                <p class="text-sm font-semibold text-gray-800" id="usuario-nome">Usuário</p>
                             </div>
-                            <button onclick="logout()" class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
-                                <i class="fas fa-sign-out-alt mr-2"></i>Sair
+                            <button onclick="logout()" class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-all flex items-center space-x-2">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Sair</span>
                             </button>
                         </div>
                     </div>
@@ -428,34 +440,6 @@
                         <i class="fas fa-times-circle text-white text-xl"></i>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Painel Entregas de Hoje -->
-        <div class="mb-8 bg-gradient-to-r from-orange-primary to-orange-secondary rounded-2xl shadow-2xl p-6 text-white">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-white bg-opacity-20 p-3 rounded-xl">
-                        <i class="fas fa-calendar-day text-3xl"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-bold">Entregas Programadas para Hoje</h2>
-                        <p class="text-orange-100 text-sm" id="hoje-data-extenso">Carregando...</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <div class="text-right">
-                        <p class="text-sm text-orange-100">Total de Hoje</p>
-                        <p class="text-3xl font-bold" id="total-entregas-hoje">0</p>
-                    </div>
-                    <button onclick="dashboard.atualizarEntregasHoje()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all">
-                        <i class="fas fa-sync-alt mr-2"></i>
-                        Atualizar
-                    </button>
-                </div>
-            </div>
-            <div id="entregas-hoje-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                <!-- Será preenchido via JS -->
             </div>
         </div>
 

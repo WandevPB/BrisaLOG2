@@ -2906,6 +2906,99 @@ class CDDashboard {
         
         document.getElementById('status-modal').classList.remove('hidden');
     }
+
+    // ========================================
+    // NOVAS FUNCIONALIDADES - MELHORIAS V2
+    // ========================================
+
+    filtrarPendentes() {
+        document.getElementById('filter-status').value = 'pendente';
+        this.applyFilters();
+    }
+
+    filtrarHoje() {
+        document.getElementById('filter-periodo').value = 'hoje';
+        this.applyFilters();
+    }
+
+    filtrarAtrasados() {
+        document.getElementById('filter-periodo').value = 'atrasados';
+        this.applyFilters();
+    }
+
+    limparFiltros() {
+        if (document.getElementById('filter-status')) document.getElementById('filter-status').value = '';
+        if (document.getElementById('filter-periodo')) document.getElementById('filter-periodo').value = '';
+        if (document.getElementById('filter-sort')) document.getElementById('filter-sort').value = 'data-asc';
+        if (document.getElementById('search-input')) document.getElementById('search-input').value = '';
+        this.applyFilters();
+    }
+
+    toggleDarkMode() {
+        const body = document.body;
+        const isDark = body.classList.toggle('dark-mode');
+        
+        const icon = document.querySelector('#toggle-dark-mode i');
+        if (icon) {
+            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        
+        localStorage.setItem('darkMode', isDark);
+        this.showNotification(isDark ? 'Modo escuro ativado' : 'Modo claro ativado', 'info');
+    }
+
+    verificarAlertasAtrasados() {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        
+        const atrasados = this.agendamentos.filter(ag => {
+            const dataEntrega = new Date(ag.dataEntrega);
+            dataEntrega.setHours(0, 0, 0, 0);
+            return dataEntrega < hoje && ag.status !== 'entregue' && ag.status !== 'nao-veio';
+        });
+        
+        const container = document.getElementById('alertas-atrasados');
+        if (!container) return;
+        
+        if (atrasados.length > 0) {
+            container.classList.remove('hidden');
+            container.innerHTML = `
+                <div class="bg-red-500 text-white rounded-2xl shadow-lg p-6 alert-atrasado">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                                <i class="fas fa-exclamation-triangle text-3xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold">⚠️ Atenção: Entregas Atrasadas!</h3>
+                                <p class="text-red-100">Você tem ${atrasados.length} entrega(s) atrasada(s) que precisa(m) de atenção</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="dashboard.filtrarAtrasados()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-6 py-2 rounded-lg transition-all font-semibold">
+                                <i class="fas fa-eye mr-2"></i>
+                                Ver Atrasados
+                            </button>
+                            <button onclick="document.getElementById('alertas-atrasados').classList.add('hidden')" class="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
+    atualizarBadgeAcoesPendentes() {
+        const pendentes = this.agendamentos.filter(ag => ag.status === 'pendente').length;
+        const badge = document.getElementById('badge-acoes-pendentes');
+        if (badge) {
+            badge.textContent = pendentes;
+            badge.classList.toggle('badge-pulse', pendentes > 0);
+        }
+    }
 }
 
 // --- FIM DA CLASSE ---
@@ -5051,11 +5144,7 @@ function irParaPagina(pagina) {
     atualizarPaginacao();
 }
 
-// ========================================
-// NOVAS FUNCIONALIDADES - MELHORIAS V2
-// ========================================
-
-// Atalhos de Teclado
+// Atalhos de Teclado Globais
 document.addEventListener('keydown', function(e) {
     // F - Focar na busca
     if (e.key === 'f' || e.key === 'F') {
@@ -5080,136 +5169,3 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
-
-// Filtrar por Período
-dashboard.filtrarPorPeriodo = function(periodo) {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    
-    this.filteredAgendamentos = this.agendamentos.filter(agendamento => {
-        const dataEntrega = new Date(agendamento.dataEntrega);
-        dataEntrega.setHours(0, 0, 0, 0);
-        
-        switch(periodo) {
-            case 'hoje':
-                return dataEntrega.getTime() === hoje.getTime();
-            
-            case 'amanha':
-                const amanha = new Date(hoje);
-                amanha.setDate(amanha.getDate() + 1);
-                return dataEntrega.getTime() === amanha.getTime();
-            
-            case 'semana':
-                const fimSemana = new Date(hoje);
-                fimSemana.setDate(fimSemana.getDate() + 7);
-                return dataEntrega >= hoje && dataEntrega <= fimSemana;
-            
-            case 'mes':
-                const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-                return dataEntrega >= hoje && dataEntrega <= fimMes;
-            
-            case 'atrasados':
-                return dataEntrega < hoje && agendamento.status !== 'entregue' && agendamento.status !== 'nao-veio';
-            
-            default:
-                return true;
-        }
-    });
-    
-    this.renderAgendamentos();
-};
-
-// Quick Actions
-dashboard.filtrarPendentes = function() {
-    document.getElementById('filter-status').value = 'pendente';
-    this.applyFilters();
-};
-
-dashboard.filtrarHoje = function() {
-    document.getElementById('filter-periodo').value = 'hoje';
-    this.applyFilters();
-};
-
-dashboard.filtrarAtrasados = function() {
-    document.getElementById('filter-periodo').value = 'atrasados';
-    this.applyFilters();
-};
-
-dashboard.limparFiltros = function() {
-    document.getElementById('filter-status').value = '';
-    document.getElementById('filter-periodo').value = '';
-    document.getElementById('filter-sort').value = 'data-asc';
-    document.getElementById('search-input').value = '';
-    this.applyFilters();
-};
-
-// Modo Escuro
-dashboard.toggleDarkMode = function() {
-    const body = document.body;
-    const isDark = body.classList.toggle('dark-mode');
-    
-    const icon = document.querySelector('#toggle-dark-mode i');
-    if (icon) {
-        icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-    }
-    
-    localStorage.setItem('darkMode', isDark);
-    this.showNotification(isDark ? 'Modo escuro ativado' : 'Modo claro ativado', 'info');
-};
-
-// Verificar alertas de entregas atrasadas
-dashboard.verificarAlertasAtrasados = function() {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    
-    const atrasados = this.agendamentos.filter(ag => {
-        const dataEntrega = new Date(ag.dataEntrega);
-        dataEntrega.setHours(0, 0, 0, 0);
-        return dataEntrega < hoje && ag.status !== 'entregue' && ag.status !== 'nao-veio';
-    });
-    
-    const container = document.getElementById('alertas-atrasados');
-    if (!container) return;
-    
-    if (atrasados.length > 0) {
-        container.classList.remove('hidden');
-        container.innerHTML = `
-            <div class="bg-red-500 text-white rounded-2xl shadow-lg p-6 alert-atrasado">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="bg-white bg-opacity-20 p-3 rounded-xl">
-                            <i class="fas fa-exclamation-triangle text-3xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold">⚠️ Atenção: Entregas Atrasadas!</h3>
-                            <p class="text-red-100">Você tem ${atrasados.length} entrega(s) atrasada(s) que precisa(m) de atenção</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button onclick="dashboard.filtrarAtrasados()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-6 py-2 rounded-lg transition-all font-semibold">
-                            <i class="fas fa-eye mr-2"></i>
-                            Ver Atrasados
-                        </button>
-                        <button onclick="document.getElementById('alertas-atrasados').classList.add('hidden')" class="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    } else {
-        container.classList.add('hidden');
-    }
-};
-
-// Atualizar badge de ações pendentes
-dashboard.atualizarBadgeAcoesPendentes = function() {
-    const pendentes = this.agendamentos.filter(ag => ag.status === 'pendente').length;
-    const badge = document.getElementById('badge-acoes-pendentes');
-    if (badge) {
-        badge.textContent = pendentes;
-        badge.classList.toggle('badge-pulse', pendentes > 0);
-    }
-};
-
-// Modificar applyFilters para incluir novos filtros
