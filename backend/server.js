@@ -339,6 +339,10 @@ app.use(express.static(path.join(__dirname, '..')));
 // Usar rotas de autenticação
 app.use('/api/auth', authRoutes);
 
+// Usar rotas de usuários
+const usuariosRoutes = require('./usuariosRoutes');
+app.use('/api/usuarios', usuariosRoutes);
+
 // Configuração do Multer para upload de arquivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -1179,11 +1183,11 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
 app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, observacoes } = req.body;
+    const { status, observacoes, codigoUsuario, nomeUsuario } = req.body;
     const cdId = req.user.id;
 
     console.log(`🔄 [PUT /api/agendamentos/${id}/status] Iniciando atualização de status...`);
-    console.log(`📋 [PUT /api/agendamentos/${id}/status] Dados recebidos:`, { id, status, observacoes, cdId });
+    console.log(`📋 [PUT /api/agendamentos/${id}/status] Dados recebidos:`, { id, status, observacoes, cdId, codigoUsuario, nomeUsuario });
 
     // Validar status
     const statusValidos = ['pendente', 'confirmado', 'entregue', 'nao-veio', 'reagendamento'];
@@ -1231,11 +1235,13 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
       statusNovo: agendamentoAtualizado.status 
     });
 
-    // Criar histórico
+    // Criar histórico com informações do usuário
     await prisma.historicoAcao.create({
       data: {
         acao: 'status_alterado',
         descricao: `Status alterado de "${agendamento.status}" para "${status}"`,
+        autor: nomeUsuario || null,
+        codigoUsuario: codigoUsuario || null,
         agendamentoId: parseInt(id),
         cdId: cdId
       }
@@ -1243,7 +1249,7 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
 
     // Enviar emails automáticos conforme o novo status
     try {
-  const consultaUrl = `${process.env.FRONTEND_URL || 'http://  npx prisma migrate resolve --applied 20241006000000_init'}/consultar-status.html?codigo=${agendamento.codigo}`;
+  const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
       if (status === 'confirmado') {
         await emailService.sendConfirmadoEmail({
           to: agendamento.fornecedor.email,

@@ -2251,8 +2251,18 @@ class CDDashboard {
     async updateAgendamentoStatus(id, newStatus) {
         try {
             const token = sessionStorage.getItem('token');
+            const cdData = JSON.parse(sessionStorage.getItem('cdData'));
             
             console.log('Atualizando status:', { id, newStatus, token: token ? 'presente' : 'ausente' });
+            
+            // Solicitar código do usuário antes de prosseguir
+            const usuarioData = await solicitarCodigoUsuario(cdData.id);
+            
+            if (!usuarioData) {
+                // Usuário cancelou a autenticação
+                this.showNotification('Ação cancelada', 'warning');
+                return;
+            }
             
             const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/status`, {
                 method: 'PUT',
@@ -2260,7 +2270,11 @@ class CDDashboard {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ status: newStatus })
+                body: JSON.stringify({ 
+                    status: newStatus,
+                    codigoUsuario: usuarioData.usuario.codigo,
+                    nomeUsuario: usuarioData.usuario.nome
+                })
             });
 
             console.log('Response status:', response.status, response.statusText);
@@ -2275,8 +2289,8 @@ class CDDashboard {
                 // Fechar modal se estiver aberto
                 this.closeDetailModal();
                 
-                // Mostrar notificação de sucesso
-                this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)}`, 'success');
+                // Mostrar notificação de sucesso com nome do usuário
+                this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)} (por ${usuarioData.usuario.nome})`, 'success');
                 
             } else {
                 // Verificar se é token expirado

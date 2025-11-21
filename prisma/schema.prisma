@@ -23,6 +23,7 @@ model Cd {
   agendamentos      Agendamento[]
   bloqueiosHorarios BloqueioHorario[]
   historicoAcoes    HistoricoAcao[]
+  usuarios          Usuario[]         // Usuários vinculados a este CD
 
   @@map("cds")
 }
@@ -103,6 +104,8 @@ model HistoricoAcao {
   descricao     String
   dataAnterior  DateTime?
   dataNova      DateTime?
+  autor         String?     // Nome do usuário que fez a ação
+  codigoUsuario String?     // Código único do usuário
   createdAt     DateTime    @default(now())
   agendamentoId Int
   cdId          Int
@@ -110,6 +113,21 @@ model HistoricoAcao {
   agendamento   Agendamento @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
 
   @@map("historico_acoes")
+}
+
+model Usuario {
+  id            Int      @id @default(autoincrement())
+  nome          String
+  codigo        String   @unique // Código único do usuário (ex: "BHUSER001")
+  email         String?
+  cargo         String?
+  cdId          Int?     // Vinculado a qual CD (null = usuário admin/consultivo)
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  cd            Cd?      @relation(fields: [cdId], references: [id])
+
+  @@map("usuarios")
 }
 
 model BloqueioHorario {
