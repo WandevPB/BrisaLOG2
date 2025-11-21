@@ -115,9 +115,9 @@ class DashboardConsultivo {
 
     updateStatistics() {
         const total = this.agendamentos.length;
-        const pendentes = this.agendamentos.filter(a => a.statusAgendamento === 'Pendente').length;
-        const confirmados = this.agendamentos.filter(a => a.statusAgendamento === 'Confirmado').length;
-        const entregues = this.agendamentos.filter(a => a.statusAgendamento === 'Entregue').length;
+        const pendentes = this.agendamentos.filter(a => a.status === 'pendente').length;
+        const confirmados = this.agendamentos.filter(a => a.status === 'confirmado').length;
+        const entregues = this.agendamentos.filter(a => a.status === 'entregue').length;
 
         document.getElementById('total-agendamentos').textContent = total;
         document.getElementById('total-pendentes').textContent = pendentes;
@@ -157,46 +157,37 @@ class DashboardConsultivo {
         tr.className = 'hover:bg-gray-50 transition-colors';
 
         const cdNome = agendamento.cd?.nome || 'N/A';
-        const nf = agendamento.nf || 'N/A';
-        const fornecedor = agendamento.fornecedorNome || 'N/A';
-        const transportador = agendamento.transportadorNome || 'N/A';
-        const dataAgendamento = this.formatDate(agendamento.dataAgendamento);
-        const turno = agendamento.turno || 'N/A';
-        const status = agendamento.statusAgendamento || 'Pendente';
+        const codigo = agendamento.codigo || 'N/A';
+        const transportador = agendamento.transportadorNome || agendamento.fornecedorNome || 'N/A';
+        const dataEntrega = this.formatDate(agendamento.dataEntrega);
+        const horario = agendamento.horarioEntrega || 'N/A';
+        const status = agendamento.status || 'pendente';
 
         tr.innerHTML = `
             <td class="px-6 py-4">
                 <span class="badge-cd">${cdNome}</span>
             </td>
             <td class="px-6 py-4">
-                <span class="font-semibold text-gray-dark">${nf}</span>
-            </td>
-            <td class="px-6 py-4">
-                <div class="text-sm">
-                    <div class="font-medium text-gray-900">${fornecedor}</div>
-                    ${agendamento.fornecedorDocumento ? `<div class="text-gray-500">${agendamento.fornecedorDocumento}</div>` : ''}
-                </div>
+                <span class="font-semibold text-gray-dark">${codigo}</span>
             </td>
             <td class="px-6 py-4">
                 <div class="text-sm">
                     <div class="font-medium text-gray-900">${transportador}</div>
-                    ${agendamento.transportadorDocumento ? `<div class="text-gray-500">${agendamento.transportadorDocumento}</div>` : ''}
+                    ${agendamento.transportadorDocumento ? `<div class="text-gray-500 text-xs">${agendamento.transportadorDocumento}</div>` : ''}
                 </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <span class="text-sm text-gray-900">${dataAgendamento}</span>
+                <span class="text-sm text-gray-900">${dataEntrega}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    ${turno}
-                </span>
+                <span class="text-sm text-gray-900">${horario}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 ${this.getStatusBadge(status)}
             </td>
             <td class="px-6 py-4 text-center">
                 <button onclick="dashboardConsultivo.verDetalhes(${agendamento.id})" 
-                    class="text-blue-primary hover:text-blue-secondary transition-colors" 
+                    class="text-orange-primary hover:text-orange-secondary transition-colors" 
                     title="Ver Detalhes">
                     <i class="fas fa-eye text-lg"></i>
                 </button>
@@ -208,20 +199,20 @@ class DashboardConsultivo {
 
     getStatusBadge(status) {
         const statusMap = {
-            'Pendente': { class: 'status-pendente', icon: 'clock' },
-            'Confirmado': { class: 'status-confirmado', icon: 'check-circle' },
-            'Entregue': { class: 'status-entregue', icon: 'box-open' },
-            'Não Veio': { class: 'status-nao-veio', icon: 'times-circle' },
-            'Reagendamento': { class: 'status-reagendamento', icon: 'calendar-alt' },
-            'Cancelado pelo Fornecedor': { class: 'status-cancelado-fornecedor', icon: 'ban' }
+            'pendente': { class: 'status-pendente', icon: 'clock', label: 'Pendente' },
+            'confirmado': { class: 'status-confirmado', icon: 'check-circle', label: 'Confirmado' },
+            'entregue': { class: 'status-entregue', icon: 'box-open', label: 'Entregue' },
+            'nao-veio': { class: 'status-nao-veio', icon: 'times-circle', label: 'Não Veio' },
+            'reagendado': { class: 'status-reagendamento', icon: 'calendar-alt', label: 'Reagendado' },
+            'cancelado': { class: 'status-cancelado-fornecedor', icon: 'ban', label: 'Cancelado' }
         };
 
-        const config = statusMap[status] || { class: 'status-pendente', icon: 'question' };
+        const config = statusMap[status] || { class: 'status-pendente', icon: 'question', label: status || 'Pendente' };
 
         return `
             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white ${config.class}">
                 <i class="fas fa-${config.icon} mr-1"></i>
-                ${status}
+                ${config.label}
             </span>
         `;
     }
@@ -429,12 +420,11 @@ class DashboardConsultivo {
             // Filtro de busca
             if (searchTerm) {
                 const searchFields = [
-                    agendamento.nf,
-                    agendamento.fornecedorNome,
-                    agendamento.fornecedorDocumento,
+                    agendamento.codigo,
                     agendamento.transportadorNome,
                     agendamento.transportadorDocumento,
-                    agendamento.protocolo
+                    agendamento.fornecedorNome,
+                    agendamento.fornecedorDocumento
                 ].filter(Boolean).map(f => f.toLowerCase());
 
                 if (!searchFields.some(field => field.includes(searchTerm))) {
@@ -443,7 +433,7 @@ class DashboardConsultivo {
             }
 
             // Filtro de status
-            if (statusFilter && agendamento.statusAgendamento !== statusFilter) {
+            if (statusFilter && agendamento.status !== statusFilter) {
                 return false;
             }
 
@@ -454,7 +444,7 @@ class DashboardConsultivo {
 
             // Filtro de data
             if (dateFilter) {
-                const agendamentoDate = agendamento.dataAgendamento?.split('T')[0];
+                const agendamentoDate = agendamento.dataEntrega?.split('T')[0];
                 if (agendamentoDate !== dateFilter) {
                     return false;
                 }
