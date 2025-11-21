@@ -38,7 +38,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Background animado com grid pattern e glow effects */
+        /* Background simplificado e otimizado */
         .animated-background {
             position: fixed;
             top: 0;
@@ -47,8 +47,7 @@
             height: 100%;
             z-index: -1;
             overflow: hidden;
-            background: linear-gradient(135deg, #fef7f0 0%, #fff8f3 25%, #fef6ef 50%, #fff5ec 75%, #fef4e9 100%);
-            animation: background-breathe 40s ease-in-out infinite;
+            background: linear-gradient(135deg, #fff9f5 0%, #fff 50%, #fff9f5 100%);
         }
         
         /* Grid pattern sutil */
@@ -58,14 +57,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            opacity: 0.08;
+            opacity: 0.04;
             background-image: 
-                linear-gradient(rgba(255, 107, 53, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 107, 53, 0.1) 1px, transparent 1px),
-                linear-gradient(rgba(247, 147, 30, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(247, 147, 30, 0.05) 1px, transparent 1px);
-            background-size: 50px 50px, 50px 50px, 10px 10px, 10px 10px;
-            animation: grid-float 20s ease-in-out infinite;
+                linear-gradient(rgba(255, 107, 53, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 107, 53, 0.08) 1px, transparent 1px);
+            background-size: 50px 50px;
         }
         
         /* Glow effects pulsantes */
@@ -323,19 +319,17 @@
             left: 100%;
         }
         .card-3d {
-            transform: perspective(1000px) rotateX(0deg);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
         }
         .card-3d:hover {
-            transform: perspective(1000px) rotateX(-2deg) translateY(-5px);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.2);
         }
         .icon-3d {
-            filter: drop-shadow(0 5px 10px rgba(255, 107, 53, 0.3));
             transition: all 0.3s ease;
         }
         .icon-3d:hover {
-            filter: drop-shadow(0 8px 15px rgba(255, 107, 53, 0.4));
-            transform: translateY(-2px);
+            transform: translateY(-3px) scale(1.05);
         }
         
         /* Animação de título letra por letra */
@@ -1078,23 +1072,23 @@
         <div class="depth-overlay"></div>
     </div>
 
-    <nav class="bg-white shadow-lg sticky top-0 z-50">
+    <nav class="bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-4">
-                    <div class="w-10 h-10 bg-gradient-to-r from-orange-primary to-orange-secondary rounded-lg flex items-center justify-center icon-3d">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
                         <i class="fas fa-rocket text-white text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold text-gray-dark">BrisaLOG Agenda</h1>
-                        <p class="text-sm text-gray-medium">Sistema de Agendamentos</p>
+                        <h1 class="text-xl font-bold text-white">BrisaLOG Agenda</h1>
+                        <p class="text-sm text-orange-100">Sistema de Agendamentos</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button onclick="openConsultaModal()" class="text-gray-medium hover:text-orange-primary transition-colors duration-300 font-medium">
+                    <button onclick="openConsultaModal()" class="text-white hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-lg transition-all duration-300 font-medium">
                         <i class="fas fa-search mr-1"></i>Consultar Status
                     </button>
-                    <a href="/login" class="bg-gradient-to-r from-orange-primary to-orange-secondary text-white px-4 py-2 rounded-lg btn-3d hover:shadow-lg transition-all duration-300">
+                    <a href="/login" class="bg-white text-orange-600 px-4 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-300 font-semibold">
                         <i class="fas fa-user mr-1"></i>Login Institucional
                     </a>
                 </div>
@@ -1103,74 +1097,29 @@
     </nav>
 
     <section class="hero-background relative py-20 overflow-hidden">
+        <!-- Elementos decorativos simplificados -->
         <div class="floating-glow glow-1"></div>
         <div class="floating-glow glow-2"></div>
-        <div class="floating-glow glow-3"></div>
-        
-        <div class="logistics-element delivery-route"></div>
-        <div class="logistics-element shipping-container"></div>
-        <div class="logistics-element logistics-map"></div>
-        <div class="logistics-element warehouse-grid"></div>
-        
-        <div class="geometric-square square-1"></div>
-        <div class="geometric-square square-2"></div>
-        <div class="geometric-square square-3"></div>
-        <div class="geometric-square square-4"></div>
-        <div class="geometric-square square-5"></div>
-        <div class="geometric-square square-6"></div>
-        <div class="geometric-square circle-1"></div>
-        <div class="geometric-square circle-2"></div>
-        <div class="geometric-square circle-3"></div>
-        <div class="geometric-square triangle-1"></div>
-        <div class="geometric-square triangle-2"></div>
-        <div class="geometric-square triangle-3"></div>
-        <div class="geometric-square diamond-1"></div>
-        
-        <div class="logistics-element distribution-network">
-            <div class="network-node node-1"></div>
-            <div class="network-node node-2"></div>
-            <div class="network-node node-3"></div>
-            <div class="network-node node-4"></div>
-            <div class="network-node node-center"></div>
-            <div class="network-line line-1"></div>
-            <div class="network-line line-2"></div>
-            <div class="network-line line-3"></div>
-            <div class="network-line line-4"></div>
-        </div>
         
         <div class="geometric-shape shape-1">
             <i class="fas fa-truck"></i>
         </div>
         <div class="geometric-shape shape-2">
-            <i class="fas fa-shipping-fast"></i>
-        </div>
-        <div class="geometric-shape shape-3">
-            <i class="fas fa-warehouse"></i>
-        </div>
-        <div class="geometric-shape shape-4">
             <i class="fas fa-calendar-alt"></i>
         </div>
-        <div class="geometric-shape shape-5">
-            <i class="fas fa-boxes"></i>
-        </div>
         
-        <div class="absolute top-1/5 right-1/5 text-2xl opacity-10 text-orange-400">
-            <i class="fas fa-wifi"></i>
-        </div>
-
-        
-        <div class="hero-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="hero-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="text-center mb-16">
                 <h1 id="main-title" class="text-5xl md:text-7xl font-bold mb-6 typewriter-title" style="line-height: 1.2; padding: 10px 0;">
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-primary to-orange-secondary">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-600">
                         Bem vindo ao BrisaLOG Agenda
                     </span>
                 </h1>
-                <p class="text-xl md:text-2xl text-gray-medium mb-8 max-w-4xl mx-auto leading-relaxed">
+                <p class="text-xl md:text-2xl text-gray-700 mb-8 max-w-4xl mx-auto leading-relaxed">
                     Agende suas entregas nos Centros de Distribuição da Brisanet de forma 
-                    <strong class="text-orange-primary">simples</strong>, 
-                    <strong class="text-orange-primary">rápida</strong> e 
-                    <strong class="text-orange-primary">sem cadastro</strong>!
+                    <strong class="text-orange-600">simples</strong>, 
+                    <strong class="text-orange-600">rápida</strong> e 
+                    <strong class="text-orange-600">sem cadastro</strong>!
                 </p>
                 
                 <p class="text-lg text-gray-600 mb-6 font-medium">
@@ -1178,13 +1127,13 @@
                 </p>
                 
                 <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                    <a href="/agendamento" class="bg-gradient-to-r from-orange-primary to-orange-secondary text-white font-bold py-6 px-12 rounded-2xl btn-3d shadow-3d hover:shadow-3d-hover transition-all duration-300 transform hover:scale-105 text-xl animate-bounce-gentle">
+                    <a href="/agendamento" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-6 px-16 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 text-2xl">
                         <i class="fas fa-calendar-plus mr-3"></i>
                         Agendar Entrega Agora
                     </a>
-                    <button onclick="openConsultaModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-6 px-12 rounded-2xl btn-3d shadow-3d hover:shadow-3d-hover transition-all duration-300 transform hover:scale-105 text-xl animate-bounce-gentle">
-                        <i class="fas fa-search mr-3"></i>
-                        Consultar por Código
+                    <button onclick="openConsultaModal()" class="border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-semibold py-5 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 text-lg">
+                        <i class="fas fa-search mr-2"></i>
+                        Consultar Status
                     </button>
                 </div>
             </div>
@@ -1338,7 +1287,111 @@
         </div>
     </section>
 
-    <section class="py-20 bg-gradient-to-r from-orange-primary to-orange-secondary">
+    <!-- Seção de Benefícios Visuais -->
+    <section class="py-20 bg-gradient-to-br from-orange-50 to-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-star text-orange-500 mr-3"></i>
+                    Por que usar o BrisaLOG Agenda?
+                </h2>
+                <p class="text-xl text-gray-600">Benefícios que fazem a diferença</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="bg-white rounded-2xl p-8 shadow-lg text-center transform hover:scale-105 transition-all duration-300 border-t-4 border-orange-500">
+                    <div class="text-6xl font-bold text-orange-500 mb-4">100%</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Digital</h3>
+                    <p class="text-gray-600">Tudo online, sem necessidade de ligações ou deslocamentos</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-8 shadow-lg text-center transform hover:scale-105 transition-all duration-300 border-t-4 border-green-500">
+                    <div class="text-5xl mb-4">
+                        <i class="fas fa-gift text-green-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Grátis</h3>
+                    <p class="text-gray-600">Sem custos, sem taxas. Totalmente gratuito para uso</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-8 shadow-lg text-center transform hover:scale-105 transition-all duration-300 border-t-4 border-blue-500">
+                    <div class="text-5xl mb-4">
+                        <i class="fas fa-bolt text-blue-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Rápido</h3>
+                    <p class="text-gray-600">Agendamento completo em menos de 3 minutos</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-8 shadow-lg text-center transform hover:scale-105 transition-all duration-300 border-t-4 border-purple-500">
+                    <div class="text-5xl mb-4">
+                        <i class="fas fa-user-slash text-purple-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Sem Cadastro</h3>
+                    <p class="text-gray-600">Não precisa criar conta ou fazer login</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção FAQ -->
+    <section class="py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-question-circle text-orange-500 mr-3"></i>
+                    Perguntas Frequentes
+                </h2>
+                <p class="text-xl text-gray-600">Tire suas dúvidas rapidamente</p>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-orange-50 rounded-2xl p-6 border-l-4 border-orange-500">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-calendar-plus text-orange-500 mr-3"></i>
+                        Como faço para agendar uma entrega?
+                    </h3>
+                    <p class="text-gray-700 pl-9">
+                        Clique no botão "Agendar Entrega Agora", preencha os dados da empresa, escolha o CD, data e horário, 
+                        adicione as notas fiscais e confirme. Você receberá um código de agendamento por e-mail.
+                    </p>
+                </div>
+
+                <div class="bg-blue-50 rounded-2xl p-6 border-l-4 border-blue-500">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-lock text-blue-500 mr-3"></i>
+                        Preciso criar uma conta ou fazer login?
+                    </h3>
+                    <p class="text-gray-700 pl-9">
+                        Não! O BrisaLOG Agenda funciona sem necessidade de cadastro. Basta preencher os dados do agendamento 
+                        e você receberá um código para acompanhar tudo.
+                    </p>
+                </div>
+
+                <div class="bg-green-50 rounded-2xl p-6 border-l-4 border-green-500">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-search text-green-500 mr-3"></i>
+                        Como acompanho meu agendamento?
+                    </h3>
+                    <p class="text-gray-700 pl-9">
+                        Use o código que você recebeu por e-mail. Clique em "Consultar Status" no topo da página, 
+                        digite seu código e veja todas as informações e atualizações do seu agendamento.
+                    </p>
+                </div>
+
+                <div class="bg-purple-50 rounded-2xl p-6 border-l-4 border-purple-500">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-redo text-purple-500 mr-3"></i>
+                        Posso cancelar ou reagendar?
+                    </h3>
+                    <p class="text-gray-700 pl-9">
+                        Sim! Consulte seu agendamento usando o código e você verá opções para solicitar cancelamento ou reagendamento. 
+                        O CD analisará sua solicitação e retornará por e-mail.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 bg-gradient-to-r from-orange-500 to-orange-600">
         <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
             <h2 class="text-4xl font-bold text-white mb-6">
                 Pronto para agendar sua entrega?
@@ -1346,7 +1399,7 @@
             <p class="text-xl text-orange-100 mb-8">
                 É rápido, fácil e você acompanha tudo pelo código gerado!
             </p>
-            <a href="/agendamento" class="bg-white text-orange-primary font-bold py-6 px-12 rounded-2xl btn-3d shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-xl inline-flex items-center">
+            <a href="/agendamento" class="bg-white text-orange-600 font-bold py-6 px-12 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-xl inline-flex items-center">
                 <i class="fas fa-rocket mr-3"></i>
                 Começar Agendamento
             </a>
