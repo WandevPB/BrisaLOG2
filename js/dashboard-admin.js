@@ -14,9 +14,10 @@ class DashboardAdmin {
             await this.loadUsuarios();
             this.setupEventListeners();
             
-            // Inicializar visão geral com dashboard consultivo
-            if (typeof dashboardConsultivo !== 'undefined') {
-                dashboardConsultivo.init();
+            // Inicializar dashboard consultivo na aba Visão Geral
+            if (typeof DashboardConsultivo !== 'undefined') {
+                window.dashboardConsultivo = new DashboardConsultivo();
+                await window.dashboardConsultivo.init();
             }
         } catch (error) {
             console.error('Erro ao inicializar dashboard admin:', error);

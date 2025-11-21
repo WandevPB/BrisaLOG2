@@ -209,7 +209,7 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// Gerar próximo código disponível para um CD
+// Gerar código aleatório de 5 dígitos para um CD
 router.get('/gerar-codigo/:cdId', async (req, res) => {
     try {
         const { cdId } = req.params;
@@ -222,29 +222,31 @@ router.get('/gerar-codigo/:cdId', async (req, res) => {
             return res.status(404).json({ error: 'CD não encontrado' });
         }
 
-        // Pegar sigla do CD (primeiras 2 letras)
-        const sigla = cd.nome.substring(0, 2).toUpperCase();
+        // Gerar código aleatório de 5 dígitos
+        let novoCodigo;
+        let tentativas = 0;
+        const maxTentativas = 100;
 
-        // Buscar último código do CD
-        const ultimoUsuario = await prisma.usuario.findFirst({
-            where: {
-                cdId: parseInt(cdId),
-                codigo: {
-                    startsWith: sigla
-                }
-            },
-            orderBy: {
-                codigo: 'desc'
+        do {
+            // Gerar número aleatório de 5 dígitos (10000 a 99999)
+            const numeroAleatorio = Math.floor(10000 + Math.random() * 90000);
+            novoCodigo = numeroAleatorio.toString();
+
+            // Verificar se já existe
+            const codigoExistente = await prisma.usuario.findUnique({
+                where: { codigo: novoCodigo }
+            });
+
+            if (!codigoExistente) {
+                break; // Código único encontrado
             }
-        });
 
-        let proximoNumero = 1;
-        if (ultimoUsuario) {
-            const numeroAtual = parseInt(ultimoUsuario.codigo.replace(sigla, ''));
-            proximoNumero = numeroAtual + 1;
+            tentativas++;
+        } while (tentativas < maxTentativas);
+
+        if (tentativas >= maxTentativas) {
+            return res.status(500).json({ error: 'Não foi possível gerar código único' });
         }
-
-        const novoCodigo = `${sigla}${proximoNumero.toString().padStart(3, '0')}`;
 
         res.json({ codigo: novoCodigo });
     } catch (error) {
