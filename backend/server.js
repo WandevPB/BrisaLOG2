@@ -2674,6 +2674,58 @@ app.get('/api/cds', authenticateToken, async (req, res) => {
   }
 });
 
+// Buscar dados do transportador por CNPJ (para autocomplete)
+app.get('/api/transportador/buscar-por-cnpj/:cnpj', async (req, res) => {
+  try {
+    const cnpj = req.params.cnpj.replace(/[^\d]/g, ''); // Remove formatação
+    
+    console.log('🔍 [GET /api/transportador/buscar-por-cnpj] Buscando CNPJ:', cnpj);
+    
+    // Buscar o agendamento mais recente com este CNPJ
+    const agendamento = await prisma.agendamento.findFirst({
+      where: {
+        fornecedorDocumento: {
+          contains: cnpj
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      select: {
+        fornecedorNome: true,
+        fornecedorEmail: true,
+        fornecedorTelefone: true,
+        fornecedorDocumento: true,
+        transportadorNome: true,
+        transportadorEmail: true,
+        transportadorTelefone: true,
+        transportadorDocumento: true
+      }
+    });
+    
+    if (agendamento) {
+      console.log('✅ [GET /api/transportador/buscar-por-cnpj] Transportador encontrado:', agendamento.fornecedorNome || agendamento.transportadorNome);
+      
+      // Priorizar dados de transportador se existirem, senão usar fornecedor
+      const dados = {
+        nome: agendamento.transportadorNome || agendamento.fornecedorNome,
+        email: agendamento.transportadorEmail || agendamento.fornecedorEmail,
+        telefone: agendamento.transportadorTelefone || agendamento.fornecedorTelefone,
+        documento: agendamento.transportadorDocumento || agendamento.fornecedorDocumento,
+        existe: true
+      };
+      
+      res.json(dados);
+    } else {
+      console.log('ℹ️ [GET /api/transportador/buscar-por-cnpj] CNPJ não encontrado no sistema');
+      res.json({ existe: false });
+    }
+  } catch (err) {
+    console.error('❌ [GET /api/transportador/buscar-por-cnpj] Erro:', err);
+    res.status(500).json({ error: 'Erro ao buscar transportador' });
+  }
+});
+
 // ============================================================================
 // MIDDLEWARE DE ERROR E INICIALIZAÇÃO
 // ============================================================================

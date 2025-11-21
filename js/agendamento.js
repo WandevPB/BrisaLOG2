@@ -24,6 +24,19 @@ class AgendamentoForm {
         document.getElementById('next-btn')?.addEventListener('click', () => this.nextStep());
         document.getElementById('prev-btn')?.addEventListener('click', () => this.previousStep());
 
+        // Autocomplete de transportador por CNPJ
+        const cnpjInput = document.getElementById('documento');
+        if (cnpjInput) {
+            cnpjInput.addEventListener('blur', () => this.buscarTransportadorPorCNPJ());
+            // Também buscar ao pressionar Enter
+            cnpjInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.buscarTransportadorPorCNPJ();
+                }
+            });
+        }
+
     // Botão Adicionar Pedido removido
     }
 
@@ -213,6 +226,69 @@ class AgendamentoForm {
         if (feedback) {
             feedback.textContent = '';
             feedback.classList.add('hidden');
+        }
+    }
+
+    async buscarTransportadorPorCNPJ() {
+        const cnpjInput = document.getElementById('documento');
+        if (!cnpjInput) return;
+
+        const cnpj = cnpjInput.value.replace(/[^\d]/g, ''); // Remove formatação
+        
+        // Só buscar se tiver pelo menos 14 dígitos
+        if (cnpj.length < 14) return;
+
+        try {
+            console.log('🔍 Buscando transportador com CNPJ:', cnpj);
+            
+            const response = await fetch(`${getApiBaseUrl()}/api/transportador/buscar-por-cnpj/${cnpj}`);
+            const data = await response.json();
+
+            if (data.existe) {
+                console.log('✅ Transportador encontrado:', data.nome);
+                
+                // Preencher campos
+                const nomeInput = document.getElementById('nome-empresa');
+                const emailInput = document.getElementById('email');
+                const telefoneInput = document.getElementById('telefone');
+
+                if (nomeInput) {
+                    nomeInput.value = data.nome;
+                    nomeInput.readOnly = true;
+                    nomeInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    nomeInput.title = 'Nome vinculado ao CNPJ (não editável)';
+                }
+
+                if (emailInput && data.email) {
+                    emailInput.value = data.email;
+                }
+
+                if (telefoneInput && data.telefone) {
+                    telefoneInput.value = data.telefone;
+                }
+
+                // Mostrar mensagem de sucesso
+                this.showNotification(`Transportador "${data.nome}" encontrado! Nome bloqueado para edição.`, 'success');
+            } else {
+                console.log('ℹ️ CNPJ novo - permitir edição livre');
+                
+                // Desbloquear campo nome se estava bloqueado
+                const nomeInput = document.getElementById('nome-empresa');
+                if (nomeInput) {
+                    nomeInput.readOnly = false;
+                    nomeInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                    nomeInput.title = '';
+                }
+            }
+        } catch (error) {
+            console.error('❌ Erro ao buscar transportador:', error);
+            // Em caso de erro, permitir edição
+            const nomeInput = document.getElementById('nome-empresa');
+            if (nomeInput) {
+                nomeInput.readOnly = false;
+                nomeInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                nomeInput.title = '';
+            }
         }
     }
 

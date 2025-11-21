@@ -1743,6 +1743,77 @@
             cnpjInput.addEventListener('input', function(e) {
                 maskDocument(e.target);
             });
+            
+            // Buscar transportador ao sair do campo ou pressionar Enter
+            cnpjInput.addEventListener('blur', function() {
+                buscarTransportadorPorCNPJModal();
+            });
+            
+            cnpjInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    buscarTransportadorPorCNPJModal();
+                }
+            });
+        }
+        
+        // Função para buscar transportador por CNPJ no modal
+        async function buscarTransportadorPorCNPJModal() {
+            const cnpjInput = document.getElementById('entrega-cnpj-Transportador');
+            if (!cnpjInput) return;
+
+            const cnpj = cnpjInput.value.replace(/[^\d]/g, '');
+            
+            if (cnpj.length < 14) return;
+
+            try {
+                console.log('🔍 [Modal] Buscando transportador com CNPJ:', cnpj);
+                
+                const response = await fetch(`${getApiBaseUrl()}/api/transportador/buscar-por-cnpj/${cnpj}`);
+                const data = await response.json();
+
+                if (data.existe) {
+                    console.log('✅ [Modal] Transportador encontrado:', data.nome);
+                    
+                    const nomeInput = document.getElementById('entrega-nome-Transportador');
+                    const emailInput = document.getElementById('entrega-email-Transportador');
+                    const telefoneInput = document.getElementById('entrega-telefone-Transportador');
+
+                    if (nomeInput) {
+                        nomeInput.value = data.nome;
+                        nomeInput.readOnly = true;
+                        nomeInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                        nomeInput.title = 'Nome vinculado ao CNPJ (não editável)';
+                    }
+
+                    if (emailInput && data.email) {
+                        emailInput.value = data.email;
+                    }
+
+                    if (telefoneInput && data.telefone) {
+                        telefoneInput.value = data.telefone;
+                    }
+
+                    dashboard.showNotification(`Transportador "${data.nome}" encontrado! Nome bloqueado para edição.`, 'success');
+                } else {
+                    console.log('ℹ️ [Modal] CNPJ novo - permitir edição livre');
+                    
+                    const nomeInput = document.getElementById('entrega-nome-Transportador');
+                    if (nomeInput) {
+                        nomeInput.readOnly = false;
+                        nomeInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                        nomeInput.title = '';
+                    }
+                }
+            } catch (error) {
+                console.error('❌ [Modal] Erro ao buscar transportador:', error);
+                const nomeInput = document.getElementById('entrega-nome-Transportador');
+                if (nomeInput) {
+                    nomeInput.readOnly = false;
+                    nomeInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                    nomeInput.title = '';
+                }
+            }
         }
     });
     </script>
