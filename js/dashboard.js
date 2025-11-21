@@ -2251,11 +2251,37 @@ class CDDashboard {
     async updateAgendamentoStatus(id, newStatus) {
         try {
             const token = sessionStorage.getItem('token');
-            const cdData = JSON.parse(sessionStorage.getItem('cdData'));
+            const cdDataString = sessionStorage.getItem('cdData');
+            
+            console.log('DEBUG - sessionStorage cdData:', cdDataString);
+            console.log('DEBUG - sessionStorage keys:', Object.keys(sessionStorage));
+            
+            const cdData = cdDataString ? JSON.parse(cdDataString) : null;
+            
+            console.log('DEBUG - cdData parsed:', cdData);
             
             if (!cdData || !cdData.id) {
-                this.showNotification('Erro: Dados do CD não encontrados. Faça login novamente.', 'error');
-                return;
+                // Tentar fallback com cdInfo ou cd_id
+                const cdInfo = sessionStorage.getItem('cdInfo');
+                const cdId = sessionStorage.getItem('cd_id');
+                
+                console.log('DEBUG - Tentando fallback - cdInfo:', cdInfo, 'cd_id:', cdId);
+                
+                if (cdInfo) {
+                    const cdInfoParsed = JSON.parse(cdInfo);
+                    if (cdInfoParsed && cdInfoParsed.id) {
+                        console.log('DEBUG - Usando cdInfo como fallback');
+                        cdData = cdInfoParsed;
+                    }
+                } else if (cdId) {
+                    console.log('DEBUG - Usando cd_id como fallback');
+                    cdData = { id: parseInt(cdId) };
+                }
+                
+                if (!cdData || !cdData.id) {
+                    this.showNotification('Erro: Dados do CD não encontrados. Faça login novamente.', 'error');
+                    return;
+                }
             }
             
             console.log('Atualizando status:', { id, newStatus, cdId: cdData.id, token: token ? 'presente' : 'ausente' });
