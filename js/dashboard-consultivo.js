@@ -233,6 +233,7 @@ class DashboardConsultivo {
 
             content.innerHTML = this.renderDetalhesContent(agendamento);
             modal.classList.remove('hidden');
+            modal.style.display = 'flex';
 
         } catch (error) {
             console.error('Erro ao carregar detalhes:', error);
@@ -674,7 +675,9 @@ function limparFiltros() {
 }
 
 function fecharDetalhes() {
-    document.getElementById('detalhes-modal').classList.add('hidden');
+    const modal = document.getElementById('detalhes-modal');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
 }
 
 // Inicializar dashboard
