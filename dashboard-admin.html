@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - BrisaLOG Portal</title>
+    <script src="config.js"></script>
+    <script src="js/apiRequest.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'orange-primary': '#FF6B35',
+                        'orange-secondary': '#FF8C42',
+                        'orange-accent': '#FF9F66',
+                        'orange-light': '#FFA885',
+                        'gray-dark': '#2D3748',
+                        'gray-medium': '#4A5568',
+                        'gray-light': '#E2E8F0'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-3d {
+            transform: perspective(1000px) rotateX(5deg);
+            transition: all 0.3s ease;
+            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.1), 0 10px 20px rgba(255, 107, 53, 0.1);
+        }
+        .card-3d:hover {
+            transform: perspective(1000px) rotateX(0deg) translateY(-5px);
+            box-shadow: 0 30px 60px rgba(255, 107, 53, 0.2), 0 15px 30px rgba(255, 107, 53, 0.15);
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-button.active {
+            border-bottom-color: #FF6B35;
+            color: #FF6B35;
+            background: rgba(255, 107, 53, 0.1);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-orange-primary to-orange-secondary shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-xl p-3">
+                        <i class="fas fa-user-shield text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-white text-2xl font-bold">Dashboard Administrativo</h1>
+                        <p class="text-orange-100 text-sm">Gestão completa do sistema</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Sair
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white shadow-md sticky top-0 z-40">
+        <div class="container mx-auto px-4">
+            <div class="flex space-x-1 overflow-x-auto">
+                <button onclick="dashboardAdmin.switchTab('visao-geral')" class="tab-button active px-6 py-4 font-semibold whitespace-nowrap">
+                    <i class="fas fa-chart-line mr-2"></i>
+                    Visão Geral
+                </button>
+                <button onclick="dashboardAdmin.switchTab('usuarios')" class="tab-button px-6 py-4 font-semibold whitespace-nowrap">
+                    <i class="fas fa-users mr-2"></i>
+                    Gerenciar Usuários
+                </button>
+                <button onclick="dashboardAdmin.switchTab('produtividade')" class="tab-button px-6 py-4 font-semibold whitespace-nowrap">
+                    <i class="fas fa-chart-bar mr-2"></i>
+                    Produtividade
+                </button>
+                <button onclick="dashboardAdmin.switchTab('relatorios')" class="tab-button px-6 py-4 font-semibold whitespace-nowrap">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    Relatórios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        
+        <!-- Tab: Visão Geral -->
+        <div id="tab-visao-geral" class="tab-content active">
+            <div id="visao-geral-container">
+                <!-- Será preenchido pelo dashboard-consultivo.js -->
+            </div>
+        </div>
+
+        <!-- Tab: Gerenciar Usuários -->
+        <div id="tab-usuarios" class="tab-content">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    <i class="fas fa-users text-orange-primary mr-2"></i>
+                    Gerenciar Usuários
+                </h2>
+                <button onclick="dashboardAdmin.abrirModalNovoUsuario()" class="bg-gradient-to-r from-orange-primary to-orange-secondary text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all font-semibold">
+                    <i class="fas fa-plus mr-2"></i>
+                    Novo Usuário
+                </button>
+            </div>
+
+            <!-- Filtros -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-search mr-2 text-orange-primary"></i>
+                            Buscar
+                        </label>
+                        <input type="text" id="filtro-usuario-busca" placeholder="Nome ou código..." 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-building mr-2 text-orange-primary"></i>
+                            CD
+                        </label>
+                        <select id="filtro-usuario-cd" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                            <option value="">Todos os CDs</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-toggle-on mr-2 text-orange-primary"></i>
+                            Status
+                        </label>
+                        <select id="filtro-usuario-status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                            <option value="">Todos</option>
+                            <option value="true">Ativos</option>
+                            <option value="false">Inativos</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Usuários -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gradient-to-r from-orange-primary to-orange-secondary text-white">
+                            <tr>
+                                <th class="px-6 py-4 text-left font-semibold">Código</th>
+                                <th class="px-6 py-4 text-left font-semibold">Nome</th>
+                                <th class="px-6 py-4 text-left font-semibold">Cargo</th>
+                                <th class="px-6 py-4 text-left font-semibold">CD</th>
+                                <th class="px-6 py-4 text-left font-semibold">Email</th>
+                                <th class="px-6 py-4 text-center font-semibold">Status</th>
+                                <th class="px-6 py-4 text-center font-semibold">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuarios-table-body">
+                            <!-- Será preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Produtividade -->
+        <div id="tab-produtividade" class="tab-content">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                <i class="fas fa-chart-bar text-orange-primary mr-2"></i>
+                Relatório de Produtividade
+            </h2>
+
+            <!-- Filtro de Período -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Data Inicial</label>
+                        <input type="date" id="prod-data-inicio" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Data Final</label>
+                        <input type="date" id="prod-data-fim" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="dashboardAdmin.gerarRelatorioProdutividade()" class="w-full bg-orange-primary text-white px-6 py-2 rounded-lg hover:bg-orange-secondary transition-all">
+                            <i class="fas fa-sync mr-2"></i>
+                            Atualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards de Produtividade -->
+            <div id="produtividade-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Será preenchido via JS -->
+            </div>
+        </div>
+
+        <!-- Tab: Relatórios -->
+        <div id="tab-relatorios" class="tab-content">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                <i class="fas fa-file-alt text-orange-primary mr-2"></i>
+                Relatórios do Sistema
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Card Relatório de Agendamentos -->
+                <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all cursor-pointer">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="bg-blue-100 p-4 rounded-xl">
+                            <i class="fas fa-calendar-alt text-blue-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl text-gray-900">Agendamentos</h3>
+                            <p class="text-gray-600 text-sm">Relatório completo de agendamentos</p>
+                        </div>
+                    </div>
+                    <button onclick="dashboardAdmin.exportarRelatorioAgendamentos()" class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all">
+                        <i class="fas fa-download mr-2"></i>
+                        Exportar Excel
+                    </button>
+                </div>
+
+                <!-- Card Relatório de Usuários -->
+                <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all cursor-pointer">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="bg-green-100 p-4 rounded-xl">
+                            <i class="fas fa-users text-green-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl text-gray-900">Ações por Usuário</h3>
+                            <p class="text-gray-600 text-sm">Histórico de ações executadas</p>
+                        </div>
+                    </div>
+                    <button onclick="dashboardAdmin.exportarRelatorioUsuarios()" class="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all">
+                        <i class="fas fa-download mr-2"></i>
+                        Exportar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Novo/Editar Usuário -->
+    <div id="modal-usuario" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-900" id="modal-usuario-title">Novo Usuário</h3>
+                <button onclick="dashboardAdmin.fecharModalUsuario()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <form id="form-usuario" class="space-y-4">
+                <input type="hidden" id="usuario-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Nome Completo *
+                        </label>
+                        <input type="text" id="usuario-nome" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Código *
+                        </label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="usuario-codigo" required readonly
+                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 font-mono uppercase">
+                            <button type="button" onclick="dashboardAdmin.gerarCodigo()" class="bg-orange-primary text-white px-4 py-2 rounded-lg hover:bg-orange-secondary">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Email
+                        </label>
+                        <input type="email" id="usuario-email"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Cargo
+                        </label>
+                        <input type="text" id="usuario-cargo"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Centro de Distribuição *
+                    </label>
+                    <select id="usuario-cd" required onchange="dashboardAdmin.cdSelecionado()"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                        <option value="">Selecione um CD</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="usuario-ativo" checked class="w-4 h-4 text-orange-primary border-gray-300 rounded focus:ring-orange-primary">
+                    <label for="usuario-ativo" class="text-sm font-semibold text-gray-700">
+                        Usuário Ativo
+                    </label>
+                </div>
+
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="dashboardAdmin.fecharModalUsuario()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all font-semibold">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-orange-primary to-orange-secondary text-white rounded-lg hover:shadow-lg transition-all font-semibold">
+                        Salvar Usuário
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/dashboard-consultivo.js"></script>
+    <script src="js/dashboard-admin.js"></script>
+    <script>
+        // Logout
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // Verificar autenticação
+        const token = sessionStorage.getItem('token');
+        const cdData = sessionStorage.getItem('cdData');
+        
+        if (!token || !cdData) {
+            window.location.href = 'login.html';
+        } else {
+            const userData = JSON.parse(cdData);
+            if (userData.tipoPerfil !== 'admin') {
+                alert('Acesso negado! Apenas administradores podem acessar esta página.');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>
