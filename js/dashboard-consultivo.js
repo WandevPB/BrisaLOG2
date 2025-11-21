@@ -238,15 +238,19 @@ class DashboardConsultivo {
     }
 
     renderDetalhesContent(agendamento) {
-        const dataAgendamento = this.formatDate(agendamento.dataAgendamento);
+        const dataEntrega = this.formatDate(agendamento.dataEntrega);
         const dataCriacao = this.formatDateTime(agendamento.createdAt);
         const dataAtualizacao = this.formatDateTime(agendamento.updatedAt);
+        
+        // Buscar notas fiscais
+        const notasFiscais = agendamento.notasFiscais || [];
+        const historicoAcoes = agendamento.historicoAcoes || [];
 
         return `
             <!-- Informações Gerais -->
             <div class="mb-6">
                 <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
-                    <i class="fas fa-info-circle text-blue-primary mr-2"></i>
+                    <i class="fas fa-info-circle text-orange-primary mr-2"></i>
                     Informações Gerais
                 </h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
@@ -255,119 +259,160 @@ class DashboardConsultivo {
                         <p class="text-gray-dark font-semibold">${agendamento.cd?.nome || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Número NF</label>
-                        <p class="text-gray-dark font-semibold">${agendamento.nf || 'N/A'}</p>
+                        <label class="text-xs text-gray-500 font-semibold uppercase">Código</label>
+                        <p class="text-gray-dark font-semibold">${agendamento.codigo || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Data Agendamento</label>
-                        <p class="text-gray-dark">${dataAgendamento}</p>
+                        <label class="text-xs text-gray-500 font-semibold uppercase">Data de Entrega</label>
+                        <p class="text-gray-dark">${dataEntrega}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Turno</label>
-                        <p class="text-gray-dark">${agendamento.turno || 'N/A'}</p>
+                        <label class="text-xs text-gray-500 font-semibold uppercase">Horário</label>
+                        <p class="text-gray-dark">${agendamento.horarioEntrega || 'N/A'}</p>
                     </div>
                     <div>
                         <label class="text-xs text-gray-500 font-semibold uppercase">Status</label>
-                        <div class="mt-1">${this.getStatusBadge(agendamento.statusAgendamento)}</div>
+                        <div class="mt-1">${this.getStatusBadge(agendamento.status)}</div>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Protocolo</label>
-                        <p class="text-gray-dark font-mono">${agendamento.protocolo || 'N/A'}</p>
+                        <label class="text-xs text-gray-500 font-semibold uppercase">Tipo de Carga</label>
+                        <p class="text-gray-dark">${agendamento.tipoCarga || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 font-semibold uppercase">Tipo de Veículo</label>
+                        <p class="text-gray-dark">${agendamento.tipoVeiculo || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 font-semibold uppercase">Placa do Veículo</label>
+                        <p class="text-gray-dark font-mono">${agendamento.placaVeiculo || 'N/A'}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Informações do Fornecedor -->
+            <!-- Informações do Fornecedor/Transportador -->
             <div class="mb-6">
                 <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
-                    <i class="fas fa-building text-blue-primary mr-2"></i>
-                    Dados do Fornecedor
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
-                    <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Nome</label>
-                        <p class="text-gray-dark">${agendamento.fornecedorNome || 'N/A'}</p>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">CNPJ</label>
-                        <p class="text-gray-dark">${agendamento.fornecedorDocumento || 'N/A'}</p>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">E-mail</label>
-                        <p class="text-gray-dark">${agendamento.fornecedorEmail || 'N/A'}</p>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Telefone</label>
-                        <p class="text-gray-dark">${agendamento.fornecedorTelefone || 'N/A'}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Informações do Transportador -->
-            <div class="mb-6">
-                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
-                    <i class="fas fa-truck text-blue-primary mr-2"></i>
+                    <i class="fas fa-truck text-orange-primary mr-2"></i>
                     Dados do Transportador
                 </h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div>
                         <label class="text-xs text-gray-500 font-semibold uppercase">Nome</label>
-                        <p class="text-gray-dark">${agendamento.transportadorNome || 'N/A'}</p>
+                        <p class="text-gray-dark">${agendamento.transportadorNome || agendamento.fornecedorNome || 'N/A'}</p>
                     </div>
                     <div>
                         <label class="text-xs text-gray-500 font-semibold uppercase">CNPJ</label>
-                        <p class="text-gray-dark">${agendamento.transportadorDocumento || 'N/A'}</p>
+                        <p class="text-gray-dark">${agendamento.transportadorDocumento || agendamento.fornecedorDocumento || 'N/A'}</p>
                     </div>
                     <div>
                         <label class="text-xs text-gray-500 font-semibold uppercase">E-mail</label>
-                        <p class="text-gray-dark">${agendamento.transportadorEmail || 'N/A'}</p>
+                        <p class="text-gray-dark">${agendamento.transportadorEmail || agendamento.fornecedorEmail || 'N/A'}</p>
                     </div>
                     <div>
                         <label class="text-xs text-gray-500 font-semibold uppercase">Telefone</label>
-                        <p class="text-gray-dark">${agendamento.transportadorTelefone || 'N/A'}</p>
+                        <p class="text-gray-dark">${agendamento.transportadorTelefone || agendamento.fornecedorTelefone || 'N/A'}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Informações de Entrega -->
-            ${agendamento.statusAgendamento === 'Entregue' ? `
+            <!-- Informações do Motorista (se tiver) -->
+            ${agendamento.motoristaNome ? `
             <div class="mb-6">
                 <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
-                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                    Dados da Entrega
+                    <i class="fas fa-id-card text-orange-primary mr-2"></i>
+                    Dados do Motorista
                 </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Data/Hora da Entrega</label>
-                        <p class="text-gray-dark">${this.formatDateTime(agendamento.dataHoraEntrega)}</p>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Motorista</label>
-                        <p class="text-gray-dark">${agendamento.nomeMotorista || 'N/A'}</p>
+                        <label class="text-xs text-gray-500 font-semibold uppercase">Nome</label>
+                        <p class="text-gray-dark">${agendamento.motoristaNome}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">CPF Motorista</label>
-                        <p class="text-gray-dark">${agendamento.cpfMotorista || 'N/A'}</p>
+                        <label class="text-xs text-gray-500 font-semibold uppercase">CPF</label>
+                        <p class="text-gray-dark font-mono">${agendamento.motoristaCpf || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Placa Veículo</label>
-                        <p class="text-gray-dark font-mono">${agendamento.placaVeiculo || 'N/A'}</p>
+                        <label class="text-xs text-gray-500 font-semibold uppercase">Telefone</label>
+                        <p class="text-gray-dark">${agendamento.motoristaTelefone || 'N/A'}</p>
                     </div>
-                    ${agendamento.observacoes ? `
-                    <div class="md:col-span-2">
-                        <label class="text-xs text-gray-500 font-semibold uppercase">Observações</label>
-                        <p class="text-gray-dark">${agendamento.observacoes}</p>
-                    </div>
-                    ` : ''}
                 </div>
             </div>
             ` : ''}
 
-            <!-- Histórico -->
+            <!-- Notas Fiscais -->
+            ${notasFiscais.length > 0 ? `
             <div class="mb-6">
                 <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
-                    <i class="fas fa-history text-blue-primary mr-2"></i>
-                    Histórico
+                    <i class="fas fa-file-invoice text-orange-primary mr-2"></i>
+                    Notas Fiscais
+                </h4>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="space-y-2">
+                        ${notasFiscais.map(nf => `
+                            <div class="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-file-alt text-orange-primary text-xl"></i>
+                                    <div>
+                                        <p class="font-semibold text-gray-dark">NF: ${nf.numeroNF}</p>
+                                        <p class="text-sm text-gray-500">Pedido: ${nf.numeroPedido}${nf.serie ? ` | Série: ${nf.serie}` : ''}</p>
+                                    </div>
+                                </div>
+                                ${nf.valor ? `<span class="text-sm font-semibold text-green-600">R$ ${nf.valor}</span>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Observações -->
+            ${agendamento.observacoes ? `
+            <div class="mb-6">
+                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
+                    <i class="fas fa-comment-alt text-orange-primary mr-2"></i>
+                    Observações
+                </h4>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-gray-dark whitespace-pre-wrap">${agendamento.observacoes}</p>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Histórico de Movimentações -->
+            ${historicoAcoes.length > 0 ? `
+            <div class="mb-6">
+                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
+                    <i class="fas fa-history text-orange-primary mr-2"></i>
+                    Histórico de Movimentações
+                </h4>
+                <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                    ${historicoAcoes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(acao => `
+                        <div class="flex items-start space-x-3 p-3 bg-white rounded border border-gray-200">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                    <i class="fas fa-${this.getAcaoIcon(acao.acao)} text-orange-primary text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-gray-dark">${this.getAcaoLabel(acao.acao)}</p>
+                                ${acao.descricao ? `<p class="text-sm text-gray-600 mt-1">${acao.descricao}</p>` : ''}
+                                <div class="flex items-center mt-2 text-xs text-gray-500">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    <span>${this.formatDateTime(acao.createdAt)}</span>
+                                    ${acao.autor ? ` <span class="mx-2">•</span> <i class="fas fa-user mr-1"></i> <span>${acao.autor}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Dados de Criação/Atualização -->
+            <div class="mb-6">
+                <h4 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
+                    <i class="fas fa-clock text-orange-primary mr-2"></i>
+                    Registro
                 </h4>
                 <div class="bg-gray-50 p-4 rounded-lg space-y-2">
                     <div class="flex justify-between items-center">
@@ -389,6 +434,32 @@ class DashboardConsultivo {
                 </button>
             </div>
         `;
+    }
+
+    getAcaoIcon(acao) {
+        const icons = {
+            'agendamento_criado': 'plus-circle',
+            'status_alterado': 'exchange-alt',
+            'confirmado': 'check-circle',
+            'entregue': 'box-open',
+            'reagendamento': 'calendar-alt',
+            'nao-veio': 'times-circle',
+            'cancelado': 'ban'
+        };
+        return icons[acao] || 'circle';
+    }
+
+    getAcaoLabel(acao) {
+        const labels = {
+            'agendamento_criado': 'Agendamento Criado',
+            'status_alterado': 'Status Alterado',
+            'confirmado': 'Agendamento Confirmado',
+            'entregue': 'Entrega Realizada',
+            'reagendamento': 'Reagendamento Solicitado',
+            'nao-veio': 'Transportador Não Compareceu',
+            'cancelado': 'Agendamento Cancelado'
+        };
+        return labels[acao] || acao;
     }
 
     setupEventListeners() {
@@ -489,7 +560,7 @@ class DashboardConsultivo {
 
         // Botão Anterior
         const prevButton = document.createElement('button');
-        prevButton.className = `px-3 py-1 rounded ${this.currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-primary text-white hover:bg-blue-secondary'}`;
+        prevButton.className = `px-3 py-1 rounded ${this.currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-orange-primary text-white hover:bg-orange-secondary'}`;
         prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
         prevButton.disabled = this.currentPage === 1;
         prevButton.onclick = () => {
@@ -504,7 +575,7 @@ class DashboardConsultivo {
         for (let i = 1; i <= totalPages; i++) {
             if (i === 1 || i === totalPages || (i >= this.currentPage - 1 && i <= this.currentPage + 1)) {
                 const pageButton = document.createElement('button');
-                pageButton.className = `px-3 py-1 rounded ${i === this.currentPage ? 'bg-blue-primary text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
+                pageButton.className = `px-3 py-1 rounded ${i === this.currentPage ? 'bg-orange-primary text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
                 pageButton.textContent = i;
                 pageButton.onclick = () => {
                     this.currentPage = i;
@@ -521,7 +592,7 @@ class DashboardConsultivo {
 
         // Botão Próximo
         const nextButton = document.createElement('button');
-        nextButton.className = `px-3 py-1 rounded ${this.currentPage === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-primary text-white hover:bg-blue-secondary'}`;
+        nextButton.className = `px-3 py-1 rounded ${this.currentPage === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-orange-primary text-white hover:bg-orange-secondary'}`;
         nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
         nextButton.disabled = this.currentPage === totalPages;
         nextButton.onclick = () => {
