@@ -128,7 +128,7 @@ module.exports = function({ nome, codigo, cdNome, email }) {
                                 © ${new Date().getFullYear()} <strong style="color: #FF6B35;">BrisaLOG</strong> - Sistema de Agendamento
                             </p>
                             <p style="margin: 0; color: #cccccc; font-size: 12px;">
-                                Brisanet Telecomunicações. Todos os direitos reservados.
+                                Desenvolvido por Wanderson Davyd. Todos os direitos reservados.
                             </p>
                         </td>
                     </tr>
