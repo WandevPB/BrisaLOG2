@@ -2683,23 +2683,8 @@ app.get('/api/transportador/buscar-por-cnpj/:cnpj', async (req, res) => {
     console.log('🔍 [GET /api/transportador/buscar-por-cnpj] Buscando CNPJ:', cnpjLimpo);
     console.log('🔍 [GET /api/transportador/buscar-por-cnpj] CNPJ original:', cnpjOriginal);
     
-    // Buscar em TODOS os agendamentos (sem filtro de CD)
-    // Buscar tanto em fornecedorDocumento quanto em transportadorDocumento
-    const agendamento = await prisma.agendamento.findFirst({
-      where: {
-        OR: [
-          {
-            fornecedorDocumento: {
-              contains: cnpjLimpo
-            }
-          },
-          {
-            transportadorDocumento: {
-              contains: cnpjLimpo
-            }
-          }
-        ]
-      },
+    // Buscar TODOS os agendamentos e filtrar no código (já que Prisma não tem REPLACE)
+    const todosAgendamentos = await prisma.agendamento.findMany({
       orderBy: {
         createdAt: 'desc'
       },
@@ -2714,6 +2699,13 @@ app.get('/api/transportador/buscar-por-cnpj/:cnpj', async (req, res) => {
         transportadorDocumento: true,
         cdId: true
       }
+    });
+    
+    // Filtrar no JavaScript removendo formatação
+    const agendamento = todosAgendamentos.find(a => {
+      const fornecedorDoc = (a.fornecedorDocumento || '').replace(/[^\d]/g, '');
+      const transportadorDoc = (a.transportadorDocumento || '').replace(/[^\d]/g, '');
+      return fornecedorDoc === cnpjLimpo || transportadorDoc === cnpjLimpo;
     });
     
     if (agendamento) {
@@ -2734,18 +2726,13 @@ app.get('/api/transportador/buscar-por-cnpj/:cnpj', async (req, res) => {
       console.log('ℹ️ [GET /api/transportador/buscar-por-cnpj] CNPJ não encontrado no sistema');
       
       // Debug: Listar alguns agendamentos para verificar
-      const todosAgendamentos = await prisma.agendamento.findMany({
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          fornecedorDocumento: true,
-          transportadorDocumento: true,
-          fornecedorNome: true,
-          transportadorNome: true
-        }
-      });
-      console.log('🔍 [DEBUG] Últimos 5 agendamentos:', todosAgendamentos);
+      const primeiros5 = todosAgendamentos.slice(0, 5);
+      console.log('🔍 [DEBUG] Últimos 5 agendamentos:', primeiros5.map(a => ({
+        fornecedorDocumento: a.fornecedorDocumento,
+        fornecedorNome: a.fornecedorNome,
+        transportadorDocumento: a.transportadorDocumento,
+        transportadorNome: a.transportadorNome
+      })));
       
       res.json({ existe: false });
     }
