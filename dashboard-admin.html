@@ -104,8 +104,296 @@
         
         <!-- Tab: Visão Geral -->
         <div id="tab-visao-geral" class="tab-content active">
-            <div id="visao-geral-container">
-                <!-- Será preenchido pelo dashboard-consultivo.js -->
+            <!-- Indicador de Período Ativo -->
+            <div id="periodo-indicator" class="bg-gradient-to-r from-orange-primary to-orange-secondary text-white px-6 py-3 rounded-xl shadow-lg mb-6 hidden">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-filter text-xl"></i>
+                        <span class="font-semibold">Período ativo:</span>
+                        <span id="periodo-text" class="font-bold"></span>
+                    </div>
+                    <button onclick="dashboardConsultivo.limparFiltros()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all text-sm font-semibold">
+                        <i class="fas fa-times mr-2"></i>
+                        Limpar Filtros
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cards de Estatísticas -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total de Agendamentos -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-3d border-t-4 border-orange-primary">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-orange-100 p-3 rounded-xl">
+                            <i class="fas fa-calendar-alt text-orange-primary text-2xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-gray-dark" id="total-agendamentos">0</span>
+                    </div>
+                    <p class="text-gray-medium font-semibold">Total de Agendamentos</p>
+                    <p class="text-xs text-gray-400 mt-1">Todos os CDs</p>
+                </div>
+
+                <!-- Pendentes -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-3d border-t-4 border-yellow-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-yellow-100 p-3 rounded-xl">
+                            <i class="fas fa-clock text-yellow-500 text-2xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-gray-dark" id="total-pendentes">0</span>
+                    </div>
+                    <p class="text-gray-medium font-semibold">Aguardando Confirmação</p>
+                    <p class="text-xs text-gray-400 mt-1">Aguardando confirmação do CD</p>
+                </div>
+
+                <!-- Confirmados -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-3d border-t-4 border-green-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-green-100 p-3 rounded-xl">
+                            <i class="fas fa-shipping-fast text-green-500 text-2xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-gray-dark" id="total-confirmados">0</span>
+                    </div>
+                    <p class="text-gray-medium font-semibold">Aguardando Entrega</p>
+                    <p class="text-xs text-gray-400 mt-1">Confirmado pelo CD</p>
+                </div>
+
+                <!-- Entregues -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-3d border-t-4 border-blue-600">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-blue-100 p-3 rounded-xl">
+                            <i class="fas fa-box-open text-blue-600 text-2xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-gray-dark" id="total-entregues">0</span>
+                    </div>
+                    <p class="text-gray-medium font-semibold">Entregas Concluídas</p>
+                    <p class="text-xs text-gray-400 mt-1">Status: Entregue</p>
+                </div>
+            </div>
+
+            <!-- KPIs e Gráficos -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Gráfico de Status (Pizza) -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-chart-pie text-orange-primary mr-2"></i>
+                        Distribuição por Status
+                    </h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de CDs (Barras) -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-chart-bar text-orange-primary mr-2"></i>
+                        Agendamentos por CD
+                    </h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="cdChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- KPIs Importantes -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-tachometer-alt text-orange-primary mr-2"></i>
+                        Indicadores
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                            <div>
+                                <p class="text-xs text-gray-600 font-semibold uppercase">Taxa de Confirmação</p>
+                                <p class="text-2xl font-bold text-green-600" id="taxa-confirmacao">0%</p>
+                            </div>
+                            <i class="fas fa-check-double text-green-300 text-3xl"></i>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                            <div>
+                                <p class="text-xs text-gray-600 font-semibold uppercase">Não Compareceram</p>
+                                <p class="text-2xl font-bold text-red-600" id="taxa-nao-veio">0%</p>
+                            </div>
+                            <i class="fas fa-times-circle text-red-300 text-3xl"></i>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                            <div>
+                                <p class="text-xs text-gray-600 font-semibold uppercase">Taxa de Entrega</p>
+                                <p class="text-2xl font-bold text-blue-600" id="taxa-entrega">0%</p>
+                            </div>
+                            <i class="fas fa-truck text-blue-300 text-3xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros e Busca -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-filter text-orange-primary mr-2"></i>
+                        Filtros Avançados
+                    </h3>
+                    <button onclick="dashboardConsultivo.exportarDados()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all btn-3d">
+                        <i class="fas fa-file-excel mr-2"></i>
+                        Exportar Excel
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                    <!-- Busca -->
+                    <div>
+                        <label class="block text-gray-dark font-semibold mb-2">
+                            <i class="fas fa-search mr-2 text-orange-primary"></i>
+                            Buscar
+                        </label>
+                        <input type="text" id="search-input" placeholder="NF, Fornecedor, Transportador..."
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
+                    </div>
+
+                    <!-- Filtro Status -->
+                    <div>
+                        <label class="block text-gray-dark font-semibold mb-2">
+                            <i class="fas fa-flag mr-2 text-orange-primary"></i>
+                            Status
+                        </label>
+                        <select id="filter-status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
+                            <option value="">Todos os Status</option>
+                            <option value="pendente">Pendente</option>
+                            <option value="confirmado">Aguardando Entrega</option>
+                            <option value="entregue">Entregue</option>
+                            <option value="nao-veio">Não Veio</option>
+                            <option value="reagendado">Reagendado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro CD -->
+                    <div>
+                        <label class="block text-gray-dark font-semibold mb-2">
+                            <i class="fas fa-building mr-2 text-orange-primary"></i>
+                            Centro de Distribuição
+                        </label>
+                        <select id="filter-cd" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
+                            <option value="">Todos os CDs</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro Transportador -->
+                    <div>
+                        <label class="block text-gray-dark font-semibold mb-2">
+                            <i class="fas fa-truck mr-2 text-orange-primary"></i>
+                            Transportador
+                        </label>
+                        <select id="filter-transportador" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro Período -->
+                    <div>
+                        <label class="block text-gray-dark font-semibold mb-2">
+                            <i class="fas fa-calendar-week mr-2 text-orange-primary"></i>
+                            Período
+                        </label>
+                        <select id="filter-periodo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
+                            <option value="">Todos</option>
+                            <option value="hoje">Hoje</option>
+                            <option value="7dias">Últimos 7 dias</option>
+                            <option value="30dias">Últimos 30 dias</option>
+                            <option value="mes-atual">Mês Atual</option>
+                            <option value="mes-anterior">Mês Anterior</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro Data Específica -->
+                    <div>
+                        <label class="block text-gray-dark font-semibold mb-2">
+                            <i class="fas fa-calendar mr-2 text-orange-primary"></i>
+                            Data Específica
+                        </label>
+                        <input type="date" id="filter-date" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all">
+                    </div>
+                </div>
+
+                <div class="mt-4 flex justify-end space-x-2">
+                    <button onclick="dashboardConsultivo.limparFiltros()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all">
+                        <i class="fas fa-times mr-2"></i>
+                        Limpar Filtros
+                    </button>
+                    <button onclick="dashboardConsultivo.aplicarFiltros()" class="px-4 py-2 bg-orange-primary text-white rounded-lg hover:bg-orange-secondary transition-all btn-3d">
+                        <i class="fas fa-search mr-2"></i>
+                        Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabela de Agendamentos -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-orange-primary to-orange-secondary flex items-center justify-between">
+                    <h2 class="text-white text-xl font-bold">
+                        <i class="fas fa-list mr-2"></i>
+                        Agendamentos - Visão Consolidada
+                    </h2>
+                    <button onclick="dashboardConsultivo.toggleComparativo()" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all">
+                        <i class="fas fa-chart-line mr-2"></i>
+                        Ver Comparativo
+                    </button>
+                </div>
+                
+                <!-- Seção de Comparativo entre CDs (oculta por padrão) -->
+                <div id="comparativo-section" class="hidden">
+                    <div class="p-6 bg-gray-50 border-b">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-trophy text-orange-primary mr-2"></i>
+                            Ranking e Comparativo de CDs
+                        </h3>
+                        <div id="comparativo-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Será preenchido via JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b-2 border-gray-200">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">CD</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Transportador</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Data</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Horário</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agendamentos-tbody" class="bg-white divide-y divide-gray-200">
+                            <!-- Linhas serão inseridas via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading-state" class="py-12 text-center hidden">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-primary mx-auto mb-4"></div>
+                    <p class="text-gray-500">Carregando agendamentos...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="py-12 text-center hidden">
+                    <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+                    <p class="text-gray-500 text-lg">Nenhum agendamento encontrado</p>
+                </div>
+
+                <!-- Paginação -->
+                <div id="pagination" class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                    <div class="text-sm text-gray-600">
+                        Mostrando <span id="showing-start">0</span> - <span id="showing-end">0</span> de <span id="total-records">0</span> registros
+                    </div>
+                    <div class="flex space-x-2" id="pagination-buttons">
+                        <!-- Botões de paginação serão inseridos via JavaScript -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -259,6 +547,31 @@
 
     </main>
 
+    <!-- Modal de Detalhes do Agendamento -->
+    <div id="detalhes-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <!-- Header do Modal -->
+            <div class="sticky top-0 bg-gradient-to-r from-orange-primary to-orange-secondary p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-white text-2xl font-bold">
+                        <i class="fas fa-file-alt mr-2"></i>
+                        Detalhes do Agendamento
+                    </h3>
+                    <button onclick="fecharDetalhes()" class="text-white hover:text-gray-200 transition-colors">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conteúdo do Modal -->
+            <div class="p-6">
+                <div id="detalhes-content">
+                    <!-- Conteúdo será inserido via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Novo/Editar Usuário -->
     <div id="modal-usuario" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -365,6 +678,14 @@
                 window.location.href = 'login.html';
             }
         }
+
+        // Função global para fechar modal de detalhes
+        function fecharDetalhes() {
+            document.getElementById('detalhes-modal').style.display = 'none';
+        }
     </script>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
 </body>
 </html>

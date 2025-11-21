@@ -54,9 +54,13 @@ router.post('/validar-codigo', async (req, res) => {
     try {
         const { codigo, cdId } = req.body;
 
+        console.log('🔍 [Validar Código] Recebido:', { codigo, cdId });
+
         if (!codigo) {
             return res.status(400).json({ error: 'Código é obrigatório' });
         }
+
+        console.log('🔍 [Validar Código] Buscando usuário com código:', codigo.toUpperCase());
 
         const usuario = await prisma.usuario.findUnique({
             where: {
@@ -72,6 +76,8 @@ router.post('/validar-codigo', async (req, res) => {
             }
         });
 
+        console.log('🔍 [Validar Código] Usuário encontrado:', usuario ? 'SIM' : 'NÃO');
+
         if (!usuario) {
             return res.status(404).json({ error: 'Código de usuário inválido' });
         }
@@ -82,8 +88,11 @@ router.post('/validar-codigo', async (req, res) => {
 
         // Validar se o usuário pertence ao CD correto
         if (cdId && usuario.cdId !== parseInt(cdId)) {
+            console.log('🔍 [Validar Código] CD não corresponde:', { usuarioCdId: usuario.cdId, cdIdRequisitado: cdId });
             return res.status(403).json({ error: 'Usuário não autorizado para este CD' });
         }
+
+        console.log('✅ [Validar Código] Validação bem-sucedida');
 
         res.json({
             valido: true,
@@ -96,8 +105,9 @@ router.post('/validar-codigo', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Erro ao validar código:', error);
-        res.status(500).json({ error: 'Erro ao validar código' });
+        console.error('❌ [Validar Código] Erro:', error);
+        console.error('❌ [Validar Código] Stack:', error.stack);
+        res.status(500).json({ error: 'Erro ao validar código', details: error.message });
     }
 });
 
