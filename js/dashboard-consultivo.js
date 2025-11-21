@@ -182,12 +182,52 @@ class DashboardConsultivo {
         document.getElementById('taxa-entrega').textContent = taxaEntrega + '%';
     }
 
+    // Métodos para atualizar com dados filtrados
+    updateStatisticsWithFiltered() {
+        const total = this.agendamentosFiltrados.length;
+        const pendentes = this.agendamentosFiltrados.filter(a => a.status === 'pendente').length;
+        const confirmados = this.agendamentosFiltrados.filter(a => a.status === 'confirmado').length;
+        const entregues = this.agendamentosFiltrados.filter(a => a.status === 'entregue').length;
+
+        document.getElementById('total-agendamentos').textContent = total;
+        document.getElementById('total-pendentes').textContent = pendentes;
+        document.getElementById('total-confirmados').textContent = confirmados;
+        document.getElementById('total-entregues').textContent = entregues;
+    }
+
+    updateKPIsWithFiltered() {
+        const total = this.agendamentosFiltrados.length;
+        if (total === 0) {
+            document.getElementById('taxa-confirmacao').textContent = '0%';
+            document.getElementById('taxa-nao-veio').textContent = '0%';
+            document.getElementById('taxa-entrega').textContent = '0%';
+            return;
+        }
+
+        const confirmados = this.agendamentosFiltrados.filter(a => a.status === 'confirmado' || a.status === 'entregue').length;
+        const naoVeio = this.agendamentosFiltrados.filter(a => a.status === 'nao-veio').length;
+        const entregues = this.agendamentosFiltrados.filter(a => a.status === 'entregue').length;
+
+        const taxaConfirmacao = ((confirmados / total) * 100).toFixed(1);
+        const taxaNaoVeio = ((naoVeio / total) * 100).toFixed(1);
+        const taxaEntrega = ((entregues / total) * 100).toFixed(1);
+
+        document.getElementById('taxa-confirmacao').textContent = taxaConfirmacao + '%';
+        document.getElementById('taxa-nao-veio').textContent = taxaNaoVeio + '%';
+        document.getElementById('taxa-entrega').textContent = taxaEntrega + '%';
+    }
+
+    updateChartsWithFiltered() {
+        this.renderStatusChart(this.agendamentosFiltrados);
+        this.renderCDChart(this.agendamentosFiltrados);
+    }
+
     updateCharts() {
         this.renderStatusChart();
         this.renderCDChart();
     }
 
-    renderStatusChart() {
+    renderStatusChart(dados = null) {
         const ctx = document.getElementById('statusChart');
         if (!ctx) return;
 
@@ -195,6 +235,8 @@ class DashboardConsultivo {
         if (this.charts.statusChart) {
             this.charts.statusChart.destroy();
         }
+
+        const dataSource = dados || this.agendamentos;
 
         const statusCount = {
             pendente: 0,
@@ -205,7 +247,7 @@ class DashboardConsultivo {
             cancelado: 0
         };
 
-        this.agendamentos.forEach(a => {
+        dataSource.forEach(a => {
             if (statusCount.hasOwnProperty(a.status)) {
                 statusCount[a.status]++;
             }
@@ -254,7 +296,7 @@ class DashboardConsultivo {
         });
     }
 
-    renderCDChart() {
+    renderCDChart(dados = null) {
         const ctx = document.getElementById('cdChart');
         if (!ctx) return;
 
@@ -263,9 +305,11 @@ class DashboardConsultivo {
             this.charts.cdChart.destroy();
         }
 
+        const dataSource = dados || this.agendamentos;
+
         // Contar agendamentos por CD
         const cdCount = {};
-        this.agendamentos.forEach(a => {
+        dataSource.forEach(a => {
             const cdNome = a.cd?.nome || 'Sem CD';
             cdCount[cdNome] = (cdCount[cdNome] || 0) + 1;
         });
@@ -835,6 +879,12 @@ class DashboardConsultivo {
             return true;
         });
 
+        // Atualizar todos os componentes do dashboard com dados filtrados
+        this.updateStatisticsWithFiltered();
+        this.updateKPIsWithFiltered();
+        this.updateChartsWithFiltered();
+        this.updatePeriodoIndicator(periodoFilter);
+        
         this.currentPage = 1;
         this.renderAgendamentos();
     }
@@ -848,10 +898,38 @@ class DashboardConsultivo {
         document.getElementById('filter-periodo').value = '';
 
         this.agendamentosFiltrados = [...this.agendamentos];
+        
+        // Resetar todos os componentes do dashboard
+        this.updateStatistics();
+        this.updateKPIs();
+        this.updateCharts();
+        this.updatePeriodoIndicator('');
+        
         this.currentPage = 1;
         this.renderAgendamentos();
 
         this.showNotification('Filtros limpos', 'info');
+    }
+
+    updatePeriodoIndicator(periodo) {
+        const indicator = document.getElementById('periodo-indicator');
+        const periodoText = document.getElementById('periodo-text');
+        
+        if (!periodo) {
+            indicator.classList.add('hidden');
+            return;
+        }
+
+        const periodoLabels = {
+            'hoje': 'Hoje',
+            '7dias': 'Últimos 7 dias',
+            '30dias': 'Últimos 30 dias',
+            'mes-atual': 'Mês Atual',
+            'mes-anterior': 'Mês Anterior'
+        };
+
+        periodoText.textContent = periodoLabels[periodo] || periodo;
+        indicator.classList.remove('hidden');
     }
 
     updatePagination() {
