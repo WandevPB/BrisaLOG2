@@ -256,7 +256,7 @@ class DashboardConsultivo {
         this.charts.statusChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Pendente', 'Confirmado', 'Entregue', 'Não Veio', 'Reagendado', 'Cancelado'],
+                labels: ['Pendente', 'Aguardando Entrega', 'Entregue', 'Não Veio', 'Reagendado', 'Cancelado'],
                 datasets: [{
                     data: [
                         statusCount.pendente,
@@ -474,7 +474,7 @@ class DashboardConsultivo {
     getStatusBadge(status) {
         const statusMap = {
             'pendente': { class: 'status-pendente', icon: 'clock', label: 'Pendente' },
-            'confirmado': { class: 'status-confirmado', icon: 'check-circle', label: 'Confirmado' },
+            'confirmado': { class: 'status-confirmado', icon: 'shipping-fast', label: 'Aguardando Entrega' },
             'entregue': { class: 'status-entregue', icon: 'box-open', label: 'Entregue' },
             'nao-veio': { class: 'status-nao-veio', icon: 'times-circle', label: 'Não Veio' },
             'reagendado': { class: 'status-reagendamento', icon: 'calendar-alt', label: 'Reagendado' },
