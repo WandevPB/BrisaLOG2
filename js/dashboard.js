@@ -2940,19 +2940,6 @@ class CDDashboard {
         this.applyFilters();
     }
 
-    toggleDarkMode() {
-        const body = document.body;
-        const isDark = body.classList.toggle('dark-mode');
-        
-        const icon = document.querySelector('#toggle-dark-mode i');
-        if (icon) {
-            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-        }
-        
-        localStorage.setItem('darkMode', isDark);
-        this.showNotification(isDark ? 'Modo escuro ativado' : 'Modo claro ativado', 'info');
-    }
-
     verificarAlertasAtrasados() {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
@@ -3093,14 +3080,6 @@ function applyMasksToContainer(container) {
 document.addEventListener('DOMContentLoaded', () => {
     dashboard = new CDDashboard();
     applyMasksToContainer(document);
-    
-    // Restaurar modo escuro se estava ativado
-    const darkMode = localStorage.getItem('darkMode') === 'true';
-    if (darkMode) {
-        document.body.classList.add('dark-mode');
-        const icon = document.querySelector('#toggle-dark-mode i');
-        if (icon) icon.className = 'fas fa-sun';
-    }
 });
 
 // Funções globais que delegam para a instância do dashboard

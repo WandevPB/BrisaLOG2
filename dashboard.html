@@ -177,96 +177,6 @@
         }
 
         /* Modo Escuro */
-        body.dark-mode {
-            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-            color: #f3f4f6;
-        }
-
-        body.dark-mode .bg-white {
-            background-color: #374151 !important;
-            color: #f3f4f6;
-        }
-
-        body.dark-mode .text-gray-dark {
-            color: #f9fafb !important;
-        }
-
-        body.dark-mode .text-gray-medium {
-            color: #d1d5db !important;
-        }
-
-        body.dark-mode .border-gray-300 {
-            border-color: #6b7280 !important;
-        }
-
-        body.dark-mode input,
-        body.dark-mode select {
-            background-color: #4b5563 !important;
-            color: #f3f4f6 !important;
-            border-color: #6b7280 !important;
-        }
-
-        body.dark-mode input:focus,
-        body.dark-mode select:focus {
-            background-color: #374151 !important;
-            border-color: #ff6b35 !important;
-        }
-
-        body.dark-mode .card-3d {
-            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        body.dark-mode .card-3d:hover {
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 10px 20px rgba(0, 0, 0, 0.4);
-        }
-
-        body.dark-mode h1,
-        body.dark-mode h2,
-        body.dark-mode h3 {
-            color: #f9fafb;
-        }
-
-        body.dark-mode .text-gray-700 {
-            color: #d1d5db !important;
-        }
-
-        body.dark-mode .text-gray-800 {
-            color: #e5e7eb !important;
-        }
-
-        body.dark-mode .text-gray-600 {
-            color: #9ca3af !important;
-        }
-
-        body.dark-mode button:not(.bg-gradient-to-r):not(.bg-orange-500):not(.bg-red-500):not(.bg-green-500):not(.bg-blue-500) {
-            background-color: #4b5563;
-            color: #f3f4f6;
-        }
-
-        body.dark-mode button:not(.bg-gradient-to-r):hover {
-            background-color: #6b7280;
-        }
-
-        body.dark-mode table {
-            background-color: #374151;
-        }
-
-        body.dark-mode th {
-            background-color: #4b5563;
-            color: #f3f4f6;
-            border-color: #6b7280;
-        }
-
-        body.dark-mode td {
-            border-color: #6b7280;
-            color: #e5e7eb;
-        }
-
-        body.dark-mode tr:hover {
-            background-color: #4b5563;
-        }
-
         /* Animação para alertas */
         @keyframes slideInDown {
             from {
@@ -303,11 +213,6 @@
             padding: 2px 4px;
             border-radius: 3px;
             font-weight: 600;
-        }
-
-        body.dark-mode .search-highlight {
-            background-color: #78350f;
-            color: #fef3c7;
         }
 
         /* Kbd styling */
@@ -538,9 +443,6 @@
                     <button onclick="dashboard.filtrarAtrasados()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-white transition-all">
                         <i class="fas fa-exclamation-triangle mr-2"></i>
                         Atrasados
-                    </button>
-                    <button id="toggle-dark-mode" onclick="dashboard.toggleDarkMode()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-white transition-all">
-                        <i class="fas fa-moon"></i>
                     </button>
                 </div>
             </div>
