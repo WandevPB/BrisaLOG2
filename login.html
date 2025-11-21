@@ -689,6 +689,9 @@
                         throw new Error(`Erro ao carregar usuários: ${response.status} - ${text}`);
                     }
                     const data = await response.json();
+                    console.log('🔍 Dados recebidos da API:', data);
+                    console.log('🔍 Perfil selecionado:', profileType);
+                    
                     if (data.success) {
                         const select = document.getElementById('usuario');
                         // Limpar opções existentes
@@ -696,8 +699,16 @@
                             select.removeChild(select.lastChild);
                         }
                         
+                        // Debug: mostrar todos os usuários
+                        console.log('👥 Todos os usuários:', data.data.map(cd => ({
+                            nome: cd.nome,
+                            usuario: cd.usuario,
+                            tipoPerfil: cd.tipoPerfil
+                        })));
+                        
                         // Filtrar por tipo de perfil
                         const usuarios = data.data.filter(cd => {
+                            console.log(`Verificando ${cd.nome}: tipoPerfil=${cd.tipoPerfil}, comparando com ${profileType}`);
                             if (profileType === 'cd') {
                                 return cd.tipoPerfil === 'cd' || !cd.tipoPerfil;
                             } else if (profileType === 'consultivo') {
@@ -705,6 +716,8 @@
                             }
                             return false;
                         });
+                        
+                        console.log('✅ Usuários filtrados:', usuarios.map(u => u.nome));
                         
                         // Adicionar opções
                         usuarios.forEach(cd => {

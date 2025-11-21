@@ -69,5 +69,8 @@
   "bugs": {
     "url": "https://github.com/brisanet/brisalog-portal/issues"
   },
-  "homepage": "https://github.com/brisanet/brisalog-portal#readme"
+  "homepage": "https://github.com/brisanet/brisalog-portal#readme",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  }
 }
