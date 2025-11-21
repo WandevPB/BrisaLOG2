@@ -2253,7 +2253,12 @@ class CDDashboard {
             const token = sessionStorage.getItem('token');
             const cdData = JSON.parse(sessionStorage.getItem('cdData'));
             
-            console.log('Atualizando status:', { id, newStatus, token: token ? 'presente' : 'ausente' });
+            if (!cdData || !cdData.id) {
+                this.showNotification('Erro: Dados do CD não encontrados. Faça login novamente.', 'error');
+                return;
+            }
+            
+            console.log('Atualizando status:', { id, newStatus, cdId: cdData.id, token: token ? 'presente' : 'ausente' });
             
             // Solicitar código do usuário antes de prosseguir
             const usuarioData = await solicitarCodigoUsuario(cdData.id);
