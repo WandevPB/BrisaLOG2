@@ -16,9 +16,6 @@ class DashboardConsultivo {
             return;
         }
 
-        // Garantir que o modal inicie escondido
-        document.getElementById('detalhes-modal').classList.add('hidden');
-
         // Carregar informações do usuário
         this.loadUserInfo();
 
