@@ -661,6 +661,107 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
   }
 });
 
+// Listar agendamentos de TODOS os CDs (para perfil consultivo)
+app.get('/api/agendamentos/todos', authenticateToken, async (req, res) => {
+  try {
+    console.log('🔍 [GET /api/agendamentos/todos] Iniciando listagem consultiva...');
+    console.log('👤 [GET /api/agendamentos/todos] Usuário:', req.user.nome, 'Perfil:', req.user.tipoPerfil);
+    
+    // Verificar se usuário tem perfil consultivo ou admin
+    if (req.user.tipoPerfil !== 'consultivo' && req.user.tipoPerfil !== 'admin') {
+      return res.status(403).json({ error: 'Acesso negado. Apenas perfis consultivos podem acessar esta rota.' });
+    }
+
+    const { status, search, cdId, page = 1, limit = 100 } = req.query;
+
+    // Construir filtros (SEM filtro de cdId padrão)
+    const where = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (cdId) {
+      where.cdId = parseInt(cdId);
+    }
+
+    if (search) {
+      where.OR = [
+        { codigo: { contains: search } },
+        { fornecedorNome: { contains: search } },
+        { fornecedorEmail: { contains: search } },
+        { fornecedorDocumento: { contains: search } }
+      ];
+    }
+
+    console.log('🔍 [GET /api/agendamentos/todos] Filtros aplicados:', where);
+
+    // Buscar agendamentos de TODOS os CDs
+    const agendamentos = await prisma.agendamento.findMany({
+      where: where,
+      include: {
+        cd: {
+          select: {
+            id: true,
+            nome: true
+          }
+        },
+        notasFiscais: true,
+        historicoAcoes: {
+          include: {
+            cd: {
+              select: {
+                id: true,
+                nome: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        }
+      },
+      orderBy: {
+        dataEntrega: 'desc'
+      },
+      skip: (page - 1) * limit,
+      take: parseInt(limit)
+    });
+
+    // Adicionar objeto fornecedor virtual
+    agendamentos.forEach(agendamento => addFornecedorVirtual(agendamento));
+
+    // Contar total
+    const total = await prisma.agendamento.count({ where });
+
+    console.log(`✅ [GET /api/agendamentos/todos] ${agendamentos.length} agendamentos encontrados de ${total} total`);
+
+    // Serializa BigInt para string
+    function replacer(key, value) {
+      if (typeof value === 'bigint') {
+        return value.toString();
+      }
+      return value;
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({
+      success: true,
+      data: agendamentos,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: total,
+        pages: Math.ceil(total / limit)
+      }
+    }, replacer));
+
+  } catch (error) {
+    console.error('❌ [GET /api/agendamentos/todos] Erro:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Criar agendamento (sem autenticação para fornecedores)
 app.post('/api/agendamentos', upload.any(), async (req, res) => {
   console.log('🎯 [POST /api/agendamentos] ROTA INICIADA - Agendamento público (fornecedor)');

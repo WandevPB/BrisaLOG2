@@ -416,7 +416,16 @@
                             this.showNotification('Login realizado com sucesso!', 'success');
                             
                             setTimeout(() => {
-                                window.location.href = '/dashboard';
+                                // Redirecionar baseado no tipo de perfil
+                                const tipoPerfil = data.cd.tipoPerfil || 'cd';
+                                
+                                if (tipoPerfil === 'consultivo') {
+                                    window.location.href = '/dashboard-consultivo';
+                                } else if (tipoPerfil === 'admin') {
+                                    window.location.href = '/dashboard-admin';
+                                } else {
+                                    window.location.href = '/dashboard';
+                                }
                             }, 1000);
                         }
                     } else {
@@ -515,7 +524,16 @@
                     this.showNotification('Senha alterada e e-mail de recuperação cadastrado com sucesso! Redirecionando...', 'success');
                     
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
+                        // Redirecionar baseado no tipo de perfil
+                        const tipoPerfil = loginData.cd.tipoPerfil || 'cd';
+                        
+                        if (tipoPerfil === 'consultivo') {
+                            window.location.href = '/dashboard-consultivo';
+                        } else if (tipoPerfil === 'admin') {
+                            window.location.href = '/dashboard-admin';
+                        } else {
+                            window.location.href = '/dashboard';
+                        }
                     }, 2000);
 
                 } catch (error) {
