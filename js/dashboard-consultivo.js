@@ -249,12 +249,12 @@ class DashboardConsultivo {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            padding: 15,
+                            padding: 10,
                             font: {
                                 size: 11
                             }
@@ -298,7 +298,7 @@ class DashboardConsultivo {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 scales: {
                     y: {
                         beginAtZero: true,
