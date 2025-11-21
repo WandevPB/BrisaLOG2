@@ -1016,6 +1016,12 @@ class CDDashboard {
             moreButton.querySelector('span') ? 
                 moreButton.querySelector('span').textContent = `+${agendamentos.length - 3} mais` :
                 moreButton.innerHTML = `<i class="fas fa-plus mr-1"></i>+${agendamentos.length - 3} mais`;
+            
+            // Adicionar função de clique para filtrar e mudar para modo lista
+            moreButton.onclick = (e) => {
+                e.stopPropagation();
+                this.verMaisStatus(status);
+            };
         } else if (moreButton) {
             moreButton.classList.add('hidden');
         }
@@ -2997,6 +3003,33 @@ class CDDashboard {
         if (badge) {
             badge.textContent = pendentes;
             badge.classList.toggle('badge-pulse', pendentes > 0);
+        }
+    }
+
+    verMaisStatus(status) {
+        // Limpar filtros de período e busca
+        const periodoFilter = document.getElementById('filter-periodo');
+        const searchInput = document.getElementById('search-input');
+        
+        if (periodoFilter) periodoFilter.value = '';
+        if (searchInput) searchInput.value = '';
+        
+        // Aplicar filtro do status específico
+        const statusFilter = document.getElementById('filter-status');
+        if (statusFilter) {
+            statusFilter.value = status;
+        }
+        
+        // Aplicar filtros
+        this.applyFilters();
+        
+        // Mudar para modo lista
+        this.changeView('list');
+        
+        // Scroll suave para a área de conteúdo
+        const listView = document.getElementById('list-view');
+        if (listView) {
+            listView.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 }
