@@ -28,22 +28,21 @@
     </script>
     <style>
         .card-3d {
-            transform: perspective(1000px) rotateX(5deg);
             transition: all 0.3s ease;
-            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.1), 0 10px 20px rgba(255, 107, 53, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         .card-3d:hover {
-            transform: perspective(1000px) rotateX(0deg) translateY(-5px);
-            box-shadow: 0 30px 60px rgba(255, 107, 53, 0.2), 0 15px 30px rgba(255, 107, 53, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
         .btn-3d {
             transform: perspective(1000px) translateZ(0);
             transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(255, 107, 53, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         .btn-3d:hover {
-            transform: perspective(1000px) translateZ(10px) translateY(-2px);
-            box-shadow: 0 15px 35px rgba(255, 107, 53, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         .status-pendente { background: linear-gradient(135deg, #FF6B35, #FF8C42); }
         .status-confirmado { background: linear-gradient(135deg, #10B981, #059669); }
@@ -172,36 +171,93 @@
 
         /* Modo Escuro */
         body.dark-mode {
-            background-color: #1a202c;
-            color: #e2e8f0;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            color: #f3f4f6;
         }
 
         body.dark-mode .bg-white {
-            background-color: #2d3748 !important;
-            color: #e2e8f0;
+            background-color: #374151 !important;
+            color: #f3f4f6;
         }
 
         body.dark-mode .text-gray-dark {
-            color: #e2e8f0 !important;
+            color: #f9fafb !important;
         }
 
         body.dark-mode .text-gray-medium {
-            color: #cbd5e0 !important;
+            color: #d1d5db !important;
         }
 
         body.dark-mode .border-gray-300 {
-            border-color: #4a5568 !important;
+            border-color: #6b7280 !important;
         }
 
         body.dark-mode input,
         body.dark-mode select {
+            background-color: #4b5563 !important;
+            color: #f3f4f6 !important;
+            border-color: #6b7280 !important;
+        }
+
+        body.dark-mode input:focus,
+        body.dark-mode select:focus {
             background-color: #374151 !important;
-            color: #e2e8f0 !important;
-            border-color: #4a5568 !important;
+            border-color: #ff6b35 !important;
         }
 
         body.dark-mode .card-3d {
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 10px 20px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        body.dark-mode .card-3d:hover {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3 {
+            color: #f9fafb;
+        }
+
+        body.dark-mode .text-gray-700 {
+            color: #d1d5db !important;
+        }
+
+        body.dark-mode .text-gray-800 {
+            color: #e5e7eb !important;
+        }
+
+        body.dark-mode .text-gray-600 {
+            color: #9ca3af !important;
+        }
+
+        body.dark-mode button:not(.bg-gradient-to-r):not(.bg-orange-500):not(.bg-red-500):not(.bg-green-500):not(.bg-blue-500) {
+            background-color: #4b5563;
+            color: #f3f4f6;
+        }
+
+        body.dark-mode button:not(.bg-gradient-to-r):hover {
+            background-color: #6b7280;
+        }
+
+        body.dark-mode table {
+            background-color: #374151;
+        }
+
+        body.dark-mode th {
+            background-color: #4b5563;
+            color: #f3f4f6;
+            border-color: #6b7280;
+        }
+
+        body.dark-mode td {
+            border-color: #6b7280;
+            color: #e5e7eb;
+        }
+
+        body.dark-mode tr:hover {
+            background-color: #4b5563;
         }
 
         /* Animação para alertas */
@@ -330,7 +386,7 @@
                     
                     <button onclick="openRegistrarEntregaModal()" class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all" title="Registrar Entrada Sem Agendamento">
                         <i class="fas fa-truck text-gray-600"></i>
-                        <span class="hidden md:inline">Registrar Entrada</span>
+                        <span class="hidden md:inline">Registrar Entrada (Sem agendamento)</span>
                     </button>
                     
                     <button onclick="openBloqueioModal()" class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all" title="Bloquear Horários">
@@ -449,7 +505,7 @@
         </div>
 
         <!-- Quick Actions Bar -->
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg p-4 mb-6">
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl shadow-lg p-4 mb-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2 text-white">
                     <i class="fas fa-bolt text-xl"></i>
@@ -459,7 +515,7 @@
                     <button onclick="dashboard.filtrarPendentes()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-white transition-all flex items-center space-x-2">
                         <i class="fas fa-clock"></i>
                         <span>Ver Pendentes</span>
-                        <span id="badge-acoes-pendentes" class="bg-orange-500 px-2 py-1 rounded-full text-xs font-bold">0</span>
+                        <span id="badge-acoes-pendentes" class="bg-white bg-opacity-30 px-2 py-1 rounded-full text-xs font-bold">0</span>
                     </button>
                     <button onclick="dashboard.filtrarHoje()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-white transition-all">
                         <i class="fas fa-calendar-day mr-2"></i>
