@@ -259,16 +259,21 @@ class AgendamentoForm {
                     nomeInput.title = 'Nome vinculado ao CNPJ (não editável)';
                 }
 
+                // Email e telefone são preenchidos mas permanecem editáveis
                 if (emailInput && data.email) {
                     emailInput.value = data.email;
+                    emailInput.readOnly = false;
+                    emailInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
                 }
 
                 if (telefoneInput && data.telefone) {
                     telefoneInput.value = data.telefone;
+                    telefoneInput.readOnly = false;
+                    telefoneInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
                 }
 
                 // Mostrar mensagem de sucesso
-                this.showNotification(`Transportador "${data.nome}" encontrado! Nome bloqueado para edição.`, 'success');
+                this.showNotification(`Transportador "${data.nome}" encontrado! Nome fixo, email/telefone editáveis.`, 'success');
             } else {
                 console.log('ℹ️ CNPJ novo - permitir edição livre');
                 
