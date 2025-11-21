@@ -7,6 +7,7 @@ class DashboardConsultivo {
         this.agendamentosFiltrados = [];
         this.currentPage = 1;
         this.itemsPerPage = 20;
+        this.charts = {}; // Armazenar instâncias dos gráficos
         this.init();
     }
 
@@ -27,6 +28,9 @@ class DashboardConsultivo {
 
         // Setup event listeners
         this.setupEventListeners();
+
+        // Atualizar data de hoje
+        this.updateDataHoje();
     }
 
     checkAuth() {
@@ -100,6 +104,10 @@ class DashboardConsultivo {
                 this.agendamentos = data.data || [];
                 this.agendamentosFiltrados = [...this.agendamentos];
                 this.updateStatistics();
+                this.updateCharts();
+                this.updateKPIs();
+                this.renderEntregasHoje();
+                this.loadTransportadorList();
                 this.renderAgendamentos();
             } else {
                 throw new Error(data.message || 'Erro ao carregar agendamentos');
@@ -113,16 +121,289 @@ class DashboardConsultivo {
         }
     }
 
+    updateDataHoje() {
+        const hoje = new Date();
+        const dataFormatada = hoje.toLocaleDateString('pt-BR', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        document.getElementById('data-hoje').textContent = dataFormatada;
+    }
+
+    loadTransportadorList() {
+        // Extrair lista única de transportadores
+        const transportadores = new Set();
+        this.agendamentos.forEach(a => {
+            const nome = a.transportadorNome || a.fornecedorNome;
+            if (nome) transportadores.add(nome);
+        });
+
+        const select = document.getElementById('filter-transportador');
+        select.innerHTML = '<option value="">Todos</option>';
+        
+        Array.from(transportadores).sort().forEach(nome => {
+            const option = document.createElement('option');
+            option.value = nome;
+            option.textContent = nome;
+            select.appendChild(option);
+        });
+    }
+
     updateStatistics() {
         const total = this.agendamentos.length;
         const pendentes = this.agendamentos.filter(a => a.status === 'pendente').length;
         const confirmados = this.agendamentos.filter(a => a.status === 'confirmado').length;
         const entregues = this.agendamentos.filter(a => a.status === 'entregue').length;
+        
+        // Entregas de hoje
+        const hoje = new Date().toISOString().split('T')[0];
+        const entregasHoje = this.agendamentos.filter(a => {
+            const dataEntrega = a.dataEntrega?.split('T')[0];
+            return dataEntrega === hoje;
+        }).length;
 
         document.getElementById('total-agendamentos').textContent = total;
         document.getElementById('total-pendentes').textContent = pendentes;
         document.getElementById('total-confirmados').textContent = confirmados;
         document.getElementById('total-entregues').textContent = entregues;
+        document.getElementById('total-hoje').textContent = entregasHoje;
+    }
+
+    updateKPIs() {
+        const total = this.agendamentos.length;
+        if (total === 0) {
+            document.getElementById('taxa-confirmacao').textContent = '0%';
+            document.getElementById('taxa-nao-veio').textContent = '0%';
+            document.getElementById('taxa-entrega').textContent = '0%';
+            return;
+        }
+
+        const confirmados = this.agendamentos.filter(a => a.status === 'confirmado' || a.status === 'entregue').length;
+        const naoVeio = this.agendamentos.filter(a => a.status === 'nao-veio').length;
+        const entregues = this.agendamentos.filter(a => a.status === 'entregue').length;
+
+        const taxaConfirmacao = ((confirmados / total) * 100).toFixed(1);
+        const taxaNaoVeio = ((naoVeio / total) * 100).toFixed(1);
+        const taxaEntrega = ((entregues / total) * 100).toFixed(1);
+
+        document.getElementById('taxa-confirmacao').textContent = taxaConfirmacao + '%';
+        document.getElementById('taxa-nao-veio').textContent = taxaNaoVeio + '%';
+        document.getElementById('taxa-entrega').textContent = taxaEntrega + '%';
+    }
+
+    updateCharts() {
+        this.renderStatusChart();
+        this.renderCDChart();
+    }
+
+    renderStatusChart() {
+        const ctx = document.getElementById('statusChart');
+        if (!ctx) return;
+
+        // Destruir gráfico anterior se existir
+        if (this.charts.statusChart) {
+            this.charts.statusChart.destroy();
+        }
+
+        const statusCount = {
+            pendente: 0,
+            confirmado: 0,
+            entregue: 0,
+            'nao-veio': 0,
+            reagendado: 0,
+            cancelado: 0
+        };
+
+        this.agendamentos.forEach(a => {
+            if (statusCount.hasOwnProperty(a.status)) {
+                statusCount[a.status]++;
+            }
+        });
+
+        this.charts.statusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pendente', 'Confirmado', 'Entregue', 'Não Veio', 'Reagendado', 'Cancelado'],
+                datasets: [{
+                    data: [
+                        statusCount.pendente,
+                        statusCount.confirmado,
+                        statusCount.entregue,
+                        statusCount['nao-veio'],
+                        statusCount.reagendado,
+                        statusCount.cancelado
+                    ],
+                    backgroundColor: [
+                        '#FF6B35',
+                        '#10B981',
+                        '#3B82F6',
+                        '#EF4444',
+                        '#8B5CF6',
+                        '#6B7280'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    renderCDChart() {
+        const ctx = document.getElementById('cdChart');
+        if (!ctx) return;
+
+        // Destruir gráfico anterior se existir
+        if (this.charts.cdChart) {
+            this.charts.cdChart.destroy();
+        }
+
+        // Contar agendamentos por CD
+        const cdCount = {};
+        this.agendamentos.forEach(a => {
+            const cdNome = a.cd?.nome || 'Sem CD';
+            cdCount[cdNome] = (cdCount[cdNome] || 0) + 1;
+        });
+
+        const labels = Object.keys(cdCount);
+        const data = Object.values(cdCount);
+
+        this.charts.cdChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Agendamentos',
+                    data: data,
+                    backgroundColor: '#FF6B35',
+                    borderColor: '#FF8C42',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
+    renderEntregasHoje() {
+        const container = document.getElementById('entregas-hoje-container');
+        if (!container) return;
+
+        const hoje = new Date().toISOString().split('T')[0];
+        const entregasHoje = this.agendamentos.filter(a => {
+            const dataEntrega = a.dataEntrega?.split('T')[0];
+            return dataEntrega === hoje;
+        });
+
+        if (entregasHoje.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full text-center py-8 text-white">
+                    <i class="fas fa-calendar-check text-6xl mb-3 opacity-50"></i>
+                    <p class="text-lg">Nenhuma entrega programada para hoje</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = entregasHoje.map(a => `
+            <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 hover:bg-opacity-30 transition-all cursor-pointer" onclick="dashboardConsultivo.verDetalhes(${a.id})">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold bg-white bg-opacity-30 px-2 py-1 rounded">${a.cd?.nome || 'N/A'}</span>
+                    ${this.getStatusBadge(a.status)}
+                </div>
+                <p class="font-bold text-lg mb-1">${a.codigo || 'N/A'}</p>
+                <p class="text-sm opacity-90">${a.transportadorNome || a.fornecedorNome || 'N/A'}</p>
+                <p class="text-xs mt-2 opacity-80">
+                    <i class="fas fa-clock mr-1"></i>${a.horarioEntrega || 'N/A'}
+                </p>
+            </div>
+        `).join('');
+    }
+
+    atualizarDados() {
+        this.showNotification('Atualizando dados...', 'info');
+        this.loadAgendamentos();
+    }
+
+    exportarDados() {
+        try {
+            // Preparar dados para exportação
+            const dados = this.agendamentosFiltrados.map(a => ({
+                'CD': a.cd?.nome || 'N/A',
+                'Código': a.codigo || 'N/A',
+                'Transportador': a.transportadorNome || a.fornecedorNome || 'N/A',
+                'CNPJ': a.transportadorDocumento || a.fornecedorDocumento || 'N/A',
+                'Data Entrega': this.formatDate(a.dataEntrega),
+                'Horário': a.horarioEntrega || 'N/A',
+                'Status': a.status || 'N/A',
+                'Tipo Carga': a.tipoCarga || 'N/A',
+                'Tipo Veículo': a.tipoVeiculo || 'N/A',
+                'Placa': a.placaVeiculo || 'N/A',
+                'Motorista': a.motoristaNome || 'N/A',
+                'Observações': a.observacoes || ''
+            }));
+
+            // Converter para CSV
+            const headers = Object.keys(dados[0]);
+            const csv = [
+                headers.join(','),
+                ...dados.map(row => headers.map(header => {
+                    const value = row[header] || '';
+                    // Escapar vírgulas e aspas
+                    return `"${String(value).replace(/"/g, '""')}"`;
+                }).join(','))
+            ].join('\n');
+
+            // Criar blob e download
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const dataAtual = new Date().toISOString().split('T')[0];
+            link.setAttribute('href', url);
+            link.setAttribute('download', `agendamentos_${dataAtual}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            this.showNotification('Dados exportados com sucesso!', 'success');
+        } catch (error) {
+            console.error('Erro ao exportar:', error);
+            this.showNotification('Erro ao exportar dados', 'error');
+        }
     }
 
     renderAgendamentos() {
@@ -492,6 +773,12 @@ class DashboardConsultivo {
         document.getElementById('filter-status').addEventListener('change', () => this.aplicarFiltros());
         document.getElementById('filter-cd').addEventListener('change', () => this.aplicarFiltros());
         document.getElementById('filter-date').addEventListener('change', () => this.aplicarFiltros());
+        document.getElementById('filter-transportador').addEventListener('change', () => this.aplicarFiltros());
+        document.getElementById('filter-periodo').addEventListener('change', () => {
+            // Limpar data específica quando selecionar período
+            document.getElementById('filter-date').value = '';
+            this.aplicarFiltros();
+        });
 
         // Enter para buscar
         document.getElementById('search-input').addEventListener('keypress', (e) => {
@@ -506,6 +793,8 @@ class DashboardConsultivo {
         const statusFilter = document.getElementById('filter-status').value;
         const cdFilter = document.getElementById('filter-cd').value;
         const dateFilter = document.getElementById('filter-date').value;
+        const transportadorFilter = document.getElementById('filter-transportador').value;
+        const periodoFilter = document.getElementById('filter-periodo').value;
 
         this.agendamentosFiltrados = this.agendamentos.filter(agendamento => {
             // Filtro de busca
@@ -533,8 +822,61 @@ class DashboardConsultivo {
                 return false;
             }
 
-            // Filtro de data
-            if (dateFilter) {
+            // Filtro de transportador
+            if (transportadorFilter) {
+                const nomeTransp = agendamento.transportadorNome || agendamento.fornecedorNome || '';
+                if (nomeTransp !== transportadorFilter) {
+                    return false;
+                }
+            }
+
+            // Filtro de período
+            if (periodoFilter) {
+                const dataEntrega = new Date(agendamento.dataEntrega);
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+
+                switch (periodoFilter) {
+                    case 'hoje':
+                        const hojeFim = new Date(hoje);
+                        hojeFim.setHours(23, 59, 59, 999);
+                        if (dataEntrega < hoje || dataEntrega > hojeFim) {
+                            return false;
+                        }
+                        break;
+                    case '7dias':
+                        const sete = new Date(hoje);
+                        sete.setDate(sete.getDate() - 7);
+                        if (dataEntrega < sete) {
+                            return false;
+                        }
+                        break;
+                    case '30dias':
+                        const trinta = new Date(hoje);
+                        trinta.setDate(trinta.getDate() - 30);
+                        if (dataEntrega < trinta) {
+                            return false;
+                        }
+                        break;
+                    case 'mes-atual':
+                        const mesAtual = hoje.getMonth();
+                        const anoAtual = hoje.getFullYear();
+                        if (dataEntrega.getMonth() !== mesAtual || dataEntrega.getFullYear() !== anoAtual) {
+                            return false;
+                        }
+                        break;
+                    case 'mes-anterior':
+                        const mesAnterior = new Date(hoje);
+                        mesAnterior.setMonth(mesAnterior.getMonth() - 1);
+                        if (dataEntrega.getMonth() !== mesAnterior.getMonth() || dataEntrega.getFullYear() !== mesAnterior.getFullYear()) {
+                            return false;
+                        }
+                        break;
+                }
+            }
+
+            // Filtro de data específica
+            if (dateFilter && !periodoFilter) {
                 const agendamentoDate = agendamento.dataEntrega?.split('T')[0];
                 if (agendamentoDate !== dateFilter) {
                     return false;
@@ -545,7 +887,6 @@ class DashboardConsultivo {
         });
 
         this.currentPage = 1;
-        this.updateStatistics();
         this.renderAgendamentos();
     }
 
@@ -554,10 +895,11 @@ class DashboardConsultivo {
         document.getElementById('filter-status').value = '';
         document.getElementById('filter-cd').value = '';
         document.getElementById('filter-date').value = '';
+        document.getElementById('filter-transportador').value = '';
+        document.getElementById('filter-periodo').value = '';
 
         this.agendamentosFiltrados = [...this.agendamentos];
         this.currentPage = 1;
-        this.updateStatistics();
         this.renderAgendamentos();
 
         this.showNotification('Filtros limpos', 'info');
@@ -668,6 +1010,102 @@ class DashboardConsultivo {
         
         // Abrir em nova aba
         window.open(fileUrl, '_blank');
+    }
+
+    toggleComparativo() {
+        const section = document.getElementById('comparativo-section');
+        if (section.classList.contains('hidden')) {
+            section.classList.remove('hidden');
+            this.renderComparativo();
+        } else {
+            section.classList.add('hidden');
+        }
+    }
+
+    renderComparativo() {
+        const container = document.getElementById('comparativo-content');
+        if (!container) return;
+
+        // Agrupar por CD
+        const cdStats = {};
+        this.agendamentos.forEach(a => {
+            const cdNome = a.cd?.nome || 'Sem CD';
+            if (!cdStats[cdNome]) {
+                cdStats[cdNome] = {
+                    total: 0,
+                    pendente: 0,
+                    confirmado: 0,
+                    entregue: 0,
+                    naoVeio: 0,
+                    cancelado: 0
+                };
+            }
+            cdStats[cdNome].total++;
+            if (a.status === 'pendente') cdStats[cdNome].pendente++;
+            if (a.status === 'confirmado') cdStats[cdNome].confirmado++;
+            if (a.status === 'entregue') cdStats[cdNome].entregue++;
+            if (a.status === 'nao-veio') cdStats[cdNome].naoVeio++;
+            if (a.status === 'cancelado') cdStats[cdNome].cancelado++;
+        });
+
+        // Calcular métricas e ordenar
+        const cdArray = Object.keys(cdStats).map(nome => {
+            const stats = cdStats[nome];
+            const taxaEntrega = stats.total > 0 ? ((stats.entregue / stats.total) * 100).toFixed(1) : 0;
+            const taxaNaoVeio = stats.total > 0 ? ((stats.naoVeio / stats.total) * 100).toFixed(1) : 0;
+            const taxaConfirmacao = stats.total > 0 ? (((stats.confirmado + stats.entregue) / stats.total) * 100).toFixed(1) : 0;
+            
+            return {
+                nome,
+                ...stats,
+                taxaEntrega: parseFloat(taxaEntrega),
+                taxaNaoVeio: parseFloat(taxaNaoVeio),
+                taxaConfirmacao: parseFloat(taxaConfirmacao)
+            };
+        }).sort((a, b) => b.taxaEntrega - a.taxaEntrega);
+
+        // Renderizar cards
+        container.innerHTML = cdArray.map((cd, index) => {
+            const medalha = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+            const borderColor = index === 0 ? 'border-yellow-400' : index === 1 ? 'border-gray-400' : index === 2 ? 'border-orange-400' : 'border-gray-200';
+            
+            return `
+                <div class="bg-white border-2 ${borderColor} rounded-xl p-4 hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-gray-900 text-lg">${cd.nome}</h4>
+                        ${medalha ? `<span class="text-3xl">${medalha}</span>` : ''}
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Total:</span>
+                            <span class="font-bold text-gray-900">${cd.total}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Taxa Entrega:</span>
+                            <span class="font-bold ${cd.taxaEntrega >= 70 ? 'text-green-600' : cd.taxaEntrega >= 50 ? 'text-yellow-600' : 'text-red-600'}">${cd.taxaEntrega}%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Taxa Confirmação:</span>
+                            <span class="font-bold text-blue-600">${cd.taxaConfirmacao}%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Não Veio:</span>
+                            <span class="font-bold text-red-600">${cd.taxaNaoVeio}%</span>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-200 grid grid-cols-2 gap-2 text-xs">
+                            <div class="text-center">
+                                <p class="text-yellow-600 font-semibold">${cd.pendente}</p>
+                                <p class="text-gray-500">Pendentes</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-blue-600 font-semibold">${cd.entregue}</p>
+                                <p class="text-gray-500">Entregues</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     showNotification(message, type = 'info') {
