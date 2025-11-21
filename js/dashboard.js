@@ -2256,7 +2256,7 @@ class CDDashboard {
             console.log('DEBUG - sessionStorage cdData:', cdDataString);
             console.log('DEBUG - sessionStorage keys:', Object.keys(sessionStorage));
             
-            const cdData = cdDataString ? JSON.parse(cdDataString) : null;
+            let cdData = cdDataString ? JSON.parse(cdDataString) : null;
             
             console.log('DEBUG - cdData parsed:', cdData);
             
