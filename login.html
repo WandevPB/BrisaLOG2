@@ -102,7 +102,13 @@
     <!-- Login Card -->
     <div class="relative z-10 w-full max-w-md mx-4">
         <!-- Profile Selection -->
-        <div id="profile-selection" class="bg-white rounded-3xl shadow-2xl overflow-hidden card-simple mb-6">
+        <div id="profile-selection" class="bg-white rounded-3xl shadow-2xl overflow-hidden card-simple mb-6 relative">
+            <!-- Link Admin no canto -->
+            <a href="javascript:void(0)" onclick="selectProfile('admin')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors text-xs flex items-center space-x-1">
+                <i class="fas fa-user-shield"></i>
+                <span>Admin</span>
+            </a>
+            
             <div class="gradient-bg p-6 text-center text-white">
                 <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-2xl p-4 inline-block mb-3">
                     <i class="fas fa-users text-white text-3xl"></i>
@@ -168,7 +174,8 @@
                             <i id="usuario-icon" class="fas fa-building mr-2 text-orange-primary"></i>
                             <span id="usuario-label">Centro de Distribuição</span>
                         </label>
-                        <div class="relative">
+                        <!-- Dropdown para CD e Consultivo -->
+                        <div id="usuario-select-container" class="relative">
                             <select id="usuario" name="usuario" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all appearance-none bg-white">
                                 <option value="">Selecione...</option>
@@ -176,6 +183,12 @@
                             <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
                                 <i class="fas fa-chevron-down text-gray-400"></i>
                             </div>
+                        </div>
+                        <!-- Input para Admin -->
+                        <div id="usuario-input-container" class="hidden">
+                            <input type="text" id="usuario-input" name="usuario-input" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
+                                placeholder="Digite o usuário admin">
                         </div>
                         <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
                     </div>
@@ -321,31 +334,45 @@
             const loginIcon = document.getElementById('login-icon');
             const usuarioLabel = document.getElementById('usuario-label');
             const usuarioIcon = document.getElementById('usuario-icon');
+            const selectContainer = document.getElementById('usuario-select-container');
+            const inputContainer = document.getElementById('usuario-input-container');
             
             // Armazenar tipo de perfil
             profileTypeInput.value = type;
             
-            // Atualizar textos baseado no perfil
+            // Atualizar textos e campos baseado no perfil
             if (type === 'cd') {
                 loginTitle.textContent = 'Login Centro de Distribuição';
                 loginSubtitle.textContent = 'Acesse o dashboard administrativo';
                 loginIcon.className = 'fas fa-warehouse text-white text-3xl';
                 usuarioLabel.textContent = 'Centro de Distribuição';
                 usuarioIcon.className = 'fas fa-building mr-2 text-orange-primary';
+                selectContainer.classList.remove('hidden');
+                inputContainer.classList.add('hidden');
             } else if (type === 'consultivo') {
                 loginTitle.textContent = 'Login Consultivo';
                 loginSubtitle.textContent = 'Acesse a visualização gerencial';
                 loginIcon.className = 'fas fa-chart-line text-white text-3xl';
                 usuarioLabel.textContent = 'Área Consultiva';
                 usuarioIcon.className = 'fas fa-user-tie mr-2 text-blue-500';
+                selectContainer.classList.remove('hidden');
+                inputContainer.classList.add('hidden');
+            } else if (type === 'admin') {
+                loginTitle.textContent = 'Login Administrativo';
+                loginSubtitle.textContent = 'Acesso total ao sistema';
+                loginIcon.className = 'fas fa-user-shield text-white text-3xl';
+                usuarioLabel.textContent = 'Usuário Administrador';
+                usuarioIcon.className = 'fas fa-shield-alt mr-2 text-red-500';
+                selectContainer.classList.add('hidden');
+                inputContainer.classList.remove('hidden');
             }
             
             // Esconder seleção e mostrar formulário
             profileSelection.classList.add('hidden');
             loginCard.classList.remove('hidden');
             
-            // Recarregar lista de usuários baseado no perfil
-            if (loginCD) {
+            // Recarregar lista de usuários baseado no perfil (exceto admin)
+            if (loginCD && type !== 'admin') {
                 loginCD.loadCDsByProfile(type);
             }
         }
@@ -468,7 +495,16 @@
             }
 
             async handleLogin() {
-                const usuario = document.getElementById('usuario').value.trim();
+                const profileType = document.getElementById('profile-type').value;
+                let usuario;
+                
+                // Obter usuário baseado no tipo de perfil
+                if (profileType === 'admin') {
+                    usuario = document.getElementById('usuario-input').value.trim();
+                } else {
+                    usuario = document.getElementById('usuario').value.trim();
+                }
+                
                 const senha = document.getElementById('senha').value;
                 const lembrarMe = document.querySelector('input[type="checkbox"]').checked;
 
