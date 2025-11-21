@@ -662,11 +662,12 @@ class DashboardConsultivo {
             return;
         }
         
-        const baseUrl = API_BASE_URL;
-        const pdfUrl = `${baseUrl}/uploads/${filename}`;
+        // Construir URL do arquivo usando a rota da API (mesma do dashboard CD)
+        const fileUrl = `${API_BASE_URL}/api/files/${filename}`;
+        console.log('Abrindo PDF:', fileUrl);
         
-        // Abrir PDF em nova aba
-        window.open(pdfUrl, '_blank');
+        // Abrir em nova aba
+        window.open(fileUrl, '_blank');
     }
 
     showNotification(message, type = 'info') {
