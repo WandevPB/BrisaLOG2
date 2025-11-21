@@ -33,7 +33,7 @@ module.exports = function({ nome, codigo, cdNome, email }) {
                             </p>
                             
                             <p style="margin: 0 0 30px 0; color: #666666; font-size: 15px; line-height: 1.6;">
-                                Seu usuário foi criado no sistema <strong>BrisaLOG Agenda</strong>. Use as informações abaixo para fazer seu primeiro acesso:
+                                Seu usuário foi criado no sistema <strong>BrisaLOG Agenda</strong>. Você recebeu um código de autorização pessoal que será solicitado para realizar ações importantes no sistema.
                             </p>
 
                             <!-- Card com informações do usuário -->
@@ -44,7 +44,7 @@ module.exports = function({ nome, codigo, cdNome, email }) {
                                             <tr>
                                                 <td style="padding: 8px 0;">
                                                     <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                                                        🔑 Seu Código de Acesso
+                                                        🔑 Código de Autorização
                                                     </span>
                                                     <span style="display: block; color: #FF6B35; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
                                                         ${codigo}
@@ -78,17 +78,20 @@ module.exports = function({ nome, codigo, cdNome, email }) {
                                 </tr>
                             </table>
 
-                            <!-- Instruções de acesso -->
+                            <!-- Instruções de uso -->
                             <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
                                 <h3 style="margin: 0 0 15px 0; color: #333333; font-size: 16px; font-weight: 700;">
-                                    📝 Como fazer seu primeiro acesso:
+                                    🔐 Para que serve o código de autorização?
                                 </h3>
-                                <ol style="margin: 0; padding-left: 20px; color: #666666; font-size: 14px; line-height: 1.8;">
-                                    <li style="margin-bottom: 8px;">Acesse o portal BrisaLOG Agenda (link abaixo)</li>
-                                    <li style="margin-bottom: 8px;">Selecione seu perfil de acesso</li>
-                                    <li style="margin-bottom: 8px;">Digite o código de 5 dígitos informado acima</li>
-                                    <li>Pronto! Você está dentro do sistema 🎉</li>
-                                </ol>
+                                <p style="margin: 0 0 15px 0; color: #666666; font-size: 14px; line-height: 1.8;">
+                                    Este código será solicitado quando você realizar ações importantes no sistema, como:
+                                </p>
+                                <ul style="margin: 0; padding-left: 20px; color: #666666; font-size: 14px; line-height: 1.8;">
+                                    <li style="margin-bottom: 8px;">Alterar o estágio de um agendamento</li>
+                                    <li style="margin-bottom: 8px;">Confirmar entrega de solicitações</li>
+                                    <li style="margin-bottom: 8px;">Atualizar informações importantes</li>
+                                    <li>Outras ações que requerem confirmação de identidade</li>
+                                </ul>
                             </div>
 
                             <!-- Botão de acesso -->
@@ -97,7 +100,7 @@ module.exports = function({ nome, codigo, cdNome, email }) {
                                     <td align="center">
                                         <a href="https://brisalog-agenda.online/login.html" 
                                            style="display: inline-block; background: linear-gradient(135deg, #FF6B35, #FF8C42); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3); transition: all 0.3s ease;">
-                                            🚀 Acessar BrisaLOG Agenda
+                                            🚀 Acessar Sistema BrisaLOG
                                         </a>
                                     </td>
                                 </tr>
@@ -106,13 +109,14 @@ module.exports = function({ nome, codigo, cdNome, email }) {
                             <!-- Aviso importante -->
                             <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 6px; padding: 15px; margin-top: 25px;">
                                 <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
-                                    <strong>⚠️ Importante:</strong> Guarde seu código de acesso em local seguro. Você precisará dele para todos os acessos ao sistema.
+                                    <strong>⚠️ Importante:</strong> Guarde este código em local seguro. Ele é pessoal e intransferível, servindo como sua assinatura digital para autorizar ações no sistema.
                                 </p>
                             </div>
 
                             <!-- Mensagem de suporte -->
                             <p style="margin: 30px 0 0 0; color: #999999; font-size: 14px; line-height: 1.6; text-align: center;">
-                                Em caso de dúvidas, entre em contato com o administrador do sistema.
+                                O login no sistema continua sendo feito pelo acesso do seu CD.<br>
+                                Em caso de dúvidas, entre em contato com o administrador.
                             </p>
                         </td>
                     </tr>
