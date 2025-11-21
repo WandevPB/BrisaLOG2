@@ -128,6 +128,8 @@ class DashboardConsultivo {
         document.getElementById('total-confirmados').textContent = confirmados;
         document.getElementById('total-entregues').textContent = entregues;
     }
+
+    loadTransportadorList() {
         // Extrair lista única de transportadores
         const transportadores = new Set();
         this.agendamentos.forEach(a => {
