@@ -792,6 +792,7 @@ class CDDashboard {
             this.filteredAgendamentos = [...this.agendamentos];
             this.showLoading(false);
             this.renderAgendamentos();
+            this.renderEntregasHoje();
         } catch (error) {
             console.error('Erro ao carregar agendamentos:', error);
             this.showNotification('Erro ao carregar agendamentos.', 'error');
@@ -814,6 +815,86 @@ class CDDashboard {
                 this.animateNumber(element, parseInt(element.textContent), stats[key]);
             }
         });
+    }
+
+    renderEntregasHoje() {
+        const container = document.getElementById('entregas-hoje-container');
+        if (!container) return;
+
+        // Atualizar data por extenso
+        const hoje = new Date();
+        const dataExtenso = hoje.toLocaleDateString('pt-BR', { 
+            weekday: 'long', 
+            day: 'numeric',
+            month: 'long', 
+            year: 'numeric' 
+        });
+        const dataElement = document.getElementById('hoje-data-extenso');
+        if (dataElement) {
+            dataElement.textContent = dataExtenso.charAt(0).toUpperCase() + dataExtenso.slice(1);
+        }
+
+        // Filtrar apenas entregas CONFIRMADAS para hoje
+        const hojeDateStr = hoje.toISOString().split('T')[0];
+        const entregasHoje = this.agendamentos.filter(a => {
+            const dataEntrega = a.dataEntrega?.split('T')[0];
+            return a.status === 'confirmado' && dataEntrega === hojeDateStr;
+        });
+
+        // Atualizar contador
+        const totalElement = document.getElementById('total-entregas-hoje');
+        if (totalElement) {
+            totalElement.textContent = entregasHoje.length;
+        }
+
+        // Renderizar cards
+        if (entregasHoje.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <i class="fas fa-calendar-check text-6xl mb-4 opacity-30"></i>
+                    <p class="text-lg font-semibold opacity-80">Nenhuma entrega confirmada para hoje</p>
+                    <p class="text-sm opacity-60 mt-2">As entregas aguardando entrega aparecerão aqui</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = entregasHoje.map(a => `
+            <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 hover:bg-opacity-30 transition-all cursor-pointer border border-white border-opacity-20" onclick="dashboard.viewDetails(${a.id})">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold bg-white bg-opacity-30 px-3 py-1 rounded-full">
+                        <i class="fas fa-shipping-fast mr-1"></i>
+                        ${a.horarioEntrega || 'Sem horário'}
+                    </span>
+                    <span class="text-xs bg-green-500 bg-opacity-90 px-3 py-1 rounded-full font-semibold">
+                        <i class="fas fa-check mr-1"></i>
+                        Confirmado
+                    </span>
+                </div>
+                <p class="font-bold text-lg mb-2">${a.codigo || 'N/A'}</p>
+                <p class="text-sm opacity-90 mb-1">
+                    <i class="fas fa-truck mr-1"></i>
+                    ${a.transportadorNome || a.fornecedorNome || 'N/A'}
+                </p>
+                ${a.placaVeiculo ? `
+                    <p class="text-xs opacity-80 mt-2">
+                        <i class="fas fa-car mr-1"></i>
+                        Placa: ${a.placaVeiculo}
+                    </p>
+                ` : ''}
+                ${a.motoristaNome ? `
+                    <p class="text-xs opacity-80">
+                        <i class="fas fa-user mr-1"></i>
+                        ${a.motoristaNome}
+                    </p>
+                ` : ''}
+            </div>
+        `).join('');
+    }
+
+    atualizarEntregasHoje() {
+        this.showNotification('Atualizando entregas...', 'info');
+        this.loadAgendamentos();
     }
 
     animateNumber(element, start, end) {
@@ -1500,7 +1581,7 @@ class CDDashboard {
     getStatusIcon(status) {
         const icons = {
             'pendente': 'fas fa-clock',
-            'confirmado': 'fas fa-check-circle',
+            'confirmado': 'fas fa-shipping-fast',
             'entregue': 'fas fa-truck',
             'nao-veio': 'fas fa-times-circle',
             'reagendamento': 'fas fa-calendar-alt',
@@ -1516,7 +1597,7 @@ class CDDashboard {
         }
         const texts = {
             'pendente': 'Pendente',
-            'confirmado': 'Confirmado',
+            'confirmado': 'Aguardando Entrega',
             'entregue': 'Entregue',
             'nao-veio': 'Não Veio',
             'reagendamento': 'Reagendamento',
