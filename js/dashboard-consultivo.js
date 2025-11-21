@@ -8,7 +8,6 @@ class DashboardConsultivo {
         this.currentPage = 1;
         this.itemsPerPage = 20;
         this.charts = {}; // Armazenar instâncias dos gráficos
-        this.init();
     }
 
     async init() {
@@ -43,9 +42,12 @@ class DashboardConsultivo {
     }
 
     loadUserInfo() {
-        const usuario = sessionStorage.getItem('usuario');
-        const nome = sessionStorage.getItem('cd') || usuario;
-        document.getElementById('user-name').textContent = nome;
+        const userNameElement = document.getElementById('user-name');
+        if (userNameElement) {
+            const usuario = sessionStorage.getItem('usuario');
+            const nome = sessionStorage.getItem('cd') || usuario;
+            userNameElement.textContent = nome;
+        }
     }
 
     async loadCDsList() {
@@ -1171,11 +1173,17 @@ function limparFiltros() {
 
 function fecharDetalhes() {
     const modal = document.getElementById('detalhes-modal');
-    modal.classList.add('hidden');
-    modal.style.display = 'none';
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
 }
 
-// Inicializar dashboard
+// Inicializar dashboard apenas se estiver na página consultivo
 document.addEventListener('DOMContentLoaded', () => {
-    window.dashboardConsultivo = new DashboardConsultivo();
+    // Verificar se estamos no dashboard consultivo (não no admin)
+    if (document.querySelector('body').innerHTML.includes('Dashboard Consultivo')) {
+        window.dashboardConsultivo = new DashboardConsultivo();
+        window.dashboardConsultivo.init();
+    }
 });
