@@ -349,6 +349,8 @@
                 usuarioIcon.className = 'fas fa-building mr-2 text-orange-primary';
                 selectContainer.classList.remove('hidden');
                 inputContainer.classList.add('hidden');
+                document.getElementById('usuario').required = true;
+                document.getElementById('usuario-input').required = false;
             } else if (type === 'consultivo') {
                 loginTitle.textContent = 'Login Consultivo';
                 loginSubtitle.textContent = 'Acesse a visualização gerencial';
@@ -357,6 +359,8 @@
                 usuarioIcon.className = 'fas fa-user-tie mr-2 text-blue-500';
                 selectContainer.classList.remove('hidden');
                 inputContainer.classList.add('hidden');
+                document.getElementById('usuario').required = true;
+                document.getElementById('usuario-input').required = false;
             } else if (type === 'admin') {
                 loginTitle.textContent = 'Login Administrativo';
                 loginSubtitle.textContent = 'Acesso total ao sistema';
@@ -365,6 +369,8 @@
                 usuarioIcon.className = 'fas fa-shield-alt mr-2 text-red-500';
                 selectContainer.classList.add('hidden');
                 inputContainer.classList.remove('hidden');
+                document.getElementById('usuario').required = false;
+                document.getElementById('usuario-input').required = true;
             }
             
             // Esconder seleção e mostrar formulário
