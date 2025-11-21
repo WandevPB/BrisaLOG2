@@ -153,19 +153,11 @@ class DashboardConsultivo {
         const pendentes = this.agendamentos.filter(a => a.status === 'pendente').length;
         const confirmados = this.agendamentos.filter(a => a.status === 'confirmado').length;
         const entregues = this.agendamentos.filter(a => a.status === 'entregue').length;
-        
-        // Entregas de hoje
-        const hoje = new Date().toISOString().split('T')[0];
-        const entregasHoje = this.agendamentos.filter(a => {
-            const dataEntrega = a.dataEntrega?.split('T')[0];
-            return dataEntrega === hoje;
-        }).length;
 
         document.getElementById('total-agendamentos').textContent = total;
         document.getElementById('total-pendentes').textContent = pendentes;
         document.getElementById('total-confirmados').textContent = confirmados;
         document.getElementById('total-entregues').textContent = entregues;
-        document.getElementById('total-hoje').textContent = entregasHoje;
     }
 
     updateKPIs() {
