@@ -48,24 +48,30 @@
         }
       }
     }
-  </script>
-
   <style>
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ffffff;
-    --card: rgba(255, 255, 255, 0.05);
-    --card-foreground: #ffffff;
-    --primary: #FF6B35;
-    --primary-foreground: #ffffff;
-    --secondary: #FF8C42;
-    --secondary-foreground: #ffffff;
-    --accent: #FF9F66;
-    --accent-foreground: #ffffff;
-    --muted: rgba(255, 255, 255, 0.1);
-    --muted-foreground: #9ca3af;
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
+    /* ...existing code... */
+    .input-dark {
+      background: #181818;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 15px;
+      font-size: 1rem;
+      transition: box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+    .input-dark:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #ff6600;
+    }
+    .input-dark[readonly], .input-dark[disabled] {
+      background: #181818 !important;
+      color: #bbb !important;
+      opacity: 1 !important;
+      cursor: not-allowed;
+    }
+    /* ...existing code... */
+  </style>
     --border: rgba(255, 107, 53, 0.2);
     --input: rgba(255, 255, 255, 0.05);
     --ring-hsl: 14, 100%, 60%; 
