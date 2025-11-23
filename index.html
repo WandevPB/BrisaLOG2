@@ -1,3286 +1,867 @@
 ﻿<!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BrisaLOG Agenda - Sistema de Agendamento de Entregas</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'orange-primary': '#FF6B35',
-                        'orange-secondary': '#FF8C42',
-                        'orange-accent': '#FF9F66',
-                        'orange-light': '#FFA885',
-                        'gray-dark': '#2D3748',
-                        'gray-medium': '#4A5568',
-                        'gray-light': '#E2E8F0'
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
-                    },
-                    boxShadow: {
-                        '3d': '0 10px 25px rgba(255, 107, 53, 0.3), 0 5px 10px rgba(0, 0, 0, 0.1)',
-                        '3d-hover': '0 15px 35px rgba(255, 107, 53, 0.4), 0 8px 15px rgba(0, 0, 0, 0.15)',
-                        '3d-click': '0 5px 15px rgba(255, 107, 53, 0.2), 0 2px 5px rgba(0, 0, 0, 0.1)'
-                    },
-                    animation: {
-                        'float': 'float 3s ease-in-out infinite',
-                        'pulse-orange': 'pulse-orange 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'bounce-gentle': 'bounce-gentle 2s infinite',
-                    }
-                }
-            }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        /* Background simplificado e otimizado */
-        .animated-background {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background: #000;
+            color: #fff;
+        }
+
+        /* ==== BACKGROUND ANIMADO ==== */
+        .dark-bg {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            background: linear-gradient(135deg, #fff9f5 0%, #fff 50%, #fff9f5 100%);
+            background: radial-gradient(circle at 50% 50%, #1a0a0a 0%, #000 100%);
+            z-index: -2;
         }
-        
-        /* Grid pattern sutil */
-        .grid-overlay {
-            position: absolute;
+
+        .grid-background {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            opacity: 0.04;
             background-image: 
-                linear-gradient(rgba(255, 107, 53, 0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 107, 53, 0.08) 1px, transparent 1px);
-            background-size: 50px 50px;
+                linear-gradient(rgba(255, 107, 53, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 107, 53, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -1;
+            animation: grid-move 20s linear infinite;
         }
-        
-        /* Glow effects pulsantes */
-        .glow-container {
-            position: absolute;
+
+        @keyframes grid-move {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+
+        /* Partículas flutuantes */
+        .particles-container {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            pointer-events: none;
+            z-index: 0;
         }
-        
-        .glow-orb {
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #FF6B35;
+            border-radius: 50%;
+            filter: blur(1px);
+            opacity: 0;
+            animation: particle-rise 15s infinite ease-in;
+        }
+
+        @keyframes particle-rise {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* ==== NAVBAR ==== */
+        .glass-nav {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        /* ==== HERO SECTION ==== */
+        .hero-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glowing-orb {
             position: absolute;
             border-radius: 50%;
-            filter: blur(60px);
-            animation: glow-pulse 8s ease-in-out infinite;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float-orb 20s ease-in-out infinite;
         }
-        
-        .glow-orb-1 {
+
+        .orb-1 {
             top: 20%;
-            left: 15%;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255, 107, 53, 0.12), transparent);
+            left: 10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.6), transparent);
             animation-delay: 0s;
         }
-        
-        .glow-orb-2 {
-            top: 60%;
-            right: 20%;
-            width: 250px;
-            height: 250px;
-            background: radial-gradient(circle, rgba(247, 147, 30, 0.10), transparent);
-            animation-delay: 2s;
+
+        .orb-2 {
+            bottom: 20%;
+            right: 10%;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(255, 140, 66, 0.4), transparent);
+            animation-delay: 5s;
         }
-        
-        .glow-orb-3 {
-            bottom: 30%;
-            left: 25%;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(255, 107, 53, 0.08), transparent);
-            animation-delay: 4s;
-        }
-        
-        .glow-orb-4 {
-            top: 40%;
-            right: 40%;
-            width: 180px;
-            height: 180px;
-            background: radial-gradient(circle, rgba(247, 147, 30, 0.06), transparent);
-            animation-delay: 6s;
-        }
-        
-        /* Elementos flutuantes */
-        .floating-elements {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .float-element {
-            position: absolute;
-            opacity: 0.05;
-            border-radius: 50%;
-            background: linear-gradient(45deg, rgba(255, 107, 53, 0.3), rgba(247, 147, 30, 0.2));
-        }
-        
-        .float-1 {
-            top: 10%;
-            left: 80%;
-            width: 60px;
-            height: 60px;
-            animation: float-drift-1 15s ease-in-out infinite;
-        }
-        
-        .float-2 {
-            top: 70%;
-            left: 10%;
-            width: 40px;
-            height: 40px;
-            animation: float-drift-2 18s ease-in-out infinite;
-        }
-        
-        .float-3 {
-            top: 30%;
-            left: 70%;
-            width: 80px;
-            height: 80px;
-            animation: float-drift-3 12s ease-in-out infinite;
-        }
-        
-        .float-4 {
-            top: 80%;
-            right: 15%;
-            width: 50px;
-            height: 50px;
-            animation: float-drift-4 20s ease-in-out infinite;
-        }
-        
-        .float-5 {
-            top: 50%;
-            left: 5%;
-            width: 70px;
-            height: 70px;
-            animation: float-drift-5 16s ease-in-out infinite;
-        }
-        
-        /* Partículas micro flutuantes */
-        .micro-particles {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .particle {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: rgba(255, 107, 53, 0.15);
-            border-radius: 50%;
-            animation: particle-float 25s linear infinite;
-        }
-        
-        .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
-        .particle:nth-child(2) { left: 20%; animation-delay: 3s; }
-        .particle:nth-child(3) { left: 30%; animation-delay: 6s; }
-        .particle:nth-child(4) { left: 40%; animation-delay: 9s; }
-        .particle:nth-child(5) { left: 50%; animation-delay: 12s; }
-        .particle:nth-child(6) { left: 60%; animation-delay: 15s; }
-        .particle:nth-child(7) { left: 70%; animation-delay: 18s; }
-        .particle:nth-child(8) { left: 80%; animation-delay: 21s; }
-        .particle:nth-child(9) { left: 90%; animation-delay: 24s; }
-        .particle:nth-child(10) { left: 15%; animation-delay: 5s; }
-        
-        /* Overlay de profundidade */
-        .depth-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 70% 80%, rgba(255, 107, 53, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 20% 70%, rgba(247, 147, 30, 0.03) 0%, transparent 50%);
-            animation: depth-shift 30s ease-in-out infinite;
-        }
-        
-        /* Otimizações de performance */
-        .animated-background *,
-        .glow-orb,
-        .float-element,
-        .particle {
-            will-change: transform, opacity;
-            backface-visibility: hidden;
-            transform-style: preserve-3d;
-        }
-        
-        /* Responsividade para telas menores */
-        @media (max-width: 768px) {
-            .glow-orb {
-                filter: blur(40px);
+
+        @keyframes float-orb {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
             }
-            .glow-orb-1, .glow-orb-2 {
-                width: 200px;
-                height: 200px;
+            33% {
+                transform: translate(30px, -30px) scale(1.1);
             }
-            .glow-orb-3, .glow-orb-4 {
-                width: 150px;
-                height: 150px;
-            }
-            .float-element {
-                opacity: 0.03;
-            }
-            .grid-overlay {
-                opacity: 0.05;
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
             }
         }
-        
-        @media (max-width: 480px) {
-            .micro-particles {
-                display: none; /* Remove partículas em telas muito pequenas */
-            }
-            .floating-elements .float-element:nth-child(n+4) {
-                display: none; /* Reduz elementos flutuantes */
-            }
+
+        /* Texto com gradiente animado */
+        .gradient-text {
+            background: linear-gradient(135deg, #FF6B35, #FF8C42, #FFA066, #FF6B35);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-flow 4s ease infinite;
         }
-        
-        /* Garantir que o conteúdo sempre fique por cima */
-        .hero-section,
-        .container,
-        .relative {
+
+        @keyframes gradient-flow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Botão Neon */
+        .btn-neon {
             position: relative;
-            z-index: 10;
-        }
-        
-        /* Estilos originais */
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-        @keyframes pulse-orange {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .7; }
-        }
-        @keyframes bounce-gentle {
-            0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
-            50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
-        }
-        .btn-3d {
-            transform: perspective(1000px) rotateX(0deg);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .btn-3d:hover {
-            transform: perspective(1000px) rotateX(-5deg) translateY(-2px);
-        }
-        .btn-3d:active {
-            transform: perspective(1000px) rotateX(2deg) translateY(1px);
-        }
-        .btn-secondary {
-            position: relative;
+            background: linear-gradient(135deg, #FF6B35, #FF8C42);
+            border: none;
+            padding: 1.2rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
             overflow: hidden;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 
-                0 4px 15px 0 rgba(102, 126, 234, 0.3),
-                0 2px 4px 0 rgba(102, 126, 234, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.5);
+            text-decoration: none;
+            display: inline-block;
         }
-        .btn-secondary:hover {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-            box-shadow: 
-                0 8px 25px 0 rgba(102, 126, 234, 0.4),
-                0 4px 10px 0 rgba(102, 126, 234, 0.2);
-            transform: translateY(-2px) scale(1.02);
+
+        .btn-neon:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 50px rgba(255, 107, 53, 0.8);
         }
-        .btn-secondary:active {
-            transform: translateY(0) scale(0.98);
-        }
-        .btn-secondary::before {
+
+        .btn-neon::before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.6s;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
         }
-        .btn-secondary:hover::before {
+
+        .btn-neon:hover::before {
             left: 100%;
         }
-        .card-3d {
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #FF6B35;
+            color: #FF6B35;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
             transition: all 0.3s ease;
-        }
-        .card-3d:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.2);
-        }
-        .icon-3d {
-            transition: all 0.3s ease;
-        }
-        .icon-3d:hover {
-            transform: translateY(-3px) scale(1.05);
-        }
-        
-        /* Animação de título letra por letra */
-        .typewriter-title {
-            overflow: visible; /* Mudado de hidden para visible */
-            padding-bottom: 10px; /* Adicionar espaço extra para evitar corte */
-            user-select: none; /* Impedir seleção de texto */
-            cursor: default; /* Cursor padrão em vez de seleção */
-            -webkit-user-select: none; /* Safari */
-            -moz-user-select: none; /* Firefox */
-            -ms-user-select: none; /* IE/Edge */
-        }
-        .letter {
-            opacity: 0;
-            transform: translateY(50px) rotateX(90deg) scale(0.5);
+            text-decoration: none;
             display: inline-block;
-            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            filter: blur(10px);
-            margin: 0 1px; /* Adicionar margem para evitar sobreposição */
-            user-select: none; /* Impedir seleção de texto */
-            cursor: default; /* Cursor padrão */
-            -webkit-user-select: none; /* Safari */
-            -moz-user-select: none; /* Firefox */
-            -ms-user-select: none; /* IE/Edge */
         }
-        .letter.animate {
-            opacity: 1;
-            transform: translateY(0px) rotateX(0deg) scale(1);
-            filter: blur(0px);
+
+        .btn-outline:hover {
+            background: rgba(255, 107, 53, 0.1);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(255, 107, 53, 0.3);
         }
-        .letter.gradient {
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: shimmer 2s ease-in-out infinite alternate;
-        }
-        .letter:hover {
-            transform: translateY(-5px) scale(1.1);
-            filter: drop-shadow(0 5px 15px rgba(255, 107, 53, 0.4));
-        }
-        
-        @keyframes shimmer {
-            0% {
-                background: linear-gradient(135deg, #ff6b35, #f7931e);
-                -webkit-background-clip: text;
-                background-clip: text;
-            }
-            100% {
-                background: linear-gradient(135deg, #f7931e, #ff6b35);
-                -webkit-background-clip: text;
-                background-clip: text;
-            }
-        }
-        
-        /* Background 3D Hero */
-        .hero-background {
-            background: linear-gradient(135deg, #fef7f0 0%, #fff8f3 25%, #fef6ef 50%, #fff5ec 75%, #fef4e9 100%);
+
+        /* ==== FEATURES SECTION ==== */
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            border-radius: 20px;
+            padding: 2.5rem;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.320, 1);
             position: relative;
             overflow: hidden;
         }
-        
-        .hero-background::before {
+
+        .feature-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                linear-gradient(45deg, 
-                    rgba(255, 255, 255, 0.4) 0%, 
-                    transparent 25%, 
-                    rgba(255, 107, 53, 0.05) 50%, 
-                    transparent 75%, 
-                    rgba(255, 255, 255, 0.3) 100%
-                ),
-                radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom right, rgba(247, 147, 30, 0.08) 0%, transparent 50%);
-            animation: float-3d 20s ease-in-out infinite;
-            z-index: 1;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.5s;
         }
-        
-        .hero-background::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                repeating-linear-gradient(
-                    90deg,
-                    transparent 0px,
-                    rgba(255, 255, 255, 0.03) 1px,
-                    transparent 2px,
-                    transparent 80px
-                ),
-                repeating-linear-gradient(
-                    0deg,
-                    transparent 0px,
-                    rgba(255, 107, 53, 0.02) 1px,
-                    transparent 2px,
-                    transparent 80px
-                );
-            box-shadow: 
-                inset 0 0 100px rgba(255, 255, 255, 0.1),
-                inset 0 0 200px rgba(255, 107, 53, 0.03);
-            z-index: 2;
+
+        .feature-card:hover::before {
+            opacity: 1;
         }
-        
-        /* Elementos de profundidade 3D */
-        .depth-layer {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(40px);
-            z-index: 1;
+
+        .feature-card:hover {
+            transform: translateY(-15px);
+            border-color: rgba(255, 107, 53, 0.5);
+            box-shadow: 0 25px 50px rgba(255, 107, 53, 0.3);
         }
-        
-        .depth-1 {
-            top: 20%;
-            left: 10%;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent);
-            animation: depth-float-1 15s ease-in-out infinite;
-        }
-        
-        .depth-2 {
-            bottom: 25%;
-            right: 15%;
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle, rgba(255, 107, 53, 0.08), transparent);
-            animation: depth-float-2 18s ease-in-out infinite;
-        }
-        
-        .depth-3 {
-            top: 60%;
-            left: 60%;
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, rgba(247, 147, 30, 0.06), transparent);
-            animation: depth-float-3 12s ease-in-out infinite;
-        }
-        
-        /* Elementos de brilho flutuante */
-        .floating-glow {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(40px);
-            animation: pulse-glow 6s ease-in-out infinite alternate;
-            z-index: 1;
-        }
-        
-        .glow-1 {
-            top: 10%;
-            right: 15%;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(255, 107, 53, 0.15), transparent);
-        }
-        
-        .glow-2 {
-            bottom: 20%;
-            left: 10%;
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle, rgba(247, 147, 30, 0.12), transparent);
-            animation-delay: 2s;
-        }
-        
-        .glow-3 {
-            top: 50%;
-            left: 60%;
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, rgba(255, 107, 53, 0.08), transparent);
-            animation-delay: 4s;
-        }
-        
-        /* Elementos logísticos únicos */
-        .logistics-element {
-            position: absolute;
-            opacity: 0.06;
-            z-index: 2;
-        }
-        
-        /* Rota de entrega animada */
-        .delivery-route {
-            top: 15%;
-            left: 8%;
-            width: 120px;
-            height: 80px;
-            border: 3px dashed #ff6b35;
-            border-radius: 20px;
-            animation: route-pulse 8s ease-in-out infinite;
-        }
-        
-        .delivery-route::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: -5px;
-            width: 10px;
-            height: 10px;
-            background: #ff6b35;
-            border-radius: 50%;
-            animation: move-along-route 8s linear infinite;
-        }
-        
-        /* Container estilizado */
-        .shipping-container {
-            bottom: 25%;
-            right: 12%;
-            width: 100px;
-            height: 60px;
-            background: linear-gradient(45deg, 
-                transparent 0%, 
-                rgba(255, 107, 53, 0.1) 25%, 
-                transparent 50%, 
-                rgba(247, 147, 30, 0.1) 75%, 
-                transparent 100%);
-            border: 2px solid rgba(255, 107, 53, 0.2);
-            border-radius: 8px;
-            animation: container-sway 6s ease-in-out infinite;
-        }
-        
-        .shipping-container::after {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            bottom: 10px;
-            border: 1px solid rgba(255, 107, 53, 0.15);
-            border-radius: 4px;
-        }
-        
-        /* Mapa logístico */
-        .logistics-map {
-            top: 45%;
-            left: 15%;
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background: radial-gradient(circle, 
-                rgba(255, 107, 53, 0.1) 0%, 
-                transparent 30%, 
-                rgba(247, 147, 30, 0.08) 60%, 
-                transparent 100%);
-            animation: map-scan 10s linear infinite;
-        }
-        
-        .logistics-map::before, .logistics-map::after {
-            content: '';
-            position: absolute;
-            border-radius: 50%;
-        }
-        
-        .logistics-map::before {
-            top: 20%;
-            left: 20%;
-            width: 60%;
-            height: 60%;
-            border: 2px solid rgba(255, 107, 53, 0.15);
-        }
-        
-        .logistics-map::after {
-            top: 40%;
-            left: 40%;
-            width: 20%;
-            height: 20%;
-            background: rgba(255, 107, 53, 0.2);
-        }
-        
-        /* Rede de distribuição */
-        .distribution-network {
-            top: 25%;
-            right: 25%;
+
+        .feature-icon {
             width: 80px;
             height: 80px;
-        }
-        
-        .network-node {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: rgba(255, 107, 53, 0.3);
-            border-radius: 50%;
-            animation: node-pulse 4s ease-in-out infinite;
-        }
-        
-        .node-1 { top: 0; left: 50%; animation-delay: 0s; }
-        .node-2 { top: 50%; left: 0; animation-delay: 1s; }
-        .node-3 { top: 50%; right: 0; animation-delay: 2s; }
-        .node-4 { bottom: 0; left: 50%; animation-delay: 3s; }
-        .node-center { top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(247, 147, 30, 0.4); }
-        
-        .network-line {
-            position: absolute;
-            background: rgba(255, 107, 53, 0.15);
-            animation: line-flow 6s ease-in-out infinite;
-        }
-        
-        .line-1 { top: 25%; left: 50%; width: 2px; height: 25%; transform-origin: top; }
-        .line-2 { top: 50%; left: 25%; width: 25%; height: 2px; transform-origin: left; }
-        .line-3 { top: 50%; right: 25%; width: 25%; height: 2px; transform-origin: right; }
-        .line-4 { bottom: 25%; left: 50%; width: 2px; height: 25%; transform-origin: bottom; }
-        
-        /* Warehouse grid */
-        .warehouse-grid {
-            bottom: 15%;
-            left: 25%;
-            width: 70px;
-            height: 70px;
-            background: 
-                linear-gradient(90deg, rgba(255, 107, 53, 0.1) 1px, transparent 1px),
-                linear-gradient(rgba(247, 147, 30, 0.1) 1px, transparent 1px);
-            background-size: 14px 14px;
-            border: 2px solid rgba(255, 107, 53, 0.12);
-            border-radius: 8px;
-            animation: grid-shimmer 7s ease-in-out infinite;
-        }
-        
-        /* Formas geométricas originais */
-        .geometric-square {
-            position: absolute;
-            opacity: 0.08;
-            z-index: 1;
-        }
-        
-        .square-1 {
-            top: 18%;
-            right: 8%;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(45deg, rgba(255, 107, 53, 0.15), rgba(247, 147, 30, 0.1));
-            transform: rotate(45deg);
-            animation: float-square 12s ease-in-out infinite;
-        }
-        
-        .square-2 {
-            bottom: 30%;
-            left: 5%;
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, rgba(247, 147, 30, 0.12), rgba(255, 107, 53, 0.08));
-            transform: rotate(25deg);
-            animation: float-square-reverse 15s ease-in-out infinite;
-        }
-        
-        .circle-1 {
-            top: 35%;
-            right: 5%;
-            width: 50px;
-            height: 50px;
-            background: radial-gradient(circle, rgba(255, 107, 53, 0.12), transparent);
-            border-radius: 50%;
-            animation: float-circle 10s ease-in-out infinite;
-        }
-        
-        .triangle-1 {
-            bottom: 45%;
-            right: 15%;
-            width: 0;
-            height: 0;
-            border-left: 25px solid transparent;
-            border-right: 25px solid transparent;
-            border-bottom: 40px solid rgba(247, 147, 30, 0.1);
-            animation: float-triangle 14s ease-in-out infinite;
-        }
-        
-        .diamond-1 {
-            top: 60%;
-            left: 8%;
-            width: 35px;
-            height: 35px;
-            background: linear-gradient(90deg, rgba(255, 107, 53, 0.1), rgba(247, 147, 30, 0.12));
-            transform: rotate(45deg);
-            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-            animation: float-diamond 16s ease-in-out infinite;
-        }
-        
-        /* Mais quadrados distribuídos */
-        .square-3 {
-            top: 10%;
-            left: 20%;
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(45deg, rgba(255, 107, 53, 0.08), rgba(247, 147, 30, 0.06));
-            transform: rotate(30deg);
-            animation: float-square 18s ease-in-out infinite;
-        }
-        
-        .square-4 {
-            top: 75%;
-            right: 30%;
-            width: 45px;
-            height: 45px;
-            background: linear-gradient(135deg, rgba(247, 147, 30, 0.1), rgba(255, 107, 53, 0.08));
-            transform: rotate(60deg);
-            animation: float-square-reverse 20s ease-in-out infinite;
-        }
-        
-        .square-5 {
-            top: 40%;
-            left: 3%;
-            width: 25px;
-            height: 25px;
-            background: linear-gradient(90deg, rgba(255, 107, 53, 0.12), rgba(247, 147, 30, 0.08));
-            transform: rotate(15deg);
-            animation: float-square 14s ease-in-out infinite;
-        }
-        
-        .square-6 {
-            bottom: 10%;
-            right: 8%;
-            width: 35px;
-            height: 35px;
-            background: linear-gradient(180deg, rgba(247, 147, 30, 0.1), rgba(255, 107, 53, 0.06));
-            transform: rotate(75deg);
-            animation: float-square-reverse 16s ease-in-out infinite;
-        }
-        
-        .circle-2 {
-            top: 25%;
-            left: 35%;
-            width: 20px;
-            height: 20px;
-            background: radial-gradient(circle, rgba(255, 107, 53, 0.08), transparent);
-            border-radius: 50%;
-            animation: float-circle 12s ease-in-out infinite;
-        }
-        
-        .circle-3 {
-            bottom: 20%;
-            right: 25%;
-            width: 30px;
-            height: 30px;
-            background: radial-gradient(circle, rgba(247, 147, 30, 0.1), transparent);
-            border-radius: 50%;
-            animation: float-circle 15s ease-in-out infinite;
-        }
-        
-        .triangle-2 {
-            top: 15%;
-            right: 35%;
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-bottom: 25px solid rgba(255, 107, 53, 0.08);
-            animation: float-triangle 13s ease-in-out infinite;
-        }
-        
-        .triangle-3 {
-            bottom: 35%;
-            left: 15%;
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-bottom: 30px solid rgba(247, 147, 30, 0.09);
-            animation: float-triangle 17s ease-in-out infinite;
-        }
-        
-        .geometric-shape {
-            position: absolute;
-            opacity: 0.08;
-            z-index: 1;
+            background: linear-gradient(135deg, #FF6B35, #FF8C42);
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 2rem;
-            color: #ff6b35;
+            margin-bottom: 1.5rem;
+            transition: transform 0.5s;
         }
-        
-        .shape-1 {
-            top: 20%;
-            left: 10%;
-            width: 100px;
-            height: 100px;
-            animation: float-reverse 15s ease-in-out infinite;
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg);
         }
-        
-        .shape-2 {
-            top: 60%;
-            right: 15%;
-            width: 80px;
-            height: 80px;
-            animation: float 12s ease-in-out infinite;
+
+        /* ==== STATS SECTION ==== */
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.4s;
         }
-        
-        .shape-3 {
-            bottom: 20%;
-            left: 20%;
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(255, 107, 53, 0.6);
+            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.3);
+        }
+
+        .stat-number {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #FF6B35, #FF8C42);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        /* ==== TIMELINE SECTION ==== */
+        .timeline-item {
+            position: relative;
+            padding-left: 80px;
+            margin-bottom: 4rem;
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.6s ease-out;
+        }
+
+        .timeline-item.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .timeline-number {
+            position: absolute;
+            left: 0;
+            top: 0;
             width: 60px;
             height: 60px;
-            animation: float-reverse 18s ease-in-out infinite;
+            background: linear-gradient(135deg, #FF6B35, #FF8C42);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 900;
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.6);
+            animation: pulse-ring 2s infinite;
         }
-        
-        .shape-4 {
-            top: 30%;
-            right: 25%;
-            width: 70px;
-            height: 70px;
-            animation: float 20s ease-in-out infinite;
+
+        @keyframes pulse-ring {
+            0%, 100% {
+                box-shadow: 0 0 30px rgba(255, 107, 53, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 50px rgba(255, 107, 53, 1);
+            }
         }
-        
-        .shape-5 {
-            bottom: 40%;
-            right: 10%;
-            width: 50px;
-            height: 50px;
-            animation: float-reverse 14s ease-in-out infinite;
+
+        .timeline-content {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
         }
-        
-        .hero-content {
+
+        /* ==== FAQ SECTION ==== */
+        .faq-item {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .faq-item:hover {
+            border-color: rgba(255, 107, 53, 0.4);
+        }
+
+        .faq-question {
+            padding: 1.5rem 2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .faq-question:hover {
+            background: rgba(255, 107, 53, 0.05);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+            padding: 0 2rem;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding: 0 2rem 1.5rem 2rem;
+        }
+
+        .faq-icon {
+            transition: transform 0.3s;
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        /* ==== SCROLL ANIMATIONS ==== */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ==== FOOTER ==== */
+        .footer-wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            line-height: 0;
+        }
+
+        .footer-wave svg {
             position: relative;
-            z-index: 10;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes float-reverse {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(10px); }
-        }
-        
-        @keyframes float-3d {
-            0%, 100% { transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px); }
-            25% { transform: perspective(1000px) rotateX(1deg) rotateY(1deg) translateZ(10px); }
-            50% { transform: perspective(1000px) rotateX(-1deg) rotateY(-1deg) translateZ(5px); }
-            75% { transform: perspective(1000px) rotateX(0.5deg) rotateY(-0.5deg) translateZ(15px); }
-        }
-        
-        @keyframes depth-float-1 {
-            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.15; }
-            50% { transform: translateY(-30px) translateX(20px) scale(1.1); opacity: 0.25; }
-        }
-        
-        @keyframes depth-float-2 {
-            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.08; }
-            50% { transform: translateY(25px) translateX(-15px) scale(0.9); opacity: 0.12; }
-        }
-        
-        @keyframes depth-float-3 {
-            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.06; }
-            50% { transform: translateY(-15px) translateX(10px) scale(1.2); opacity: 0.1; }
-        }
-        
-        @keyframes depth-pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.02); opacity: 0.95; }
-        }
-        
-        /* Animações do sistema de background */
-        @keyframes grid-float {
-            0%, 100% { transform: translateX(0) translateY(0); opacity: 0.08; }
-            25% { transform: translateX(10px) translateY(-5px); opacity: 0.12; }
-            50% { transform: translateX(-5px) translateY(10px); opacity: 0.06; }
-            75% { transform: translateX(5px) translateY(5px); opacity: 0.10; }
-        }
-        
-        @keyframes glow-pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 1; }
-        }
-        
-        @keyframes float-drift-1 {
-            0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
-            25% { transform: translateX(30px) translateY(-20px) rotate(90deg); }
-            50% { transform: translateX(-20px) translateY(40px) rotate(180deg); }
-            75% { transform: translateX(10px) translateY(-10px) rotate(270deg); }
-        }
-        
-        @keyframes float-drift-2 {
-            0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
-            33% { transform: translateX(-25px) translateY(30px) rotate(120deg); }
-            66% { transform: translateX(35px) translateY(-15px) rotate(240deg); }
-        }
-        
-        @keyframes float-drift-3 {
-            0%, 100% { transform: translateX(0) translateY(0) scale(1); }
-            50% { transform: translateX(-40px) translateY(-30px) scale(1.2); }
-        }
-        
-        @keyframes float-drift-4 {
-            0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
-            25% { transform: translateX(-15px) translateY(-25px) rotate(-90deg); }
-            50% { transform: translateX(25px) translateY(-40px) rotate(-180deg); }
-            75% { transform: translateX(-10px) translateY(15px) rotate(-270deg); }
-        }
-        
-        @keyframes float-drift-5 {
-            0%, 100% { transform: translateX(0) translateY(0) scale(1); }
-            40% { transform: translateX(20px) translateY(-35px) scale(0.8); }
-            80% { transform: translateX(-30px) translateY(25px) scale(1.1); }
-        }
-        
-        @keyframes particle-float {
-            0% { transform: translateY(100vh) translateX(0) scale(0); opacity: 0; }
-            10% { opacity: 1; transform: scale(1); }
-            90% { opacity: 1; }
-            100% { transform: translateY(-20px) translateX(50px) scale(0); opacity: 0; }
-        }
-        
-        @keyframes depth-shift {
-            0%, 100% { transform: translateX(0) translateY(0) scale(1); }
-            33% { transform: translateX(20px) translateY(-10px) scale(1.05); }
-            66% { transform: translateX(-15px) translateY(15px) scale(0.95); }
-        }
-        
-        @keyframes background-breathe {
-            0%, 100% { 
-                background: linear-gradient(135deg, #fef7f0 0%, #fff8f3 25%, #fef6ef 50%, #fff5ec 75%, #fef4e9 100%);
-                transform: scale(1);
-            }
-            50% { 
-                background: linear-gradient(135deg, #fff8f3 0%, #fef6ef 25%, #fff5ec 50%, #fef4e9 75%, #fef7f0 100%);
-                transform: scale(1.02);
-            }
-        }
-        
-        @keyframes pulse-glow {
-            0% { transform: scale(1); opacity: 0.1; }
-            50% { transform: scale(1.2); opacity: 0.15; }
-            100% { transform: scale(0.8); opacity: 0.08; }
-        }
-        
-        /* Animações logísticas */
-        @keyframes route-pulse {
-            0%, 100% { border-color: rgba(255, 107, 53, 0.3); transform: scale(1); }
-            50% { border-color: rgba(247, 147, 30, 0.5); transform: scale(1.05); }
-        }
-        
-        @keyframes move-along-route {
-            0% { left: -5px; top: 50%; }
-            25% { left: 25%; top: 10%; }
-            50% { left: 75%; top: 10%; }
-            75% { left: 100%; top: 50%; }
-            100% { left: 100%; top: 90%; }
-        }
-        
-        @keyframes container-sway {
-            0%, 100% { transform: rotate(0deg) translateY(0); }
-            25% { transform: rotate(1deg) translateY(-2px); }
-            75% { transform: rotate(-1deg) translateY(2px); }
-        }
-        
-        @keyframes map-scan {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes node-pulse {
-            0%, 100% { transform: scale(1); opacity: 0.3; }
-            50% { transform: scale(1.5); opacity: 0.6; }
-        }
-        
-        @keyframes line-flow {
-            0%, 100% { opacity: 0.1; }
-            50% { opacity: 0.3; }
-        }
-        
-        @keyframes grid-shimmer {
-            0%, 100% { opacity: 0.6; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.02); }
-        }
-        
-        /* Animações das formas geométricas */
-        @keyframes float-square {
-            0%, 100% { transform: rotate(45deg) translateY(0px); }
-            50% { transform: rotate(55deg) translateY(-15px); }
-        }
-        
-        @keyframes float-square-reverse {
-            0%, 100% { transform: rotate(25deg) translateY(0px); }
-            50% { transform: rotate(35deg) translateY(12px); }
-        }
-        
-        @keyframes float-circle {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-8px) scale(1.1); }
-        }
-        
-        @keyframes float-triangle {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(5deg); }
-        }
-        
-        @keyframes float-diamond {
-            0%, 100% { transform: rotate(45deg) translateY(0px); }
-            50% { transform: rotate(50deg) translateY(-12px); }
-        }
-        .step-number {
-            background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
-        }
-        .feature-icon {
-            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 140, 66, 0.1) 100%);
+            display: block;
+            width: calc(100% + 1.3px);
+            height: 80px;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-orange-50 to-orange-100 min-h-screen font-sans">
-    <div class="animated-background">
-        <div class="grid-overlay"></div>
-        
-        <div class="glow-container">
-            <div class="glow-orb glow-orb-1"></div>
-            <div class="glow-orb glow-orb-2"></div>
-            <div class="glow-orb glow-orb-3"></div>
-            <div class="glow-orb glow-orb-4"></div>
-        </div>
-        
-        <div class="floating-elements">
-            <div class="float-element float-1"></div>
-            <div class="float-element float-2"></div>
-            <div class="float-element float-3"></div>
-            <div class="float-element float-4"></div>
-            <div class="float-element float-5"></div>
-        </div>
-        
-        <div class="micro-particles">
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-        </div>
-        
-        <div class="depth-overlay"></div>
-    </div>
+<body>
+    <!-- Background -->
+    <div class="dark-bg"></div>
+    <div class="grid-background"></div>
+    
+    <!-- Partículas -->
+    <div class="particles-container" id="particles"></div>
 
-    <nav class="bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-4">
-                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-rocket text-white text-lg"></i>
+    <!-- Navbar -->
+    <nav class="glass-nav">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-truck text-white text-xl"></i>
                     </div>
                     <div>
                         <h1 class="text-xl font-bold text-white">BrisaLOG Agenda</h1>
-                        <p class="text-sm text-orange-100">Sistema de Agendamentos</p>
+                        <p class="text-xs text-gray-400">Sistema de Agendamentos</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button onclick="openConsultaModal()" class="text-white hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-lg transition-all duration-300 font-medium">
-                        <i class="fas fa-search mr-1"></i>Consultar Status
+                    <button onclick="openConsultaModal()" class="text-gray-300 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all">
+                        <i class="fas fa-search mr-2"></i>Consultar Status
                     </button>
-                    <a href="/login" class="bg-white text-orange-600 px-4 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-300 font-semibold">
-                        <i class="fas fa-user mr-1"></i>Login Institucional
+                    <a href="/login.html" class="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-5 py-2 rounded-lg hover:shadow-lg transition-all font-semibold">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Login
                     </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <section class="hero-background relative py-20 overflow-hidden">
-        <!-- Elementos decorativos simplificados -->
-        <div class="floating-glow glow-1"></div>
-        <div class="floating-glow glow-2"></div>
+    <!-- Hero Section -->
+    <section class="hero-container">
+        <div class="glowing-orb orb-1"></div>
+        <div class="glowing-orb orb-2"></div>
         
-        <div class="geometric-shape shape-1">
-            <i class="fas fa-truck"></i>
-        </div>
-        <div class="geometric-shape shape-2">
-            <i class="fas fa-calendar-alt"></i>
-        </div>
-        
-        <div class="hero-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="text-center mb-16">
-                <h1 id="main-title" class="text-5xl md:text-7xl font-bold mb-6 typewriter-title" style="line-height: 1.2; padding: 10px 0;">
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-600">
-                        Bem vindo ao BrisaLOG Agenda
-                    </span>
+        <div class="max-w-7xl mx-auto px-6 text-center relative z-10">
+            <div class="mb-8">
+                <h1 class="text-6xl md:text-8xl font-black mb-6 leading-tight">
+                    Agendamento de<br>
+                    <span class="gradient-text">Entregas Inteligente</span>
                 </h1>
-                <p class="text-xl md:text-2xl text-gray-700 mb-8 max-w-4xl mx-auto leading-relaxed">
-                    Agende suas entregas nos Centros de Distribuição da Brisanet de forma 
-                    <strong class="text-orange-600">simples</strong>, 
-                    <strong class="text-orange-600">rápida</strong> e 
-                    <strong class="text-orange-600">sem cadastro</strong>!
+                <p class="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed">
+                    Simplifique suas entregas nos CDs da Brisanet.<br>
+                    <strong class="text-white">Rápido, fácil e sem burocracia.</strong>
                 </p>
-                
-                <p class="text-lg text-gray-600 mb-6 font-medium">
-                    Escolha uma opção para começar:
-                </p>
-                
-                <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                    <a href="/agendamento" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-6 px-16 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 text-2xl">
-                        <i class="fas fa-calendar-plus mr-3"></i>
-                        Agendar Entrega Agora
-                    </a>
-                    <button onclick="openConsultaModal()" class="border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-semibold py-5 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 text-lg">
-                        <i class="fas fa-search mr-2"></i>
-                        Consultar Status
-                    </button>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                <a href="/agendamento.html" class="btn-neon">
+                    <i class="fas fa-calendar-plus mr-3"></i>
+                    Agendar Agora
+                </a>
+                <button onclick="openConsultaModal()" class="btn-outline">
+                    <i class="fas fa-search mr-2"></i>
+                    Consultar Status
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 max-w-5xl mx-auto">
+                <div class="stat-card">
+                    <div class="stat-number" data-target="1200">0</div>
+                    <p class="text-gray-400 mt-2">Agendamentos</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="98">0</div>
+                    <p class="text-gray-400 mt-2">% Satisfação</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="24">0</div>
+                    <p class="text-gray-400 mt-2">Horas/Dia</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="15">0</div>
+                    <p class="text-gray-400 mt-2">CDs Ativos</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-gray-dark mb-4">
-                    <i class="fas fa-lightbulb text-orange-primary mr-3"></i>
-                    Como Funciona?
+    <!-- Features Section -->
+    <section class="py-32 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-20 fade-in">
+                <h2 class="text-5xl font-black mb-4">
+                    Por que escolher o <span class="gradient-text">BrisaLOG</span>?
                 </h2>
-                <p class="text-xl text-gray-medium">É muito simples! Siga estes 4 passos:</p>
+                <p class="text-xl text-gray-400">Desenvolvido para simplificar seu dia a dia</p>
             </div>
 
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="text-center card-3d">
-                    <div class="bg-white rounded-2xl p-8 shadow-lg border border-orange-100">
-                        <div class="w-16 h-16 step-number rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
-                            1
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-dark mb-3">Clique em "Agendar"</h3>
-                        <p class="text-gray-medium mb-4">
-                            Não precisa de cadastro ou login. É só clicar no botão laranja!
-                        </p>
-                        <div class="w-12 h-12 feature-icon rounded-full flex items-center justify-center mx-auto">
-                            <i class="fas fa-mouse-pointer text-orange-primary text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center card-3d">
-                    <div class="bg-white rounded-2xl p-8 shadow-lg border border-orange-100 h-full flex flex-col">
-                        <div class="w-16 h-16 step-number rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
-                            2
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-dark mb-3">Complete os Dados</h3>
-                        <p class="text-gray-medium mb-4 flex-grow">
-                            4 etapas simples: empresa, entrega, notas fiscais e confirmação.
-                        </p>
-                        <div class="w-12 h-12 feature-icon rounded-full flex items-center justify-center mx-auto">
-                            <i class="fas fa-edit text-orange-primary text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center card-3d">
-                    <div class="bg-white rounded-2xl p-8 shadow-lg border border-orange-100">
-                        <div class="w-16 h-16 step-number rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
-                            3
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-dark mb-3">Receba seu Código</h3>
-                        <p class="text-gray-medium mb-4">
-                            Um código único será gerado automaticamente para acompanhamento.
-                        </p>
-                        <div class="w-12 h-12 feature-icon rounded-full flex items-center justify-center mx-auto">
-                            <i class="fas fa-qrcode text-orange-primary text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center card-3d">
-                    <div class="bg-white rounded-2xl p-8 shadow-lg border border-orange-100">
-                        <div class="w-16 h-16 step-number rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
-                            4
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-dark mb-3">Acompanhe o Status</h3>
-                        <p class="text-gray-medium mb-4">
-                            Receba updates por e-mail e consulte quando quiser pelo código.
-                        </p>
-                        <div class="w-12 h-12 feature-icon rounded-full flex items-center justify-center mx-auto">
-                            <i class="fas fa-bell text-orange-primary text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="py-20 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-gray-dark mb-4">
-                    <i class="fas fa-star text-orange-primary mr-3"></i>
-                    Por que usar nosso portal?
-                </h2>
-            </div>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
-                    <div class="w-16 h-16 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-user-slash text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-dark mb-4 text-center">Sem Cadastro</h3>
-                    <p class="text-gray-medium text-center">
-                        Não precisa criar conta, fazer login ou guardar senhas. É só acessar e agendar!
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
-                    <div class="w-16 h-16 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-clock text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-dark mb-4 text-center">Resposta Rápida</h3>
-                    <p class="text-gray-medium text-center">
-                        Confirmação do seu agendamento em até 48 horas úteis por e-mail.
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
-                    <div class="w-16 h-16 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-envelope text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-dark mb-4 text-center">Notificações</h3>
-                    <p class="text-gray-medium text-center">
-                        Receba todas as atualizações sobre seu agendamento diretamente no seu e-mail.
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
-                    <div class="w-16 h-16 bg-gradient-to-r from-orange-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-search text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-dark mb-4 text-center">Consulta Online</h3>
-                    <p class="text-gray-medium text-center">
-                        Use seu código para consultar o status do agendamento a qualquer momento.
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
-                    <div class="w-16 h-16 bg-gradient-to-r from-red-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-calendar-check text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-dark mb-4 text-center">Horários Disponíveis</h3>
-                    <p class="text-gray-medium text-center">
-                        O sistema mostra apenas os horários realmente disponíveis para o CD escolhido.
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-3d">
-                    <div class="w-16 h-16 bg-gradient-to-r from-teal-400 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-comments text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-dark mb-4 text-center">Comunicação Direta</h3>
-                    <p class="text-gray-medium text-center">
-                        Dialogue com o CD acompanhando os status e reagendamentos em tempo real.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Seção FAQ -->
-    <section class="py-20 bg-white">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-gray-800 mb-4">
-                    <i class="fas fa-question-circle text-orange-500 mr-3"></i>
-                    Perguntas Frequentes
-                </h2>
-                <p class="text-xl text-gray-600">Tire suas dúvidas rapidamente</p>
-            </div>
-
-            <div class="space-y-6">
-                <div class="bg-orange-50 rounded-2xl p-6 border-l-4 border-orange-500">
-                    <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-calendar-plus text-orange-500 mr-3"></i>
-                        Como faço para agendar uma entrega?
-                    </h3>
-                    <p class="text-gray-700 pl-9">
-                        Clique no botão "Agendar Entrega Agora", preencha os dados da empresa, escolha o CD, data e horário, 
-                        adicione as notas fiscais e confirme. Você receberá um código de agendamento por e-mail.
-                    </p>
-                </div>
-
-                <div class="bg-blue-50 rounded-2xl p-6 border-l-4 border-blue-500">
-                    <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-lock text-blue-500 mr-3"></i>
-                        Preciso criar uma conta ou fazer login?
-                    </h3>
-                    <p class="text-gray-700 pl-9">
-                        Não! O BrisaLOG Agenda funciona sem necessidade de cadastro. Basta preencher os dados do agendamento 
-                        e você receberá um código para acompanhar tudo.
-                    </p>
-                </div>
-
-                <div class="bg-green-50 rounded-2xl p-6 border-l-4 border-green-500">
-                    <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-search text-green-500 mr-3"></i>
-                        Como acompanho meu agendamento?
-                    </h3>
-                    <p class="text-gray-700 pl-9">
-                        Use o código que você recebeu por e-mail. Clique em "Consultar Status" no topo da página, 
-                        digite seu código e veja todas as informações e atualizações do seu agendamento.
-                    </p>
-                </div>
-
-                <div class="bg-purple-50 rounded-2xl p-6 border-l-4 border-purple-500">
-                    <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-redo text-purple-500 mr-3"></i>
-                        Posso cancelar ou reagendar?
-                    </h3>
-                    <p class="text-gray-700 pl-9">
-                        Sim! Consulte seu agendamento usando o código e você verá opções para solicitar cancelamento ou reagendamento. 
-                        O CD analisará sua solicitação e retornará por e-mail.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="py-20 bg-gradient-to-r from-orange-500 to-orange-600">
-        <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold text-white mb-6">
-                Pronto para agendar sua entrega?
-            </h2>
-            <p class="text-xl text-orange-100 mb-8">
-                É rápido, fácil e você acompanha tudo pelo código gerado!
-            </p>
-            <a href="/agendamento" class="bg-white text-orange-600 font-bold py-6 px-12 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-xl inline-flex items-center">
-                <i class="fas fa-rocket mr-3"></i>
-                Começar Agendamento
-            </a>
-        </div>
-    </section>
-
-    <footer class="bg-gray-dark text-white py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-3 gap-8">
-                <div>
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-10 h-10 bg-gradient-to-r from-orange-primary to-orange-secondary rounded-lg flex items-center justify-center">
-                            <i class="fas fa-rocket text-white"></i>
-                        </div>
-                        <span class="text-xl font-bold">BrisaLOG Agenda</span>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
                     </div>
-                    <p class="text-gray-light">
-                        Sistema de agendamento de entregas da Brisanet. Simples, rápido e eficiente.
+                    <h3 class="text-2xl font-bold mb-3">Rápido e Eficiente</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Agende sua entrega em menos de 2 minutos. Interface intuitiva e processo simplificado.
                     </p>
                 </div>
-                <div>
-                    <h3 class="font-bold mb-4">Links Rápidos</h3>
-                    <ul class="space-y-2">
-                        <li><a href="/agendamento" class="text-gray-light hover:text-orange-primary transition-colors">Agendar Entrega</a></li>
-                        <li><button onclick="openConsultaModal()" class="text-gray-light hover:text-orange-primary transition-colors text-left">Consultar Status</button></li>
-                        <li><a href="/login" class="text-gray-light hover:text-orange-primary transition-colors">Login Institucional</a></li>
-                    </ul>
+
+                <div class="feature-card fade-in" style="transition-delay: 0.1s;">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">100% Seguro</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Seus dados protegidos com criptografia de ponta. Confiança e segurança garantidas.
+                    </p>
                 </div>
-                <div>
-                    <h3 class="font-bold mb-4">Centros de Distribuição</h3>
-                    <ul class="space-y-2 text-gray-light">
-                        <li><i class="fas fa-map-marker-alt mr-2 text-orange-primary"></i>CD Bahia</li>
-                        <li><i class="fas fa-map-marker-alt mr-2 text-orange-primary"></i>CD Pernambuco</li>
-                        <li><i class="fas fa-map-marker-alt mr-2 text-orange-primary"></i>CD Lagoa Nova</li>
-                    </ul>
+
+                <div class="feature-card fade-in" style="transition-delay: 0.2s;">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Disponível 24/7</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Agende a qualquer hora, qualquer dia. Sistema sempre disponível para você.
+                    </p>
+                </div>
+
+                <div class="feature-card fade-in" style="transition-delay: 0.3s;">
+                    <div class="feature-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Notificações em Tempo Real</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Receba atualizações por e-mail sobre o status do seu agendamento.
+                    </p>
+                </div>
+
+                <div class="feature-card fade-in" style="transition-delay: 0.4s;">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Totalmente Responsivo</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Acesse de qualquer dispositivo: celular, tablet ou desktop.
+                    </p>
+                </div>
+
+                <div class="feature-card fade-in" style="transition-delay: 0.5s;">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-slash"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Sem Cadastro</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Nada de formulários extensos. Agende direto, sem complicações.
+                    </p>
                 </div>
             </div>
-            <div class="border-t border-gray-600 mt-8 pt-8 text-center">
-                <p class="text-gray-light">&copy; 2025 Desenvolvido por Wanderson Davyd. Todos os direitos reservados.</p>
+        </div>
+    </section>
+
+    <!-- Como Funciona -->
+    <section class="py-32 relative">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="text-center mb-20 fade-in">
+                <h2 class="text-5xl font-black mb-4">
+                    Como <span class="gradient-text">Funciona</span>?
+                </h2>
+                <p class="text-xl text-gray-400">Simples em 4 passos</p>
+            </div>
+
+            <div class="space-y-8">
+                <div class="timeline-item">
+                    <div class="timeline-number">1</div>
+                    <div class="timeline-content">
+                        <h3 class="text-2xl font-bold mb-2">Clique em "Agendar Agora"</h3>
+                        <p class="text-gray-400">
+                            Acesse o formulário de agendamento com um simples clique. Sem necessidade de login ou cadastro prévio.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-number">2</div>
+                    <div class="timeline-content">
+                        <h3 class="text-2xl font-bold mb-2">Preencha os Dados</h3>
+                        <p class="text-gray-400">
+                            Informações da empresa, detalhes da entrega e notas fiscais. Processo dividido em etapas fáceis.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-number">3</div>
+                    <div class="timeline-content">
+                        <h3 class="text-2xl font-bold mb-2">Aguarde Confirmação</h3>
+                        <p class="text-gray-400">
+                            Receba um código de rastreamento e acompanhe o status do seu agendamento por e-mail ou pelo sistema.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-number">4</div>
+                    <div class="timeline-content">
+                        <h3 class="text-2xl font-bold mb-2">Realize a Entrega</h3>
+                        <p class="text-gray-400">
+                            Compareça no horário agendado com a documentação necessária. Tudo organizado e sem filas!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="py-32 relative">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="text-center mb-20 fade-in">
+                <h2 class="text-5xl font-black mb-4">
+                    Perguntas <span class="gradient-text">Frequentes</span>
+                </h2>
+                <p class="text-xl text-gray-400">Tire suas dúvidas</p>
+            </div>
+
+            <div class="space-y-4 fade-in">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Preciso me cadastrar para agendar?</span>
+                        <i class="fas fa-chevron-down faq-icon text-orange-500"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p class="text-gray-400">
+                            Não! O BrisaLOG Agenda foi desenvolvido para ser simples e direto. Basta clicar em "Agendar Agora" e preencher as informações necessárias.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Como acompanho meu agendamento?</span>
+                        <i class="fas fa-chevron-down faq-icon text-orange-500"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p class="text-gray-400">
+                            Após agendar, você receberá um código de rastreamento. Use a opção "Consultar Status" no menu para verificar o andamento em tempo real.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Posso reagendar uma entrega?</span>
+                        <i class="fas fa-chevron-down faq-icon text-orange-500"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p class="text-gray-400">
+                            Sim! Acesse o status do seu agendamento e solicite um reagendamento. O CD analisará e responderá em até 48 horas.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Quais documentos preciso levar?</span>
+                        <i class="fas fa-chevron-down faq-icon text-orange-500"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p class="text-gray-400">
+                            Documentação do motorista, do veículo e as notas fiscais cadastradas no agendamento. Confira os detalhes no e-mail de confirmação.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Final -->
+    <section class="py-32 relative">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <div class="fade-in">
+                <h2 class="text-5xl md:text-6xl font-black mb-6">
+                    Pronto para <span class="gradient-text">Começar</span>?
+                </h2>
+                <p class="text-xl text-gray-400 mb-12">
+                    Agende sua próxima entrega em menos de 2 minutos
+                </p>
+                <a href="/agendamento.html" class="btn-neon">
+                    <i class="fas fa-rocket mr-3"></i>
+                    Fazer Meu Primeiro Agendamento
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative bg-gradient-to-b from-transparent to-black/50 pt-20 pb-10">
+        <div class="footer-wave">
+            <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="rgba(255, 107, 53, 0.1)"></path>
+            </svg>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <div class="mb-8">
+                <div class="flex items-center justify-center space-x-3 mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-truck text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold">BrisaLOG Agenda</h3>
+                </div>
+                <p class="text-gray-400">Sistema de Agendamento de Entregas</p>
+            </div>
+            
+            <div class="border-t border-gray-800 pt-8">
+                <p class="text-gray-500 text-sm">
+                    © 2025 BrisaLOG Agenda. Desenvolvido por <strong class="text-orange-500">Wanderson Davyd</strong>. Todos os direitos reservados.
+                </p>
             </div>
         </div>
     </footer>
-    <div id="cancelar-solicitacao-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
-            <h2 class="text-lg font-bold mb-4 text-red-700"><i class="fas fa-exclamation-triangle mr-2"></i>Cancelar Solicitação</h2>
-            <form id="form-cancelar-solicitacao" onsubmit="event.preventDefault(); consultaStatus.enviarMotivoCancelamento();">
-                <label for="motivo-cancelamento" class="block text-sm font-medium text-gray-700 mb-2">Motivo do cancelamento:</label>
-                <textarea id="motivo-cancelamento" name="motivo" rows="4" required class="w-full border border-gray-300 rounded-lg p-2 mb-4"></textarea>
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="consultaStatus.fecharCancelarSolicitacaoModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Cancelar</button>
-                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Confirmar Cancelamento</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <div id="consulta-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl max-w-md w-full mx-4">
-            <div class="p-6">
-                <div class="text-center mb-6">
-                    <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-4 rounded-2xl inline-block mb-4">
-                        <i class="fas fa-search text-white text-2xl"></i>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-dark mb-2">Consultar Agendamento</h2>
-                    <p class="text-gray-medium">Digite o código do seu agendamento</p>
-                </div>
-
-                <form id="consulta-form" class="space-y-4">
-                    <div>
-                        <label class="block text-gray-dark font-semibold mb-2">Código do Agendamento</label>
-                        <input type="text" id="codigo-consulta" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                            placeholder="AGD123456">
-                    </div>
-
-                    <div class="flex justify-end space-x-4 mt-6">
-                        <button type="button" onclick="closeConsultaModal()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-all">
-                            Cancelar
-                        </button>
-                        <button type="submit" class="btn-3d bg-orange-primary text-white px-6 py-2 rounded-lg hover:bg-orange-secondary transition-all">
-                            <i class="fas fa-search mr-2"></i>
-                            Consultar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div id="status-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal-backdrop p-4">
-        <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-3d">
-            <div class="flex-shrink-0 bg-gradient-to-r from-orange-primary to-orange-secondary px-6 py-4 flex justify-between items-center rounded-t-2xl">
-                <h2 class="text-xl font-bold text-white flex items-center">
-                    <i class="fas fa-search mr-3"></i>
-                    Status do Agendamento
-                </h2>
-                <button onclick="closeStatusModal()" class="text-white hover:text-orange-200 transition-colors duration-300">
-                    <i class="fas fa-times text-xl"></i>
+    <!-- Modal de Consulta -->
+    <div id="consultaModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-gray-900 rounded-2xl p-8 max-w-md w-full mx-4 border border-orange-500/20">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Consultar Status</h3>
+                <button onclick="closeConsultaModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
-            <div id="status-content" class="flex-1 overflow-y-auto p-6">
-                </div>
-        </div>
-    </div>
-
-    <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-60 flex items-center justify-center modal-backdrop p-4">
-        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-3d">
-            <div class="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center rounded-t-2xl">
-                <h2 class="text-xl font-bold text-white flex items-center">
-                    <i class="fas fa-edit mr-3"></i>
-                    Editar Agendamento
-                </h2>
-                <button onclick="closeEditModal()" class="text-white hover:text-blue-200 transition-colors duration-300">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div id="edit-content" class="flex-1 overflow-y-auto p-6">
-                </div>
-        </div>
-    </div>
-
-    <div id="nf-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-60 modal-backdrop">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto">
-                <div class="p-6 border-b border-gray-200">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-gray-800">
-                            <i class="fas fa-file-invoice mr-2 text-green-600"></i>
-                            Adicionar Nota Fiscal
-                        </h2>
-                        <button type="button" onclick="closeNFModal()" class="text-gray-500 hover:text-gray-700 text-xl">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <p class="text-gray-600 mt-2">Preencha os dados da nota fiscal</p>
-                </div>
-                
-                <div class="p-6">
-                    <form id="nf-form">
-                        <div class="space-y-6">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-dark mb-2">
-                                        <i class="fas fa-shopping-cart mr-1 text-orange-primary"></i>
-                                        Número do Pedido *
-                                    </label>
-                                    <input type="text" id="nf-pedido" required 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
-                                        placeholder="Ex: PED12345">
-                                    <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-dark mb-2">
-                                        <i class="fas fa-hashtag mr-1 text-orange-primary"></i>
-                                        Número da NF-e *
-                                    </label>
-                                    <input type="text" id="nf-numero" required 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
-                                        placeholder="Número">
-                                    <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-dark mb-2">
-                                    <i class="fas fa-dollar-sign mr-1 text-orange-primary"></i>
-                                    Valor *
-                                </label>
-                                <input type="text" id="nf-valor" required placeholder="0,00"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary">
-                                <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-dark mb-2">
-                                    <i class="fas fa-file-pdf mr-1 text-orange-primary"></i>
-                                    Arquivo PDF/XML
-                                </label>
-                                <input type="file" id="nf-arquivo" accept=".pdf,.xml" 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary text-sm">
-                                <p class="text-xs text-gray-500 mt-1">Arquivos PDF ou XML (máx. 10MB)</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex justify-end space-x-4 mt-6 pt-6 border-t border-gray-200">
-                            <button type="button" onclick="closeNFModal()" 
-                                class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all font-medium">
-                                Cancelar
-                            </button>
-                            <button type="submit" 
-                                class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-all font-medium">
-                                <i class="fas fa-save mr-2"></i>Salvar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="notification-container"></div>
-
-    <div id="pedidos-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 modal-backdrop">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl max-w-5xl w-full max-h-screen overflow-y-auto">
-                <div class="p-6 border-b border-gray-200">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-gray-800">
-                            <i class="fas fa-shopping-cart mr-2 text-green-600"></i>
-                            Adicionar Pedidos e Notas Fiscais
-                        </h2>
-                        <button type="button" onclick="closePedidosModal()" class="text-gray-500 hover:text-gray-700 text-xl">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <p class="text-gray-600 mt-2">Adicione um ou mais pedidos e suas respectivas notas fiscais</p>
-                </div>
-                
-                <div class="p-6">
-                    <div id="pedidos-modal-tabs" class="flex flex-wrap gap-2 mb-6">
-                        </div>
-                    
-                    <div id="pedidos-modal-container" class="min-h-[400px]">
-                        </div>
-                    
-                    <div class="flex justify-between items-center mt-6 pt-6 border-t border-gray-200">
-                        <div class="flex space-x-4">
-                            <button type="button" onclick="closePedidosModal()" 
-                                class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all font-medium">
-                                Cancelar
-                            </button>
-                            <button type="button" onclick="salvarPedidosModal()" 
-                                class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-all font-medium">
-                                <i class="fas fa-save mr-2"></i>Salvar Pedidos
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="contra-proposta-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-60 modal-backdrop">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl max-w-md w-full">
-                <div class="p-6 border-b border-gray-200">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-gray-800">
-                            <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>
-                            <span id="modal-reagendar-titulo">Sugerir Nova Data</span>
-                        </h2>
-                        <button type="button" onclick="consultaStatus.fecharContraPropostaModal()" class="text-gray-500 hover:text-gray-700 text-xl">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <p class="text-gray-600 mt-2" id="modal-reagendar-descricao">Sugira uma nova data e horário para o agendamento</p>
-                </div>
-                
-                <div class="p-6">
-                    <form id="contra-proposta-form" onsubmit="event.preventDefault(); consultaStatus.enviarContraProposta();">
-                        <div class="space-y-4">
-                            <div>
-                                <label for="contra-proposta-data" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Nova Data *
-                                </label>
-                                <input type="date" 
-                                        id="contra-proposta-data" 
-                                        name="novaData" 
-                                        required 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            
-                            <div>
-                                <label for="contra-proposta-horario" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Novo Horário *
-                                </label>
-                                <select id="contra-proposta-horario" 
-                                        name="novoHorario" 
-                                        required 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">Selecione o horário</option>
-                                    <option value="08:00-12:00">08:00 às 12:00</option>
-                                    <option value="13:00-17:00">13:00 às 17:00</option>
-                                    <option value="08:00-17:00">08:00 às 17:00 (Dia Inteiro)</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label for="contra-proposta-comentario" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Comentário (opcional)
-                                </label>
-                                <textarea id="contra-proposta-comentario" 
-                                          name="comentario" 
-                                          rows="3" 
-                                          placeholder="Explique o motivo da nova data sugerida..."
-                                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-3 mt-6">
-                            <button type="submit" 
-                                    class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-all font-medium">
-                                <i class="fas fa-paper-plane mr-2"></i>Enviar Proposta
-                            </button>
-                            <button type="button" 
-                                    onclick="consultaStatus.fecharContraPropostaModal()" 
-                                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-all">
-                                Cancelar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+            <p class="text-gray-400 mb-6">Digite o código do seu agendamento:</p>
+            <input type="text" id="codigoConsulta" placeholder="Ex: AG12345" 
+                   class="w-full bg-black/50 border border-orange-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 mb-6">
+            <button onclick="consultarStatus()" class="w-full btn-neon">
+                <i class="fas fa-search mr-2"></i>
+                Consultar
+            </button>
         </div>
     </div>
 
     <script>
-        // Animação do título letra por letra
-        function animateTitle() {
-            const titleElement = document.getElementById('main-title');
-            const titleText = 'Bem vindo ao BrisaLOG Agenda';
-            
-            // Limpar o conteúdo atual
-            titleElement.innerHTML = '';
-            
-            // Criar span para cada letra
-            titleText.split('').forEach((char, index) => {
-                const span = document.createElement('span');
-                span.textContent = char === ' ' ? '\u00A0' : char; // Usar espaço não-quebrável
-                span.className = 'letter gradient';
-                span.style.animationDelay = `${index * 50}ms`; // 50ms de delay entre cada letra
-                titleElement.appendChild(span);
-            });
-            
-            // Animar as letras uma por uma
-            const letters = titleElement.querySelectorAll('.letter');
-            letters.forEach((letter, index) => {
-                setTimeout(() => {
-                    letter.classList.add('animate');
-                }, index * 50); // 50ms entre cada letra para efeito rápido
+        // Criar partículas
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 15 + 's';
+            particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+            particlesContainer.appendChild(particle);
+        }
+
+        // Animação de números
+        function animateNumbers() {
+            const stats = document.querySelectorAll('.stat-number');
+            stats.forEach(stat => {
+                const target = parseInt(stat.dataset.target);
+                const duration = 2000;
+                const increment = target / (duration / 16);
+                let current = 0;
+
+                const updateNumber = () => {
+                    current += increment;
+                    if (current < target) {
+                        stat.textContent = Math.floor(current);
+                        requestAnimationFrame(updateNumber);
+                    } else {
+                        stat.textContent = target;
+                    }
+                };
+                updateNumber();
             });
         }
-        
-        // Executar quando a página carregar
-        document.addEventListener('DOMContentLoaded', () => {
-            // Pequeno delay para garantir que tudo carregou
-            setTimeout(animateTitle, 300);
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    
+                    // Animar números quando a seção aparecer
+                    if (entry.target.querySelector('.stat-number')) {
+                        animateNumbers();
+                    }
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in, .timeline-item').forEach(el => {
+            observer.observe(el);
         });
 
-        // Sistema de consulta por código
-        class ConsultaStatus {
-            abrirCancelarSolicitacaoModal(codigo) {
-                this.codigoCancelamento = codigo;
-                document.getElementById('cancelar-solicitacao-modal').classList.remove('hidden');
-            }
-
-            fecharCancelarSolicitacaoModal() {
-                document.getElementById('cancelar-solicitacao-modal').classList.add('hidden');
-                document.getElementById('motivo-cancelamento').value = '';
-            }
-
-            async enviarMotivoCancelamento() {
-                const motivo = document.getElementById('motivo-cancelamento').value.trim();
-                if (!motivo) {
-                    this.showNotification('Informe o motivo do cancelamento.', 'error');
-                    return;
-                }
-                try {
-                    // Envia para backend
-                    const response = await fetch(`/api/agendamentos/cancelar/${this.codigoCancelamento}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ motivo })
-                    });
-                    const result = await response.json();
-                    if (result.success) {
-                        this.fecharCancelarSolicitacaoModal();
-                        this.showNotification('Solicitação cancelada com sucesso!', 'success');
-                        this.closeStatusModal();
-                    } else {
-                        this.showNotification(result.message || 'Erro ao cancelar solicitação.', 'error');
-                    }
-                } catch (error) {
-                    this.showNotification('Erro ao cancelar solicitação.', 'error');
-                }
-            }
-            constructor() {
-                this.init();
-            }
-
-            init() {
-                this.setupEventListeners();
-            }
-
-            // Função para formatar data ISO para formato brasileiro
-            formatDateBrFromISO(isoString) {
-                if (!isoString) return 'N/A';
-                const dateStr = isoString.slice(0, 10); // YYYY-MM-DD
-                const [year, month, day] = dateStr.split('-');
-                return `${day}/${month}/${year}`;
-            }
-
-            setupEventListeners() {
-                document.getElementById('consulta-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.consultarAgendamento();
-                });
-
-                // Fechar modais ao clicar fora
-                document.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('modal-backdrop')) {
-                        this.closeConsultaModal();
-                        this.closeStatusModal();
-                        this.closePedidosModal();
-                    }
-                });
-            }
-
-            async consultarAgendamento() {
-                const codigo = document.getElementById('codigo-consulta').value.trim();
-                
-                if (!codigo) {
-                    this.showNotification('Digite o código do agendamento', 'error');
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`/api/agendamentos/consultar/${codigo}`);
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        // Mapear fornecedor para transportador (compatibilidade backend)
-                        if (result.data.fornecedor && !result.data.transportador) {
-                            result.data.transportador = result.data.fornecedor;
-                        }
-                        
-                        this.closeConsultaModal();
-                        this.showStatusModal(result.data);
-                    } else {
-                        this.showNotification(result.message || 'Agendamento não encontrado', 'error');
-                    }
-                } catch (error) {
-                    console.error('Erro ao consultar agendamento:', error);
-                    this.showNotification('Erro ao consultar agendamento', 'error');
-                }
-            }
-
-            showStatusModal(agendamento) {
-                const statusContent = document.getElementById('status-content');
-                this.currentAgendamento = agendamento;
-
-                // Cards detalhados replicados do dashboard
-                statusContent.innerHTML = `
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                                <div class="flex items-center mb-3">
-                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                                        <i class="fas fa-info-circle text-blue-600 text-sm"></i>
-                                    </div>
-                                    <h3 class="text-md font-semibold text-gray-800">Informações Gerais</h3>
-                                </div>
-                                <div class="space-y-2 text-sm">
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Código:</span>
-                                        <span class="font-semibold">${agendamento.codigo}</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-gray-600">Status:</span>
-                                        <span class="status-${agendamento.status} px-2 py-1 rounded-full text-xs font-medium">
-                                            <i class="${this.getStatusIcon(agendamento.status)} mr-1"></i>
-                                            ${this.getStatusText(agendamento.status)}
-                                        </span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Data:</span>
-                                        <span class="font-semibold">${this.formatDateBrFromISO(agendamento.dataEntrega)}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Horário:</span>
-                                        <span class="font-semibold">${agendamento.horarioEntrega}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">CD:</span>
-                                        <span class="font-semibold text-xs">${agendamento.cdDestino || 'N/A'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
-                                <div class="flex items-center mb-3">
-                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
-                                        <i class="fas fa-truck-moving text-green-600 text-sm"></i>
-                                    </div>
-                                    <h3 class="text-md font-semibold text-gray-800">Transportador</h3>
-                                </div>
-                                <div class="space-y-2 text-sm">
-                                    <div>
-                                        <span class="text-gray-600 text-xs">Empresa</span>
-                                        <p class="font-semibold truncate" title="${agendamento.transportador?.nome || agendamento.nomeEmpresa || 'N/A'}">${agendamento.transportador?.nome || agendamento.nomeEmpresa || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 text-xs">E-mail</span>
-                                        <p class="font-semibold truncate" title="${agendamento.transportador?.email || agendamento.email || 'N/A'}">${agendamento.transportador?.email || agendamento.email || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 text-xs">Telefone</span>
-                                        <p class="font-semibold">${agendamento.transportador?.telefone || agendamento.telefone || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 text-xs">CNPJ</span>
-                                        <p class="font-semibold text-xs">${agendamento.transportador?.documento || agendamento.cnpj || 'N/A'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
-                                <div class="flex items-center mb-3">
-                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                                        <i class="fas fa-user-tie text-blue-600 text-sm"></i>
-                                    </div>
-                                    <h3 class="text-md font-semibold text-gray-800">Motorista</h3>
-                                </div>
-                                <div class="space-y-2 text-sm">
-                                    <div>
-                                        <span class="text-gray-600 text-xs">Nome</span>
-                                        <p class="font-semibold">${agendamento.motoristaNome || agendamento.transportador?.nomeResponsavel || 'Não informado'}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 text-xs">CPF</span>
-                                        <p class="font-semibold">${agendamento.motoristaCpf || agendamento.transportador?.cpfMotorista || 'Não informado'}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 text-xs">Telefone</span>
-                                        <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.transportador?.telefoneMotorista || 'Não informado'}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 text-xs">Placa</span>
-                                        <p class="font-semibold">${agendamento.placaVeiculo || agendamento.transportador?.placaVeiculo || 'Não informado'}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 text-xs">Tipo de Veículo</span>
-                                        <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.transportador?.tipoVeiculo || 'Não informado'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                                <div class="flex items-center mb-3">
-                                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
-                                        <i class="fas fa-file-invoice text-purple-600 text-sm"></i>
-                                    </div>
-                                    <h3 class="text-md font-semibold text-gray-800">Resumo</h3>
-                                </div>
-                                <div class="space-y-2 text-sm">
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Pedidos:</span>
-                                        <span class="font-semibold">${agendamento.pedidos ? agendamento.pedidos.length : 0}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Notas Fiscais:</span>
-                                        <span class="font-semibold">${agendamento.pedidos ? agendamento.pedidos.reduce((total, p) => total + p.notasFiscais.length, 0) : 0}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Valor Total:</span>
-                                        <span class="font-semibold text-green-600 text-xs">
-                                            R$ ${this.calcularValorTotal(agendamento)}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        ${this.shouldShowCommunicationHistory(agendamento) ? `
-                            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                                <div class="border-b border-gray-200 p-4">
-                                    <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mr-2">
-                                            <i class="fas fa-comments text-yellow-600 text-sm"></i>
-                                        </div>
-                                        <h3 class="text-md font-semibold text-gray-800">Histórico de Comunicação</h3>
-                                    </div>
-                                </div>
-                                <div class="p-4">
-                                    ${this.renderCommunicationHistory(agendamento)}
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        ${agendamento.status === 'reagendamento' ? `
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                <h3 class="text-lg font-bold text-yellow-800 mb-4">
-                                    <i class="fas fa-calendar-alt mr-2"></i>Nova Data Sugerida pelo CD
-                                </h3>
-                                <div class="grid md:grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <p class="text-yellow-700"><strong>Nova Data:</strong> ${this.formatDateBrFromISO(agendamento.dataSugestaoCD || agendamento.dataEntrega)}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-yellow-700"><strong>Novo Horário:</strong> ${agendamento.horarioSugestaoCD || agendamento.horarioEntrega}</p>
-                                    </div>
-                                </div>
-                                ${agendamento.motivoNaoVeio ? `<p class="text-yellow-700 mb-4"><strong>Motivo:</strong> ${agendamento.motivoNaoVeio}</p>` : ''}
-                                
-                                <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
-                                    <p class="text-blue-800 text-sm"><strong>⏰ Aguardando sua resposta!</strong> O CD está esperando você aceitar ou sugerir uma nova data.</p>
-                                </div>
-                                
-                                <div class="flex flex-wrap gap-3">
-                                    <button onclick="consultaStatus.responderReagendamento('${agendamento.codigo}', 'aceito')" 
-                                        class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all text-sm font-medium">
-                                        <i class="fas fa-check mr-1"></i>Aceitar Nova Data
-                                    </button>
-                                    <button onclick="consultaStatus.abrirContraProposta('${agendamento.codigo}')" 
-                                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all text-sm font-medium">
-                                        <i class="fas fa-calendar mr-1"></i>Sugerir Outra Data
-                                    </button>
-                                    <button onclick="consultaStatus.confirmarCancelamento('${agendamento.codigo}')" 
-                                        class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all text-sm font-medium">
-                                        <i class="fas fa-trash mr-1"></i>Cancelar Solicitação
-                                    </button>
-                                </div>
-                                
-                                <div class="mt-3 bg-red-50 border border-red-200 rounded p-3">
-                                    <p class="text-red-700 text-xs">
-                                        <i class="fas fa-exclamation-triangle mr-1"></i>
-                                        <strong>Atenção:</strong> Ao cancelar a solicitação, todos os dados serão removidos permanentemente da base de dados e não poderão ser recuperados.
-                                    </p>
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        ${agendamento.status === 'nao-veio' ? `
-                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                                <h3 class="text-lg font-bold text-red-800 mb-4">
-                                    <i class="fas fa-exclamation-triangle mr-2"></i>Entrega Não Realizada
-                                </h3>
-                                ${agendamento.motivoNaoVeio ? `<p class="text-red-700 mb-4"><strong>Motivo:</strong> ${agendamento.motivoNaoVeio}</p>` : ''}
-                                
-                                <div class="Transportador-options mb-4">
-                                    <h4 class="text-md font-semibold text-red-700 mb-3">Opções Disponíveis:</h4>
-                                    <div class="flex flex-wrap gap-3">
-                                        <button onclick="consultaStatus.reagendarEntrega('${agendamento.codigo}')" 
-                                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all text-sm font-medium">
-                                            <i class="fas fa-calendar-plus mr-1"></i>Reagendar Entrega
-                                        </button>
-                                        <button onclick="consultaStatus.cancelarAgendamento('${agendamento.codigo}')" 
-                                            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all text-sm font-medium">
-                                            <i class="fas fa-times mr-1"></i>Cancelar Agendamento
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                ${agendamento.dataSugestaoCD ? `
-                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
-                                        <h4 class="text-md font-semibold text-blue-800 mb-2">
-                                            <i class="fas fa-lightbulb mr-2"></i>Nova Data Sugerida pelo CD
-                                        </h4>
-                                        <div class="grid md:grid-cols-2 gap-3 mb-3">
-                                            <div>
-                                                <p class="text-blue-700"><strong>Data:</strong> ${this.formatDateBrFromISO(agendamento.dataSugestaoCD)}</p>
-                                            </div>
-                                            <div>
-                                                <p class="text-blue-700"><strong>Horário:</strong> ${agendamento.horarioSugestaoCD}</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex space-x-2">
-                                            <button onclick="consultaStatus.responderSugestaoCD('${agendamento.codigo}', 'aceito')" 
-                                                class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
-                                                <i class="fas fa-check mr-1"></i>Aceitar
-                                            </button>
-                                            <button onclick="consultaStatus.responderSugestaoCD('${agendamento.codigo}', 'rejeitado')" 
-                                                class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
-                                                <i class="fas fa-times mr-1"></i>Rejeitar
-                                            </button>
-                                        </div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        ` : ''}
-
-                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                            <div class="border-b border-gray-200 p-4">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-2">
-                                            <i class="fas fa-file-invoice-dollar text-indigo-600 text-sm"></i>
-                                        </div>
-                                        <h3 class="text-md font-semibold text-gray-800">Pedidos e Notas Fiscais</h3>
-                                    </div>
-                                    </div>
-                            </div>
-                            <div class="p-4">
-                                ${this.renderPedidosENotasFiscais(agendamento)}
-                            </div>
-                        </div>
-
-                        ${agendamento.observacoes ? `
-                            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                                <div class="border-b border-gray-200 p-4">
-                                    <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-2">
-                                            <i class="fas fa-comment-alt text-gray-600 text-sm"></i>
-                                        </div>
-                                        <h3 class="text-md font-semibold text-gray-800">Observações</h3>
-                                    </div>
-                                </div>
-                                <div class="p-4">
-                                    <p class="text-gray-700 text-sm leading-relaxed">${agendamento.observacoes}</p>
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-                
-                document.getElementById('status-modal').classList.remove('hidden');
-            }
-
-            // Funções auxiliares para o novo modal
-            calcularValorTotal(agendamento) {
-                if (!agendamento.notasFiscais) return '0,00';
-                
-                let total = 0;
-                agendamento.notasFiscais.forEach(nf => {
-                    // Valor vem como "2.000.00" onde o último .00 são centavos
-                    // Troca o último ponto por vírgula, remove os outros pontos
-                    let valorStr = String(nf.valor || '0');
-                    // Encontra o último ponto e troca por vírgula
-                    const lastDotIndex = valorStr.lastIndexOf('.');
-                    if (lastDotIndex !== -1) {
-                        valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + ',' + valorStr.substring(lastDotIndex + 1);
-                    }
-                    // Agora converte: "2000,00" -> "2000.00"
-                    valorStr = valorStr.replace(',', '.');
-                    const v = parseFloat(valorStr) || 0;
-                    total += v;
-                });
-                
-                return total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            } 
+        // FAQ Toggle
+        function toggleFaq(element) {
+            const faqItem = element.parentElement;
+            const isActive = faqItem.classList.contains('active');
             
-
-            shouldShowCommunicationHistory(agendamento) {
-                return agendamento.status === 'reagendamento' || agendamento.status === 'nao-veio' || 
-                       (agendamento.historico && agendamento.historico.length > 0);
-            }
-
-            renderCommunicationHistory(agendamento) {
-                const historico = agendamento.historico || [];
-                if (historico.length === 0) {
-                    return `
-                        <div class="text-center py-8 text-gray-500">
-                            <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-comments text-2xl text-gray-400"></i>
-                            </div>
-                            <p class="text-lg font-medium text-gray-600">Nenhuma comunicação registrada</p>
-                            <p class="text-sm text-gray-500 mt-1">As atualizações do agendamento aparecerão aqui</p>
-                        </div>
-                    `;
-                }
-
-                // Métodos auxiliares para cor, ícone e título
-                function getHistoryIconClass(acao) {
-                    const classes = {
-                        'agendamento_criado': 'bg-blue-500',
-                        'cd_sugeriu_reagendamento': 'bg-orange-600',
-                        'Transportador_sugeriu_reagendamento': 'bg-purple-500',
-                        'Transportador_aceitou_reagendamento': 'bg-green-500',
-                        'Transportador_rejeitou_reagendamento': 'bg-red-500',
-                        'Transportador_respondeu': 'bg-purple-600',
-                        'entrega_realizada': 'bg-blue-600',
-                        'ausencia_registrada': 'bg-red-500'
-                    };
-                    return classes[acao] || 'bg-gray-500';
-                }
-                function getHistoryIcon(acao) {
-                    const icons = {
-                        'agendamento_criado': 'fas fa-plus-circle',
-                        'cd_sugeriu_reagendamento': 'fas fa-calendar-alt',
-                        'Transportador_sugeriu_reagendamento': 'fas fa-calendar',
-                        'Transportador_aceitou_reagendamento': 'fas fa-thumbs-up',
-                        'Transportador_rejeitou_reagendamento': 'fas fa-thumbs-down',
-                        'Transportador_respondeu': 'fas fa-reply-all',
-                        'entrega_realizada': 'fas fa-truck',
-                        'ausencia_registrada': 'fas fa-user-slash'
-                    };
-                    return icons[acao] || 'fas fa-info-circle';
-                }
-                function getHistoryTitle(acao) {
-                    const titles = {
-                        'agendamento_criado': 'Agendamento Criado',
-                        'cd_sugeriu_reagendamento': 'CD Sugeriu Nova Data',
-                        'Transportador_sugeriu_reagendamento': 'Transportador Sugeriu Nova Data',
-                        'Transportador_aceitou_reagendamento': 'Transportador Aceitou Nova Data',
-                        'Transportador_rejeitou_reagendamento': 'Transportador Rejeitou Nova Data',
-                        'Transportador_respondeu': 'Transportador Respondeu',
-                        'entrega_realizada': 'Entrega Realizada',
-                        'ausencia_registrada': 'Ausência Registrada'
-                    };
-                    return titles[acao] || 'Evento do Sistema';
-                }
-                // Detecta resposta do Transportador
-                const hasSupplierResponse = historico.some(ev =>
-                    ev.acao === 'Transportador_aceitou_reagendamento' ||
-                    ev.acao === 'Transportador_rejeitou_reagendamento' ||
-                    ev.acao === 'Transportador_respondeu'
-                );
-                return `
-                    <div class="space-y-4">
-                        ${historico.map((evento, index) => {
-                            let acao = evento.acao;
-                            let iconClass = getHistoryIconClass(acao);
-                            let icon = getHistoryIcon(acao);
-                            let title = getHistoryTitle(acao);
-                            // Ícones coloridos e padronizados
-                            if (acao && acao.toLowerCase().includes('Transportador') && acao.toLowerCase().includes('sugeriu')) {
-                                iconClass = 'bg-purple-500';
-                                icon = 'fas fa-calendar';
-                                title = 'Nova Data Sugerida';
-                            } else if (acao && acao.toLowerCase().includes('criado')) {
-                                iconClass = 'bg-blue-500';
-                                icon = 'fas fa-plus-circle';
-                                title = 'Agendamento Criado';
-                            } else if (acao && acao.toLowerCase().includes('aceitou')) {
-                                iconClass = 'bg-green-500';
-                                icon = 'fas fa-thumbs-up';
-                                title = 'Transportador Aceitou Nova Data';
-                            } else if (acao && acao.toLowerCase().includes('rejeitou')) {
-                                iconClass = 'bg-red-500';
-                                icon = 'fas fa-thumbs-down';
-                                title = 'Transportador Rejeitou Nova Data';
-                            }
-                            return `
-                                <div class="flex items-start space-x-4 ${index < historico.length - 1 ? 'border-b border-gray-100 pb-4' : ''}">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-12 h-12 rounded-full ${iconClass} flex items-center justify-center shadow-sm">
-                                            <i class="${icon} text-lg"></i>
-                                        </div>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <p class="text-base font-semibold text-gray-900">
-                                                ${title.replace(/\[TESTE\]\s*/gi, '')}
-                                            </p>
-                                            <div class="flex items-center text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                                <i class="fas fa-clock mr-1"></i>
-                                                ${evento.data ? this.formatDateBrFromISO(evento.data) : 'Agora'}
-                                            </div>
-                                        </div>
-                                        ${evento.descricao ? `
-                                            <p class="text-sm text-gray-700 leading-relaxed mb-2">
-                                                ${(evento.descricao || '').replace(/\[TESTE\]\s*/gi, '')}
-                                            </p>
-                                        ` : ''}
-                                        ${evento.novaData ? `
-                                            <div class="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-                                                <div class="flex items-center mb-2">
-                                                    <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
-                                                    <span class="font-medium text-blue-900">Nova Data Proposta</span>
-                                                </div>
-                                                <div class="grid grid-cols-2 gap-4 text-sm">
-                                                    <div class="flex items-center">
-                                                        <i class="fas fa-calendar mr-2 text-blue-600"></i>
-                                                        <span class="font-medium text-blue-800">${this.formatDateBrFromISO(evento.novaData)}</span>
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <i class="fas fa-clock mr-2 text-blue-600"></i>
-                                                        <span class="font-medium text-blue-800">${evento.novoHorario}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ` : ''}
-                                        ${evento.autor ? `
-                                            <div class="mt-2 flex items-center text-xs text-gray-500">
-                                                <i class="fas fa-user mr-1"></i>
-                                                <span>Por: ${evento.autor}</span>
-                                            </div>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                    ${(agendamento.status === 'reagendamento' && !hasSupplierResponse) ? `
-                        <div class="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
-                            <div class="flex items-center mb-3">
-                                <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
-                                    <i class="fas fa-hourglass-half text-white text-sm"></i>
-                                </div>
-                                <span class="font-semibold text-yellow-800">Aguardando resposta do Transportador</span>
-                            </div>
-                            <p class="text-sm text-yellow-700 leading-relaxed">
-                                O Transportador foi notificado sobre a solicitação de reagendamento e deve responder em breve.
-                            </p>
-                        </div>
-                    ` : ''}
-                `;
-            }
-
-            getHistoryIconClass(acao) {
-                const classes = {
-                    'agendamento_criado': 'bg-green-500',
-                    'cd_sugeriu_reagendamento': 'bg-blue-500',
-                    'Transportador_respondeu': 'bg-purple-500'
-                };
-                return classes[acao] || 'bg-gray-500';
-            }
-
-            getHistoryIcon(acao) {
-                const icons = {
-                    'agendamento_criado': 'fas fa-plus',
-                    'cd_sugeriu_reagendamento': 'fas fa-calendar-alt',
-                    'Transportador_respondeu': 'fas fa-reply'
-                };
-                return icons[acao] || 'fas fa-comment';
-            }
-
-            getHistoryTitle(acao) {
-                const titles = {
-                    'agendamento_criado': 'Agendamento Criado',
-                    'cd_sugeriu_reagendamento': 'CD Sugeriu Nova Data',
-                    'Transportador_respondeu': 'Transportador Respondeu'
-                };
-                return titles[acao] || 'Evento';
-            }
-
-            renderPedidosENotasFiscais(agendamento) {
-                if (!agendamento.pedidos || agendamento.pedidos.length === 0) {
-                    return `
-                        <div class="text-center py-6 text-gray-500">
-                            <i class="fas fa-inbox text-2xl mb-2"></i>
-                            <p class="text-sm">Nenhum pedido encontrado</p>
-                        </div>
-                    `;
-                }
-
-                return agendamento.pedidos.map(pedido => `
-                    <div class="border border-gray-200 rounded-lg p-4 mb-4">
-                        <div class="flex items-center mb-3">
-                            <h4 class="font-semibold text-gray-900">Pedido: ${pedido.numero}</h4>
-                            </div>
-                        <div class="space-y-2">
-                            ${pedido.notasFiscais.map(nf => `
-                                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
-                                    <div class="flex-1">
-                                        <div class="flex items-center space-x-3 mb-1">
-                                            <span class="font-medium text-gray-900">NF: ${nf.numero}</span>
-                                            ${nf.serie ? `<span class="text-xs text-gray-500">Série: ${nf.serie}</span>` : ''}
-                                        </div>
-                                        <div class="text-lg font-bold text-green-600">R$ ${nf.valor}</div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        ${(() => {
-                                            return nf.arquivo ? `
-                                                <button onclick="consultaStatus.viewPDF('${nf.arquivo}')" 
-                                                    class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium hover:bg-blue-200">
-                                                    <i class="fas fa-file-pdf mr-1"></i>PDF
-                                                </button>
-                                            ` : `
-                                                <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
-                                                    <i class="fas fa-exclamation-triangle mr-1"></i>Sem PDF
-                                                </span>
-                                            `;
-                                        })()}
-                                        
-                                       
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            // Funções de edição
-            editarInformacoes() {
-                // Implementar modal de edição de informações gerais
-                console.log('Editar informações gerais');
-            }
-
-            editarTransportador() {
-                // Implementar modal de edição de dados do Transportador
-                console.log('Editar Transportador');
-            }
-
-            adicionarNF() {
-                // Abrir modal para adicionar nova NF
-                document.getElementById('nf-modal-title').textContent = 'Adicionar Nota Fiscal';
-                document.getElementById('nf-form').reset();
-                document.getElementById('nf-modal').classList.remove('hidden');
-            }
-
-            adicionarPedido() {
-                // Inicializar dados do modal
-                this.pedidosModalData = {
-                    pedidos: [],
-                    pedidoCounter: 0
-                };
-                
-                // Limpar containers
-                document.getElementById('pedidos-modal-tabs').innerHTML = '';
-                document.getElementById('pedidos-modal-container').innerHTML = '';
-                
-                // Adicionar primeiro pedido automaticamente
-                this.adicionarPedidoNoModal();
-                
-                // Abrir modal
-                document.getElementById('pedidos-modal').classList.remove('hidden');
-            }
-
-            adicionarPedidoNoModal() {
-                this.pedidosModalData.pedidoCounter++;
-                const pedidoId = `modal-pedido-${this.pedidosModalData.pedidoCounter}`;
-                
-                // Criar tab do pedido
-                this.criarTabPedidoModal(pedidoId, this.pedidosModalData.pedidoCounter);
-                
-                // Criar conteúdo do pedido
-                const pedidoHTML = `
-                    <div id="${pedidoId}" class="pedido-modal-content bg-gray-50 rounded-xl p-6 border-l-4 border-orange-primary" style="display: none;">
-                        <div class="grid md:grid-cols-2 gap-4 mb-6">
-                            <div>
-                                <label class="block text-gray-dark font-semibold mb-2">
-                                    <i class="fas fa-shopping-cart mr-2 text-orange-primary"></i>
-                                    Número do Pedido *
-                                </label>
-                                <input type="text" name="numeroPedido" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all"
-                                    placeholder="Ex: PED12345">
-                                <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
-                            </div>
-                            <div class="flex items-end">
-                                <div class="w-full">
-                                    <label class="block text-gray-dark font-semibold mb-2">
-                                        <i class="fas fa-receipt mr-2 text-orange-primary"></i>
-                                        Notas Fiscais do Pedido *
-                                    </label>
-                                    <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-                                        <span class="text-blue-800 font-medium">
-                                            <i class="fas fa-file-invoice mr-2"></i>
-                                            Adicione as notas fiscais abaixo
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-4">
-                            <div class="notas-fiscais-modal-container" data-pedido="${pedidoId}">
-                                </div>
-                            
-                            <div class="text-left">
-                                <button type="button" onclick="consultaStatus.adicionarNotaFiscalModal('${pedidoId}')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all">
-                                    </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                document.getElementById('pedidos-modal-container').insertAdjacentHTML('beforeend', pedidoHTML);
-                
-                // Mostrar o pedido recém-criado
-                this.mostrarPedidoModal(pedidoId);
-                
-                // Adicionar primeira nota fiscal automaticamente
-                this.adicionarNotaFiscalModal(pedidoId);
-            }
-
-            criarTabPedidoModal(pedidoId, numeroTab) {
-                const tabsContainer = document.getElementById('pedidos-modal-tabs');
-                
-                const tabHTML = `
-                    <button type="button" id="tab-${pedidoId}" onclick="consultaStatus.mostrarPedidoModal('${pedidoId}')" 
-                        class="pedido-modal-tab px-4 py-2 rounded-lg font-medium transition-all bg-orange-primary text-white flex items-center space-x-2">
-                        <span>Pedido ${numeroTab}</span>
-                        ${numeroTab > 1 ? `
-                            <button type="button" onclick="event.stopPropagation(); consultaStatus.removerPedidoModal('${pedidoId}')" 
-                                class="ml-2 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs transition-all">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        ` : ''}
-                    </button>
-                `;
-                
-                tabsContainer.insertAdjacentHTML('beforeend', tabHTML);
-            }
-
-            mostrarPedidoModal(pedidoId) {
-                // Ocultar todos os pedidos
-                document.querySelectorAll('.pedido-modal-content').forEach(pedido => {
-                    pedido.style.display = 'none';
-                });
-                
-                // Remover classe ativa de todas as abas
-                document.querySelectorAll('.pedido-modal-tab').forEach(tab => {
-                    tab.classList.remove('bg-orange-primary', 'text-white');
-                    tab.classList.add('bg-gray-200', 'text-gray-700');
-                });
-                
-                // Mostrar pedido selecionado
-                const pedidoElement = document.getElementById(pedidoId);
-                if (pedidoElement) {
-                    pedidoElement.style.display = 'block';
-                }
-                
-                // Ativar aba correspondente
-                const tab = document.getElementById(`tab-${pedidoId}`);
-                if (tab) {
-                    tab.classList.add('bg-orange-primary', 'text-white');
-                    tab.classList.remove('bg-gray-200', 'text-gray-700');
-                }
-            }
-
-            adicionarNotaFiscalModal(pedidoId) {
-                const container = document.querySelector(`.notas-fiscais-modal-container[data-pedido="${pedidoId}"]`);
-                if (!container) return;
-                
-                // Contar notas fiscais existentes para numerar
-                const nfsExistentes = container.querySelectorAll('.nota-fiscal-modal-item');
-                const nfCount = nfsExistentes.length + 1;
-                const nfId = `nf-${pedidoId}-${nfCount}`;
-                
-                const nfHTML = `
-                    <div id="${nfId}" class="nota-fiscal-modal-item bg-white rounded-lg border mb-4">
-                        <div class="nota-fiscal-header flex justify-between items-center p-4 cursor-pointer" onclick="consultaStatus.toggleNotaFiscalModal('${nfId}')">
-                            <h6 class="font-medium text-gray-dark">
-                                <i class="fas fa-file-invoice mr-2 text-orange-primary"></i>
-                                Nota Fiscal ${nfCount}
-                            </h6>
-                            <div class="flex items-center space-x-2">
-                                ${nfCount > 1 ? `
-                                    <button type="button" onclick="event.stopPropagation(); consultaStatus.removerNotaFiscalModal('${nfId}', '${pedidoId}')" 
-                                        class="w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs transition-all">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                ` : ''}
-                                <i class="fas fa-chevron-up toggle-icon text-gray-500"></i>
-                            </div>
-                        </div>
-                        
-                        <div class="nota-fiscal-content p-4 border-t">
-                            <div class="grid md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-dark mb-2">
-                                        <i class="fas fa-hashtag mr-1 text-orange-primary"></i>
-                                        Número da NF-e *
-                                    </label>
-                                    <input type="text" name="numeroNF" required
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
-                                        placeholder="Número">
-                                    <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-dark mb-2">
-                                        <i class="fas fa-dollar-sign mr-1 text-orange-primary"></i>
-                                        Valor *
-                                    </label>
-                                    <input type="text" name="valorNF" required
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary"
-                                        placeholder="R$ 0,00">
-                                    <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-dark mb-2">
-                                    <i class="fas fa-file-pdf mr-1 text-orange-primary"></i>
-                                    Arquivo XML/PDF da NF-e *
-                                </label>
-                                <input type="file" name="arquivoNF" accept=".pdf,.xml" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-1 focus:ring-orange-primary text-sm">
-                                <p class="text-xs text-gray-500 mt-1">Apenas arquivos PDF ou XML são aceitos</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                container.insertAdjacentHTML('beforeend', nfHTML);
-            }
-
-            toggleNotaFiscalModal(nfId) {
-                const nfElement = document.getElementById(nfId);
-                const content = nfElement.querySelector('.nota-fiscal-content');
-                const icon = nfElement.querySelector('.toggle-icon');
-                
-                if (content.style.display === 'none') {
-                    content.style.display = 'block';
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-up');
-                } else {
-                    content.style.display = 'none';
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                }
-            }
-
-            minimizarNotaFiscalModal(nfElement) {
-                const content = nfElement.querySelector('.nota-fiscal-content');
-                const icon = nfElement.querySelector('.toggle-icon');
-                
-                if (content && icon) {
-                    content.style.display = 'none';
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                }
-            }
-
-            removerNotaFiscalModal(nfId, pedidoId) {
-                if (confirm('Tem certeza que deseja remover esta nota fiscal?')) {
-                    document.getElementById(nfId).remove();
-                }
-            }
-
-            removerPedidoModal(pedidoId) {
-                if (confirm('Tem certeza que deseja remover este pedido?')) {
-                    // Remover conteúdo do pedido
-                    document.getElementById(pedidoId).remove();
-                    
-                    // Remover tab
-                    document.getElementById(`tab-${pedidoId}`).remove();
-                    
-                    // Se não há mais pedidos, adicionar um novo
-                    const pedidosRestantes = document.querySelectorAll('.pedido-modal-content');
-                    if (pedidosRestantes.length === 0) {
-                        this.adicionarPedidoNoModal();
-                    } else {
-                        // Mostrar o primeiro pedido restante
-                        const primeiroPedido = pedidosRestantes[0];
-                        this.mostrarPedidoModal(primeiroPedido.id);
-                    }
-                }
-            }
+            // Fechar todos os outros
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
             
-            // Funções para status "nao-veio"
-            async reagendarEntrega(codigo) {
-                // Usar o mesmo modal padronizado com calendário e validação
-                this.abrirContraProposta(codigo);
+            // Toggle atual
+            if (!isActive) {
+                faqItem.classList.add('active');
             }
+        }
 
-            async cancelarAgendamento(codigo) {
-                const motivo = prompt('Motivo do cancelamento (opcional):');
-                
-                if (confirm('Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.')) {
-                    try {
-                        const response = await fetch(`/api/agendamentos/${codigo}/cancelar`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                motivo: motivo || ''
-                            })
-                        });
-                        
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            this.showNotification(result.message, 'success');
-                            
-                            // Recarregar agendamento atualizado
-                            await this.recarregarAgendamento();
-                            
-                        } else {
-                            this.showNotification(result.error || 'Erro ao cancelar', 'error');
-                        }
-                        
-                    } catch (error) {
-                        console.error('Erro ao cancelar:', error);
-                        this.showNotification('Erro ao cancelar agendamento', 'error');
-                    }
-                }
-            }
-
-            async responderSugestaoCD(codigo, resposta) {
-                try {
-                    const response = await fetch(`/api/agendamentos/${codigo}/responder-reagendamento`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            resposta: resposta,
-                            comentario: ''
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        const mensagem = resposta === 'aceito' ? 
-                            'Sugestão de data aceita! O agendamento foi atualizado.' : 
-                            'Sugestão de data rejeitada. O CD foi notificado.';
-                        
-                        this.showNotification(mensagem, 'success');
-                        this.closeStatusModal();
-                    } else {
-                        this.showNotification(result.error || 'Erro ao responder', 'error');
-                    }
-                    
-                } catch (error) {
-                    console.error('Erro ao responder sugestão:', error);
-                    this.showNotification('Erro ao responder sugestão do CD', 'error');
-                }
-            }
-
-            async salvarPedidosModal() {
-                // Validar e salvar todos os pedidos
-                const pedidos = [];
-                const pedidosElements = document.querySelectorAll('.pedido-modal-content');
-                
-                let temErro = false;
-                
-                pedidosElements.forEach(pedidoElement => {
-                    const numeroPedido = pedidoElement.querySelector('input[name="numeroPedido"]').value.trim();
-                    if (!numeroPedido) {
-                        this.showNotification('Todos os pedidos devem ter um número', 'error');
-                        temErro = true;
-                        return;
-                    }
-                    
-                    const notasFiscais = [];
-                    const nfsElements = pedidoElement.querySelectorAll('.nota-fiscal-modal-item');
-                    
-                    if (nfsElements.length === 0) {
-                        this.showNotification('Cada pedido deve ter pelo menos uma nota fiscal', 'error');
-                        temErro = true;
-                        return;
-                    }
-                    
-                    nfsElements.forEach(nfElement => {
-                        const numeroNF = nfElement.querySelector('input[name="numeroNF"]').value.trim();
-                        const valorNF = nfElement.querySelector('input[name="valorNF"]').value.trim();
-                        
-                        if (!numeroNF || !valorNF) {
-                            this.showNotification('Todas as notas fiscais devem ter número e valor', 'error');
-                            temErro = true;
-                            return;
-                        }
-                        
-                        notasFiscais.push({
-                            numero: numeroNF,
-                            valor: valorNF,
-                            arquivo: nfElement.querySelector('input[name="arquivoNF"]').files[0]
-                        });
-                    });
-                    
-                    if (!temErro) {
-                        pedidos.push({
-                            numero: numeroPedido,
-                            notasFiscais: notasFiscais
-                        });
-                    }
-                });
-                
-                if (!temErro && pedidos.length > 0) {
-                    try {
-                        // Preparar FormData para envio
-                        const formData = new FormData();
-                        formData.append('pedidos', JSON.stringify(pedidos));
-                        
-                        // Adicionar arquivos
-                        let fileCounter = 0;
-                        pedidos.forEach(pedido => {
-                            pedido.notasFiscais.forEach(nf => {
-                                if (nf.arquivo) {
-                                    const fieldName = `arquivo_${fileCounter}`;
-                                    formData.append(fieldName, nf.arquivo);
-                                    formData.append(`${fieldName}_info`, JSON.stringify({
-                                        pedido: pedido.numero,
-                                        nf: nf.numero
-                                    }));
-                                    fileCounter++;
-                                }
-                            });
-                        });
-                        
-                        // Enviar para API
-                        const response = await fetch(`/api/agendamentos/${this.currentAgendamento.codigo}/pedidos`, {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            this.showNotification('Pedidos salvos com sucesso!', 'success');
-                            this.closePedidosModal();
-                            
-                            // Recarregar os dados do agendamento
-                            if (this.currentAgendamento) {
-                                const consultaResponse = await fetch(`/api/agendamentos/consultar/${this.currentAgendamento.codigo}`);
-                                const consultaResult = await consultaResponse.json();
-                                if (consultaResult.success) {
-                                    this.showStatusModal(consultaResult.data);
-                                }
-                            }
-                        } else {
-                            this.showNotification(result.message || 'Erro ao salvar pedidos', 'error');
-                        }
-                        
-                    } catch (error) {
-                        console.error('Erro ao salvar pedidos:', error);
-                        this.showNotification('Erro ao salvar pedidos', 'error');
-                    }
-                }
-            }
-
-            closePedidosModal() {
-                document.getElementById('pedidos-modal').classList.add('hidden');
-            }
-
-            adicionarNFAoPedido(numeroPedido) {
-                // Adicionar NF a um pedido específico
-                this.pedidoAtual = numeroPedido;
-                this.adicionarNF();
-            }
-
-            editarNF(numeroPedido, numeroNF) {
-                // Buscar os dados da NF atual
-                const agendamento = this.currentAgendamento;
-                if (!agendamento || !agendamento.pedidos) {
-                    this.showNotification('Erro: Dados do agendamento não encontrados', 'error');
-                    return;
-                }
-
-                const pedido = agendamento.pedidos.find(p => p.numero === numeroPedido);
-                if (!pedido) {
-                    this.showNotification('Erro: Pedido não encontrado', 'error');
-                    return;
-                }
-
-                const nf = pedido.notasFiscais.find(n => n.numero === numeroNF);
-                if (!nf) {
-                    this.showNotification('Erro: Nota fiscal não encontrada', 'error');
-                    return;
-                }
-
-                // Preencher o modal de NF com os dados existentes
-                document.getElementById('nf-pedido').value = numeroPedido;
-                document.getElementById('nf-numero').value = nf.numero;
-                document.getElementById('nf-valor').value = nf.valor;
-
-                // Adicionar campo hidden para identificar que é uma edição
-                let hiddenField = document.getElementById('nf-edit-mode');
-                if (!hiddenField) {
-                    hiddenField = document.createElement('input');
-                    hiddenField.type = 'hidden';
-                    hiddenField.id = 'nf-edit-mode';
-                    hiddenField.name = 'editMode';
-                    document.getElementById('nf-form').appendChild(hiddenField);
-                }
-                hiddenField.value = 'edit';
-
-                // Adicionar campo com número original da NF
-                let originalNFField = document.getElementById('nf-numero-original');
-                if (!originalNFField) {
-                    originalNFField = document.createElement('input');
-                    originalNFField.type = 'hidden';
-                    originalNFField.id = 'nf-numero-original';
-                    originalNFField.name = 'numeroOriginal';
-                    document.getElementById('nf-form').appendChild(originalNFField);
-                }
-                originalNFField.value = numeroNF;
-
-                // Alterar título do modal
-                document.querySelector('#nf-modal h2').innerHTML = `
-                    <i class="fas fa-edit mr-2 text-blue-600"></i>
-                    Editar Nota Fiscal
-                `;
-
-                // Abrir modal
-                document.getElementById('nf-modal').classList.remove('hidden');
-            }
-
-            excluirNF(numeroPedido, numeroNF) {
-                if (confirm('Tem certeza que deseja excluir esta nota fiscal? Esta ação não pode ser desfeita.')) {
-                    this.showNotification('Excluindo nota fiscal...', 'info');
-                    
-                    // Chamar API para excluir
-                    fetch(`/api/agendamentos/${this.currentAgendamento.codigo}/pedidos/${numeroPedido}/notas-fiscais/${numeroNF}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.success) {
-                            this.showNotification('Nota fiscal excluída com sucesso!', 'success');
-                            
-                            // Atualizar os dados do agendamento
-                            this.currentAgendamento = result.data;
-                            
-                            // Recarregar o modal com os dados atualizados
-                            this.showStatusModal(this.currentAgendamento);
-                        } else {
-                            this.showNotification(result.message || 'Erro ao excluir nota fiscal', 'error');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro ao excluir NF:', error);
-                        this.showNotification('Erro ao excluir nota fiscal', 'error');
-                    });
-                }
-            }
-
-            viewPDF(arquivo) {
-                if (!arquivo) {
-                    console.log('Nenhum arquivo para visualizar');
-                    return;
-                }
-                
-                // Construir URL do arquivo
-                const fileUrl = `/api/files/${arquivo}`;
-                console.log('Abrindo PDF:', fileUrl);
-                
-                // Abrir em nova aba
-                window.open(fileUrl, '_blank');
-            }
-
-            getStatusClass(status) {
-                const classes = {
-                    'pendente': 'bg-orange-500 text-white',
-                    'confirmado': 'bg-green-500 text-white',
-                    'entregue': 'bg-blue-500 text-white',
-                    'nao-veio': 'bg-red-500 text-white',
-                    'reagendamento': 'bg-yellow-500 text-white',
-                    'cancelado': 'bg-gray-500 text-white',
-                    'aguardando_resposta_cd': 'bg-purple-500 text-white'
-                };
-                return classes[status] || 'bg-gray-500 text-white';
-            }
-
-            getStatusIcon(status) {
-                const icons = {
-                    'pendente': 'fas fa-clock',
-                    'confirmado': 'fas fa-check-circle',
-                    'entregue': 'fas fa-truck',
-                    'nao-veio': 'fas fa-times-circle',
-                    'reagendamento': 'fas fa-calendar-alt',
-                    'cancelado': 'fas fa-ban',
-                    'aguardando_resposta_cd': 'fas fa-hourglass-half'
-                };
-                return icons[status] || 'fas fa-question-circle';
-            }
-
-            getStatusText(status) {
-                const texts = {
-                    'pendente': 'Aguardando Confirmação',
-                    'confirmado': 'Confirmado - Aguardando Entrega',
-                    'entregue': 'Entregue',
-                    'nao-veio': 'Não Compareceu',
-                    'reagendamento': 'Aguardando Resposta sobre Nova Data',
-                    'cancelado': 'Cancelado',
-                    'aguardando_resposta_cd': 'Aguardando Resposta sobre Sugestão do CD'
-                };
-                return texts[status] || 'Status Desconhecido';
-            }
-
-            async recarregarAgendamento() {
-                if (this.currentAgendamento) {
-                    try {
-                        console.log('[DEBUG] Recarregando agendamento:', this.currentAgendamento.codigo);
-                        const response = await fetch(`/api/agendamentos/consultar/${this.currentAgendamento.codigo}`);
-                        const result = await response.json();
-                        console.log('[DEBUG] Resultado do recarregamento:', result);
-                        if (result.success) {
-                            this.currentAgendamento = result.data;
-                            console.log('[DEBUG] Histórico atualizado:', result.data.historico?.length, 'entradas');
-                            this.showStatusModal(result.data);
-                        }
-                    } catch (error) {
-                        console.error('Erro ao recarregar agendamento:', error);
-                    }
-                }
-            }
-
-            async responderReagendamento(codigo, resposta) {
-                try {
-                    const response = await fetch(`/api/agendamentos/${codigo}/responder-reagendamento`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            resposta: resposta,
-                            comentario: ''
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        let mensagem = '';
-                        if (resposta === 'aceito') {
-                            mensagem = 'Nova data aceita! O CD foi notificado.';
-                        } else if (resposta === 'rejeitado') {
-                            mensagem = 'Reagendamento rejeitado. O CD foi notificado.';
-                        }
-                        
-                        this.showNotification(mensagem, 'success');
-                        
-                        // Recarregar agendamento atualizado
-                        await this.recarregarAgendamento();
-                        
-                    } else {
-                        this.showNotification(result.error || 'Erro ao responder reagendamento', 'error');
-                    }
-                    
-                } catch (error) {
-                    console.error('Erro ao responder reagendamento:', error);
-                    this.showNotification('Erro ao responder reagendamento', 'error');
-                }
-            }
-
-            confirmarCancelamento(codigo) {
-                if (confirm('⚠️ ATENÇÃO: Tem certeza que deseja cancelar esta solicitação?\n\n' +
-                            '• Todos os dados serão removidos PERMANENTEMENTE da base de dados\n' +
-                            '• Esta ação NÃO PODE ser desfeita\n' +
-                            '• Você precisará criar um novo agendamento se necessário\n\n' +
-                            'Digite "CONFIRMAR" para continuar:')) {
-                    
-                    const confirmacao = prompt('Digite "CONFIRMAR" (em maiúsculas) para continuar:');
-                    if (confirmacao === 'CONFIRMAR') {
-                        this.cancelarSolicitacao(codigo);
-                    } else {
-                        this.showNotification('Cancelamento abortado.', 'info');
-                    }
-                }
-            }
-
-            async cancelarSolicitacao(codigo) {
-                try {
-                    const response = await fetch(`/api/agendamentos/${codigo}/cancelar-permanente`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        this.showNotification('Solicitação cancelada e removida permanentemente da base de dados.', 'success');
-                        this.closeStatusModal();
-                        // Limpar campos
-                        document.getElementById('codigo-consulta').value = '';
-                    } else {
-                        this.showNotification(result.error || 'Erro ao cancelar solicitação', 'error');
-                    }
-                    
-                } catch (error) {
-                    console.error('Erro ao cancelar solicitação:', error);
-                    this.showNotification('Erro ao cancelar solicitação', 'error');
-                }
-            }
-
-            abrirContraProposta(codigo) {
-                this.currentCodigoReagendamento = codigo;
-                
-                // Detectar contexto baseado no status atual do agendamento
-                const isNaoVeio = this.currentAgendamento && this.currentAgendamento.status === 'nao-veio';
-                
-                // Ajustar texto do modal baseado no contexto
-                const titulo = document.getElementById('modal-reagendar-titulo');
-                const descricao = document.getElementById('modal-reagendar-descricao');
-                
-                if (isNaoVeio) {
-                    titulo.textContent = 'Reagendar Entrega';
-                    descricao.textContent = 'Escolha uma nova data e horário para realizar a entrega';
-                } else {
-                    titulo.textContent = 'Sugerir Nova Data';
-                    descricao.textContent = 'Sugira uma nova data e horário para o agendamento';
-                }
-                
-                const modal = document.getElementById('contra-proposta-modal');
-                modal.classList.remove('hidden');
-                // Garante z-index máximo e força no topo
-                modal.style.zIndex = '2147483647';
-
-                // Limpa horários ao abrir
-                const selectHorario = document.getElementById('contra-proposta-horario');
-                selectHorario.innerHTML = '<option value="">Selecione o horário</option>';
-                document.getElementById('contra-proposta-data').value = '';
-                document.getElementById('contra-proposta-comentario').value = '';
-                
-                // Adiciona listener para buscar horários ao selecionar data
-                const inputData = document.getElementById('contra-proposta-data');
-                if (!inputData.dataset.listener) {
-                    inputData.addEventListener('change', async function() {
-                        const data = this.value;
-                        if (!data) return;
-                        selectHorario.innerHTML = '<option value="">Carregando...</option>';
-                        try {
-                            // Aqui você pode passar o CD se necessário, ex: ?date=YYYY-MM-DD&cd=CD1
-                            const resp = await fetch(`/api/horarios-disponiveis?date=${data}`);
-                            const result = await resp.json();
-                            if (result.success && result.horarios) {
-                                const disponiveis = result.horarios.filter(h => h.disponivel);
-                                if (disponiveis.length === 0) {
-                                    selectHorario.innerHTML = '<option value="">Nenhum horário disponível</option>';
-                                } else {
-                                    selectHorario.innerHTML = '<option value="">Selecione o horário</option>' +
-                                        disponiveis.map(h => `<option value="${h.valor}">${h.label}</option>`).join('');
-                                }
-                            } else {
-                                selectHorario.innerHTML = '<option value="">Erro ao buscar horários</option>';
-                            }
-                        } catch (e) {
-                            selectHorario.innerHTML = '<option value="">Erro ao buscar horários</option>';
-                        }
-                    });
-                    inputData.dataset.listener = 'true';
-                }
-            }
-
-            fecharContraPropostaModal() {
-                document.getElementById('contra-proposta-modal').classList.add('hidden');
-                this.currentCodigoReagendamento = null;
-            }
-
-            async enviarContraProposta() {
-                const novaData = document.getElementById('contra-proposta-data').value;
-                const novoHorario = document.getElementById('contra-proposta-horario').value;
-                const comentario = document.getElementById('contra-proposta-comentario').value;
-
-                console.log('[DEBUG] Enviando contra-proposta:', { novaData, novoHorario, comentario });
-
-                if (!novaData || !novoHorario) {
-                    this.showNotification('Preencha a data e horário.', 'error');
-                    return;
-                }
-
-                // Detectar contexto baseado no status atual do agendamento
-                const isNaoVeio = this.currentAgendamento && this.currentAgendamento.status === 'nao-veio';
-                
-                try {
-                    let response, apiUrl, requestBody, successMessage;
-                    
-                    if (isNaoVeio) {
-                        // Para "não veio", usar API de reagendar Transportador
-                        apiUrl = `/api/agendamentos/${this.currentCodigoReagendamento}/reagendar-Transportador`;
-                        
-                        // Converter data para UTC ISO string
-                        const [year, month, day] = novaData.split('-').map(Number);
-                        const utcDate = new Date(Date.UTC(year, month - 1, day));
-                        const novaDataUTC = utcDate.toISOString();
-                        
-                        requestBody = {
-                            novaData: novaDataUTC,
-                            novoHorario: novoHorario,
-                            motivo: comentario || ''
-                        };
-                        successMessage = 'Reagendamento solicitado! O CD foi notificado e analisará sua proposta.';
-                    } else {
-                        // Para reagendamento, usar API de responder reagendamento
-                        apiUrl = `/api/agendamentos/${this.currentCodigoReagendamento}/responder-reagendamento`;
-                        requestBody = {
-                            resposta: 'contra_proposta',
-                            comentario: comentario,
-                            novaData: novaData, // Envia a string 'YYYY-MM-DD' pura
-                            novoHorario: novoHorario
-                        };
-                        successMessage = 'Nova data sugerida! O CD foi notificado e analisará sua proposta.';
-                    }
-                    
-                    response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(requestBody)
-                    });
-                    
-                    const result = await response.json();
-                    console.log('[DEBUG] Resposta da proposta:', result);
-                    
-                    if (result.success) {
-                        this.showNotification(successMessage, 'success');
-                        this.fecharContraPropostaModal();
-                        console.log('[DEBUG] Iniciando recarregamento do agendamento...');
-                        await this.recarregarAgendamento();
-                    } else {
-                        this.showNotification(result.error || result.message || 'Erro ao enviar proposta', 'error');
-                    }
-                    
-                } catch (error) {
-                    console.error('Erro ao enviar proposta:', error);
-                    this.showNotification('Erro ao enviar proposta', 'error');
-                }
-            }
-
-            closeConsultaModal() {
-                document.getElementById('consulta-modal').classList.add('hidden');
-                document.getElementById('codigo-consulta').value = '';
-            }
-
-            closeStatusModal() {
-                document.getElementById('status-modal').classList.add('hidden');
-            }
-
-            showNotification(message, type = 'info') {
-                const colors = {
-                    success: 'bg-green-500',
-                    error: 'bg-red-500',
-                    warning: 'bg-yellow-500',
-                    info: 'bg-blue-500'
-                };
-                
-                const icons = {
-                    success: 'fa-check-circle',
-                    error: 'fa-exclamation-circle',
-                    warning: 'fa-exclamation-triangle',
-                    info: 'fa-info-circle'
-                };
-                
-                const notification = document.createElement('div');
-                notification.className = `fixed top-5 right-5 ${colors[type]} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 z-50`;
-                notification.innerHTML = `
-                    <i class="fas ${icons[type]}"></i>
-                    <span>${message}</span>
-                    <button onclick="this.parentElement.remove()" class="ml-4 hover:bg-white hover:bg-opacity-20 rounded p-1">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-                
-                document.getElementById('notification-container').appendChild(notification);
-                
-                setTimeout(() => notification.remove(), 5000);
-            }
-        } // <-- FECHAMENTO CORRETO DA CLASSE
-
-        // Funções globais (BLOCO ÚNICO, SEM DUPLICAÇÃO)
+        // Modal de Consulta
         function openConsultaModal() {
-            document.getElementById('consulta-modal').classList.remove('hidden');
+            document.getElementById('consultaModal').classList.remove('hidden');
+            document.getElementById('consultaModal').classList.add('flex');
         }
 
         function closeConsultaModal() {
-            consultaStatus.closeConsultaModal();
+            document.getElementById('consultaModal').classList.add('hidden');
+            document.getElementById('consultaModal').classList.remove('flex');
         }
 
-        function closeStatusModal() {
-            consultaStatus.closeStatusModal();
+        function consultarStatus() {
+            const codigo = document.getElementById('codigoConsulta').value;
+            if (codigo) {
+                window.location.href = `/consultar-status.html?codigo=${codigo}`;
+            }
         }
 
-        function closeEditModal() {
-            document.getElementById('edit-modal').classList.add('hidden');
-        }
-
-        function closeNFModal() {
-            document.getElementById('nf-modal').classList.add('hidden');
-            // Limpar o formulário
-            document.getElementById('nf-form').reset();
-            // Remover campos de edição se existirem
-            const editModeField = document.getElementById('nf-edit-mode');
-            const originalField = document.getElementById('nf-numero-original');
-            if (editModeField) editModeField.remove();
-            if (originalField) originalField.remove();
-            // Restaurar título original
-            document.querySelector('#nf-modal h2').innerHTML = `
-                <i class="fas fa-file-invoice mr-2 text-green-600"></i>
-                Adicionar Nota Fiscal
-            `;
-        }
-
-        function closePedidosModal() {
-            consultaStatus.closePedidosModal();
-        }
-
-        // Função adicionarPedidoNoModal removida (está dentro da classe)
-
-        function salvarPedidosModal() {
-            consultaStatus.salvarPedidosModal();
-        }
-
-        // Inicializar sistema
-        let consultaStatus;
-        document.addEventListener('DOMContentLoaded', () => {
-            consultaStatus = new ConsultaStatus();
-            // Event listener para formulário de NF
-            document.getElementById('nf-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                const editMode = document.getElementById('nf-edit-mode')?.value === 'edit';
-                const numeroOriginal = document.getElementById('nf-numero-original')?.value;
-                const formData = new FormData();
-                formData.append('numeroPedido', document.getElementById('nf-pedido').value);
-                formData.append('numeroNF', document.getElementById('nf-numero').value);
-                formData.append('valor', document.getElementById('nf-valor').value);
-                const arquivo = document.getElementById('nf-arquivo').files[0];
-                if (arquivo) {
-                    formData.append('arquivo', arquivo);
-                }
-                fetch(`/api/agendamentos/${consultaStatus.currentAgendamento.codigo}/notas-fiscais`, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        consultaStatus.showNotification(
-                            editMode ? 'Nota fiscal atualizada com sucesso!' : 'Nota fiscal salva com sucesso!', 
-                            'success'
-                        );
-                        // Atualizar dados do agendamento
-                        consultaStatus.currentAgendamento = result.data;
-                        // Recarregar modal de status
-                        consultaStatus.showStatusModal(consultaStatus.currentAgendamento);
-                        closeNFModal();
-                        // Limpar campos de edição
-                        const editModeField = document.getElementById('nf-edit-mode');
-                        const originalField = document.getElementById('nf-numero-original');
-                        if (editModeField) editModeField.remove();
-                        if (originalField) originalField.remove();
-                        // Restaurar título original
-                        document.querySelector('#nf-modal h2').innerHTML = `
-                            <i class="fas fa-file-invoice mr-2 text-green-600"></i>
-                            Adicionar Nota Fiscal
-                        `;
-                    } else {
-                        consultaStatus.showNotification(result.message || 'Erro ao salvar nota fiscal', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro ao salvar NF:', error);
-                    consultaStatus.showNotification('Erro ao salvar nota fiscal', 'error');
-                });
-            });
+        // Fechar modal com ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeConsultaModal();
+            }
         });
-
     </script>
 </body>
 </html>
