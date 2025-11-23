@@ -52,79 +52,203 @@
 
   <style>
   :root {
-    --background: hsl(0,0%,98%);
-    --foreground: hsl(214,31%,21%);
-    --card: hsl(0,0%,100%);
-    --card-foreground: hsl(214,31%,21%);
-    --primary: hsl(14,100%,60%);
-    --primary-foreground: hsl(0,0%,100%);
-    --secondary: hsl(16,100%,63%);
-    --secondary-foreground: hsl(0,0%,100%);
-    --accent: hsl(16,100%,70%);
-    --accent-foreground: hsl(214,31%,21%);
-    --muted: hsl(210,40%,96.1%);
-    --muted-foreground: hsl(215,16%,47%);
-    --destructive: hsl(0,84%,60%);
-    --destructive-foreground: hsl(0,0%,100%);
-    --border: hsl(214,32%,91%);
-    --input: hsl(214,32%,91%);
-    /* Adicionado HSL para o ring-opacity funcionar no CSS */
+    --background: #0a0a0a;
+    --foreground: #ffffff;
+    --card: rgba(255, 255, 255, 0.05);
+    --card-foreground: #ffffff;
+    --primary: #FF6B35;
+    --primary-foreground: #ffffff;
+    --secondary: #FF8C42;
+    --secondary-foreground: #ffffff;
+    --accent: #FF9F66;
+    --accent-foreground: #ffffff;
+    --muted: rgba(255, 255, 255, 0.1);
+    --muted-foreground: #9ca3af;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: rgba(255, 107, 53, 0.2);
+    --input: rgba(255, 255, 255, 0.05);
     --ring-hsl: 14, 100%, 60%; 
     --ring: hsl(var(--ring-hsl));
     --radius: 0.75rem;
-    --gradient-primary: linear-gradient(135deg, hsl(14,100%,60%), hsl(16,100%,63%));
-    --gradient-warm: linear-gradient(135deg, hsl(16,100%,63%), hsl(16,100%,70%));
-    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-medium: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-large: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --gradient-primary: linear-gradient(135deg, #FF6B35, #FF8C42);
+    --gradient-warm: linear-gradient(135deg, #FF8C42, #FF9F66);
+    --shadow-soft: 0 4px 20px rgba(255, 107, 53, 0.2);
+    --shadow-medium: 0 10px 30px rgba(255, 107, 53, 0.3);
+    --shadow-large: 0 20px 50px rgba(255, 107, 53, 0.4);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .card-3d { transition: all 0.3s ease; box-shadow: var(--shadow-large); border-radius: 1.5rem; border: 1px solid var(--border); }
-  .btn-3d { transition: all 0.3s ease; box-shadow: var(--shadow-soft); border-radius: var(--radius); font-weight: 600; }
-  .btn-3d:hover { box-shadow: var(--shadow-medium); }
-  .gradient-bg { background: var(--gradient-primary); }
-  .step-inactive { opacity: .5; pointer-events: none; }
-  .step-completed { background: linear-gradient(135deg, #10B981, #059669); }
-  .progress-bar { transition: width .5s ease; }
-  .notification { position: fixed; top: 20px; right: 20px; z-index: 1000; transform: translateX(400px); transition: transform .3s ease; }
-  .notification.show { transform: translateX(0); }
-  .file-drop-zone { border: 2px dashed var(--accent); transition: all .3s ease; border-radius: var(--radius); background: #fff; }
-  .file-drop-zone.drag-over { border-color: var(--primary); background-color: #FFF5F3; transform: scale(1.02); }
-  .nf-card { background: #fff; border-radius: 1.25rem; box-shadow: var(--shadow-soft); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; }
-  .nf-header { font-size: 1.1rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
-  
-  /* .nf-input (substituído pela classe .input-themed) */
-  .nf-trash { color: #e53e3e; background: #fff; border: none; border-radius: 50%; width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-soft); transition: background .2s; }
-  .nf-trash:hover { background: #ffe5e5; }
-  .nf-summary { background: #fff; border-radius: 1.5rem; box-shadow: var(--shadow-soft); border: 1px solid var(--border); padding: 2rem; margin-top: 2rem; }
-  .nf-summary-title { font-size: 1.3rem; font-weight: 700; color: #059669; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; }
-  .nf-summary-section { margin-bottom: 1.5rem; }
-  .nf-summary-label { font-weight: 600; color: var(--muted-foreground); margin-bottom: 0.25rem; font-size: 0.9rem; }
-  .nf-summary-value { font-size: 1.1rem; color: var(--foreground); font-weight: 500; }
 
-  /* * NOVO: Classes de Input Padronizadas (Objetivo 2)
-  * Usam as variáveis CSS do seu tema para animação e cores.
-  */
+  body {
+    background: #0a0a0a;
+    color: #ffffff;
+  }
+
+  /* Dark Background Grid */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      linear-gradient(rgba(255, 107, 53, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 107, 53, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    z-index: -1;
+    animation: grid-move 20s linear infinite;
+  }
+
+  @keyframes grid-move {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(60px, 60px); }
+  }
+
+  .card-3d { 
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    box-shadow: 0 20px 60px rgba(255, 107, 53, 0.15);
+  }
+  .card-3d:hover {
+    border-color: rgba(255, 107, 53, 0.4);
+    box-shadow: 0 25px 70px rgba(255, 107, 53, 0.25);
+    transform: translateY(-5px);
+  }
+
+  .btn-3d { 
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+    border-radius: var(--radius);
+    font-weight: 600;
+  }
+  .btn-3d:hover { 
+    box-shadow: 0 0 40px rgba(255, 107, 53, 0.6);
+    transform: translateY(-2px);
+  }
+
+  .gradient-bg { background: var(--gradient-primary); }
+  .step-inactive { opacity: .4; pointer-events: none; }
+  .step-completed { background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+  .progress-bar { transition: width .5s ease; }
+  
+  .notification { 
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    transform: translateX(400px);
+    transition: transform .3s ease;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 107, 53, 0.3);
+  }
+  .notification.show { transform: translateX(0); }
+  
+  .file-drop-zone { 
+    border: 2px dashed rgba(255, 107, 53, 0.4);
+    transition: all .3s ease;
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .file-drop-zone.drag-over { 
+    border-color: var(--primary);
+    background-color: rgba(255, 107, 53, 0.1);
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(255, 107, 53, 0.3);
+  }
+  
+  .nf-card { 
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border-radius: 1.25rem;
+    box-shadow: 0 10px 30px rgba(255, 107, 53, 0.15);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .nf-header { 
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .nf-trash { 
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .3s;
+  }
+  .nf-trash:hover { 
+    background: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  }
+  
+  .nf-summary { 
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 1.5rem;
+    box-shadow: 0 20px 50px rgba(255, 107, 53, 0.2);
+    border: 1px solid rgba(255, 107, 53, 0.3);
+    padding: 2rem;
+    margin-top: 2rem;
+  }
+  .nf-summary-title { 
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #10B981;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .nf-summary-section { margin-bottom: 1.5rem; }
+  .nf-summary-label { 
+    font-weight: 600;
+    color: #9ca3af;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+  }
+  .nf-summary-value { 
+    font-size: 1.1rem;
+    color: #ffffff;
+    font-weight: 500;
+  }
+
   .input-themed {
     width: 100%;
-    padding: 0.75rem 1rem; /* py-3 px-4 */
-    border: 1px solid var(--border);
-    border-radius: var(--radius); /* rounded-lg */
-    background-color: var(--card); /* bg-white */
-    color: var(--foreground);
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    border-radius: var(--radius);
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    color: #ffffff;
     transition: var(--transition-smooth);
     font-size: 1rem;
   }
   .input-themed::placeholder {
-    color: var(--muted-foreground);
+    color: #9ca3af;
     opacity: 0.8;
   }
   .input-themed:focus,
   .input-themed:focus-within {
     outline: none;
     border-color: var(--primary);
-    /* Sombra com cor e opacidade do tema */
-    box-shadow: 0 0 0 2px hsla(var(--ring-hsl), 0.2); 
+    background-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
   }
 
   /* Adiciona a seta para <select> */
@@ -132,11 +256,11 @@
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23FF6B35' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
     background-position: right 0.75rem center;
     background-repeat: no-repeat;
     background-size: 1.25em 1.25em;
-    padding-right: 2.5rem; /* Espaço para a seta */
+    padding-right: 2.5rem;
   }
 
   /* Ajuste para o input[type=file] customizado */
@@ -148,16 +272,25 @@
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
-    overflow: hidden; /* Garante que o span.file-name não quebre o layout */
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    transition: var(--transition-smooth);
+  }
+  .file-input-label:hover {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.08);
   }
   .file-input-label span.file-name {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-    color: var(--muted-foreground);
+    color: #9ca3af;
   }
   .file-input-label.file-selected span.file-name {
-    color: var(--foreground); /* Texto normal quando selecionado */
+    color: #ffffff;
   }
   .file-input-native {
     position: absolute;
@@ -167,10 +300,37 @@
     opacity: 0;
     cursor: pointer;
   }
+
+  /* Glassmorphism navbar */
+  .glass-nav {
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+  }
+
+  /* Steps indicator */
+  .step {
+    transition: all 0.3s ease;
+  }
+
+  .step.active {
+    background: linear-gradient(135deg, #FF6B35, #FF8C42) !important;
+    color: white !important;
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+  }
+
+  /* Botões */
+  button, .btn {
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+  }
+
+  button:hover:not(:disabled), .btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
   </style>
-</head>
-<body class="bg-gray-50 min-h-screen font-[Inter]">
-  <header class="bg-white shadow-lg">
+</head>`
+<body class="min-h-screen font-[Inter]">
+  <header class="glass-nav sticky top-0 z-50">
     <nav class="container mx-auto px-6 py-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
@@ -178,11 +338,11 @@
             <i class="fas fa-truck text-white text-2xl"></i>
           </div>
           <div>
-            <h1 class="text-2xl font-bold text-gray-dark">BrisaLOG</h1>
-            <p class="text-gray-medium text-sm">Agendamento de Entrega</p>
+            <h1 class="text-2xl font-bold text-white">BrisaLOG</h1>
+            <p class="text-gray-400 text-sm">Agendamento de Entrega</p>
           </div>
         </div>
-        <a href="/" class="flex items-center text-gray-medium hover:text-orange-primary transition-colors">
+        <a href="/" class="flex items-center text-gray-400 hover:text-orange-primary transition-colors">
           <i class="fas fa-home mr-2"></i>
           Voltar ao Início
         </a>
@@ -194,23 +354,23 @@
     <div class="container mx-auto px-6 py-4">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center space-x-4">
-          <div id="step-1" class="step flex items-center justify-center w-10 h-10 rounded-full bg-orange-primary text-white font-bold">1</div>
-          <div class="h-1 w-16 bg-gray-300">
-            <div id="progress-1-2" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
+          <div id="step-1" class="step active flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-orange-primary to-orange-secondary text-white font-bold">1</div>
+          <div class="h-1 w-16 bg-gray-700">
+            <div id="progress-1-2" class="h-full bg-gradient-to-r from-orange-primary to-orange-secondary progress-bar" style="width: 0%"></div>
           </div>
-          <div id="step-2" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">2</div>
-          <div class="h-1 w-16 bg-gray-300">
-            <div id="progress-2-3" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
+          <div id="step-2" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 text-gray-400 font-bold">2</div>
+          <div class="h-1 w-16 bg-gray-700">
+            <div id="progress-2-3" class="h-full bg-gradient-to-r from-orange-primary to-orange-secondary progress-bar" style="width: 0%"></div>
           </div>
-          <div id="step-3" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">3</div>
-          <div class="h-1 w-16 bg-gray-300">
-            <div id="progress-3-4" class="h-full bg-orange-primary progress-bar" style="width: 0%"></div>
+          <div id="step-3" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 text-gray-400 font-bold">3</div>
+          <div class="h-1 w-16 bg-gray-700">
+            <div id="progress-3-4" class="h-full bg-gradient-to-r from-orange-primary to-orange-secondary progress-bar" style="width: 0%"></div>
           </div>
-          <div id="step-4" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-500 font-bold">4</div>
+          <div id="step-4" class="step flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 text-gray-400 font-bold">4</div>
         </div>
         <div class="text-right">
-          <p class="text-sm text-gray-medium">Etapa <span id="current-step">1</span> de 4</p>
-          <p class="text-xs text-gray-400" id="step-description">Dados do Transportador</p>
+          <p class="text-sm text-gray-400">Etapa <span id="current-step">1</span> de 4</p>
+          <p class="text-xs text-gray-500" id="step-description">Dados do Transportador</p>
         </div>
       </div>
     </div>
@@ -220,19 +380,19 @@
     <div class="max-w-4xl mx-auto">
       <form id="agendamento-form">
         <div id="form-step-1" class="form-step">
-          <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+          <div class="card-3d p-8">
             <div class="text-center mb-8">
               <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-4 rounded-2xl inline-block mb-4">
                 <i class="fas fa-user text-white text-3xl"></i>
               </div>
-              <h2 class="text-3xl font-bold text-gray-dark mb-2">Dados do Transportador</h2>
-              <p class="text-gray-medium">Informe os dados para identificação da entrega</p>
+              <h2 class="text-3xl font-bold text-white mb-2">Dados do Transportador</h2>
+              <p class="text-gray-400">Informe os dados para identificação da entrega</p>
             </div>
 
             <div class="grid md:grid-cols-2 gap-6">
 
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-building mr-2 text-orange-primary"></i>
                   Nome do Transportador *
                 </label>
@@ -242,7 +402,7 @@
                 <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
               </div>
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-briefcase mr-2 text-orange-primary"></i>
                   CNPJ da Transportadora *
                 </label>
@@ -253,7 +413,7 @@
               </div>
 
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-envelope mr-2 text-orange-primary"></i>
                   E-mail do Transportador *
                 </label>
@@ -263,7 +423,7 @@
                 <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
               </div>
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-phone mr-2 text-orange-primary"></i>
                   Telefone da Transportadora *
                 </label>
@@ -274,7 +434,7 @@
               </div>
 
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-id-badge mr-2 text-orange-primary"></i>
                   Nome do Motorista *
                 </label>
@@ -284,7 +444,7 @@
                 <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
               </div>
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-id-card mr-2 text-orange-primary"></i>
                   CPF do Motorista *
                 </label>
@@ -295,7 +455,7 @@
               </div>
 
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-car-side mr-2 text-orange-primary"></i>
                   Placa do Veículo (CAVALO) *
                 </label>
@@ -306,7 +466,7 @@
               </div>
 
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-truck-moving mr-2 text-orange-primary"></i>
                   Tipo de Veículo *
                 </label>
@@ -325,7 +485,7 @@
                 <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
               </div>
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-phone mr-2 text-orange-primary"></i>
                   Telefone do Motorista *
                 </label>
@@ -346,18 +506,18 @@
         </div>
 
         <div id="form-step-2" class="form-step hidden">
-          <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+          <div class="card-3d p-8 card-3d">
             <div class="text-center mb-8">
               <div class="bg-gradient-to-r from-orange-secondary to-orange-accent p-4 rounded-2xl inline-block mb-4">
                 <i class="fas fa-truck text-white text-3xl"></i>
               </div>
-              <h2 class="text-3xl font-bold text-gray-dark mb-2">Dados da Entrega</h2>
-              <p class="text-gray-medium">Informe os detalhes da sua entrega</p>
+              <h2 class="text-3xl font-bold text-white mb-2">Dados da Entrega</h2>
+              <p class="text-gray-400">Informe os detalhes da sua entrega</p>
             </div>
 
             <div class="grid md:grid-cols-2 gap-6">
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-map-marker-alt mr-2 text-orange-primary"></i>
                   Centro de Distribuição *
                 </label>
@@ -372,7 +532,7 @@
               </div>
 
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-boxes mr-2 text-orange-primary"></i>
                   Tipo de Carga *
                 </label>
@@ -388,7 +548,7 @@
               </div>
 
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-calendar mr-2 text-orange-primary"></i>
                   Data de Entrega *
                 </label>
@@ -398,7 +558,7 @@
               </div>
 
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-clock mr-2 text-orange-primary"></i>
                   Horário Preferencial *
                 </label>
@@ -414,7 +574,7 @@
               </div>
 
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-layer-group mr-2 text-orange-primary"></i>
                   Quantidade de Volumes *
                 </label>
@@ -425,7 +585,7 @@
               </div>
 
               <div>
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-box mr-2 text-orange-primary"></i>
                   Tipo de Volume *
                 </label>
@@ -445,7 +605,7 @@
               </div>
 
               <div class="md:col-span-2">
-                <label class="block text-gray-dark font-semibold mb-2">
+                <label class="block text-white font-semibold mb-2">
                   <i class="fas fa-comment mr-2 text-orange-primary"></i>
                   Observações
                 </label>
@@ -469,13 +629,13 @@
         </div>
 
         <div id="form-step-3" class="form-step hidden">
-          <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+          <div class="card-3d p-8 card-3d">
             <div class="text-center mb-8">
               <div class="bg-gradient-to-r from-orange-accent to-orange-light p-4 rounded-2xl inline-block mb-4">
                 <i class="fas fa-file-invoice text-white text-3xl"></i>
               </div>
-              <h2 class="text-3xl font-bold text-gray-dark mb-2">Notas Fiscais</h2>
-              <p class="text-gray-medium">Informe as notas e anexe os PDFs</p>
+              <h2 class="text-3xl font-bold text-white mb-2">Notas Fiscais</h2>
+              <p class="text-gray-400">Informe as notas e anexe os PDFs</p>
             </div>
 
             <!-- Instruções de Preenchimento -->
@@ -530,20 +690,20 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
                       <div>
-                        <label class="block text-gray-dark font-semibold mb-2">Número da Nota Fiscal *</label>
+                        <label class="block text-white font-semibold mb-2">Número da Nota Fiscal *</label>
                         <input type="text" name="numeroNF" class="input-themed" placeholder="Ex: 123456" required>
                       </div>
                       <div>
-                        <label class="block text-gray-dark font-semibold mb-2">Número do Pedido *</label>
+                        <label class="block text-white font-semibold mb-2">Número do Pedido *</label>
                         <input type="text" name="numeroPedidoLinha" class="input-themed" placeholder="Ex: 4501234567" required maxlength="10" inputmode="numeric" pattern="450[0-9]{7}">
                       </div>
                       <div>
-                        <label class="block text-gray-dark font-semibold mb-2">Valor (R$) *</label>
+                        <label class="block text-white font-semibold mb-2">Valor (R$) *</label>
                         <input type="text" name="valorNF" class="input-themed" placeholder="R$ 0,00" required>
                       </div>
                       
                       <div>
-                        <label class="block text-gray-dark font-semibold mb-2">Anexo PDF *</label>
+                        <label class="block text-white font-semibold mb-2">Anexo PDF *</label>
                         <div class="file-input-wrapper">
                           <label class="input-themed file-input-label">
                             <span class="file-name">Clique para anexar PDF</span>
@@ -582,13 +742,13 @@
         </div>
 
         <div id="form-step-4" class="form-step hidden">
-          <div class="bg-white rounded-2xl shadow-xl p-8 card-3d">
+          <div class="card-3d p-8 card-3d">
             <div class="text-center mb-8">
               <div class="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-2xl inline-block mb-4">
                 <i class="fas fa-check-circle text-white text-3xl"></i>
               </div>
-              <h2 class="text-3xl font-bold text-gray-dark mb-2">Resumo do Agendamento</h2>
-              <p class="text-gray-medium">Confira todos os dados antes de finalizar</p>
+              <h2 class="text-3xl font-bold text-white mb-2">Resumo do Agendamento</h2>
+              <p class="text-gray-400">Confira todos os dados antes de finalizar</p>
             </div>
 
             <div id="resumo-agendamento" class="nf-summary !shadow-none !border-none !p-0 !mt-0">
@@ -715,7 +875,7 @@
   <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
     <div class="bg-white rounded-2xl p-8 text-center">
       <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-primary mx-auto mb-4"></div>
-      <p class="text-gray-dark font-semibold">Processando agendamento...</p>
+      <p class="text-white font-semibold">Processando agendamento...</p>
     </div>
   </div>
 
