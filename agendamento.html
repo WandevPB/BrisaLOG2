@@ -245,6 +245,12 @@
     transition: var(--transition-smooth);
     font-size: 1rem;
   }
+  .input-themed[readonly], .input-themed[disabled] {
+    background-color: #181818 !important;
+    color: #bbb !important;
+    opacity: 1 !important;
+    cursor: not-allowed;
+  }
   .input-themed::placeholder {
     color: #9ca3af;
     opacity: 0.8;
