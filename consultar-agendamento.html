@@ -48,13 +48,81 @@
     </script>
 
     <style>
-        /* Estilos de tema */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Inter', sans-serif;
-            background: #0D0D0D; 
-            color: #EFEFEF;
-            min-height: 100vh;
+            overflow-x: hidden;
+            background: #000;
+            color: #fff;
         }
+        /* ==== BACKGROUND ANIMADO ==== */
+        .dark-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, #1a0a0a 0%, #000 100%);
+            z-index: -2;
+        }
+        .grid-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 107, 53, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 107, 53, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -1;
+            animation: grid-move 20s linear infinite;
+        }
+        @keyframes grid-move {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        /* Partículas flutuantes */
+        .particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #FF6B35;
+            border-radius: 50%;
+            filter: blur(1px);
+            opacity: 0;
+            animation: particle-rise 15s infinite ease-in;
+        }
+        @keyframes particle-rise {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(1);
+                opacity: 0;
+            }
+        }
+        /* ==== NAVBAR ==== */
         .navbar {
             background: rgba(20,20,20,0.98);
             backdrop-filter: blur(5px);
@@ -64,68 +132,14 @@
             z-index: 50;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        .card-detail {
-            background: #181818; 
-            border: 1px solid #2E2E2E;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-        }
-        .card-detail:hover {
-            border-color: #FF6B35;
-            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.15);
-            transform: translateY(-3px);
-        }
-        .modal-backdrop {
-            background: rgba(0,0,0,0.7);
-        }
-        
-        /* Cores de Status */
-        .status-pendente { background-color: #FF8C42; color: #fff; }
-        .status-confirmado, .status-entregue { background-color: #10B981; color: #fff; }
-        .status-reagendamento, .status-aguardando_resposta_cd { background-color: #FBBF24; color: #333; }
-        .status-nao-veio, .status-cancelado { background-color: #EF4444; color: #fff; } 
-        
-        /* Timeline 3D */
-        .timeline-container {
-            position: relative;
-            background: linear-gradient(145deg, #181818, #101010);
-            border: 2px solid #2E2E2E;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
-        .timeline-path-fill {
-            transition: width 1.5s ease-in-out;
-            background: linear-gradient(90deg, #FF6B35 0%, #FF8C42 100%);
-            box-shadow: 0 0 10px #FF6B35;
-        }
-        .timeline-truck {
-            position: absolute;
-            top: 50%;
-            transition: left 1.5s ease-in-out;
-            z-index: 10;
-        }
-        .truck-icon {
-            filter: drop-shadow(0 0 5px #FF6B35);
-        }
-        /* Estilo para inputs em dark mode */
-        input:not(.timeline-input), textarea, select {
-            background-color: #2D2D2D !important;
-            border-color: #444444 !important;
-            color: #EFEFEF !important;
-        }
-        /* Estilo para histórico de eventos */
-        .event-detail-card {
-            background: #1F1F1F;
-            border-left: 3px solid;
-            transition: all 0.3s;
-        }
-        .event-detail-card:hover {
-            background: #252525;
-            transform: translateX(3px);
-        }
+        /* ...existing code... */
     </style>
 </head>
 <body>
-
+    <!-- Background animado igual ao index.html -->
+    <div class="dark-bg"></div>
+    <div class="grid-background"></div>
+    <div class="particles-container" id="particles"></div>
     <!-- NAV BAR -->
     <nav class="navbar flex items-center justify-between px-8 py-4">
         <div class="flex items-center gap-3">
@@ -273,6 +287,20 @@
 
     <!-- JAVASCRIPT LÓGICA COMPLETA -->
     <script>
+        // Criar partículas igual ao index.html
+        document.addEventListener('DOMContentLoaded', function() {
+            const particlesContainer = document.getElementById('particles');
+            if (particlesContainer) {
+                for (let i = 0; i < 30; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 15 + 's';
+                    particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                    particlesContainer.appendChild(particle);
+                }
+            }
+        });
         // --- Configurações & Variáveis Globais ---
         // API_BASE_URL já definido em config.js
         let currentAgendamento = null;
