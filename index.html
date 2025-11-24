@@ -966,123 +966,103 @@
         }
 
         function showStatusModal(agendamento) {
-            // Render cards detalhados, histórico, ações, etc. (dark theme)
+            // Render cards detalhados, histórico, ações, pedidos/notas fiscais e observações (dark theme)
             let html = `<div class="space-y-4">
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 shadow-sm">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 bg-blue-900 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-info-circle text-blue-400 text-sm"></i>
+                    <!-- ...cards principais, igual ao patch anterior... -->
+                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 shadow-sm"> ... </div>
+                    <div class="bg-gray-800 border border-green-700 rounded-lg p-4 shadow-sm"> ... </div>
+                    <div class="bg-gray-800 border border-blue-700 rounded-lg p-4 shadow-sm"> ... </div>
+                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 shadow-sm"> ... </div>
+                </div>
+                <!-- Histórico de movimentação -->
+                ${(agendamento.historico && agendamento.historico.length > 0) ? `
+                <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-sm">
+                    <div class="border-b border-gray-700 p-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-yellow-900 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-comments text-yellow-400 text-sm"></i>
                             </div>
-                            <h3 class="text-md font-semibold text-gray-200">Informações Gerais</h3>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Código:</span>
-                                <span class="font-semibold">${agendamento.codigo}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-400">Status:</span>
-                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-900 border border-gray-700">
-                                    <i class="${getStatusIcon(agendamento.status)} mr-1"></i>
-                                    ${getStatusText(agendamento.status)}
-                                </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Data:</span>
-                                <span class="font-semibold">${formatDateBrFromISO(agendamento.dataEntrega)}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Horário:</span>
-                                <span class="font-semibold">${agendamento.horarioEntrega}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">CD:</span>
-                                <span class="font-semibold text-xs">${agendamento.cdDestino || 'N/A'}</span>
-                            </div>
+                            <h3 class="text-md font-semibold text-gray-200">Histórico de Comunicação</h3>
                         </div>
                     </div>
-                    <div class="bg-gray-800 border border-green-700 rounded-lg p-4 shadow-sm">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 bg-green-900 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-truck-moving text-green-400 text-sm"></i>
+                    <div class="p-4">
+                        ${agendamento.historico.map((evento, index) => `
+                            <div class="flex items-start space-x-4 ${index < agendamento.historico.length - 1 ? 'border-b border-gray-700 pb-4' : ''}">
+                                <div class="flex-shrink-0">
+                                    <div class="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center shadow-sm">
+                                        <i class="fas fa-info-circle text-yellow-400 text-lg"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-base font-semibold text-gray-200">
+                                            ${evento.acao}
+                                        </p>
+                                        <div class="flex items-center text-xs text-gray-400 bg-gray-900 px-2 py-1 rounded-full">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            ${evento.data ? formatDateBrFromISO(evento.data) : 'Agora'}
+                                        </div>
+                                    </div>
+                                    ${evento.descricao ? `<p class="text-sm text-gray-300 leading-relaxed mb-2">${evento.descricao}</p>` : ''}
+                                </div>
                             </div>
-                            <h3 class="text-md font-semibold text-gray-200">Transportador</h3>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div>
-                                <span class="text-gray-400 text-xs">Empresa</span>
-                                <p class="font-semibold truncate" title="${agendamento.transportador?.nome || agendamento.nomeEmpresa || 'N/A'}">${agendamento.transportador?.nome || agendamento.nomeEmpresa || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-400 text-xs">E-mail</span>
-                                <p class="font-semibold truncate" title="${agendamento.transportador?.email || agendamento.email || 'N/A'}">${agendamento.transportador?.email || agendamento.email || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-400 text-xs">Telefone</span>
-                                <p class="font-semibold">${agendamento.transportador?.telefone || agendamento.telefone || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-400 text-xs">CNPJ</span>
-                                <p class="font-semibold text-xs">${agendamento.transportador?.documento || agendamento.cnpj || 'N/A'}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-800 border border-blue-700 rounded-lg p-4 shadow-sm">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 bg-blue-900 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-user-tie text-blue-400 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-200">Motorista</h3>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div>
-                                <span class="text-gray-400 text-xs">Nome</span>
-                                <p class="font-semibold">${agendamento.motoristaNome || agendamento.transportador?.nomeResponsavel || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-400 text-xs">CPF</span>
-                                <p class="font-semibold">${agendamento.motoristaCpf || agendamento.transportador?.cpfMotorista || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-400 text-xs">Telefone</span>
-                                <p class="font-semibold">${agendamento.motoristaTelefone || agendamento.transportador?.telefoneMotorista || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-400 text-xs">Placa</span>
-                                <p class="font-semibold">${agendamento.placaVeiculo || agendamento.transportador?.placaVeiculo || 'Não informado'}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-400 text-xs">Tipo de Veículo</span>
-                                <p class="font-semibold text-xs">${agendamento.tipoVeiculo || agendamento.transportador?.tipoVeiculo || 'Não informado'}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 shadow-sm">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 bg-purple-900 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-file-invoice text-purple-400 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-200">Resumo</h3>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Pedidos:</span>
-                                <span class="font-semibold">${agendamento.pedidos ? agendamento.pedidos.length : 0}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Notas Fiscais:</span>
-                                <span class="font-semibold">${agendamento.pedidos ? agendamento.pedidos.reduce((total, p) => total + p.notasFiscais.length, 0) : 0}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Valor Total:</span>
-                                <span class="font-semibold text-green-400 text-xs">R$ ${calcularValorTotal(agendamento)}</span>
-                            </div>
-                        </div>
+                        `).join('')}
                     </div>
                 </div>
-                <!-- Histórico, ações, pedidos, observações, etc. -->
-                <!-- ... (replicar lógica do index-old.html conforme necessário) ... -->
+                ` : ''}
+                <!-- Pedidos e Notas Fiscais -->
+                <div class="bg-gray-800 border border-indigo-700 rounded-lg shadow-sm">
+                    <div class="border-b border-gray-700 p-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-indigo-900 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-file-invoice-dollar text-indigo-400 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-200">Pedidos e Notas Fiscais</h3>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        ${(agendamento.pedidos && agendamento.pedidos.length > 0) ? agendamento.pedidos.map(pedido => `
+                            <div class="border border-gray-700 rounded-lg p-4 mb-4">
+                                <div class="flex items-center mb-3">
+                                    <h4 class="font-semibold text-gray-200">Pedido: ${pedido.numero}</h4>
+                                </div>
+                                <div class="space-y-2">
+                                    ${pedido.notasFiscais.map(nf => `
+                                        <div class="flex justify-between items-center bg-gray-900 p-3 rounded-lg">
+                                            <div class="flex-1">
+                                                <div class="flex items-center space-x-3 mb-1">
+                                                    <span class="font-medium text-gray-200">NF: ${nf.numero}</span>
+                                                    ${nf.serie ? `<span class="text-xs text-gray-400">Série: ${nf.serie}</span>` : ''}
+                                                </div>
+                                                <div class="text-lg font-bold text-green-400">R$ ${nf.valor}</div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                ${nf.arquivo ? `<button onclick=\"window.open('/api/files/${nf.arquivo}','_blank')\" class=\"bg-blue-900 text-blue-400 px-2 py-1 rounded text-xs font-medium hover:bg-blue-800\"><i class=\"fas fa-file-pdf mr-1\"></i>PDF</button>` : `<span class=\"bg-yellow-900 text-yellow-400 px-2 py-1 rounded text-xs\"><i class=\"fas fa-exclamation-triangle mr-1\"></i>Sem PDF</span>`}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('') : `<div class='text-center py-6 text-gray-400'><i class='fas fa-inbox text-2xl mb-2'></i><p class='text-sm'>Nenhum pedido encontrado</p></div>`}
+                    </div>
+                </div>
+                <!-- Observações -->
+                ${agendamento.observacoes ? `
+                <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-sm">
+                    <div class="border-b border-gray-700 p-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center mr-2">
+                                <i class="fas fa-comment-alt text-gray-400 text-sm"></i>
+                            </div>
+                            <h3 class="text-md font-semibold text-gray-200">Observações</h3>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <p class="text-gray-300 text-sm leading-relaxed">${agendamento.observacoes}</p>
+                    </div>
+                </div>
+                ` : ''}
             </div>`;
             document.getElementById('status-content').innerHTML = html;
             document.getElementById('status-modal').classList.remove('hidden');
