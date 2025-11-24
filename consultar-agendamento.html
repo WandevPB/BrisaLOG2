@@ -481,16 +481,18 @@
                 </div>
             `;
             const timelineHTML = `
-                <div class="timeline-container rounded-2xl p-8 mb-10 overflow-x-auto shadow-deep">
-                    <h3 class="text-2xl font-extrabold text-white mb-8 flex items-center gap-3">
+                <div class="timeline-container rounded-2xl mx-auto mb-12 shadow-deep flex flex-col items-center justify-center" style="max-width:1100px; min-width:340px; padding: 2.5rem 2rem;">
+                    <h3 class="text-2xl font-extrabold text-white mb-6 flex items-center gap-3 justify-center">
                         <i class="fas ${statusInfo.icon} text-orange-primary"></i>
                         Fluxo Logístico: <span class="font-bold ${statusInfo.color} px-3 py-1 rounded-lg">${statusInfo.text}</span>
                     </h3>
-                    <p class="text-text-secondary mb-8 text-center">${statusInfo.description}</p>
-                    <div class="relative h-40 w-full mb-10 overflow-x-auto">
-                        <div class="flex items-center h-32 relative" style="min-width:${timelineStatuses.length * 140}px;">
-                            ${truck3D}
-                            ${stepsHTML}
+                    <p class="text-text-secondary mb-6 text-center">${statusInfo.description}</p>
+                    <div class="relative w-full flex flex-col items-center justify-center" style="height:170px;">
+                        <div class="w-full overflow-x-auto flex justify-center">
+                            <div class="flex items-end relative" style="min-width:${timelineStatuses.length * 150}px; height:120px;">
+                                ${truck3D}
+                                ${stepsHTML}
+                            </div>
                         </div>
                     </div>
                 </div>
