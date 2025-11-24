@@ -835,11 +835,11 @@
         function consultarStatus() {
             const codigo = document.getElementById('codigoConsulta').value;
             if (codigo) {
-                // Aqui você pode abrir o modal de detalhes, exibir info, etc.
-                // Exemplo: abre um modal de detalhes (substitua pelo seu modal real)
-                alert('Detalhes do agendamento: ' + codigo);
-                // Se tiver um modal customizado, chame a função para abrir ele aqui
-                // openDetalhesModal(codigo);
+                // Exibe o modal de detalhes (reutilizando o modal existente)
+                // Aqui você pode popular o modal com os dados do código
+                document.getElementById('consultaModal').classList.remove('hidden');
+                document.getElementById('consultaModal').classList.add('flex');
+                // Se quiser mostrar detalhes, pode preencher campos do modal aqui
             }
         }
 
