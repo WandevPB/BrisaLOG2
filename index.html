@@ -479,11 +479,11 @@
             </div>
 
             <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <a href="/agendamento.html" class="btn-neon">
+                <a href="/agendamento.html" class="btn-neon" id="btn-agendar">
                     <i class="fas fa-calendar-plus mr-3"></i>
                     Agendar Agora
                 </a>
-                <button onclick="openConsultaModal()" class="btn-outline">
+                <button onclick="openConsultaModal()" class="btn-outline" id="btn-consultar">
                     <i class="fas fa-search mr-2"></i>
                     Consultar Status
                 </button>
@@ -765,6 +765,9 @@
         </div>
     </div>
 
+    <!-- Overlay de Transição de Página -->
+    <div id="page-transition" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#181818;opacity:0;pointer-events:none;z-index:9999;transition:opacity 0.5s;"></div>
+
     <script>
         // Criar partículas
         const particlesContainer = document.getElementById('particles');
@@ -855,6 +858,29 @@
                 window.location.href = `/consultar-status.html?codigo=${codigo}`;
             }
         }
+
+        // Efeito de transição entre páginas
+        function showPageTransition(callback) {
+            const overlay = document.getElementById('page-transition');
+            overlay.style.pointerEvents = 'auto';
+            overlay.style.opacity = '1';
+            setTimeout(() => {
+                callback();
+            }, 500);
+        }
+        document.getElementById('btn-agendar').addEventListener('click', function(e) {
+            e.preventDefault();
+            showPageTransition(() => {
+                window.location.href = '/agendamento.html';
+            });
+        });
+        document.getElementById('btn-consultar').addEventListener('click', function(e) {
+            showPageTransition(() => {
+                openConsultaModal();
+                document.getElementById('page-transition').style.opacity = '0';
+                document.getElementById('page-transition').style.pointerEvents = 'none';
+            });
+        });
 
         // Fechar modal com ESC
         document.addEventListener('keydown', (e) => {
