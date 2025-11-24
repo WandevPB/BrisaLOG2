@@ -535,7 +535,7 @@
             } catch (error) { showNotification('Erro de conexão ao enviar proposta.', 'error'); }
         }
 
-        function renderTimeline3D(currentStatus) {
+        function renderTimeline3D(currentStatus, historico = []) {
             const statusInfo = statusMap[currentStatus];
 
             // Novo fluxo logístico completo
@@ -562,43 +562,25 @@
                 'cancelado': 7
             };
 
-            let currentIdx = statusMapIdx[currentStatus] ?? 0;
-            
-            let floatingParticlesHTML = '';
-            for (let i = 0; i < 12; i++) {
-                const size = Math.random() * 4 + 2;
-                const left = Math.random() * 100;
-                const top = Math.random() * 100;
-                const delay = Math.random() * 5;
-                const duration = 5 + Math.random() * 10;
-                
-                floatingParticlesHTML += `
-                    <div class="floating-particle" style="
-                        width: ${size}px; 
-                        height: ${size}px; 
-                        left: ${left}%; 
-                        top: ${top}%; 
-                        animation-delay: ${delay}s;
-                        animation-duration: ${duration}s;
-                        animation-name: orbit;
-                    "></div>
-                `;
+            // Determina o caminho real percorrido pelo histórico
+            let lastStatusIdx = 0;
+            if (Array.isArray(historico) && historico.length > 0) {
+                historico.forEach(evento => {
+                    // Mapeia ações do histórico para status da timeline
+                    if (evento.acao === 'agendamento_criado') lastStatusIdx = Math.max(lastStatusIdx, statusMapIdx['pendente']);
+                    if (evento.acao === 'confirmado') lastStatusIdx = Math.max(lastStatusIdx, statusMapIdx['confirmado']);
+                    if (evento.acao === 'cd_sugeriu_reagendamento' || evento.acao === 'Transportador_sugeriu_reagendamento') lastStatusIdx = Math.max(lastStatusIdx, statusMapIdx['reagendamento']);
+                    if (evento.acao === 'Transportador_aceitou_reagendamento') lastStatusIdx = Math.max(lastStatusIdx, statusMapIdx['aguardando_resposta_cd']);
+                    if (evento.acao === 'em_transito') lastStatusIdx = Math.max(lastStatusIdx, statusMapIdx['em_transito']);
+                    if (evento.acao === 'entrega_realizada') lastStatusIdx = Math.max(lastStatusIdx, statusMapIdx['entregue']);
+                    if (evento.acao === 'ausencia_registrada') lastStatusIdx = Math.max(lastStatusIdx, statusMapIdx['nao-veio']);
+                    if (evento.acao === 'cancelado_Transportador') lastStatusIdx = Math.max(lastStatusIdx, statusMapIdx['cancelado']);
+                });
+            } else {
+                lastStatusIdx = statusMapIdx[currentStatus] ?? 0;
             }
-            
-            let orbitRingsHTML = '';
-            for (let i = 1; i <= 3; i++) {
-                const size = 80 + i * 40;
-                orbitRingsHTML += `
-                    <div class="orbit-ring" style="
-                        width: ${size}px; 
-                        height: ${size}px; 
-                        top: calc(50% - ${size/2}px); 
-                        left: calc(50% - ${size/2}px);
-                        animation: orbit ${15 + i*5}s linear infinite;
-                    "></div>
-                `;
-            }
-            
+            let currentIdx = lastStatusIdx;
+
             let stepsHTML = '';
             timelineStatuses.forEach((step, idx) => {
                 const isCompleted = idx < currentIdx;
@@ -646,8 +628,6 @@
             });
             
             const truckPercent = (currentIdx / (timelineStatuses.length - 1)) * 100;
-
-            // Se cancelado ou nao-veio, caminhão para na etapa correspondente
             let showTruck = !(currentStatus === 'cancelado' || currentStatus === 'nao-veio');
 
             const timelineHTML = `
@@ -857,7 +837,7 @@
             document.getElementById('display-codigo').textContent = data.codigo || 'N/A';
             document.getElementById('display-codigo').classList.remove('animate-pulse');
 
-            const statusSectionHTML = renderTimeline3D(data.status);
+            const statusSectionHTML = renderTimeline3D(data.status, data.historico);
             const buttonsHTML = renderActionButtons(data);
             const communicationHistoryHTML = renderCommunicationHistory(data);
             const nfsHTML = renderPedidosENotasFiscais(data);
