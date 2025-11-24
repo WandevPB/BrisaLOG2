@@ -80,6 +80,18 @@
         .notification.show {
             transform: translateX(0);
         }
+        #page-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #181818;
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
     </style>
 </head>
 <body class="min-h-screen gradient-bg flex items-center justify-center relative">
@@ -326,6 +338,9 @@
             </form>
         </div>
     </div>
+
+    <!-- Transition Overlay -->
+    <div id="page-transition" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#181818;opacity:1;pointer-events:auto;z-index:9999;transition:opacity 0.5s;"></div>
 
     <script>
         // Variável global para instância do LoginCD
@@ -852,6 +867,27 @@
         // Inicializar quando o DOM estiver carregado
         document.addEventListener('DOMContentLoaded', () => {
             loginCD = new LoginCD();
+        });
+
+        // Fade-in na entrada
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const overlay = document.getElementById('page-transition');
+                overlay.style.opacity = '0';
+                overlay.style.pointerEvents = 'none';
+            }, 400);
+        });
+        // Fade-out ao clicar em voltar ao início
+        document.querySelectorAll('.btn-voltar').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const overlay = document.getElementById('page-transition');
+                overlay.style.pointerEvents = 'auto';
+                overlay.style.opacity = '1';
+                setTimeout(function() {
+                    window.location.href = '/';
+                }, 500);
+            });
         });
     </script>
 </body>

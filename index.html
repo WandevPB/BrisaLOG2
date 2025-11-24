@@ -766,7 +766,7 @@
     </div>
 
     <!-- Overlay de Transição de Página -->
-    <div id="page-transition" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#181818;opacity:0;pointer-events:none;z-index:9999;transition:opacity 0.5s;"></div>
+    <div id="page-transition" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#181818;opacity:1;pointer-events:auto;z-index:9999;transition:opacity 0.5s;"></div>
 
     <script>
         // Criar partículas
@@ -879,6 +879,46 @@
                 openConsultaModal();
                 document.getElementById('page-transition').style.opacity = '0';
                 document.getElementById('page-transition').style.pointerEvents = 'none';
+            });
+        });
+        // Fade-in na entrada
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const overlay = document.getElementById('page-transition');
+                overlay.style.opacity = '0';
+                overlay.style.pointerEvents = 'none';
+            }, 400);
+        });
+        // Fade-out ao clicar em links principais
+        document.getElementById('btn-agendar').addEventListener('click', function(e) {
+            e.preventDefault();
+            const overlay = document.getElementById('page-transition');
+            overlay.style.pointerEvents = 'auto';
+            overlay.style.opacity = '1';
+            setTimeout(function() {
+                window.location.href = '/agendamento.html';
+            }, 500);
+        });
+        document.getElementById('btn-consultar').addEventListener('click', function(e) {
+            const overlay = document.getElementById('page-transition');
+            overlay.style.pointerEvents = 'auto';
+            overlay.style.opacity = '1';
+            setTimeout(function() {
+                openConsultaModal();
+                overlay.style.opacity = '0';
+                overlay.style.pointerEvents = 'none';
+            }, 500);
+        });
+        // Fade-out ao clicar em voltar ao início
+        document.querySelectorAll('.btn-voltar').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const overlay = document.getElementById('page-transition');
+                overlay.style.pointerEvents = 'auto';
+                overlay.style.opacity = '1';
+                setTimeout(function() {
+                    window.location.href = '/';
+                }, 500);
             });
         });
 
