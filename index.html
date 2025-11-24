@@ -479,14 +479,34 @@
             </div>
 
             <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <a href="/agendamento.html" class="btn-neon" id="btn-agendar">
+                <a href="/agendamento.html" class="btn-neon">
                     <i class="fas fa-calendar-plus mr-3"></i>
                     Agendar Agora
                 </a>
-                <button onclick="openConsultaModal()" class="btn-outline" id="btn-consultar">
+                <button onclick="openConsultaModal()" class="btn-outline">
                     <i class="fas fa-search mr-2"></i>
                     Consultar Status
                 </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 max-w-5xl mx-auto">
+                <div class="stat-card">
+                    <div class="stat-number" data-target="1200">0</div>
+                    <p class="text-gray-400 mt-2">Agendamentos</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="98">0</div>
+                    <p class="text-gray-400 mt-2">% Satisfação</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="24">0</div>
+                    <p class="text-gray-400 mt-2">Horas/Dia</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="15">0</div>
+                    <p class="text-gray-400 mt-2">CDs Ativos</p>
+                </div>
             </div>
         </div>
     </section>
@@ -744,11 +764,7 @@
             </button>
         </div>
     </div>
-    <!-- Overlay de Transição de Página -->
-    <div id="page-transition" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#181818;opacity:1;pointer-events:auto;z-index:9999;transition:opacity 0.5s;"></div>
 
-    <script src="config.js"></script>
-    <script src="js/apiRequest.js"></script>
     <script>
         // Criar partículas
         const particlesContainer = document.getElementById('particles');
@@ -761,16 +777,67 @@
             particlesContainer.appendChild(particle);
         }
 
-        // FAQ Toggle
-        function toggleFaq(element) {
-            const faqItem = element.parentElement;
-            const isActive = faqItem.classList.contains('active');
-            document.querySelectorAll('.faq-item').forEach(item => {
-                item.classList.remove('active');
+        // Animação de números
+        function animateNumbers() {
+            const stats = document.querySelectorAll('.stat-number');
+            stats.forEach(stat => {
+                const target = parseInt(stat.dataset.target);
+                const duration = 2000;
+                const increment = target / (duration / 16);
+                let current = 0;
+
+                const updateNumber = () => {
+                    current += increment;
+                    if (current < target) {
+                        stat.textContent = Math.floor(current);
+                        requestAnimationFrame(updateNumber);
+                    } else {
+                        stat.textContent = target;
+                    }
+                };
+                updateNumber();
             });
-            if (!isActive) {
-                faqItem.classList.add('active');
-            }
+        }
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const elementsToObserve = document.querySelectorAll('.fade-in, .timeline-item');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    // Animar números quando a seção aparecer
+                    if (entry.target.querySelector('.stat-number')) {
+                        animateNumbers();
+                    }
+                }
+            });
+        }, observerOptions);
+
+        elementsToObserve.forEach(el => {
+            observer.observe(el);
+        });
+
+        // Força visualização inicial dos elementos já visíveis
+        const checkInitialVisibility = () => {
+            elementsToObserve.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) {
+                    el.classList.add('visible');
+                }
+            });
+        };
+        checkInitialVisibility();
+
+        // FAQ Toggle simplificado
+        function toggleFaq(element) {
+            const faqItem = element.closest('.faq-item');
+            faqItem.classList.toggle('active');
         }
 
         // Modal de Consulta
@@ -778,220 +845,20 @@
             document.getElementById('consultaModal').classList.remove('hidden');
             document.getElementById('consultaModal').classList.add('flex');
         }
+
         function closeConsultaModal() {
             document.getElementById('consultaModal').classList.add('hidden');
             document.getElementById('consultaModal').classList.remove('flex');
         }
-        function closeStatusModal() {
-            document.getElementById('status-modal').classList.add('hidden');
-        }
-        function closeDetailModal() {
-            document.getElementById('detailModal').classList.add('hidden');
-        }
-        function closeNFModal() {
-            document.getElementById('nf-modal').classList.add('hidden');
-            document.getElementById('nf-form').reset();
-        }
 
-        // Funções utilitárias para modal de status
-        function formatDateBrFromISO(isoString) {
-            if (!isoString) return 'N/A';
-            const dateStr = isoString.slice(0, 10);
-            const [year, month, day] = dateStr.split('-');
-            return `${day}/${month}/${year}`;
-        }
-        function calcularValorTotal(agendamento) {
-            if (!agendamento.notasFiscais) return '0,00';
-            let total = 0;
-            agendamento.notasFiscais.forEach(nf => {
-                let valorStr = String(nf.valor || '0');
-                const lastDotIndex = valorStr.lastIndexOf('.');
-                if (lastDotIndex !== -1) {
-                    valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + ',' + valorStr.substring(lastDotIndex + 1);
-                }
-                valorStr = valorStr.replace(',', '.');
-                const v = parseFloat(valorStr) || 0;
-                total += v;
-            });
-            return total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-        }
-        function getStatusIcon(status) {
-            const icons = {
-                'pendente': 'fas fa-clock',
-                'confirmado': 'fas fa-check-circle',
-                'entregue': 'fas fa-truck',
-                'nao-veio': 'fas fa-times-circle',
-                'reagendamento': 'fas fa-calendar-alt',
-                'cancelado': 'fas fa-ban',
-                'aguardando_resposta_cd': 'fas fa-hourglass-half'
-            };
-            return icons[status] || 'fas fa-question-circle';
-        }
-        function getStatusText(status) {
-            const texts = {
-                'pendente': 'Aguardando Confirmação',
-                'confirmado': 'Confirmado - Aguardando Entrega',
-                'entregue': 'Entregue',
-                'nao-veio': 'Não Compareceu',
-                'reagendamento': 'Aguardando Resposta sobre Nova Data',
-                'cancelado': 'Cancelado',
-                'aguardando_resposta_cd': 'Aguardando Resposta sobre Sugestão do CD'
-            };
-            return texts[status] || 'Status Desconhecido';
-        }
-
-        // Modal de Detalhes - ConsultaStatus
         function consultarStatus() {
-            const codigo = document.getElementById('codigoConsulta').value.trim();
-            if (!codigo) return;
-            window.location.href = `consultar-agendamento.html?codigo=${encodeURIComponent(codigo)}`;
+            const codigo = document.getElementById('codigoConsulta').value;
+            if (codigo) {
+                window.location.href = `/consultar-status.html?codigo=${codigo}`;
+            }
         }
 
-        function showStatusModal(agendamento) {
-            // Render cards detalhados, histórico, ações, pedidos/notas fiscais e observações (dark theme)
-            let html = `<div class="space-y-4">
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                    <!-- ...cards principais, igual ao patch anterior... -->
-                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 shadow-sm"> ... </div>
-                    <div class="bg-gray-800 border border-green-700 rounded-lg p-4 shadow-sm"> ... </div>
-                    <div class="bg-gray-800 border border-blue-700 rounded-lg p-4 shadow-sm"> ... </div>
-                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 shadow-sm"> ... </div>
-                </div>
-                <!-- Histórico de movimentação -->
-                ${(agendamento.historico && agendamento.historico.length > 0) ? `
-                <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-sm">
-                    <div class="border-b border-gray-700 p-4">
-                        <div class="flex items-center">
-                            <div class="w-8 h-8 bg-yellow-900 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-comments text-yellow-400 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-200">Histórico de Comunicação</h3>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        ${agendamento.historico.map((evento, index) => `
-                            <div class="flex items-start space-x-4 ${index < agendamento.historico.length - 1 ? 'border-b border-gray-700 pb-4' : ''}">
-                                <div class="flex-shrink-0">
-                                    <div class="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center shadow-sm">
-                                        <i class="fas fa-info-circle text-yellow-400 text-lg"></i>
-                                    </div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <p class="text-base font-semibold text-gray-200">
-                                            ${evento.acao}
-                                        </p>
-                                        <div class="flex items-center text-xs text-gray-400 bg-gray-900 px-2 py-1 rounded-full">
-                                            <i class="fas fa-clock mr-1"></i>
-                                            ${evento.data ? formatDateBrFromISO(evento.data) : 'Agora'}
-                                        </div>
-                                    </div>
-                                    ${evento.descricao ? `<p class="text-sm text-gray-300 leading-relaxed mb-2">${evento.descricao}</p>` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
-                <!-- Pedidos e Notas Fiscais -->
-                <div class="bg-gray-800 border border-indigo-700 rounded-lg shadow-sm">
-                    <div class="border-b border-gray-700 p-4">
-                        <div class="flex items-center">
-                            <div class="w-8 h-8 bg-indigo-900 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-file-invoice-dollar text-indigo-400 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-200">Pedidos e Notas Fiscais</h3>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        ${(agendamento.pedidos && agendamento.pedidos.length > 0) ? agendamento.pedidos.map(pedido => `
-                            <div class="border border-gray-700 rounded-lg p-4 mb-4">
-                                <div class="flex items-center mb-3">
-                                    <h4 class="font-semibold text-gray-200">Pedido: ${pedido.numero}</h4>
-                                </div>
-                                <div class="space-y-2">
-                                    ${pedido.notasFiscais.map(nf => `
-                                        <div class="flex justify-between items-center bg-gray-900 p-3 rounded-lg">
-                                            <div class="flex-1">
-                                                <div class="flex items-center space-x-3 mb-1">
-                                                    <span class="font-medium text-gray-200">NF: ${nf.numero}</span>
-                                                    ${nf.serie ? `<span class="text-xs text-gray-400">Série: ${nf.serie}</span>` : ''}
-                                                </div>
-                                                <div class="text-lg font-bold text-green-400">R$ ${nf.valor}</div>
-                                            </div>
-                                            <div class="flex items-center space-x-2">
-                                                ${nf.arquivo ? `<button onclick=\"window.open('/api/files/${nf.arquivo}','_blank')\" class=\"bg-blue-900 text-blue-400 px-2 py-1 rounded text-xs font-medium hover:bg-blue-800\"><i class=\"fas fa-file-pdf mr-1\"></i>PDF</button>` : `<span class=\"bg-yellow-900 text-yellow-400 px-2 py-1 rounded text-xs\"><i class=\"fas fa-exclamation-triangle mr-1\"></i>Sem PDF</span>`}
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `).join('') : `<div class='text-center py-6 text-gray-400'><i class='fas fa-inbox text-2xl mb-2'></i><p class='text-sm'>Nenhum pedido encontrado</p></div>`}
-                    </div>
-                </div>
-                <!-- Observações -->
-                ${agendamento.observacoes ? `
-                <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-sm">
-                    <div class="border-b border-gray-700 p-4">
-                        <div class="flex items-center">
-                            <div class="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center mr-2">
-                                <i class="fas fa-comment-alt text-gray-400 text-sm"></i>
-                            </div>
-                            <h3 class="text-md font-semibold text-gray-200">Observações</h3>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <p class="text-gray-300 text-sm leading-relaxed">${agendamento.observacoes}</p>
-                    </div>
-                </div>
-                ` : ''}
-            </div>`;
-            document.getElementById('status-content').innerHTML = html;
-            document.getElementById('status-modal').classList.remove('hidden');
-        }
-
-        // Efeito de transição entre páginas
-        function showPageTransition(callback) {
-            const overlay = document.getElementById('page-transition');
-            overlay.style.pointerEvents = 'auto';
-            overlay.style.opacity = '1';
-            setTimeout(() => {
-                callback();
-            }, 500);
-        }
-        document.getElementById('btn-agendar').addEventListener('click', function(e) {
-            e.preventDefault();
-            showPageTransition(() => {
-                window.location.href = '/agendamento.html';
-            });
-        });
-        window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                const overlay = document.getElementById('page-transition');
-                overlay.style.opacity = '0';
-                overlay.style.pointerEvents = 'none';
-            }, 400);
-        });
-        document.getElementById('btn-agendar').addEventListener('click', function(e) {
-            e.preventDefault();
-            const overlay = document.getElementById('page-transition');
-            overlay.style.pointerEvents = 'auto';
-            overlay.style.opacity = '1';
-            setTimeout(function() {
-                window.location.href = '/agendamento.html';
-            }, 500);
-        });
-        document.querySelectorAll('.btn-voltar').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const overlay = document.getElementById('page-transition');
-                overlay.style.pointerEvents = 'auto';
-                overlay.style.opacity = '1';
-                setTimeout(function() {
-                    window.location.href = '/';
-                }, 500);
-            });
-        });
+        // Fechar modal com ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeConsultaModal();
