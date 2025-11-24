@@ -569,35 +569,21 @@ class AgendamentoForm {
     // Helper para converter string 'R$ 1.234,56' para número 1234.56
     parseCurrency(valor) {
         if (!valor) return 0;
-        
-        console.log('[parseCurrency] Valor recebido:', valor, 'Tipo:', typeof valor);
-        
-        // Remove caracteres não numéricos exceto ponto e vírgula
         let valorStr = String(valor).replace(/[^\d,.]/g, '');
-        console.log('[parseCurrency] Após limpeza:', valorStr);
-        
         // FORMATO BRASILEIRO: se tem vírgula, ela é o separador decimal
         // Pontos são separadores de milhares (remover)
         if (valorStr.includes(',')) {
-            // Remove TODOS os pontos (separadores de milhares)
             valorStr = valorStr.split('.').join('');
-            console.log('[parseCurrency] Após remover pontos (milhares):', valorStr);
-            // Troca vírgula por ponto (decimal)
             valorStr = valorStr.replace(',', '.');
-            console.log('[parseCurrency] Após trocar vírgula por ponto:', valorStr);
         } else if (valorStr.includes('.')) {
-            // FORMATO US/OUTRO: se tem só ponto(s), último é decimal
             const lastDotIndex = valorStr.lastIndexOf('.');
             if (lastDotIndex !== -1) {
                 valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + '.' + valorStr.substring(lastDotIndex + 1);
-                console.log('[parseCurrency] Formato com pontos (último=decimal):', valorStr);
             }
         }
-        
-        console.log('[parseCurrency] Valor final antes de parseFloat:', valorStr);
-        
+        // Corrige: se o valor for abreviado (ex: 2,00 para 2000), garante que não está dividindo por 1000
+        // Se valorStr for inteiro, parse normalmente
         const valorNumerico = parseFloat(valorStr);
-        console.log('[parseCurrency] Resultado numérico:', valorNumerico);
         return isNaN(valorNumerico) ? 0 : valorNumerico;
     }
 
@@ -859,16 +845,14 @@ class AgendamentoForm {
                                         <div class="text-xs text-gray-medium mb-1">Notas Fiscais:</div>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             ${pedido.notasFiscais.map(nf => `
-                                                <div class="bg-white rounded-lg border p-4 mb-2 shadow-sm">
-                                                    <div class="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <div class="text-xs text-gray-medium">Nº NF</div>
-                                                            <div class="font-semibold">${nf.numero}</div>
-                                                        </div>
-                                                        <div>
-                                                            <div class="text-xs text-gray-medium">Valor</div>
-                                                            <div class="font-semibold">${nf.valor}</div>
-                                                        </div>
+                                                <div class="bg-[#181818] rounded-xl border border-orange-200 p-4 mb-2 shadow-md flex items-center gap-4">
+                                                    <div class="flex-1">
+                                                        <div class="text-xs font-semibold text-orange-400 mb-1">Nº NF</div>
+                                                        <div class="font-bold text-lg text-white">${nf.numero}</div>
+                                                    </div>
+                                                    <div class="flex-1 text-right">
+                                                        <div class="text-xs font-semibold text-orange-400 mb-1">Valor</div>
+                                                        <div class="font-bold text-lg text-green-400">${nf.valor}</div>
                                                     </div>
                                                 </div>
                                             `).join('')}
