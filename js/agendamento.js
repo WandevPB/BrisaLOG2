@@ -780,7 +780,7 @@ class AgendamentoForm {
 
         // Card ainda mais largo
         const resumoHTML = `
-            <div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl p-12 card-3d border-4 border-orange-100">
+            <div class="max-w-6xl mx-auto bg-[#181818] rounded-3xl shadow-2xl p-12 card-3d border-4 border-orange-100">
                 <div class="flex items-center gap-3 mb-8">
                     <div class="bg-green-100 rounded-full p-3"><i class="fas fa-check text-green-600 text-xl"></i></div>
                     <div>
@@ -790,7 +790,7 @@ class AgendamentoForm {
                 </div>
                 <div class="mb-8">
                     <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-truck"></i> Dados do Transportador</div>
-                    <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
+                    <div class="grid md:grid-cols-2 gap-6 bg-[#181818] rounded-xl p-6 shadow">
                         <div>
                             <div class="text-xs text-gray-medium">CNPJ</div>
                             <div class="font-semibold">${this.formData.transportador.documento || 'Não informado'}</div>
@@ -807,7 +807,7 @@ class AgendamentoForm {
                 </div>
                 <div class="mb-8">
                     <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-id-card"></i> Dados do Motorista</div>
-                    <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
+                    <div class="grid md:grid-cols-2 gap-6 bg-[#181818] rounded-xl p-6 shadow">
                         <div>
                             <div class="text-xs text-gray-medium">Nome</div>
                             <div class="font-semibold">${this.formData.transportador.nomeResponsavel || 'Não informado'}</div>
@@ -824,7 +824,7 @@ class AgendamentoForm {
                 </div>
                 <div class="mb-8">
                     <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-map-marker-alt"></i> Detalhes da Entrega</div>
-                    <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
+                    <div class="grid md:grid-cols-2 gap-6 bg-[#181818] rounded-xl p-6 shadow">
                         <div>
                             <div class="text-xs text-gray-medium">Quantidade de Volumes</div>
                             <div class="font-semibold">${quantidadeVolumes}</div>
@@ -845,7 +845,7 @@ class AgendamentoForm {
                 </div>
                 <div>
                     <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-file-invoice"></i> Pedidos e Notas Fiscais (${notasFiscaisCount})</div>
-                    <div class="bg-gray-50 rounded-xl p-6 shadow">
+                    <div class="bg-[#181818] rounded-xl p-6 shadow">
                         ${this.formData.pedidos.map((pedido, idx) => {
                             // *** CORREÇÃO AQUI: 'pedido.numero' agora contém o número correto ***
                             return `
