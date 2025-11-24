@@ -452,6 +452,7 @@
                 'confirmado': 1,
                 'reagendamento': 2, // CD sugeriu reagendamento
                 'aguardando_resposta_cd': 3, // Transportador sugeriu reagendamento
+                'nao-veio': 3, // Transportador não veio, fica aguardando confirmação do Transportador
                 'em_transito': 4,
                 'entregue': 5
             };
@@ -469,13 +470,13 @@
                     </div>
                 `;
             });
-            // Caminhão 3D super dinâmico
+            // Caminhão 3D super dinâmico - agora acima dos pontos
             const truckLeft = (currentIdx * 140) + 40;
             const truck3D = `
-                <div id="timeline-truck" class="absolute top-0" style="left:${truckLeft}px;transition:left 1s;">
+                <div id="timeline-truck" class="absolute -top-10" style="left:${truckLeft}px;transition:left 1s;z-index:10;">
                     <div style="perspective: 800px;">
-                        <i class="fas fa-truck-fast text-5xl text-orange-primary truck-icon" style="animation: float-3d 2s cubic-bezier(.4,0,.2,1) infinite, timeline-pulse 1.5s infinite alternate;"></i>
-                        <div class="w-16 h-2 bg-gradient-to-r from-orange-primary to-orange-secondary rounded-full mt-2 mx-auto animate-pulse"></div>
+                        <i class="fas fa-truck-fast text-6xl text-orange-primary truck-icon" style="animation: float-3d 2s cubic-bezier(.4,0,.2,1) infinite, timeline-pulse 1.5s infinite alternate;"></i>
+                        <div class="w-20 h-2 bg-gradient-to-r from-orange-primary to-orange-secondary rounded-full mt-2 mx-auto animate-pulse"></div>
                     </div>
                 </div>
             `;
@@ -486,10 +487,10 @@
                         Fluxo Logístico: <span class="font-bold ${statusInfo.color} px-3 py-1 rounded-lg">${statusInfo.text}</span>
                     </h3>
                     <p class="text-text-secondary mb-8 text-center">${statusInfo.description}</p>
-                    <div class="relative h-32 w-full mb-10 overflow-x-auto">
+                    <div class="relative h-40 w-full mb-10 overflow-x-auto">
                         <div class="flex items-center h-32 relative" style="min-width:${timelineStatuses.length * 140}px;">
-                            ${stepsHTML}
                             ${truck3D}
+                            ${stepsHTML}
                         </div>
                     </div>
                 </div>
