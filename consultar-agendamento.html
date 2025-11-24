@@ -934,20 +934,31 @@
             agendamentoDiv.innerHTML = `<div class="card-detail text-center p-10"><p class="text-xl text-orange-400"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando detalhes para ${codigo}...</p></div>`;
 
             try {
-                await new Promise(resolve => setTimeout(resolve, 500)); 
+                await new Promise(resolve => setTimeout(resolve, 500));
 
                 const response = await fetch(`${API_BASE_URL}/api/agendamentos/consultar/${codigo}`);
-                const result = await response.json();
-                
-                if (result.success && result.data) {
+                let result = null;
+                let errorMsg = '';
+                if (!response.ok) {
+                    errorMsg = `Erro HTTP ${response.status}: ${response.statusText}`;
+                } else {
+                    try {
+                        result = await response.json();
+                    } catch (jsonError) {
+                        errorMsg = 'Resposta da API está malformada.';
+                    }
+                }
+
+                if (result && result.success && result.data) {
                     renderAgendamentoDetalhes(result.data);
                 } else {
-                    agendamentoDiv.innerHTML = `<div class="card-detail text-center p-10 bg-red-900/30 border-red-700 text-red-400"><i class="fas fa-times-circle mr-2"></i>Agendamento ${codigo} não encontrado.</div>`;
-                    showNotification(`Agendamento ${codigo} não encontrado.`, 'error');
+                    let apiError = (result && (result.error || result.message)) ? (result.error || result.message) : errorMsg;
+                    agendamentoDiv.innerHTML = `<div class="card-detail text-center p-10 bg-red-900/30 border-red-700 text-red-400"><i class="fas fa-times-circle mr-2"></i>Agendamento ${codigo} não encontrado.<br>${apiError ? `<br><span class='text-xs'>${apiError}</span>` : ''}</div>`;
+                    showNotification(`Agendamento ${codigo} não encontrado. ${apiError ? apiError : ''}`, 'error');
                 }
             } catch (error) {
-                agendamentoDiv.innerHTML = `<div class="card-detail text-center p-10 bg-red-900/30 border-red-700 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>Erro ao consultar o agendamento. Verifique a conexão com a API.</div>`;
-                showNotification('Erro de conexão com a API.', 'error');
+                agendamentoDiv.innerHTML = `<div class="card-detail text-center p-10 bg-red-900/30 border-red-700 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>Erro ao consultar o agendamento. Verifique a conexão com a API.<br><span class='text-xs'>${error.message}</span></div>`;
+                showNotification('Erro de conexão com a API. ' + error.message, 'error');
             }
         }
 
