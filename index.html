@@ -18,87 +18,29 @@
         body {
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
-            background: #000;
-            color: #fff;
+            background: #f8fafc;
+            color: #222;
         }
 
         /* ==== BACKGROUND ANIMADO ==== */
         .dark-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 50% 50%, #1a0a0a 0%, #000 100%);
-            z-index: -2;
+            display: none;
         }
-
         .grid-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(255, 107, 53, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 107, 53, 0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            z-index: -1;
-            animation: grid-move 20s linear infinite;
-        }
-
-        @keyframes grid-move {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(60px, 60px); }
-        }
-
-        /* Partículas flutuantes */
-        .particles-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: #FF6B35;
-            border-radius: 50%;
-            filter: blur(1px);
-            opacity: 0;
-            animation: particle-rise 15s infinite ease-in;
-        }
-
-        @keyframes particle-rise {
-            0% {
-                transform: translateY(100vh) scale(0);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100px) scale(1);
-                opacity: 0;
-            }
+            background-image: linear-gradient(rgba(255, 107, 53, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 107, 53, 0.08) 1px, transparent 1px);
         }
 
         /* ==== NAVBAR ==== */
         .glass-nav {
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(20px);
+            background: linear-gradient(90deg, #FF6B35 80%, #FF8C42 100%);
             border-bottom: 1px solid rgba(255, 107, 53, 0.2);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            color: #fff;
+        }
+        .glass-nav h1, .glass-nav p {
+            color: #fff !important;
+        }
+        .glass-nav .text-gray-400 {
+            color: #fff !important;
         }
 
         /* ==== HERO SECTION ==== */
@@ -224,9 +166,9 @@
 
         /* ==== FEATURES SECTION ==== */
         .feature-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 107, 53, 0.2);
+            background: #fff !important;
+            color: #222 !important;
+            border: 1px solid rgba(255, 107, 53, 0.15);
             border-radius: 20px;
             padding: 2.5rem;
             transition: all 0.5s cubic-bezier(0.23, 1, 0.320, 1);
@@ -275,9 +217,9 @@
 
         /* ==== STATS SECTION ==== */
         .stat-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 107, 53, 0.2);
+            background: #fff !important;
+            color: #222 !important;
+            border: 1px solid rgba(255, 107, 53, 0.15);
             border-radius: 20px;
             padding: 3rem 2rem;
             text-align: center;
@@ -342,18 +284,18 @@
         }
 
         .timeline-content {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 107, 53, 0.2);
+            background: #fff !important;
+            color: #222 !important;
+            border: 1px solid rgba(255, 107, 53, 0.15);
             border-radius: 15px;
             padding: 2rem;
         }
 
         /* ==== FAQ SECTION ==== */
         .faq-item {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 107, 53, 0.2);
+            background: #fff !important;
+            color: #222 !important;
+            border: 1px solid rgba(255, 107, 53, 0.15);
             border-radius: 15px;
             margin-bottom: 1rem;
             overflow: hidden;
@@ -446,7 +388,7 @@
                     </div>
                     <div>
                         <h1 class="text-xl font-bold text-white">BrisaLOG Agenda</h1>
-                        <p class="text-xs text-gray-400">Sistema de Agendamentos</p>
+                        <p class="text-xs text-white">Sistema de Agendamentos</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -472,9 +414,9 @@
                     Agendamento de<br>
                     <span class="gradient-text">Entregas Inteligente</span>
                 </h1>
-                <p class="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed">
+                <p class="text-xl md:text-2xl text-orange-500 max-w-3xl mx-auto mb-12 leading-relaxed">
                     Simplifique suas entregas nos CDs da Brisanet.<br>
-                    <strong class="text-white">Rápido, fácil e sem burocracia.</strong>
+                    <strong class="text-orange-600">Rápido, fácil e sem burocracia.</strong>
                 </p>
             </div>
 
@@ -493,7 +435,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 max-w-5xl mx-auto">
                 <div class="stat-card">
                     <div class="stat-number" data-target="1200">0</div>
-                    <p class="text-gray-400 mt-2">Agendamentos</p>
+                    <p class="text-orange-500 mt-2">Agendamentos</p>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" data-target="98">0</div>
@@ -518,7 +460,7 @@
                 <h2 class="text-5xl font-black mb-4">
                     Por que escolher o <span class="gradient-text">BrisaLOG</span>?
                 </h2>
-                <p class="text-xl text-gray-400">Desenvolvido para simplificar seu dia a dia</p>
+                <p class="text-xl text-orange-500">Desenvolvido para simplificar seu dia a dia</p>
             </div>
 
             <div class="grid md:grid-cols-3 gap-8">
@@ -527,7 +469,7 @@
                         <i class="fas fa-bolt"></i>
                     </div>
                     <h3 class="text-2xl font-bold mb-3">Rápido e Eficiente</h3>
-                    <p class="text-gray-400 leading-relaxed">
+                    <p class="text-orange-500 leading-relaxed">
                         Agende sua entrega em menos de 2 minutos. Interface intuitiva e processo simplificado.
                     </p>
                 </div>
@@ -592,7 +534,7 @@
                 <h2 class="text-5xl font-black mb-4">
                     Como <span class="gradient-text">Funciona</span>?
                 </h2>
-                <p class="text-xl text-gray-400">Simples em 4 passos</p>
+                <p class="text-xl text-orange-500">Simples em 4 passos</p>
             </div>
 
             <div class="space-y-8">
@@ -646,7 +588,7 @@
                 <h2 class="text-5xl font-black mb-4">
                     Perguntas <span class="gradient-text">Frequentes</span>
                 </h2>
-                <p class="text-xl text-gray-400">Tire suas dúvidas</p>
+                <p class="text-xl text-orange-500">Tire suas dúvidas</p>
             </div>
 
             <div class="space-y-4 fade-in">
@@ -708,7 +650,7 @@
                 <h2 class="text-5xl md:text-6xl font-black mb-6">
                     Pronto para <span class="gradient-text">Começar</span>?
                 </h2>
-                <p class="text-xl text-gray-400 mb-12">
+                <p class="text-xl text-orange-500 mb-12">
                     Agende sua próxima entrega em menos de 2 minutos
                 </p>
                 <a href="/agendamento.html" class="btn-neon">
