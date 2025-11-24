@@ -874,7 +874,15 @@
                 window.location.href = '/agendamento.html';
             });
         });
-        // Fade-out ao clicar em links principais
+        // Fade-in na entrada
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const overlay = document.getElementById('page-transition');
+                overlay.style.opacity = '0';
+                overlay.style.pointerEvents = 'none';
+            }, 400);
+        });
+        // Fade-out ao clicar em Agendar
         document.getElementById('btn-agendar').addEventListener('click', function(e) {
             e.preventDefault();
             const overlay = document.getElementById('page-transition');
