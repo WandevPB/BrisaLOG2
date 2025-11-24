@@ -1,1052 +1,893 @@
-﻿        // Função global para obter URL base da API
-        function getApiBaseUrl() {
-            return API_BASE_URL;
-        }
-
-        // Função global para visualizar PDF
-        function viewPDF(filename) {
-            if (!filename) return;
-            const baseUrl = getApiBaseUrl();
-            window.open(baseUrl + '/uploads/' + filename, '_blank');
-        }
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consultar Status - BrisaLOG Agenda</title>
-    <script src="config.js"></script>
+    <title>Consulta de Agendamento | BrisaLOG - Status Detalhado</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <script>
-        // Função utilitária para formatar datas ISO ou YYYY-MM-DD no padrão brasileiro sem bug de fuso
-            // Função igual à do dashboard para formatar datas de forma robusta
-            // Formata datas YYYY-MM-DD ou ISO para DD/MM/YYYY sem criar objeto Date (evita bug de fuso)
-            function formatDateBrFromISO(dateString) {
-                if (!dateString) return 'Data não informada';
-                // Extrai apenas a parte da data (YYYY-MM-DD)
-                const [isoDate] = dateString.split('T');
-                if (!isoDate || isoDate.length < 10) return 'Data inválida';
-                const [ano, mes, dia] = isoDate.split('-');
-                return `${dia}/${mes}/${ano}`;
-            }
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                    },
                     colors: {
-                        orange: {
-                            primary: '#FF6B35',
-                            secondary: '#FF8C42', 
-                            accent: '#FF9F66',
-                            light: '#FFAB7A'
+                        'bg-dark': '#121212',
+                        'card-dark': '#1E1E1E',
+                        'border-dark': '#333333',
+                        'orange-primary': '#FF6B35',
+                        'orange-secondary': '#FF8C42',
+                        'gray-light': '#E0E0E0',
+                        'text-secondary': '#B0B0B0',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-8px)' },
                         },
-                        gray: {
-                            dark: '#2D3748',
-                            medium: '#4A5568',
-                            light: '#A0AEC0'
+                        'truck-move': {
+                            '0%': { left: '0%', transform: 'translateX(-50%)' },
+                            '100%': { left: 'calc(100% - 1.5rem)', transform: 'translateX(-50%)' },
                         }
                     },
                     animation: {
-                        'bounce-gentle': 'bounce 2s infinite',
-                        'pulse-slow': 'pulse 3s infinite',
-                        'fade-in': 'fadeIn 0.5s ease-in',
-                        'slide-up': 'slideUp 0.6s ease-out',
-                        'scale-in': 'scaleIn 0.4s ease-out'
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' }
-                        },
-                        slideUp: {
-                            '0%': { opacity: '0', transform: 'translateY(30px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' }
-                        },
-                        scaleIn: {
-                            '0%': { opacity: '0', transform: 'scale(0.9)' },
-                            '100%': { opacity: '1', transform: 'scale(1)' }
-                        }
-                    },
-                    boxShadow: {
-                        '3d': '0 10px 25px rgba(0,0,0,0.1), 0 6px 12px rgba(0,0,0,0.08)',
-                        '3d-hover': '0 15px 35px rgba(0,0,0,0.15), 0 8px 16px rgba(0,0,0,0.1)'
+                        float: 'float 3s ease-in-out infinite',
+                        'truck-move': 'truck-move 4s linear infinite',
                     }
                 }
             }
         }
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        .btn-3d {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
-            transform: translateY(0);
-            transition: all 0.2s ease;
+        /* Estilos globais e de fundo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #121212;
+            color: #E0E0E0;
+            min-height: 100vh;
         }
-        .btn-3d:hover {
-            box-shadow: 0 8px 16px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1);
+        .navbar {
+            background: rgba(20,20,20,0.95);
+            border-bottom: 1px solid #FF6B35;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 2px 12px rgba(255,107,53,0.1);
+        }
+        .card-detail {
+            background: linear-gradient(135deg, #1E1E1E 0%, #171717 100%);
+            border: 1px solid #333333;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            transition: all 0.3s;
+        }
+        .card-detail:hover {
+            border-color: #FF6B35;
+            box-shadow: 0 4px 20px rgba(255,107,53,0.15);
             transform: translateY(-2px);
         }
-        .btn-3d:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .card-3d {
-            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-        .card-3d:hover {
-            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-            transform: translateY(-4px);
-        }
-        
-        .icon-3d {
-            box-shadow: 0 4px 12px rgba(255,107,53,0.3);
-            transition: all 0.3s ease;
-        }
-        .icon-3d:hover {
-            box-shadow: 0 6px 16px rgba(255,107,53,0.4);
-            transform: translateY(-2px);
-        }
+        /* Status Colors */
+        .status-pendente { background-color: #FF8C42; color: #fff; }
+        .status-confirmado { background-color: #10B981; color: #fff; } /* Green */
+        .status-entregue { background-color: #3B82F6; color: #fff; } /* Blue */
+        .status-nao-veio, .status-cancelado { background-color: #EF4444; color: #fff; } /* Red */
+        .status-reagendamento, .status-aguardando_resposta_cd { background-color: #FBBF24; color: #333; } /* Yellow/Amber */
 
-        .shadow-3d {
-            box-shadow: 0 10px 25px rgba(255,107,53,0.2), 0 6px 12px rgba(255,107,53,0.1);
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
         }
-        .shadow-3d-hover {
-            box-shadow: 0 15px 35px rgba(255,107,53,0.25), 0 8px 16px rgba(255,107,53,0.15);
+        .timeline-path {
+            position: absolute;
+            top: 50%;
+            left: 50px;
+            right: 50px;
+            height: 4px;
+            background: #333;
+            transform: translateY(-50%);
         }
-
-        .step-number {
-            background: linear-gradient(135deg, #FF6B35, #FF8C42);
-            box-shadow: 0 4px 12px rgba(255,107,53,0.3);
-        }
-
-        .feature-icon {
-            background: linear-gradient(135deg, #FF9F66, #FFAB7A);
-        }
-
-        .timeline-dot {
-            box-shadow: 0 0 0 4px rgba(255,107,53,0.1);
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #FF6B35;
+        .timeline-step {
+            position: absolute;
+            top: 50%;
+            width: 12px;
+            height: 12px;
+            background: #444;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
+            transform: translate(-50%, -50%);
+            transition: background 0.5s, transform 0.5s;
         }
+        .timeline-step.active {
+            background: #FF6B35;
+            transform: translate(-50%, -50%) scale(1.5);
+        }
+        .timeline-label {
+            position: absolute;
+            top: -40px;
+            color: #B0B0B0;
+            font-size: 0.8rem;
+            text-align: center;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        .timeline-truck {
+            position: absolute;
+            top: 50%;
+            width: 3rem; 
+            height: 3rem; 
+            transform: translate(-50%, -50%);
+            transition: left 2s ease-in-out; 
+            z-index: 10;
+        }
+        /* truck position is set dynamically by JS */
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Style for inputs in dark mode */
+        input:not(.timeline-input), textarea, select {
+            background-color: #2D2D2D !important;
+            border-color: #444444 !important;
+            color: #E0E0E0 !important;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-orange-50 to-orange-100 min-h-screen font-sans">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-4">
-                    <div class="w-10 h-10 bg-gradient-to-r from-orange-primary to-orange-secondary rounded-lg flex items-center justify-center icon-3d">
-                        <i class="fas fa-rocket text-white text-lg"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold text-gray-dark">BrisaLOG Agenda</h1>
-                        <p class="text-sm text-gray-medium">Consulta de Status</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="text-gray-medium hover:text-orange-primary transition-colors duration-300 font-medium">
-                        <i class="fas fa-home mr-1"></i>Início
-                    </a>
-                    <a href="/agendamento" class="text-gray-medium hover:text-orange-primary transition-colors duration-300 font-medium">
-                        <i class="fas fa-calendar-plus mr-1"></i>Agendar
-                    </a>
-                    <a href="/login" class="bg-gradient-to-r from-orange-primary to-orange-secondary text-white px-4 py-2 rounded-lg btn-3d hover:shadow-lg transition-all duration-300">
-                        <i class="fas fa-user mr-1"></i>Login CD
-                    </a>
-                </div>
-            </div>
+<body>
+
+    <nav class="navbar flex items-center justify-between px-8 py-4">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-truck-fast text-white text-xl"></i>
+            </a>
+            <span class="font-bold text-lg text-white">BrisaLOG Agenda</span>
+        </div>
+        <div class="flex gap-4 items-center">
+            <a href="index.html" class="text-text-secondary hover:text-white transition-colors"><i class="fas fa-arrow-left mr-2"></i>Início</a>
+            <button onclick="openConsultaModal()" class="bg-orange-primary hover:bg-orange-secondary text-white font-semibold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-search mr-2"></i>Consultar outro</button>
         </div>
     </nav>
+    
+    <main class="max-w-7xl mx-auto px-4 py-10">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold text-white mb-2 flex items-center justify-center gap-3">
+                <i class="fas fa-route text-orange-primary"></i>
+                Acompanhamento da Solicitação
+            </h1>
+            <p class="text-xl text-text-secondary">Visualize o status e todos os detalhes do seu agendamento.</p>
+        </header>
 
-    <!-- Header Section -->
-    <section class="py-12 bg-gradient-to-r from-orange-primary to-orange-secondary">
-        <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-2xl p-8 card-3d">
-                <div class="text-white">
-                    <div class="bg-white bg-opacity-30 p-4 rounded-2xl inline-block mb-6">
-                        <i class="fas fa-search text-white text-3xl"></i>
-                    </div>
-                    <h1 class="text-4xl font-bold mb-4">Consultar Status do Agendamento</h1>
-                    <p class="text-xl text-orange-100">
-                        Digite o código do seu agendamento para acompanhar o status e histórico completo
-                    </p>
-                </div>
+        <div id="agendamento-detalhes">
+            <div class="text-center p-8 bg-card-dark rounded-xl shadow-lg border border-border-dark">
+                <p class="text-xl text-text-secondary"><i class="fas fa-spinner fa-spin mr-2"></i>Carregando detalhes do agendamento...</p>
             </div>
-        </div>
-    </section>
+            </div>
 
-    <!-- Search Section -->
-    <section class="py-12">
-        <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white rounded-2xl shadow-3d p-8">
-                <form id="consulta-form" class="space-y-6">
-                    <div>
-                        <label for="codigo-agendamento" class="block text-gray-dark font-bold text-lg mb-3">
-                            <i class="fas fa-qrcode text-orange-primary mr-2"></i>
-                            Código do Agendamento
-                        </label>
-                        <div class="relative">
-                            <input type="text" 
-                                   id="codigo-agendamento" 
-                                   name="codigo" 
-                                   required
-                                   class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-xl focus:border-orange-primary focus:ring-4 focus:ring-orange-primary focus:ring-opacity-20 transition-all uppercase"
-                                   placeholder="AGD000001"
-                                   maxlength="10">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-4">
-                                <i class="fas fa-search text-gray-400 text-lg"></i>
-                            </div>
-                        </div>
-                        <p class="text-gray-medium text-sm mt-2">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            O código foi enviado para seu e-mail quando o agendamento foi criado
-                        </p>
+    </main>
+
+    <footer class="text-center py-6 text-text-secondary border-t border-border-dark mt-10">
+        <p class="text-sm">&copy; 2025 BrisaNET. Sistema BrisaLOG Agenda.</p>
+    </footer>
+
+    <div id="consulta-modal" class="hidden fixed inset-0 modal-backdrop z-[100] flex items-center justify-center">
+        <div class="bg-card-dark rounded-2xl max-w-md w-full mx-4 border border-border-dark">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-4 rounded-2xl inline-block mb-4">
+                        <i class="fas fa-search text-white text-2xl"></i>
                     </div>
-
-                    <button type="submit" 
-                            class="w-full bg-gradient-to-r from-orange-primary to-orange-secondary text-white font-bold py-4 px-8 rounded-xl btn-3d shadow-3d hover:shadow-3d-hover transition-all duration-300 text-lg">
-                        <span id="btn-text">
-                            <i class="fas fa-search mr-3"></i>
-                            Consultar Agendamento
-                        </span>
-                        <span id="btn-loading" class="hidden">
-                            <div class="loading-spinner inline-block mr-3"></div>
-                            Consultando...
-                        </span>
-                    </button>
+                    <h2 class="text-2xl font-bold text-white mb-2">Consultar Agendamento</h2>
+                    <p class="text-text-secondary">Digite o código do seu agendamento</p>
+                </div>
+                <form id="consulta-form" class="space-y-4">
+                    <div>
+                        <label class="block text-white font-semibold mb-2">Código do Agendamento</label>
+                        <input type="text" id="codigo-consulta" required class="w-full px-4 py-3 border border-border-dark rounded-lg bg-bg-dark text-white focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20 transition-all" placeholder="AGD123456">
+                    </div>
+                    <div class="flex justify-end space-x-4 mt-6">
+                        <button type="button" onclick="closeConsultaModal()" class="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-all">Cancelar</button>
+                        <button type="submit" class="bg-orange-primary hover:bg-orange-secondary text-white font-semibold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-search mr-2"></i>Consultar</button>
+                    </div>
                 </form>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Result Section -->
-    <section id="result-section" class="hidden py-12">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div id="result-content">
-                <!-- Content will be inserted here -->
+    <div id="contra-proposta-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[110] modal-backdrop">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-card-dark rounded-xl max-w-md w-full border border-border-dark">
+                <div class="p-6 border-b border-border-dark">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-white">
+                            <i class="fas fa-calendar-alt mr-2 text-blue-400"></i>
+                            <span id="modal-reagendar-titulo">Sugerir Nova Data</span>
+                        </h2>
+                        <button type="button" onclick="fecharContraPropostaModal()" class="text-text-secondary hover:text-white text-xl">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <p class="text-text-secondary mt-2" id="modal-reagendar-descricao">Selecione a nova data para o seu agendamento.</p>
+                </div>
+                
+                <div class="p-6">
+                    <form id="contra-proposta-form">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="contra-proposta-data" class="block text-sm font-medium text-white mb-1">Nova Data *</label>
+                                <input type="date" id="contra-proposta-data" name="novaData" required 
+                                    class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label for="contra-proposta-horario" class="block text-sm font-medium text-white mb-1">Novo Horário *</label>
+                                <select id="contra-proposta-horario" name="novoHorario" required 
+                                    class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">Selecione o horário</option>
+                                    <option value="08:00-12:00">08:00 às 12:00</option>
+                                    <option value="13:00-17:00">13:00 às 17:00</option>
+                                    <option value="08:00-17:00">08:00 às 17:00 (Dia Inteiro)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="contra-proposta-comentario" class="block text-sm font-medium text-white mb-1">Comentário (opcional)</label>
+                                <textarea id="contra-proposta-comentario" name="comentario" rows="3" placeholder="Explique o motivo da nova data sugerida..."
+                                    class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3 mt-6">
+                            <button type="submit" class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-all font-medium">
+                                <i class="fas fa-paper-plane mr-2"></i>Enviar Proposta
+                            </button>
+                            <button type="button" onclick="fecharContraPropostaModal()" class="px-4 py-2 border border-gray-600 text-text-secondary rounded-md hover:bg-gray-700 transition-all">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </section>
-
-    <!-- Modal Sugerir Outra Data -->
-    <div id="modal-contra-proposta" style="z-index:2147483647 !important; position:fixed !important; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7) !important; display:flex; align-items:center; justify-content:center;" class="hidden">
-        <div class="bg-white rounded-2xl shadow-3d p-8 w-full max-w-md relative animate-fade-in">
-            <button onclick="fecharContraProposta()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-2xl font-bold">&times;</button>
-            <h2 class="text-2xl font-bold mb-4 text-orange-primary flex items-center"><i class="fas fa-calendar-alt mr-2"></i>Sugerir Outra Data</h2>
-            <form id="form-contra-proposta">
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-semibold mb-2">Nova Data</label>
-                    <input type="date" id="nova-data" name="nova-data" class="w-full border rounded-lg px-4 py-2" required>
+    </div>
+    
+    <div id="cancelar-solicitacao-modal" class="hidden fixed inset-0 modal-backdrop z-[110] flex items-center justify-center">
+        <div class="bg-card-dark rounded-xl shadow-lg p-8 w-full max-w-md border border-red-600">
+            <h2 class="text-xl font-bold mb-4 text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Confirmação de Cancelamento</h2>
+            <p class="text-text-secondary mb-4">Se você cancelar esta solicitação, todos os dados serão permanentemente removidos e não poderão ser recuperados. Por favor, confirme o motivo.</p>
+            <form id="form-cancelar-solicitacao">
+                <label for="motivo-cancelamento" class="block text-sm font-medium text-white mb-2">Motivo do cancelamento:</label>
+                <textarea id="motivo-cancelamento" name="motivo" rows="3" required class="w-full border border-border-dark rounded-lg p-2 mb-4 bg-bg-dark"></textarea>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="fecharCancelarSolicitacaoModal()" class="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Voltar</button>
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Confirmar Cancelamento</button>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-semibold mb-2">Novo Horário</label>
-                    <input type="text" id="novo-horario" name="novo-horario" class="w-full border rounded-lg px-4 py-2" placeholder="Ex: 08:00-10:00" required>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-semibold mb-2">Motivo (opcional)</label>
-                    <textarea id="motivo-contra-proposta" name="motivo" class="w-full border rounded-lg px-4 py-2" rows="2"></textarea>
-                </div>
-                <button type="submit" class="w-full bg-orange-primary text-white font-bold py-3 rounded-lg btn-3d hover:bg-orange-secondary transition-all">Enviar Sugestão</button>
             </form>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-gray-dark text-white py-12 mt-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-3 gap-8">
-                <div>
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-10 h-10 bg-gradient-to-r from-orange-primary to-orange-secondary rounded-lg flex items-center justify-center">
-                            <i class="fas fa-rocket text-white"></i>
-                        </div>
-                        <span class="text-xl font-bold">BrisaLOG Agenda</span>
-                    </div>
-                    <p class="text-gray-light">
-                        Sistema de agendamento de entregas da Brisanet. Simples, rápido e eficiente.
-                    </p>
-                </div>
-                <div>
-                    <h3 class="font-bold mb-4">Links Rápidos</h3>
-                    <ul class="space-y-2">
-                        <li><a href="/" class="text-gray-light hover:text-orange-primary transition-colors">Página Inicial</a></li>
-                        <li><a href="/agendamento" class="text-gray-light hover:text-orange-primary transition-colors">Agendar Entrega</a></li>
-                        <li><a href="/login" class="text-gray-light hover:text-orange-primary transition-colors">Login CD</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="font-bold mb-4">Suporte</h3>
-                    <ul class="space-y-2 text-gray-light">
-                        <li><i class="fas fa-phone mr-2 text-orange-primary"></i>(84) 3301-5555</li>
-                        <li><i class="fas fa-envelope mr-2 text-orange-primary"></i>suporte@brisanet.com.br</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="border-t border-gray-600 mt-8 pt-8 text-center">
-                <p class="text-gray-light">&copy; 2025 Brisanet. Todos os direitos reservados.</p>
-            </div>
-        </div>
-    </footer>
+    <div id="notification-container" class="fixed top-5 right-5 space-y-2 z-[150]"></div>
 
-    <!-- Notification Container -->
-    <div id="notification-container" class="fixed top-5 right-5 z-50"></div>
 
     <script>
-    // Modal Sugerir Outra Data
-    let codigoContraProposta = null;
-    function abrirContraPropostaModal(codigo) {
-        // Fecha qualquer modal de status que esteja aberto
-        const possiveisModais = [
-            document.getElementById('status-modal'),
-            document.getElementById('consulta-modal'),
-            document.getElementById('detail-modal'),
-            document.getElementById('all-status-modal'),
-            document.getElementById('bloqueio-modal'),
-            document.getElementById('modal-entregas'),
-            document.getElementById('gerenciar-bloqueios-modal'),
-            document.getElementById('suggest-date-modal')
-        ];
-        possiveisModais.forEach(function(m){ if(m) m.classList.add('hidden'); });
+        // Variáveis globais (simulação de dados e API)
+        const API_BASE_URL = 'http://localhost:3000'; 
+        let currentAgendamento = null;
+        let currentCodigoReagendamento = null;
 
-        codigoContraProposta = codigo;
-        const modal = document.getElementById('modal-contra-proposta');
-        if (modal.parentNode) modal.parentNode.removeChild(modal);
-        document.body.appendChild(modal);
-        modal.setAttribute('style', 'z-index:2147483647 !important; position:fixed !important; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7) !important; display:flex; align-items:center; justify-content:center;');
-        modal.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
-    }
-    function fecharContraProposta() {
-        document.getElementById('modal-contra-proposta').classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('form-contra-proposta').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const novaData = document.getElementById('nova-data').value; // string pura
-            const novoHorario = document.getElementById('novo-horario').value;
-            const motivo = document.getElementById('motivo-contra-proposta').value;
-            if (!novaData || !novoHorario) {
-                consultaPage.showNotification('Preencha a data e o horário.', 'error');
-                return;
-            }
+        // --- Funções de Utilitário ---
+
+        function formatDateBrFromISO(isoString) {
+            if (!isoString) return 'N/A';
             try {
-                // Exemplo de envio real para backend (ajuste a URL se necessário)
-                const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${codigoContraProposta}/responder-reagendamento`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        resposta: 'contra_proposta',
-                        novaData,
-                        novoHorario,
-                        comentario: motivo
-                    })
-                });
-                if (response.ok) {
-                    fecharContraProposta();
-                    consultaPage.showNotification('Sugestão enviada com sucesso!', 'success');
-                } else {
-                    const data = await response.json();
-                    consultaPage.showNotification(data.error || 'Erro ao enviar sugestão.', 'error');
-                }
-            } catch (error) {
-                consultaPage.showNotification('Erro ao enviar sugestão.', 'error');
-            }
-        });
-    });
-        class ConsultaStatusPage {
-            constructor() {
-                this.init();
-            }
-
-            init() {
-                this.setupEventListeners();
-                this.checkUrlParams();
-            }
-
-            setupEventListeners() {
-                document.getElementById('consulta-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.consultarAgendamento();
-                });
-
-                // Auto-format input
-                const input = document.getElementById('codigo-agendamento');
-                input.addEventListener('input', (e) => {
-                    e.target.value = e.target.value.toUpperCase();
-                });
-            }
-
-            checkUrlParams() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const codigo = urlParams.get('codigo');
-                if (codigo) {
-                    document.getElementById('codigo-agendamento').value = codigo;
-                    this.consultarAgendamento();
-                }
-            }
-
-            async consultarAgendamento() {
-                const codigo = document.getElementById('codigo-agendamento').value.trim();
-                
-                if (!codigo) {
-                    this.showNotification('Digite o código do agendamento', 'error');
-                    return;
-                }
-
-                this.showLoading(true);
-
-                try {
-                    const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/consultar/${codigo}`);
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        this.showResult(result.data);
-                    } else {
-                        this.showNotification(result.message || 'Agendamento não encontrado. Verifique o código e tente novamente.', 'error');
-                    }
-                } catch (error) {
-                    console.error('Erro ao consultar agendamento:', error);
-                    this.showNotification('Erro ao consultar agendamento. Tente novamente em alguns minutos.', 'error');
-                } finally {
-                    this.showLoading(false);
-                }
-            }
-
-            async mockConsultaAPI(codigo) {
-                // Simular delay da API
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
-                // Dados mock expandidos
-                const mockData = {
-                    'AGD000001': {
-                        codigo: 'AGD000001',
-                        Transportador: 'TechCorp Ltda',
-                        cnpj: '12.345.678/0001-90',
-                        email: 'contato@techcorp.com',
-                        telefone: '(84) 3333-1111',
-                        dataEntrega: '2025-09-05',
-                        horarioEntrega: '10:00-12:00',
-                        cdDestino: 'Bahia',
-                        enderecoCD: 'Rua das Entregas, 123 - Salvador/BA',
-                        status: 'confirmado',
-                        observacoes: 'Entrega confirmada para sexta-feira. Lembrar de trazer documentação completa.',
-                        valorTotal: '25.450,00',
-                        dataCriacao: '2025-08-30',
-                        dataConfirmacao: '2025-09-01',
-                        responsavelCD: 'João Silva',
-                        pedidos: [
-                            {
-                                numero: 'PED1001',
-                                notasFiscais: [
-                                    { numero: '123456', valor: '15.000,00', arquivo: 'nf-123456.pdf' },
-                                    { numero: '123457', valor: '10.450,00', arquivo: 'nf-123457.pdf' }
-                                ]
-                            }
-                        ],
-                        historico: [
-                            {
-                                data: '2025-08-30 14:30',
-                                acao: 'Agendamento criado',
-                                usuario: 'Sistema',
-                                detalhes: 'Agendamento criado pelo Transportador TechCorp Ltda'
-                            },
-                            {
-                                data: '2025-09-01 09:15',
-                                acao: 'Agendamento confirmado',
-                                usuario: 'João Silva (CD Bahia)',
-                                detalhes: 'Agendamento confirmado para 05/09/2025 das 10:00 às 12:00'
-                            }
-                        ]
-                    },
-                    'AGD000002': {
-                        codigo: 'AGD000002',
-                        Transportador: 'InfraTech Solutions',
-                        cnpj: '98.765.432/0001-10',
-                        email: 'vendas@infratech.com',
-                        telefone: '(81) 2222-3333',
-                        dataEntrega: '2025-09-06',
-                        horarioEntrega: '14:00-16:00',
-                        cdDestino: 'Pernambuco',
-                        enderecoCD: 'Av. Principal, 456 - Recife/PE',
-                        status: 'reagendamento',
-                        observacoes: 'CD sugeriu nova data devido a conflito de agenda',
-                        valorTotal: '42.780,50',
-                        dataCriacao: '2025-08-28',
-                        responsavelCD: 'Maria Santos',
-                        pedidos: [
-                            {
-                                numero: 'PED2001',
-                                notasFiscais: [
-                                    { numero: '234567', valor: '42.780,50', arquivo: 'nf-234567.pdf' }
-                                ]
-                            }
-                        ],
-                        dataSugestao: '2025-09-08',
-                        horarioSugestao: '08:00-10:00',
-                        motivoReagendamento: 'Conflito de agenda no dia solicitado devido a alta demanda',
-                        historico: [
-                            {
-                                data: '2025-08-28 16:45',
-                                acao: 'Agendamento criado',
-                                usuario: 'Sistema',
-                                detalhes: 'Agendamento criado pelo Transportador InfraTech Solutions'
-                            },
-                            {
-                                data: '2025-09-02 11:30',
-                                acao: 'Reagendamento solicitado',
-                                usuario: 'Maria Santos (CD Pernambuco)',
-                                detalhes: 'Nova data sugerida: 08/09/2025 das 08:00 às 10:00'
-                            }
-                        ]
-                    },
-                    'AGD000003': {
-                        codigo: 'AGD000003',
-                        Transportador: 'Equipamentos Norte Ltda',
-                        cnpj: '11.222.333/0001-44',
-                        email: 'comercial@equipnorte.com',
-                        telefone: '(84) 4444-5555',
-                        dataEntrega: '2025-09-03',
-                        horarioEntrega: '08:00-10:00',
-                        cdDestino: 'Lagoa Nova',
-                        enderecoCD: 'Rua dos CDs, 789 - Natal/RN',
-                        status: 'entregue',
-                        observacoes: 'Entrega realizada com sucesso. Todos os itens conferidos.',
-                        valorTotal: '15.890,75',
-                        dataCriacao: '2025-08-25',
-                        dataConfirmacao: '2025-08-27',
-                        dataEntregaRealizada: '2025-09-03',
-                        responsavelCD: 'Carlos Oliveira',
-                        responsavelRecebimento: 'Ana Costa',
-                        pedidos: [
-                            {
-                                numero: 'PED3001',
-                                notasFiscais: [
-                                    { numero: '345678', valor: '8.450,25', arquivo: 'nf-345678.pdf' },
-                                    { numero: '345679', valor: '7.440,50', arquivo: 'nf-345679.pdf' }
-                                ]
-                            }
-                        ],
-                        historico: [
-                            {
-                                data: '2025-08-25 10:15',
-                                acao: 'Agendamento criado',
-                                usuario: 'Sistema',
-                                detalhes: 'Agendamento criado pelo Transportador Equipamentos Norte Ltda'
-                            },
-                            {
-                                data: '2025-08-27 14:20',
-                                acao: 'Agendamento confirmado',
-                                usuario: 'Carlos Oliveira (CD Lagoa Nova)',
-                                detalhes: 'Agendamento confirmado para 03/09/2025 das 08:00 às 10:00'
-                            },
-                            {
-                                data: '2025-09-03 09:45',
-                                acao: 'Entrega realizada',
-                                usuario: 'Ana Costa (CD Lagoa Nova)',
-                                detalhes: 'Entrega concluída. Todos os itens conferidos e recebidos.'
-                            }
-                        ]
-                    }
-                };
-
-                return mockData[codigo.toUpperCase()] || null;
-            }
-
-            showResult(agendamento) {
-                // LOG para depuração: valor bruto recebido do backend
-                console.log('[MODAL] Valor bruto de agendamento.dataEntrega:', agendamento.dataEntrega);
-                const resultSection = document.getElementById('result-section');
-                const resultContent = document.getElementById('result-content');
-                
-                const statusClass = this.getStatusClass(agendamento.status);
-                const statusIcon = this.getStatusIcon(agendamento.status);
-                const statusText = this.getStatusText(agendamento.status);
-
-                let reagendamentoSection = '';
-                if (agendamento.status === 'reagendamento' && agendamento.dataSugestao) {
-                    reagendamentoSection = `
-                        <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-xl p-6 mb-8 card-3d">
-                            <div class="flex items-start">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl"></i>
-                                </div>
-                                <div class="ml-4 flex-1">
-                                    <h3 class="text-lg font-bold text-yellow-800 mb-4">
-                                        Nova Data Sugerida pelo CD
-                                    </h3>
-                                    <div class="grid md:grid-cols-2 gap-4 mb-4">
-                                        <div class="bg-white p-4 rounded-lg">
-                                            <p class="text-yellow-700 font-semibold">Nova Data:</p>
-                                            <p class="text-yellow-800 text-lg">${formatDateBrFromISO(agendamento.dataSugestao)}</p>
-                                        </div>
-                                        <div class="bg-white p-4 rounded-lg">
-                                            <p class="text-yellow-700 font-semibold">Novo Horário:</p>
-                                            <p class="text-yellow-800 text-lg">${agendamento.horarioSugestao}</p>
-                                        </div>
-                                    </div>
-                                    ${agendamento.motivoReagendamento ? `
-                                        <div class="bg-white p-4 rounded-lg mb-4">
-                                            <p class="text-yellow-700 font-semibold">Motivo:</p>
-                                            <p class="text-yellow-800">${agendamento.motivoReagendamento}</p>
-                                        </div>
-                                    ` : ''}
-                                    
-                                    <div class="flex flex-wrap gap-3">
-                                        <button onclick="consultaPage.responderReagendamento('${agendamento.codigo}', 'aceito')" 
-                                            class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-all btn-3d flex items-center">
-                                            <i class="fas fa-check mr-2"></i>Aceitar Nova Data
-                                        </button>
-                                        <button onclick="consultaPage.abrirContraProposta('${agendamento.codigo}')" 
-                                            class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-all btn-3d flex items-center">
-                                            <i class="fas fa-calendar mr-2"></i>Sugerir Outra Data
-                                        </button>
-                                        <button onclick="consultaPage.responderReagendamento('${agendamento.codigo}', 'rejeitado')" 
-                                            class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all btn-3d flex items-center">
-                                            <i class="fas fa-times mr-2"></i>Rejeitar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                resultContent.innerHTML = `
-                    <div class="animate-fade-in">
-                        <!-- Header do Resultado -->
-                        <div class="bg-gradient-to-r from-orange-primary to-orange-secondary rounded-2xl p-8 text-white mb-8 card-3d">
-                            <div class="flex items-center justify-between flex-wrap gap-4">
-                                <div>
-                                    <h2 class="text-3xl font-bold mb-2">Agendamento ${agendamento.codigo}</h2>
-                                    <p class="text-orange-100 text-lg">${agendamento.Transportador}</p>
-                                </div>
-                                <div class="text-right">
-                                    <div class="${statusClass} status-badge">
-                                        <i class="${statusIcon} mr-2"></i>${statusText}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        ${reagendamentoSection}
-
-                        <!-- Grid Principal -->
-                        <div class="grid lg:grid-cols-3 gap-8 mb-8">
-                            <!-- Informações Principais -->
-                            <div class="lg:col-span-2 space-y-6">
-                                <!-- Dados do Agendamento -->
-                                <div class="bg-white rounded-2xl p-6 shadow-3d">
-                                    <h3 class="text-xl font-bold text-gray-dark mb-4 flex items-center">
-                                        <i class="fas fa-calendar-check text-orange-primary mr-3"></i>
-                                        Dados do Agendamento
-                                    </h3>
-                                    <div class="grid md:grid-cols-2 gap-4">
-                                        <div class="space-y-3">
-                                            <div>
-                                                <label class="text-gray-medium font-semibold text-sm">Data de Entrega</label>
-                                                <p class="text-gray-dark text-lg">
-                                                    ${agendamento.dataSugestao ? formatDateBrFromISO(agendamento.dataSugestao) : formatDateBrFromISO(agendamento.dataEntrega)}
-                                                    ${agendamento.dataSugestao ? '<span class="text-xs text-orange-500 ml-2">(sugerida)</span>' : ''}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <label class="text-gray-medium font-semibold text-sm">Horário</label>
-                                                <p class="text-gray-dark text-lg">
-                                                    ${agendamento.horarioSugestao ? agendamento.horarioSugestao : agendamento.horarioEntrega}
-                                                    ${agendamento.horarioSugestao ? '<span class="text-xs text-orange-500 ml-2">(sugerido)</span>' : ''}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <label class="text-gray-medium font-semibold text-sm">CD de Destino</label>
-                                                <p class="text-gray-dark text-lg">${agendamento.cdDestino}</p>
-                                            </div>
-                                        </div>
-                                        <div class="space-y-3">
-                                            <div>
-                                                <label class="text-gray-medium font-semibold text-sm">Valor Total</label>
-                                                <p class="text-gray-dark text-lg font-bold">R$ ${agendamento.valorTotal}</p>
-                                            </div>
-                                            <div>
-                                                <label class="text-gray-medium font-semibold text-sm">Data de Criação</label>
-                                                <p class="text-gray-dark">${new Date(agendamento.dataCriacao).toLocaleDateString('pt-BR')}</p>
-                                            </div>
-                                            <div>
-                                                <label class="text-gray-medium font-semibold text-sm">Responsável CD</label>
-                                                <p class="text-gray-dark">${agendamento.responsavelCD || 'Não definido'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    ${agendamento.enderecoCD ? `
-                                        <div class="mt-4 p-3 bg-gray-50 rounded-lg">
-                                            <label class="text-gray-medium font-semibold text-sm">Endereço do CD</label>
-                                            <p class="text-gray-dark">${agendamento.enderecoCD}</p>
-                                        </div>
-                                    ` : ''}
-                                </div>
-
-                                <!-- Dados do Transportador -->
-                                <div class="bg-white rounded-2xl p-6 shadow-3d">
-                                    <h3 class="text-xl font-bold text-gray-dark mb-4 flex items-center">
-                                        <i class="fas fa-building text-orange-primary mr-3"></i>
-                                        Dados do Transportador
-                                    </h3>
-                                    <div class="grid md:grid-cols-2 gap-4">
-                                        <div class="space-y-3">
-                                            <div>
-                                                <label class="text-gray-medium font-semibold text-sm">Empresa</label>
-                                                <p class="text-gray-dark text-lg">${agendamento.Transportador}</p>
-                                            </div>
-                                            <div>
-                                                <label class="text-gray-medium font-semibold text-sm">CNPJ</label>
-                                                <p class="text-gray-dark">${agendamento.cnpj || 'Não informado'}</p>
-                                            </div>
-                                        </div>
-                                        <div class="space-y-3">
-                                            <div>
-                                                <label class="text-gray-medium font-semibold text-sm">E-mail</label>
-                                                <p class="text-gray-dark">${agendamento.email}</p>
-                                            </div>
-                                            <div>
-                                                <label class="text-gray-medium font-semibold text-sm">Telefone</label>
-                                                <p class="text-gray-dark">${agendamento.telefone}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Pedidos e Notas Fiscais -->
-                                <div class="bg-white rounded-2xl p-6 shadow-3d">
-                                    <h3 class="text-xl font-bold text-gray-dark mb-4 flex items-center">
-                                        <i class="fas fa-file-invoice text-orange-primary mr-3"></i>
-                                        Pedidos e Notas Fiscais
-                                    </h3>
-                                    <div class="space-y-4">
-                                        ${agendamento.pedidos.map(pedido => `
-                                            <div class="border border-gray-200 rounded-lg p-4">
-                                                <h4 class="font-bold text-gray-dark mb-3">Pedido: ${pedido.numero}</h4>
-                                                <div class="overflow-x-auto">
-                                                    <table class="w-full text-sm">
-                                                        <thead class="bg-gray-50">
-                                                            <tr>
-                                                                <th class="text-left p-2 font-semibold">Nota Fiscal</th>
-                                                                <th class="text-right p-2 font-semibold">Valor</th>
-                                                                <th class="text-center p-2 font-semibold">Arquivo</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            ${pedido.notasFiscais.map(nf => `
-                                                                <tr class="border-t">
-                                                                    <td class="p-2 font-mono">${nf.numero}</td>
-                                                                    <td class="p-2 text-right font-semibold">R$ ${nf.valor}</td>
-                                                                    <td class="p-2 text-center">
-                                                                        <button class="text-orange-primary hover:text-orange-secondary text-sm" onclick="viewPDF(nf.arquivo)">
-                                                                            <i class="fas fa-file-pdf mr-1"></i>${nf.arquivo || 'PDF'}
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                            `).join('')}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Sidebar -->
-                            <div class="space-y-6">
-                                <!-- Observações -->
-                                ${agendamento.observacoes ? `
-                                    <div class="bg-white rounded-2xl p-6 shadow-3d">
-                                        <h3 class="text-lg font-bold text-gray-dark mb-3 flex items-center">
-                                            <i class="fas fa-comment text-orange-primary mr-2"></i>
-                                            Observações
-                                        </h3>
-                                        <p class="text-gray-600 leading-relaxed">${agendamento.observacoes}</p>
-                                    </div>
-                                ` : ''}
-
-                                <!-- Timeline/Histórico -->
-                                <div class="bg-white rounded-2xl p-6 shadow-3d">
-                                    <h3 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
-                                        <i class="fas fa-history text-orange-primary mr-2"></i>
-                                        Histórico
-                                    </h3>
-                                    <div class="space-y-4">
-                                        ${(() => {
-                                            // Mapeamento de ícones e títulos
-                                            const iconMap = {
-                                                'Agendamento criado': 'fa-plus-circle text-blue-500',
-                                                'Agendamento confirmado': 'fa-check-circle text-green-500',
-                                                'Reagendamento solicitado': 'fa-calendar-alt text-yellow-500',
-                                                'Transportador aceitou reagendamento': 'fa-thumbs-up text-green-600',
-                                                'Transportador rejeitou reagendamento': 'fa-thumbs-down text-red-600',
-                                                'Transportador respondeu': 'fa-reply-all text-purple-600',
-                                                'Entrega realizada': 'fa-truck text-blue-600',
-                                                'Ausência registrada': 'fa-user-slash text-red-500'
-                                            };
-                                            const titleMap = {
-                                                'Agendamento criado': 'Agendamento Criado',
-                                                'Agendamento confirmado': 'Agendamento Confirmado',
-                                                'Reagendamento solicitado': 'CD Sugeriu Nova Data',
-                                                'Transportador aceitou reagendamento': 'Transportador Aceitou Nova Data',
-                                                'Transportador rejeitou reagendamento': 'Transportador Rejeitou Nova Data',
-                                                'Transportador respondeu': 'Transportador Respondeu',
-                                                'Entrega realizada': 'Entrega Realizada',
-                                                'Ausência registrada': 'Ausência Registrada'
-                                            };
-                                            // Detecta resposta do Transportador
-                                            const hasSupplierResponse = agendamento.historico.some(ev =>
-                                                ev.acao === 'Transportador aceitou reagendamento' ||
-                                                ev.acao === 'Transportador rejeitou reagendamento' ||
-                                                ev.acao === 'Transportador respondeu'
-                                            );
-                                            let html = agendamento.historico.map((item, index) => {
-                                                let icon = iconMap[item.acao] || 'fa-info-circle text-gray-400';
-                                                let title = titleMap[item.acao] || item.acao;
-                                                // Se for resposta genérica, tenta detalhar pelo campo detalhes
-                                                if (item.acao === 'Transportador respondeu') {
-                                                    if (item.detalhes && item.detalhes.toLowerCase().includes('aceit')) {
-                                                        title = 'Transportador Aceitou Nova Data';
-                                                        icon = iconMap['Transportador aceitou reagendamento'];
-                                                    } else if (item.detalhes && item.detalhes.toLowerCase().includes('rejeit')) {
-                                                        title = 'Transportador Rejeitou Nova Data';
-                                                        icon = iconMap['Transportador rejeitou reagendamento'];
-                                                    }
-                                                }
-                                                return `
-                                                    <div class="flex items-start space-x-3">
-                                                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mt-1">
-                                                            <i class="fas ${icon} text-lg"></i>
-                                                        </div>
-                                                        <div class="flex-1 min-w-0">
-                                                            <div class="text-xs text-gray-500">${new Date(item.data).toLocaleString('pt-BR')}</div>
-                                                            <div class="font-semibold text-gray-dark">${title}</div>
-                                                            <div class="text-sm text-gray-600">${item.detalhes || ''}</div>
-                                                            <div class="text-xs text-gray-400">${item.usuario || ''}</div>
-                                                        </div>
-                                                    </div>
-                                                `;
-                                            }).join('');
-                                            // Box aguardando resposta
-                                            if (agendamento.status === 'reagendamento' && !hasSupplierResponse) {
-                                                html += `
-                                                    <div class="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
-                                                        <div class="flex items-center mb-3">
-                                                            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
-                                                                <i class="fas fa-hourglass-half text-white text-sm"></i>
-                                                            </div>
-                                                            <span class="font-semibold text-yellow-800">Aguardando resposta do Transportador</span>
-                                                        </div>
-                                                        <p class="text-sm text-yellow-700 leading-relaxed">
-                                                            O Transportador foi notificado sobre a solicitação de reagendamento e deve responder em breve.
-                                                        </p>
-                                                    </div>
-                                                `;
-                                            }
-                                            return html;
-                                        })()}
-                                    </div>
-                                </div>
-
-                                <!-- Ações Rápidas -->
-                                <div class="bg-white rounded-2xl p-6 shadow-3d">
-                                    <h3 class="text-lg font-bold text-gray-dark mb-4 flex items-center">
-                                        <i class="fas fa-tools text-orange-primary mr-2"></i>
-                                        Ações
-                                    </h3>
-                                    <div class="space-y-3">
-                                        <button onclick="consultaPage.imprimirAgendamento('${agendamento.codigo}')" 
-                                            class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-all btn-3d">
-                                            <i class="fas fa-print mr-2"></i>Imprimir
-                                        </button>
-                                        <button onclick="consultaPage.compartilharAgendamento('${agendamento.codigo}')" 
-                                            class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-all btn-3d">
-                                            <i class="fas fa-share mr-2"></i>Compartilhar
-                                        </button>
-                                        <button onclick="consultaPage.novaConsulta()" 
-                                            class="w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-all btn-3d">
-                                            <i class="fas fa-search mr-2"></i>Nova Consulta
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                resultSection.classList.remove('hidden');
-                resultSection.scrollIntoView({ behavior: 'smooth' });
-            }
-
-            showLoading(show) {
-                const btnText = document.getElementById('btn-text');
-                const btnLoading = document.getElementById('btn-loading');
-                
-                if (show) {
-                    btnText.classList.add('hidden');
-                    btnLoading.classList.remove('hidden');
-                } else {
-                    btnText.classList.remove('hidden');
-                    btnLoading.classList.add('hidden');
-                }
-            }
-
-            getStatusClass(status) {
-                const classes = {
-                    'pendente': 'bg-orange-500 text-white',
-                    'confirmado': 'bg-green-500 text-white',
-                    'entregue': 'bg-blue-500 text-white',
-                    'nao-veio': 'bg-red-500 text-white',
-                    'reagendamento': 'bg-yellow-500 text-white'
-                };
-                return classes[status] || 'bg-gray-500 text-white';
-            }
-
-            getStatusIcon(status) {
-                const icons = {
-                    'pendente': 'fas fa-clock',
-                    'confirmado': 'fas fa-check-circle',
-                    'entregue': 'fas fa-truck',
-                    'nao-veio': 'fas fa-times-circle',
-                    'reagendamento': 'fas fa-calendar-alt'
-                };
-                return icons[status] || 'fas fa-question-circle';
-            }
-
-            getStatusText(status) {
-                // Exibe 'Pendente (reagendamento)' se status for 'pendente' e observacoes contiver 'reagend'
-                if (typeof this === 'object' && this.currentAgendamento && this.currentAgendamento.status === 'pendente' && this.currentAgendamento.observacoes && this.currentAgendamento.observacoes.toLowerCase().includes('reagend')) {
-                    return 'Pendente (reagendamento)';
-                }
-                const texts = {
-                    'pendente': 'Aguardando Confirmação',
-                    'confirmado': 'Confirmado',
-                    'entregue': 'Entregue',
-                    'nao-veio': 'Não Compareceu',
-                    'reagendamento': 'Aguardando Resposta'
-                };
-                return texts[status] || 'Status Desconhecido';
-            }
-
-            async responderReagendamento(codigo, resposta) {
-                try {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    let mensagem = '';
-                    if (resposta === 'aceito') {
-                        mensagem = 'Nova data aceita com sucesso! O CD foi notificado e seu agendamento será atualizado.';
-                    } else if (resposta === 'rejeitado') {
-                        mensagem = 'Reagendamento rejeitado. O CD foi notificado e entrará em contato.';
-                    }
-                    
-                    this.showNotification(mensagem, 'success');
-                    
-                    // Recarregar a consulta após resposta
-                    setTimeout(() => {
-                        this.consultarAgendamento();
-                    }, 2000);
-                    
-                } catch (error) {
-                    this.showNotification('Erro ao responder reagendamento. Tente novamente.', 'error');
-                }
-            }
-
-            abrirContraProposta(codigo) {
-                abrirContraPropostaModal(codigo);
-            }
-
-            imprimirAgendamento(codigo) {
-                window.print();
-            }
-
-            compartilharAgendamento(codigo) {
-                const url = `${window.location.origin}/consultar-status.html?codigo=${codigo}`;
-                
-                if (navigator.share) {
-                    navigator.share({
-                        title: `Agendamento ${codigo}`,
-                        text: 'Consulte o status do agendamento:',
-                        url: url
-                    });
-                } else if (navigator.clipboard) {
-                    navigator.clipboard.writeText(url);
-                    this.showNotification('Link copiado para a área de transferência!', 'success');
-                } else {
-                    this.showNotification(`Link: ${url}`, 'info');
-                }
-            }
-
-            novaConsulta() {
-                document.getElementById('codigo-agendamento').value = '';
-                document.getElementById('result-section').classList.add('hidden');
-                document.getElementById('codigo-agendamento').focus();
-            }
-
-            showNotification(message, type = 'info') {
-                const colors = {
-                    success: 'bg-green-500',
-                    error: 'bg-red-500',
-                    warning: 'bg-yellow-500',
-                    info: 'bg-blue-500'
-                };
-                
-                const icons = {
-                    success: 'fa-check-circle',
-                    error: 'fa-exclamation-circle',
-                    warning: 'fa-exclamation-triangle',
-                    info: 'fa-info-circle'
-                };
-                
-                const notification = document.createElement('div');
-                notification.className = `${colors[type]} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 mb-3 animate-slide-up`;
-                notification.innerHTML = `
-                    <i class="fas ${icons[type]}"></i>
-                    <span class="flex-1">${message}</span>
-                    <button onclick="this.parentElement.remove()" class="ml-4 hover:bg-white hover:bg-opacity-20 rounded p-1">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-                
-                document.getElementById('notification-container').appendChild(notification);
-                
-                setTimeout(() => notification.remove(), 8000);
+                // Tenta criar data de string ISO (YYYY-MM-DD)
+                const dateStr = isoString.slice(0, 10);
+                const [year, month, day] = dateStr.split('-');
+                return `${day}/${month}/${year}`;
+            } catch (e) {
+                return 'Data Inválida';
             }
         }
 
-        // Inicializar
-        let consultaPage;
-        document.addEventListener('DOMContentLoaded', () => {
-            consultaPage = new ConsultaStatusPage();
-        });
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-600',
+                error: 'bg-red-600',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-600'
+            };
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `px-6 py-4 rounded-lg shadow-xl flex items-center space-x-3 transition-opacity duration-300 ${colors[type]} text-white`;
+            notification.innerHTML = `
+                <i class="fas ${icons[type]}"></i>
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-4 hover:bg-white hover:bg-opacity-20 rounded p-1">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            const container = document.getElementById('notification-container');
+            container.prepend(notification); // Adiciona o mais novo no topo
+            
+            setTimeout(() => {
+                notification.style.opacity = 0;
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // --- Lógica do Status/Timeline ---
+
+        const statusMap = {
+            'pendente': { text: 'Aguardando Confirmação', icon: 'fas fa-clock', color: 'bg-orange-primary', step: 1 },
+            'confirmado': { text: 'Confirmado - Aguardando Entrega', icon: 'fas fa-calendar-check', color: 'bg-green-500', step: 2 },
+            'em_transito': { text: 'Em Trânsito para o CD', icon: 'fas fa-truck-fast', color: 'bg-blue-500', step: 3 },
+            'entregue': { text: 'Entrega Concluída', icon: 'fas fa-box-open', color: 'bg-blue-600', step: 4 },
+            'reagendamento': { text: 'Aguardando Sua Resposta de Reagendamento', icon: 'fas fa-sync-alt', color: 'bg-yellow-500', step: 2.5 },
+            'nao-veio': { text: 'Entrega Não Realizada (Falta de Comparecimento)', icon: 'fas fa-user-slash', color: 'bg-red-600', step: 2.5 },
+            'cancelado': { text: 'Cancelado', icon: 'fas fa-ban', color: 'bg-gray-500', step: 0 },
+            'aguardando_resposta_cd': { text: 'Sua Proposta Enviada - Aguarde o CD', icon: 'fas fa-reply-all', color: 'bg-purple-500', step: 2.5 }
+        };
+
+        const timelineSteps = [
+            { label: 'Solicitação Enviada', position: 0 },
+            { label: 'Confirmação de Agendamento', position: 33 },
+            { label: 'Em Processo / No CD', position: 66 },
+            { label: 'Entrega Finalizada', position: 100 }
+        ];
+
+        function renderTimeline(currentStatus) {
+            const currentStep = statusMap[currentStatus]?.step || 1;
+            
+            // Determina a posição da linha do tempo com base no passo mais avançado
+            let truckPosition = 0;
+            if (currentStatus === 'pendente') truckPosition = 0;
+            else if (currentStatus === 'confirmado' || currentStatus === 'reagendamento' || currentStatus === 'nao-veio' || currentStatus === 'aguardando_resposta_cd') truckPosition = 33;
+            else if (currentStatus === 'em_transito') truckPosition = 66;
+            else if (currentStatus === 'entregue') truckPosition = 100;
+            else if (currentStatus === 'cancelado') truckPosition = 0; // Cancelado fica no início
+
+            // Ajusta o caminhão para status intermediários e não conclusivos
+            if (currentStatus === 'reagendamento' || currentStatus === 'nao-veio' || currentStatus === 'aguardando_resposta_cd') {
+                truckPosition = 50;
+            }
+
+
+            const truckHTML = `
+                <div id="timeline-truck" class="timeline-truck text-orange-primary" style="left: ${truckPosition}%; ${currentStatus === 'entregue' ? 'animation: none; transform: translate(-50%, -50%) scale(1.1);' : 'animation: float 3s ease-in-out infinite;'}">
+                    <i class="fas fa-truck-fast text-4xl"></i>
+                </div>
+            `;
+            
+            let stepsHTML = '';
+            let truckIcon = 'fas fa-truck-fast';
+            if(currentStatus === 'entregue') truckIcon = 'fas fa-check-double';
+            if(currentStatus === 'cancelado') truckIcon = 'fas fa-ban';
+
+            timelineSteps.forEach((step, index) => {
+                const isActive = (currentStep >= index + 1) || (currentStatus === 'reagendamento' && index === 1) || (currentStatus === 'nao-veio' && index === 1) || (currentStatus === 'aguardando_resposta_cd' && index === 1);
+                
+                // Posição ajustada para o centro
+                let position = (index / (timelineSteps.length - 1)) * 100;
+                
+                stepsHTML += `
+                    <div class="timeline-step ${isActive ? 'active' : ''}" style="left: ${position}%;"></div>
+                    <div class="timeline-label" style="left: ${position}%;">
+                        ${step.label}
+                    </div>
+                `;
+            });
+            
+            // Barra de preenchimento
+            let progressWidth = truckPosition;
+            if (currentStatus === 'entregue') progressWidth = 100;
+            if (currentStatus === 'cancelado') progressWidth = 0;
+            if (currentStatus === 'pendente') progressWidth = 10;
+            
+            const timelineHTML = `
+                <div class="timeline bg-card-dark p-8 rounded-xl mb-8 border border-border-dark">
+                    <h3 class="text-xl font-bold mb-6 text-white"><i class="fas ${truckIcon} mr-2 text-orange-primary"></i>Status da Entrega</h3>
+                    <div class="timeline-path">
+                        <div class="h-full bg-orange-primary absolute transition-all duration-1000" style="width: ${progressWidth}%;"></div>
+                    </div>
+                    ${stepsHTML}
+                    ${truckHTML}
+                </div>
+            `;
+            return timelineHTML;
+        }
+
+        // --- Funções de Renderização e Ações ---
+
+        function renderAgendamentoDetalhes(data) {
+            currentAgendamento = data;
+            const agendamentoDiv = document.getElementById('agendamento-detalhes');
+            const statusInfo = statusMap[data.status] || { text: 'Status Desconhecido', icon: 'fas fa-question-circle', color: 'bg-gray-500' };
+
+            const statusSectionHTML = renderTimeline(data.status);
+
+            const buttonsHTML = renderActionButtons(data);
+            const communicationHistoryHTML = renderCommunicationHistory(data);
+            const nfsHTML = renderPedidosENotasFiscais(data);
+
+            const detailsHTML = `
+                <div class="space-y-8">
+                    
+                    ${statusSectionHTML}
+
+                    <div class="bg-card-dark p-6 rounded-xl border border-border-dark flex flex-wrap gap-4 items-center justify-center">
+                        ${buttonsHTML}
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 space-y-8">
+                            <div class="card-detail p-6">
+                                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <i class="fas fa-info-circle text-orange-primary"></i> Detalhes da Solicitação
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div><span class="text-text-secondary">Código:</span> <p class="font-bold text-lg text-orange-secondary">${data.codigo || 'N/A'}</p></div>
+                                    <div><span class="text-text-secondary">Status Atual:</span> <p class="font-bold text-lg text-white">
+                                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.color} text-white">
+                                            <i class="${statusInfo.icon} mr-1"></i> ${statusInfo.text}
+                                        </span>
+                                    </p></div>
+                                    <div><span class="text-text-secondary">Data de Agendamento:</span> <p class="font-semibold">${formatDateBrFromISO(data.dataEntrega)}</p></div>
+                                    <div><span class="text-text-secondary">Horário:</span> <p class="font-semibold">${data.horarioEntrega}</p></div>
+                                    <div><span class="text-text-secondary">CD Destino:</span> <p class="font-semibold">${data.cdDestino || 'N/A'}</p></div>
+                                    <div><span class="text-text-secondary">Data da Criação:</span> <p class="font-semibold">${formatDateBrFromISO(data.dataCriacao)}</p></div>
+                                </div>
+                                ${data.motivoNaoVeio ? `<div class="mt-4 p-4 bg-red-900 bg-opacity-30 border border-red-700 rounded-lg"><p class="font-semibold text-red-400">Motivo de Ausência: ${data.motivoNaoVeio}</p></div>` : ''}
+                            </div>
+                            
+                            <div class="card-detail p-6">
+                                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <i class="fas fa-truck-moving text-blue-400"></i> Informações do Transportador
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div><span class="text-text-secondary">Empresa:</span> <p class="font-semibold">${data.fornecedor || 'N/A'}</p></div>
+                                    <div><span class="text-text-secondary">CNPJ:</span> <p class="font-semibold">${data.cnpj || 'N/A'}</p></div>
+                                    <div><span class="text-text-secondary">E-mail de Contato:</span> <p class="font-semibold truncate" title="${data.email || 'N/A'}">${data.email || 'N/A'}</p></div>
+                                    <div><span class="text-text-secondary">Telefone:</span> <p class="font-semibold">${data.telefone || 'N/A'}</p></div>
+                                    <div class="col-span-2 border-t border-border-dark pt-3 mt-3">
+                                        <h4 class="font-bold text-orange-400 mb-2">Dados do Motorista/Veículo</h4>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div><span class="text-text-secondary">Motorista:</span> <p class="font-semibold">${data.motoristaNome || 'N/A'}</p></div>
+                                            <div><span class="text-text-secondary">CPF:</span> <p class="font-semibold">${data.motoristaCpf || 'N/A'}</p></div>
+                                            <div><span class="text-text-secondary">Placa:</span> <p class="font-semibold">${data.placaVeiculo || 'N/A'}</p></div>
+                                            <div><span class="text-text-secondary">Tipo de Veículo:</span> <p class="font-semibold">${data.tipoVeiculo || 'N/A'}</p></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-1 space-y-8">
+                            <div class="card-detail p-6 h-full">
+                                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <i class="fas fa-history text-yellow-400"></i> Histórico de Eventos
+                                </h3>
+                                ${communicationHistoryHTML}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-detail p-6">
+                        <h3 class="text-xl font-bold text-white mb-4 flex items-center justify-between">
+                            <span><i class="fas fa-file-invoice-dollar text-green-400 mr-2"></i>Pedidos e Notas Fiscais</span>
+                            <button onclick="showNotification('Funcionalidade de Edição ainda não implementada neste layout.', 'warning')" class="text-sm bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded-lg transition-colors"><i class="fas fa-edit mr-1"></i>Gerenciar NFs</button>
+                        </h3>
+                        ${nfsHTML}
+                    </div>
+
+                    ${data.observacoes ? `
+                        <div class="card-detail p-6">
+                            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                <i class="fas fa-comment-alt text-gray-400"></i> Observações da Solicitação
+                            </h3>
+                            <p class="text-text-secondary">${data.observacoes}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            agendamentoDiv.innerHTML = detailsHTML;
+        }
+
+        function renderActionButtons(data) {
+            let buttons = '';
+            
+            // Botões que aparecem quando o CD sugere reagendamento e aguarda resposta
+            if (data.status === 'reagendamento') {
+                buttons += `
+                    <p class="text-lg font-semibold text-yellow-400 mr-4">Nova data sugerida pelo CD: ${formatDateBrFromISO(data.dataSugestaoCD)} às ${data.horarioSugestaoCD}</p>
+                    <button onclick="responderReagendamento('${data.codigo}', 'aceito')" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-check mr-2"></i>Aceitar Nova Data</button>
+                    <button onclick="abrirContraProposta('${data.codigo}')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-calendar-plus mr-2"></i>Sugerir Outra Data</button>
+                    <button onclick="abrirCancelarSolicitacaoModal('${data.codigo}')" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-times-circle mr-2"></i>Cancelar Solicitação</button>
+                `;
+            } 
+            // Botões que aparecem quando o status é "não-veio"
+            else if (data.status === 'nao-veio') {
+                buttons += `
+                    <p class="text-lg font-semibold text-red-400 mr-4">🚨 É necessário reagendar a entrega!</p>
+                    <button onclick="abrirContraProposta('${data.codigo}')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-redo mr-2"></i>Reagendar Entrega</button>
+                    <button onclick="abrirCancelarSolicitacaoModal('${data.codigo}')" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-times-circle mr-2"></i>Cancelar Agendamento</button>
+                `;
+            }
+            // Botão que aparece para agendamentos ativos que podem ser cancelados
+            else if (data.status === 'pendente' || data.status === 'confirmado' || data.status === 'aguardando_resposta_cd' || data.status === 'em_transito') {
+                 buttons += `
+                    <p class="text-lg font-semibold text-text-secondary mr-4"><i class="fas fa-shield-alt mr-2 text-green-400"></i>O agendamento está ativo.</p>
+                    <button onclick="abrirCancelarSolicitacaoModal('${data.codigo}')" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-times-circle mr-2"></i>Cancelar Solicitação</button>
+                `;
+            }
+            // Mensagem para status finalizados
+            else if (data.status === 'entregue' || data.status === 'cancelado') {
+                buttons += `<p class="text-lg font-semibold text-green-400"><i class="fas fa-bookmark mr-2"></i>Este agendamento está finalizado.</p>`;
+            }
+
+            return buttons;
+        }
+
+        function getHistoryStyle(acao) {
+            const styles = {
+                'agendamento_criado': { icon: 'fas fa-plus-circle', color: 'text-orange-primary', title: 'Agendamento Criado' },
+                'cd_sugeriu_reagendamento': { icon: 'fas fa-calendar-alt', color: 'text-yellow-500', title: 'Nova Data Sugerida (CD)' },
+                'Transportador_sugeriu_reagendamento': { icon: 'fas fa-calendar-alt', color: 'text-blue-400', title: 'Contra Proposta Enviada' },
+                'Transportador_aceitou_reagendamento': { icon: 'fas fa-check-double', color: 'text-green-500', title: 'Nova Data Aceita' },
+                'Transportador_rejeitou_reagendamento': { icon: 'fas fa-thumbs-down', color: 'text-red-500', title: 'Proposta Rejeitada' },
+                'entrega_realizada': { icon: 'fas fa-box-open', color: 'text-green-600', title: 'Entrega Concluída' },
+                'ausencia_registrada': { icon: 'fas fa-user-slash', color: 'text-red-500', title: 'Ausência Registrada' },
+                'cancelado_Transportador': { icon: 'fas fa-ban', color: 'text-red-500', title: 'Solicitação Cancelada' },
+                'confirmado': { icon: 'fas fa-check-circle', color: 'text-green-500', title: 'Agendamento Confirmado' }
+            };
+            return styles[acao] || { icon: 'fas fa-info-circle', color: 'text-gray-500', title: 'Evento do Sistema' };
+        }
+
+        function renderCommunicationHistory(data) {
+            const historico = data.historico || [];
+            if (historico.length === 0) {
+                return '<div class="text-center py-4 text-text-secondary">Nenhum evento registrado.</div>';
+            }
+
+            return `
+                <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    ${historico.reverse().map(evento => { // Inverter para mostrar o mais recente primeiro
+                        const style = getHistoryStyle(evento.acao);
+                        const dataFormatada = evento.data ? formatDateBrFromISO(evento.data) : 'N/A';
+                        
+                        return `
+                            <div class="flex gap-4">
+                                <div class="flex flex-col items-center">
+                                    <i class="${style.icon} text-xl ${style.color} mt-1"></i>
+                                    <div class="w-px flex-1 bg-border-dark mt-1"></div>
+                                </div>
+                                <div class="flex-1 pb-4">
+                                    <p class="font-semibold text-white">${style.title}</p>
+                                    <span class="text-xs ${style.color} font-medium">${dataFormatada}</span>
+                                    <p class="text-sm text-text-secondary mt-1 leading-relaxed">${evento.descricao || 'Detalhes não informados.'}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
+        function calcularValorTotal(agendamento) {
+            // Verifica se as notas fiscais estão aninhadas em "pedidos" (código antigo) ou diretas (código novo)
+            const allNFs = [];
+
+            if (agendamento.pedidos && agendamento.pedidos.length > 0) {
+                agendamento.pedidos.forEach(p => {
+                    if (p.notasFiscais) {
+                        p.notasFiscais.forEach(nf => allNFs.push(nf));
+                    }
+                });
+            } else if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
+                agendamento.notasFiscais.forEach(nf => allNFs.push(nf));
+            }
+
+            if (allNFs.length === 0) return '0,00';
+
+            let total = 0;
+            allNFs.forEach(nf => {
+                let valorStr = String(nf.valor || '0');
+                
+                // Limpeza e conversão: "2.000,00" -> "2000.00"
+                valorStr = valorStr.replace(/\./g, ''); // Remove pontos de milhar
+                valorStr = valorStr.replace(',', '.'); // Troca vírgula por ponto decimal
+                
+                const v = parseFloat(valorStr) || 0;
+                total += v;
+            });
+            
+            return total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        }
+
+
+        function renderPedidosENotasFiscais(data) {
+            const allNFs = [];
+            const allPedidos = {}; // Para agrupar NFs por pedido
+
+            // Lógica para extrair dados de NF, priorizando a estrutura antiga do código (com 'pedidos')
+            if (data.pedidos && data.pedidos.length > 0) {
+                data.pedidos.forEach(p => {
+                    allPedidos[p.numero] = {
+                        numero: p.numero,
+                        notasFiscais: p.notasFiscais || []
+                    };
+                    if (p.notasFiscais) {
+                        p.notasFiscais.forEach(nf => allNFs.push(nf));
+                    }
+                });
+            } else if (data.notasFiscais && data.notasFiscais.length > 0) {
+                 // Trata o caso de NFs soltas (sem a estrutura de pedidos, se aplicável)
+                 data.notasFiscais.forEach(nf => {
+                    const pedidoNum = nf.numeroPedido || 'N/I'; // Usar um campo de pedido, se existir
+                    if (!allPedidos[pedidoNum]) {
+                        allPedidos[pedidoNum] = { numero: pedidoNum, notasFiscais: [] };
+                    }
+                    allPedidos[pedidoNum].notasFiscais.push(nf);
+                    allNFs.push(nf);
+                 });
+            }
+
+            const pedidosArray = Object.values(allPedidos);
+            const totalValue = calcularValorTotal(data);
+
+            if (pedidosArray.length === 0 && allNFs.length === 0) {
+                return '<div class="text-center py-4 text-text-secondary">Nenhum Pedido ou Nota Fiscal vinculada.</div>';
+            }
+
+            let html = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-gray-800 p-4 rounded-lg border border-border-dark">
+                        <p class="text-text-secondary">Total de Pedidos</p>
+                        <p class="text-2xl font-bold text-orange-primary">${pedidosArray.length}</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-lg border border-border-dark">
+                        <p class="text-text-secondary">Total de Notas</p>
+                        <p class="text-2xl font-bold text-orange-primary">${allNFs.length}</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-lg border border-border-dark">
+                        <p class="text-text-secondary">Valor Total Estimado</p>
+                        <p class="text-2xl font-bold text-green-400">R$ ${totalValue}</p>
+                    </div>
+                </div>
+            `;
+
+            pedidosArray.forEach(pedido => {
+                html += `
+                    <div class="bg-gray-800 p-4 rounded-xl border border-border-dark mb-4">
+                        <h4 class="font-bold text-lg text-white mb-3 flex items-center gap-2">
+                            <i class="fas fa-tag text-orange-400"></i> Pedido: ${pedido.numero}
+                        </h4>
+                        <div class="space-y-2">
+                            ${pedido.notasFiscais.map(nf => {
+                                const nfValor = (nf.valor || '0').replace('.', ','); // Formatação simples de valor
+                                const fileButton = nf.arquivo ? 
+                                    `<button onclick="viewPDF('${nf.arquivo}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs ml-2"><i class="fas fa-file-pdf mr-1"></i>Ver Arquivo</button>` : '';
+
+                                return `
+                                    <div class="flex justify-between items-center bg-gray-900 p-3 rounded-lg border border-gray-700">
+                                        <p class="text-sm">
+                                            <span class="font-semibold text-white">NF: ${nf.numero}</span>
+                                            <span class="text-green-400 font-bold ml-4">R$ ${nfValor}</span>
+                                        </p>
+                                        <div class="flex items-center">
+                                            ${fileButton}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            return html;
+        }
+
+        // --- Funções de Modal e Ação ---
+
+        function openConsultaModal() {
+            document.getElementById('consulta-modal').classList.remove('hidden');
+        }
+        function closeConsultaModal() {
+            document.getElementById('consulta-modal').classList.add('hidden');
+        }
+
+        function abrirCancelarSolicitacaoModal(codigo) {
+            currentCodigoReagendamento = codigo;
+            document.getElementById('cancelar-solicitacao-modal').classList.remove('hidden');
+        }
+
+        function fecharCancelarSolicitacaoModal() {
+            document.getElementById('cancelar-solicitacao-modal').classList.add('hidden');
+            document.getElementById('motivo-cancelamento').value = '';
+        }
+
+        function abrirContraProposta(codigo) {
+            currentCodigoReagendamento = codigo;
+            
+            const isNaoVeio = currentAgendamento?.status === 'nao-veio';
+            const titulo = document.getElementById('modal-reagendar-titulo');
+            const descricao = document.getElementById('modal-reagendar-descricao');
+            
+            titulo.textContent = isNaoVeio ? 'Reagendar Entrega' : 'Sugerir Nova Data';
+            descricao.textContent = isNaoVeio ? 'Escolha uma nova data e horário para realizar a entrega.' : 'Sugira uma nova data e horário para a equipe do CD.';
+
+            document.getElementById('contra-proposta-modal').classList.remove('hidden');
+        }
+
+        function fecharContraPropostaModal() {
+            document.getElementById('contra-proposta-modal').classList.add('hidden');
+            currentCodigoReagendamento = null;
+        }
+
+        async function responderReagendamento(codigo, resposta) {
+            if (!confirm(`Tem certeza que deseja ${resposta === 'aceito' ? 'ACEITAR' : 'REJEITAR'} esta sugestão de reagendamento?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/agendamentos/${codigo}/responder-reagendamento`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resposta: resposta, comentario: '' })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(`Reagendamento ${resposta === 'aceito' ? 'ACEITO' : 'REJEITADO'} com sucesso!`, 'success');
+                    await fetchAgendamentoAndRender(codigo); // Recarrega a página
+                } else {
+                    showNotification(result.error || 'Erro ao responder reagendamento.', 'error');
+                }
+            } catch (error) {
+                showNotification('Erro de conexão ao responder reagendamento.', 'error');
+            }
+        }
+        
+        async function enviarMotivoCancelamento(event) {
+            event.preventDefault();
+            const codigo = currentCodigoReagendamento;
+            const motivo = document.getElementById('motivo-cancelamento').value.trim();
+            
+            if (!motivo) {
+                showNotification('Informe o motivo do cancelamento.', 'error');
+                return;
+            }
+
+            try {
+                // Cancela o agendamento
+                const response = await fetch(`${API_BASE_URL}/api/agendamentos/${codigo}/cancelar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ motivo: motivo })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    fecharCancelarSolicitacaoModal();
+                    showNotification('Solicitação cancelada com sucesso!', 'success');
+                    await fetchAgendamentoAndRender(codigo); // Recarrega a página
+                } else {
+                    showNotification(result.message || 'Erro ao cancelar solicitação.', 'error');
+                }
+            } catch (error) {
+                showNotification('Erro de conexão ao cancelar solicitação.', 'error');
+            }
+        }
+        
+        async function enviarContraProposta(event) {
+            event.preventDefault();
+            const codigo = currentCodigoReagendamento;
+            const novaData = document.getElementById('contra-proposta-data').value;
+            const novoHorario = document.getElementById('contra-proposta-horario').value;
+            const comentario = document.getElementById('contra-proposta-comentario').value;
+
+            if (!novaData || !novoHorario) {
+                showNotification('Preencha a data e horário.', 'error');
+                return;
+            }
+
+            const isNaoVeio = currentAgendamento?.status === 'nao-veio';
+
+            try {
+                let apiUrl, requestBody;
+                
+                if (isNaoVeio) {
+                    // Reagendar (usando API de reagendar-Transportador)
+                    apiUrl = `${API_BASE_URL}/api/agendamentos/${codigo}/reagendar-Transportador`;
+                    requestBody = { novaData: novaData, novoHorario: novoHorario, motivo: comentario };
+                } else {
+                    // Contra-proposta (usando API de responder-reagendamento)
+                    apiUrl = `${API_BASE_URL}/api/agendamentos/${codigo}/responder-reagendamento`;
+                    requestBody = { resposta: 'contra_proposta', comentario: comentario, novaData: novaData, novoHorario: novoHorario };
+                }
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('Proposta de data enviada com sucesso!', 'success');
+                    fecharContraPropostaModal();
+                    await fetchAgendamentoAndRender(codigo); // Recarrega a página
+                } else {
+                    showNotification(result.error || result.message || 'Erro ao enviar proposta.', 'error');
+                }
+            } catch (error) {
+                showNotification('Erro de conexão ao enviar proposta.', 'error');
+            }
+        }
+
+
+        // --- Lógica de Inicialização e Fetch de Dados ---
+
+        async function fetchAgendamentoAndRender(codigo) {
+            const agendamentoDiv = document.getElementById('agendamento-detalhes');
+            agendamentoDiv.innerHTML = `<div class="card-detail text-center p-8"><p class="text-xl text-orange-400"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando detalhes para ${codigo}...</p></div>`;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/agendamentos/consultar/${codigo}`);
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    renderAgendamentoDetalhes(result.data);
+                } else {
+                    agendamentoDiv.innerHTML = `<div class="card-detail text-center p-8 bg-red-900 bg-opacity-20 border-red-700 text-red-400"><i class="fas fa-times-circle mr-2"></i>Agendamento ${codigo} não encontrado.</div>`;
+                    showNotification(`Agendamento ${codigo} não encontrado.`, 'error');
+                }
+            } catch (error) {
+                agendamentoDiv.innerHTML = `<div class="card-detail text-center p-8 bg-red-900 bg-opacity-20 border-red-700 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>Erro ao consultar o agendamento. Verifique a API.</div>`;
+                showNotification('Erro de conexão com a API.', 'error');
+            }
+        }
+
+        function init() {
+            const codigo = new URLSearchParams(window.location.search).get('codigo');
+            if (codigo) {
+                fetchAgendamentoAndRender(codigo);
+            } else {
+                document.getElementById('agendamento-detalhes').innerHTML = `
+                    <div class="card-detail text-center p-12 space-y-4">
+                        <i class="fas fa-search-plus text-6xl text-orange-primary animate-float"></i>
+                        <h2 class="text-3xl font-bold text-white">Pronto para consultar?</h2>
+                        <p class="text-lg text-text-secondary">Utilize o botão **Consultar outro** na barra de navegação superior para começar.</p>
+                    </div>
+                `;
+            }
+            
+            // Adicionar event listeners aos forms dos modais
+            document.getElementById('consulta-form')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const codigoInput = document.getElementById('codigo-consulta').value.trim();
+                if (codigoInput) {
+                    closeConsultaModal();
+                    // Redireciona a própria página com o novo código
+                    window.location.href = `consultar-agendamento.html?codigo=${encodeURIComponent(codigoInput)}`;
+                }
+            });
+            document.getElementById('form-cancelar-solicitacao')?.addEventListener('submit', enviarMotivoCancelamento);
+            document.getElementById('contra-proposta-form')?.addEventListener('submit', enviarContraProposta);
+        }
+
+        // Simulação de função de visualização de PDF (apenas para evitar erros no console)
+        function viewPDF(arquivo) {
+            // Em uma aplicação real: window.open(`/api/files/${arquivo}`, '_blank');
+            showNotification(`Tentando abrir arquivo: ${arquivo}. (Simulação)`, 'info');
+        }
+
+        // Chamada de inicialização
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
