@@ -452,7 +452,6 @@
                 'confirmado': 1,
                 'reagendamento': 2, // CD sugeriu reagendamento
                 'aguardando_resposta_cd': 3, // Transportador sugeriu reagendamento
-                'nao-veio': 3, // Transportador não veio, fica aguardando confirmação do Transportador
                 'em_transito': 4,
                 'entregue': 5
             };
@@ -462,38 +461,43 @@
                 const isCompleted = idx < currentIdx;
                 const isActive = idx === currentIdx;
                 stepsHTML += `
-                    <div class="flex flex-col items-center min-w-[140px] mx-2">
-                        <div class="timeline-step-icon text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${isCompleted ? 'bg-green-500' : (isActive ? 'bg-orange-primary animate-timeline-pulse ring-4 ring-orange-secondary' : 'bg-gray-700')}">
-                            <i class="fas ${step.icon} text-xl"></i>
+                    <div class="flex flex-col items-center w-1/6">
+                        <div class="relative">
+                            <div class="timeline-step-icon text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${isCompleted ? 'bg-green-500' : (isActive ? 'bg-orange-primary animate-timeline-pulse ring-4 ring-orange-secondary' : 'bg-gray-700')}">
+                                <i class="fas ${step.icon} text-xl"></i>
+                            </div>
+                            <div class="absolute left-1/2 top-12 -translate-x-1/2 w-3 h-3 rounded-full ${isCompleted ? 'bg-green-500' : (isActive ? 'bg-orange-primary animate-timeline-pulse' : 'bg-gray-700')} border-2 border-border-dark"></div>
                         </div>
                         <p class="timeline-label text-text-secondary text-xs mt-2 text-center font-bold">${step.label}</p>
                     </div>
                 `;
             });
-            // Caminhão 3D super dinâmico - agora acima dos pontos
-            const truckLeft = (currentIdx * 140) + 40;
+            // Caminhão 3D centralizado acima do ponto ativo
+            const truckPercent = (currentIdx / (timelineStatuses.length - 1)) * 100;
             const truck3D = `
-                <div id="timeline-truck" class="absolute -top-10" style="left:${truckLeft}px;transition:left 1s;z-index:10;">
+                <div id="timeline-truck" class="absolute -top-16 left-0" style="left:calc(${truckPercent}% - 32px);transition:left 1s;">
                     <div style="perspective: 800px;">
-                        <i class="fas fa-truck-fast text-6xl text-orange-primary truck-icon" style="animation: float-3d 2s cubic-bezier(.4,0,.2,1) infinite, timeline-pulse 1.5s infinite alternate;"></i>
-                        <div class="w-20 h-2 bg-gradient-to-r from-orange-primary to-orange-secondary rounded-full mt-2 mx-auto animate-pulse"></div>
+                        <i class="fas fa-truck-fast text-5xl text-orange-primary truck-icon" style="animation: float-3d 2s cubic-bezier(.4,0,.2,1) infinite, timeline-pulse 1.5s infinite alternate;"></i>
                     </div>
                 </div>
             `;
+            // Linha contínua
+            const lineHTML = `
+                <div class="absolute left-0 right-0 top-12 h-2 bg-gradient-to-r from-orange-primary to-orange-secondary rounded-full" style="z-index:0;"></div>
+            `;
             const timelineHTML = `
-                <div class="timeline-container rounded-2xl mx-auto mb-12 shadow-deep flex flex-col items-center justify-center" style="max-width:1100px; min-width:340px; padding: 2.5rem 2rem;">
-                    <h3 class="text-2xl font-extrabold text-white mb-6 flex items-center gap-3 justify-center">
+                <div class="timeline-container rounded-2xl p-8 mb-10 max-w-7xl mx-auto shadow-deep relative">
+                    <h3 class="text-2xl font-extrabold text-white mb-8 flex items-center gap-3">
                         <i class="fas ${statusInfo.icon} text-orange-primary"></i>
                         Fluxo Logístico: <span class="font-bold ${statusInfo.color} px-3 py-1 rounded-lg">${statusInfo.text}</span>
                     </h3>
-                    <p class="text-text-secondary mb-6 text-center">${statusInfo.description}</p>
-                    <div class="relative w-full flex flex-col items-center justify-center" style="height:170px;">
-                        <div class="w-full overflow-x-auto flex justify-center">
-                            <div class="flex items-end relative" style="min-width:${timelineStatuses.length * 150}px; height:120px;">
-                                ${truck3D}
-                                ${stepsHTML}
-                            </div>
+                    <p class="text-text-secondary mb-8 text-center">${statusInfo.description}</p>
+                    <div class="relative h-40 w-full mb-10 flex items-center">
+                        ${lineHTML}
+                        <div class="flex items-end w-full relative z-10">
+                            ${stepsHTML}
                         </div>
+                        ${truck3D}
                     </div>
                 </div>
             `;
