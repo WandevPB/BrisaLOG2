@@ -537,25 +537,31 @@
 
         function renderTimeline3D(currentStatus) {
             const statusInfo = statusMap[currentStatus];
-            
+
+            // Novo fluxo logístico completo
             const timelineStatuses = [
                 { key: 'pendente', label: 'Aguardando Confirmação', icon: 'fa-clock' },
-                { key: 'confirmado', label: 'Confirmado', icon: 'fa-calendar-check' },
-                { key: 'reagendamento_cd', label: 'Reagendamento (CD)', icon: 'fa-sync-alt' },
-                { key: 'reagendamento_transportador', label: 'Reagendamento (Transportador)', icon: 'fa-reply-all' },
+                { key: 'confirmado', label: 'Agendamento Aprovado', icon: 'fa-calendar-check' },
+                { key: 'reagendamento', label: 'Nova Data Sugerida', icon: 'fa-sync-alt' },
+                { key: 'aguardando_resposta_cd', label: 'Proposta Enviada (Aguarde CD)', icon: 'fa-reply-all' },
                 { key: 'em_transito', label: 'Em Trânsito', icon: 'fa-truck-fast' },
-                { key: 'entregue', label: 'Entregue', icon: 'fa-box-open' }
+                { key: 'entregue', label: 'Entrega Realizada', icon: 'fa-box-open' },
+                { key: 'nao-veio', label: 'Fornecedor Não Compareceu', icon: 'fa-user-slash' },
+                { key: 'cancelado', label: 'Cancelado', icon: 'fa-ban' }
             ];
-            
+
+            // Mapeamento do índice para o caminhão
             let statusMapIdx = {
                 'pendente': 0,
                 'confirmado': 1,
                 'reagendamento': 2,
                 'aguardando_resposta_cd': 3,
                 'em_transito': 4,
-                'entregue': 5
+                'entregue': 5,
+                'nao-veio': 6,
+                'cancelado': 7
             };
-            
+
             let currentIdx = statusMapIdx[currentStatus] ?? 0;
             
             let floatingParticlesHTML = '';
@@ -598,12 +604,21 @@
                 const isCompleted = idx < currentIdx;
                 const isActive = idx === currentIdx;
                 const positionPercent = (idx / (timelineStatuses.length - 1)) * 100;
-                
+
                 let stepColor = 'bg-gray-700';
                 let glowColor = 'rgba(100, 100, 100, 0.3)';
                 let stepShadow = '';
-                
-                if (isCompleted) {
+
+                // Cancelado e Não Veio mudam a cor
+                if (step.key === 'cancelado' && isActive) {
+                    stepColor = 'bg-red-600';
+                    glowColor = 'rgba(255, 0, 0, 0.5)';
+                    stepShadow = 'shadow-glow animate-pulse-glow';
+                } else if (step.key === 'nao-veio' && isActive) {
+                    stepColor = 'bg-yellow-600';
+                    glowColor = 'rgba(255, 200, 0, 0.5)';
+                    stepShadow = 'shadow-glow animate-pulse-glow';
+                } else if (isCompleted) {
                     stepColor = 'bg-green-500';
                     glowColor = 'rgba(72, 187, 120, 0.5)';
                     stepShadow = 'shadow-glow';
@@ -612,7 +627,7 @@
                     glowColor = 'rgba(255, 107, 53, 0.7)';
                     stepShadow = 'shadow-glow animate-pulse-glow';
                 }
-                
+
                 stepsHTML += `
                     <div class="timeline-step-3d absolute top-1/2 -translate-y-1/2" style="left: ${positionPercent}%; transform: translateX(-50%) translateZ(20px);">
                         <div class="relative">
@@ -621,7 +636,7 @@
                                 <i class="fas ${step.icon} text-xl"></i>
                             </div>
                             <div class="absolute left-1/2 -translate-x-1/2 top-14 w-32 text-center">
-                                <p class="text-xs font-bold ${isActive ? 'text-orange-primary' : (isCompleted ? 'text-green-400' : 'text-text-secondary')}">
+                                <p class="text-xs font-bold ${isActive ? (step.key === 'cancelado' ? 'text-red-500' : (step.key === 'nao-veio' ? 'text-yellow-400' : 'text-orange-primary')) : (isCompleted ? 'text-green-400' : 'text-text-secondary')}">
                                     ${step.label}
                                 </p>
                             </div>
@@ -631,7 +646,10 @@
             });
             
             const truckPercent = (currentIdx / (timelineStatuses.length - 1)) * 100;
-            
+
+            // Se cancelado ou nao-veio, caminhão para na etapa correspondente
+            let showTruck = !(currentStatus === 'cancelado' || currentStatus === 'nao-veio');
+
             const timelineHTML = `
                 <div class="timeline-3d-container rounded-2xl p-8 mb-10 max-w-7xl mx-auto shadow-deep relative overflow-hidden bg-gradient-to-b from-gray-900 to-card-dark border border-border-dark">
                     <h3 class="text-2xl font-extrabold text-white mb-8 flex items-center gap-3">
@@ -639,16 +657,16 @@
                         Fluxo Logístico: <span class="status-badge-3d font-bold ${statusInfo.color} px-3 py-1 rounded-lg bg-card-dark border border-orange-primary/30">${statusInfo.text}</span>
                     </h3>
                     <p class="text-text-secondary mb-8 text-center">${statusInfo.description}</p>
-                    
+
                     <div class="relative h-64 w-full mb-10 flex items-center justify-center">
                         ${orbitRingsHTML}
                         ${floatingParticlesHTML}
-                        
+
                         <div class="timeline-road w-11/12 mx-auto"></div>
-                        
+
                         ${stepsHTML}
-                        
-                        <div id="timeline-truck" class="truck-3d absolute top-1/2 -translate-y-1/2" style="left: ${truckPercent}%; transition: left 1.5s cubic-bezier(0.4, 0, 0.2, 1);">
+
+                        ${showTruck ? `<div id="timeline-truck" class="truck-3d absolute top-1/2 -translate-y-1/2" style="left: ${truckPercent}%; transition: left 1.5s cubic-bezier(0.4, 0, 0.2, 1);">
                             <div class="relative">
                                 <i class="fas fa-truck-fast text-4xl text-orange-primary" style="
                                     filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
@@ -656,9 +674,9 @@
                                 "></i>
                                 <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-orange-primary rounded-full blur-sm opacity-70"></div>
                             </div>
-                        </div>
+                        </div>` : ''}
                     </div>
-                    
+
                     <div class="w-full bg-gray-800 rounded-full h-2.5 mt-6">
                         <div class="bg-gradient-to-r from-orange-primary to-orange-secondary h-2.5 rounded-full transition-all duration-1000" style="width: ${statusInfo.progress}%"></div>
                     </div>
@@ -669,7 +687,7 @@
                     </div>
                 </div>
             `;
-            
+
             return timelineHTML;
         }
 
