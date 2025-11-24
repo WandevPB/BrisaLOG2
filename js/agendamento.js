@@ -770,7 +770,7 @@ class AgendamentoForm {
                 <div class="flex items-center gap-3 mb-8">
                     <div class="bg-green-100 rounded-full p-3"><i class="fas fa-check text-green-600 text-xl"></i></div>
                     <div>
-                        <h2 class="text-3xl font-bold text-gray-dark">Revisão e Confirmação</h2>
+                        <h2 class="text-3xl font-bold text-orange-400">Revisão e Confirmação</h2>
                         <p class="text-gray-medium">Confira os dados antes de enviar a solicitação</p>
                     </div>
                 </div>
@@ -836,16 +836,16 @@ class AgendamentoForm {
                             // *** CORREÇÃO AQUI: 'pedido.numero' agora contém o número correto ***
                             return `
                                 <div class="mb-8 border-b pb-6 last:border-b-0 last:pb-0">
-                                    <div class="flex items-center gap-2 mb-2 text-lg font-bold text-gray-dark"><i class="fas fa-shopping-cart text-orange-500"></i> Pedido: ${pedido.numero}</div>
+                                    <div class="flex items-center gap-2 mb-2 text-lg font-bold text-orange-400"><i class="fas fa-shopping-cart text-orange-500"></i> Pedido: ${pedido.numero}</div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                                        <div class="text-xs text-gray-medium">Total do Pedido</div>
-                                        <div class="font-semibold text-green-700">${pedido.valor}</div>
+                                        <div class="text-xs font-semibold text-orange-400">Total do Pedido</div>
+                                        <div class="font-bold text-lg text-green-400">${pedido.valor}</div>
                                     </div>
                                     <div class="mb-2">
                                         <div class="text-xs text-gray-medium mb-1">Notas Fiscais:</div>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             ${pedido.notasFiscais.map(nf => `
-                                                <div class="bg-[#181818] rounded-xl border border-orange-200 p-4 mb-2 shadow-md flex items-center gap-4">
+                                                <div class="bg-[#181818] rounded-xl border-2 border-orange-400 p-4 mb-2 shadow-md flex items-center gap-4">
                                                     <div class="flex-1">
                                                         <div class="text-xs font-semibold text-orange-400 mb-1">Nº NF</div>
                                                         <div class="font-bold text-lg text-white">${nf.numero}</div>
