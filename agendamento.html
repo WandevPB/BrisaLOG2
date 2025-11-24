@@ -350,12 +350,32 @@
   /* Steps indicator */
   .step {
     transition: all 0.3s ease;
+    background: #181818;
+    color: #bbb;
+    border: 2px solid rgba(255, 107, 53, 0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   }
 
   .step.active {
     background: linear-gradient(135deg, #FF6B35, #FF8C42) !important;
     color: white !important;
     box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+    border: 2px solid #FF6B35;
+  }
+
+  .step-completed {
+    background: linear-gradient(135deg, #10B981, #059669) !important;
+    color: #fff !important;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+    border: 2px solid #10B981;
+  }
+
+  .step-inactive {
+    background: #181818 !important;
+    color: #555 !important;
+    opacity: .4;
+    pointer-events: none;
+    border: 2px solid rgba(255, 107, 53, 0.08);
   }
 
   /* Botões */
