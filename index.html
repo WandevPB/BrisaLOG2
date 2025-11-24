@@ -744,110 +744,6 @@
             </button>
         </div>
     </div>
-    <!-- Modal de Detalhes -->
-    <!-- Modal de Detalhes Completo (migrado do index-old.html, dark theme adaptado) -->
-    <div id="status-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center modal-backdrop p-4">
-        <div class="bg-gray-900 rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-3d border border-orange-500/20">
-            <div class="flex-shrink-0 bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 flex justify-between items-center rounded-t-2xl">
-                <h2 class="text-xl font-bold text-white flex items-center">
-                    <i class="fas fa-search mr-3"></i>
-                    Status do Agendamento
-                </h2>
-                <button onclick="closeStatusModal()" class="text-white hover:text-orange-200 transition-colors duration-300">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div id="status-content" class="flex-1 overflow-y-auto p-6 text-gray-200"></div>
-        </div>
-    </div>
-    <div id="nf-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-60 modal-backdrop">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-gray-900 rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto border border-orange-500/20">
-                <div class="p-6 border-b border-gray-700">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-orange-400">
-                            <i class="fas fa-file-invoice mr-2 text-green-600"></i>
-                            Adicionar Nota Fiscal
-                        </h2>
-                        <button type="button" onclick="closeNFModal()" class="text-gray-400 hover:text-white text-xl">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <p class="text-gray-400 mt-2">Preencha os dados da nota fiscal</p>
-                </div>
-                <div class="p-6">
-                    <form id="nf-form">
-                        <div class="space-y-6">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-2">
-                                        <i class="fas fa-shopping-cart mr-1 text-orange-400"></i>
-                                        Número do Pedido *
-                                    </label>
-                                    <input type="text" id="nf-pedido" required 
-                                        class="w-full px-3 py-2 border border-gray-700 rounded-lg bg-black text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                                        placeholder="Ex: PED12345">
-                                    <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-2">
-                                        <i class="fas fa-hashtag mr-1 text-orange-400"></i>
-                                        Número da NF-e *
-                                    </label>
-                                    <input type="text" id="nf-numero" required 
-                                        class="w-full px-3 py-2 border border-gray-700 rounded-lg bg-black text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                                        placeholder="Número">
-                                    <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    <i class="fas fa-dollar-sign mr-1 text-orange-400"></i>
-                                    Valor *
-                                </label>
-                                <input type="text" id="nf-valor" required placeholder="0,00"
-                                    class="w-full px-3 py-2 border border-gray-700 rounded-lg bg-black text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
-                                <div class="invalid-feedback hidden text-red-500 text-xs mt-1"></div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    <i class="fas fa-file-pdf mr-1 text-orange-400"></i>
-                                    Arquivo PDF/XML
-                                </label>
-                                <input type="file" id="nf-arquivo" accept=".pdf,.xml" 
-                                    class="w-full px-3 py-2 border border-gray-700 rounded-lg bg-black text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-sm">
-                                <p class="text-xs text-gray-500 mt-1">Arquivos PDF ou XML (máx. 10MB)</p>
-                            </div>
-                        </div>
-                        <div class="flex justify-end space-x-4 mt-6 pt-6 border-t border-gray-700">
-                            <button type="button" onclick="closeNFModal()" 
-                                class="bg-gray-700 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all font-medium">
-                                Cancelar
-                            </button>
-                            <button type="submit" 
-                                class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-all font-medium">
-                                <i class="fas fa-save mr-2"></i>Salvar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Detalhes Completo -->
-    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center">
-        <div class="bg-gray-900 rounded-2xl p-8 max-w-2xl w-full mx-4 border border-orange-500/20 overflow-y-auto" style="max-height:90vh;">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold" id="detailModalTitle">Detalhes do Agendamento</h3>
-                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white">
-                    <i class="fas fa-times text-2xl"></i>
-                </button>
-            </div>
-            <div id="detailModalContent" class="text-gray-300"></div>
-        </div>
-    </div>
-
     <!-- Overlay de Transição de Página -->
     <div id="page-transition" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#181818;opacity:1;pointer-events:auto;z-index:9999;transition:opacity 0.5s;"></div>
 
@@ -948,21 +844,7 @@
         function consultarStatus() {
             const codigo = document.getElementById('codigoConsulta').value.trim();
             if (!codigo) return;
-            fetch(`${API_BASE_URL}/api/agendamentos/consultar/${codigo}`)
-                .then(res => res.json())
-                .then(result => {
-                    if (result.success && result.data) {
-                        closeConsultaModal();
-                        showStatusModal(result.data);
-                    } else {
-                        document.getElementById('status-content').innerHTML = '<p>Agendamento não encontrado.</p>';
-                        document.getElementById('status-modal').classList.remove('hidden');
-                    }
-                })
-                .catch(() => {
-                    document.getElementById('status-content').innerHTML = '<p>Erro ao consultar agendamento.</p>';
-                    document.getElementById('status-modal').classList.remove('hidden');
-                });
+            window.location.href = `consultar-agendamento.html?codigo=${encodeURIComponent(codigo)}`;
         }
 
         function showStatusModal(agendamento) {

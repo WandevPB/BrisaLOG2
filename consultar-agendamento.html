@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Agendamento | BrisaLOG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #181818;
+            color: #fff;
+        }
+        .navbar {
+            background: rgba(20,20,20,0.95);
+            border-bottom: 1px solid #FF6B35;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(255,107,53,0.08);
+        }
+        .btn-orange {
+            background: linear-gradient(90deg, #FF6B35, #FF8C42);
+            color: #fff;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            transition: background 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 8px rgba(255,107,53,0.15);
+        }
+        .btn-orange:hover {
+            background: linear-gradient(90deg, #FF8C42, #FF6B35);
+            box-shadow: 0 4px 16px rgba(255,107,53,0.25);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #FF6B35;
+            color: #FF6B35;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+        }
+        .btn-outline:hover {
+            background: #FF6B35;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(255,107,53,0.15);
+        }
+        .card {
+            background: linear-gradient(135deg, #232323 80%, #181818 100%);
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+        }
+        .card h2, .card h3 {
+            color: #FF8C42;
+        }
+        .modal-backdrop {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(2px);
+        }
+        @media (max-width: 600px) {
+            .card {
+                padding: 1rem;
+            }
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar flex items-center justify-between px-8 py-4">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-truck text-white text-xl"></i>
+            </a>
+            <span class="font-bold text-lg text-white">BrisaLOG Agenda</span>
+        </div>
+        <div class="flex gap-4">
+            <a href="index.html" class="btn-outline"><i class="fas fa-arrow-left mr-2"></i>Voltar ao início</a>
+            <button onclick="openConsultaModal()" class="btn-orange"><i class="fas fa-search mr-2"></i>Consultar outro código</button>
+        </div>
+    </nav>
+    <main class="max-w-5xl mx-auto px-4 py-10">
+        <h1 class="text-3xl font-bold mb-8 flex items-center gap-3">
+            <i class="fas fa-search text-orange-500"></i>
+            Detalhes do Agendamento
+        </h1>
+        <div id="agendamento-detalhes">
+            <!-- Conteúdo dinâmico do agendamento será renderizado aqui -->
+        </div>
+    </main>
+    <!-- Modal de Consulta -->
+    <div id="consulta-modal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center">
+        <div class="bg-gray-900 rounded-2xl max-w-md w-full mx-4">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-4 rounded-2xl inline-block mb-4">
+                        <i class="fas fa-search text-white text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Consultar Agendamento</h2>
+                    <p class="text-gray-400">Digite o código do seu agendamento</p>
+                </div>
+                <form id="consulta-form" class="space-y-4">
+                    <div>
+                        <label class="block text-white font-semibold mb-2">Código do Agendamento</label>
+                        <input type="text" id="codigo-consulta" required class="w-full px-4 py-3 border border-gray-700 rounded-lg bg-black text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:ring-opacity-20 transition-all" placeholder="AGD123456">
+                    </div>
+                    <div class="flex justify-end space-x-4 mt-6">
+                        <button type="button" onclick="closeConsultaModal()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-all">Cancelar</button>
+                        <button type="submit" class="btn-orange"><i class="fas fa-search mr-2"></i>Consultar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="config.js"></script>
+    <script src="js/apiRequest.js"></script>
+    <script>
+        function openConsultaModal() {
+            document.getElementById('consulta-modal').classList.remove('hidden');
+        }
+        function closeConsultaModal() {
+            document.getElementById('consulta-modal').classList.add('hidden');
+        }
+        document.getElementById('consulta-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const codigo = document.getElementById('codigo-consulta').value.trim();
+            if (!codigo) return;
+            window.location.href = `consultar-agendamento.html?codigo=${encodeURIComponent(codigo)}`;
+        });
+        // Renderizar detalhes do agendamento
+        function renderAgendamentoDetalhes(data) {
+            // Render cards, histórico, ações, pedidos/notas fiscais, observações
+            let html = `<div class="card">
+                <h2 class="text-xl font-bold mb-2">Status: <span class="text-orange-400">${data.status || 'N/A'}</span></h2>
+                <p class="mb-2">Código: <span class="font-mono text-orange-400">${data.codigo || ''}</span></p>
+                <p class="mb-2">Data: ${data.data ? new Date(data.data).toLocaleDateString('pt-BR') : 'N/A'}</p>
+                <p class="mb-2">Fornecedor: ${data.fornecedor || 'N/A'}</p>
+            </div>`;
+            if (data.historico && data.historico.length > 0) {
+                html += `<div class="card">
+                    <h3 class="text-lg font-bold mb-4"><i class="fas fa-comments text-yellow-400 mr-2"></i>Histórico de Comunicação</h3>
+                    <ul class="space-y-3">
+                        ${data.historico.map(ev => `<li><strong>${ev.acao}</strong> - <span class="text-gray-400">${ev.data ? new Date(ev.data).toLocaleDateString('pt-BR') : ''}</span><br><span class="text-gray-300">${ev.descricao || ''}</span></li>`).join('')}
+                    </ul>
+                </div>`;
+            }
+            if (data.pedidos && data.pedidos.length > 0) {
+                html += `<div class="card">
+                    <h3 class="text-lg font-bold mb-4"><i class="fas fa-shopping-cart text-green-400 mr-2"></i>Pedidos e Notas Fiscais</h3>
+                    ${data.pedidos.map(p => `<div class="mb-3"><strong>Pedido:</strong> ${p.numero}<ul>${p.notasFiscais.map(nf => `<li>NF: ${nf.numero} - Valor: R$ ${nf.valor}</li>`).join('')}</ul></div>`).join('')}
+                </div>`;
+            }
+            if (data.observacoes) {
+                html += `<div class="card"><h3 class="text-lg font-bold mb-2"><i class="fas fa-comment-alt text-gray-400 mr-2"></i>Observações</h3><p>${data.observacoes}</p></div>`;
+            }
+            document.getElementById('agendamento-detalhes').innerHTML = html;
+        }
+        // Buscar dados se houver código na URL
+        function getCodigoFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('codigo');
+        }
+        const codigo = getCodigoFromURL();
+        if (codigo) {
+            fetch(`${API_BASE_URL}/api/agendamentos/consultar/${codigo}`)
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success && result.data) {
+                        renderAgendamentoDetalhes(result.data);
+                    } else {
+                        document.getElementById('agendamento-detalhes').innerHTML = '<div class="card text-center text-red-400">Agendamento não encontrado.</div>';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('agendamento-detalhes').innerHTML = '<div class="card text-center text-red-400">Erro ao consultar agendamento.</div>';
+                });
+        }
+    </script>
+</body>
+</html>
