@@ -441,29 +441,41 @@
             const timelineStatuses = [
                 { key: 'pendente', label: 'Aguardando Confirmação', icon: 'fa-clock' },
                 { key: 'confirmado', label: 'Confirmado (Aguardando entrega do material no CD)', icon: 'fa-calendar-check' },
+                { key: 'reagendamento_cd', label: 'Reagendamento (aguardando confirmação do Transportador)', icon: 'fa-sync-alt' },
+                { key: 'reagendamento_transportador', label: 'Reagendamento (aguardando confirmação do CD)', icon: 'fa-reply-all' },
                 { key: 'em_transito', label: 'Em Trânsito', icon: 'fa-truck-fast' },
                 { key: 'entregue', label: 'Entregue', icon: 'fa-box-open' }
             ];
-            const currentIdx = timelineStatuses.findIndex(s => s.key === currentStatus);
+            // Mapeamento do status para o ponto correto
+            let statusMapIdx = {
+                'pendente': 0,
+                'confirmado': 1,
+                'reagendamento': 2, // CD sugeriu reagendamento
+                'aguardando_resposta_cd': 3, // Transportador sugeriu reagendamento
+                'em_transito': 4,
+                'entregue': 5
+            };
+            let currentIdx = statusMapIdx[currentStatus] ?? 0;
             let stepsHTML = '';
             timelineStatuses.forEach((step, idx) => {
                 const isCompleted = idx < currentIdx;
                 const isActive = idx === currentIdx;
                 stepsHTML += `
-                    <div class="flex flex-col items-center min-w-[120px] mx-2">
-                        <div class="timeline-step-icon text-white w-8 h-8 rounded-full flex items-center justify-center ${isCompleted ? 'bg-green-500' : (isActive ? 'bg-orange-primary animate-timeline-pulse' : 'bg-gray-500')}">
-                            <i class="fas ${step.icon} text-lg"></i>
+                    <div class="flex flex-col items-center min-w-[140px] mx-2">
+                        <div class="timeline-step-icon text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${isCompleted ? 'bg-green-500' : (isActive ? 'bg-orange-primary animate-timeline-pulse ring-4 ring-orange-secondary' : 'bg-gray-700')}">
+                            <i class="fas ${step.icon} text-xl"></i>
                         </div>
-                        <p class="timeline-label text-text-secondary text-xs mt-2 text-center">${step.label}</p>
+                        <p class="timeline-label text-text-secondary text-xs mt-2 text-center font-bold">${step.label}</p>
                     </div>
                 `;
             });
-            // Caminhão 3D animado
+            // Caminhão 3D super dinâmico
             const truckLeft = (currentIdx * 140) + 40;
             const truck3D = `
                 <div id="timeline-truck" class="absolute top-0" style="left:${truckLeft}px;transition:left 1s;">
-                    <div style="perspective: 500px;">
-                        <i class="fas fa-truck-fast text-4xl text-orange-primary truck-icon" style="animation: float-3d 5s ease-in-out infinite;"></i>
+                    <div style="perspective: 800px;">
+                        <i class="fas fa-truck-fast text-5xl text-orange-primary truck-icon" style="animation: float-3d 2s cubic-bezier(.4,0,.2,1) infinite, timeline-pulse 1.5s infinite alternate;"></i>
+                        <div class="w-16 h-2 bg-gradient-to-r from-orange-primary to-orange-secondary rounded-full mt-2 mx-auto animate-pulse"></div>
                     </div>
                 </div>
             `;
@@ -474,8 +486,8 @@
                         Fluxo Logístico: <span class="font-bold ${statusInfo.color} px-3 py-1 rounded-lg">${statusInfo.text}</span>
                     </h3>
                     <p class="text-text-secondary mb-8 text-center">${statusInfo.description}</p>
-                    <div class="relative h-24 w-full mb-10 overflow-x-auto">
-                        <div class="flex items-center h-24 relative" style="min-width:${timelineStatuses.length * 140}px;">
+                    <div class="relative h-32 w-full mb-10 overflow-x-auto">
+                        <div class="flex items-center h-32 relative" style="min-width:${timelineStatuses.length * 140}px;">
                             ${stepsHTML}
                             ${truck3D}
                         </div>
