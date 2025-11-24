@@ -897,16 +897,16 @@
                             html += `<div class='mb-4'><span class='font-bold'>Nova Data Sugerida:</span> ${ag.dataSugestao} <br><span class='font-bold'>Novo Horário:</span> ${ag.horarioSugestao}</div>`;
                             html += `<div class='flex gap-3 mb-4'><button class='bg-green-500 text-white px-4 py-2 rounded' onclick="aceitarReagendamento('${ag.codigo}')">Aceitar</button><button class='bg-blue-500 text-white px-4 py-2 rounded' onclick="sugerirNovaData('${ag.codigo}')">Sugerir Outra Data</button><button class='bg-red-500 text-white px-4 py-2 rounded' onclick="rejeitarReagendamento('${ag.codigo}')">Rejeitar</button></div>`;
                         }
-                        document.getElementById('detailModalContent').innerHTML = html;
-                        document.getElementById('detailModal').classList.remove('hidden');
+                        document.getElementById('statusModalContent').innerHTML = html;
+                        document.getElementById('statusModal').classList.remove('hidden');
                     } else {
-                        document.getElementById('detailModalContent').innerHTML = '<p>Agendamento não encontrado.</p>';
-                        document.getElementById('detailModal').classList.remove('hidden');
+                        document.getElementById('statusModalContent').innerHTML = '<p>Agendamento não encontrado.</p>';
+                        document.getElementById('statusModal').classList.remove('hidden');
                     }
                 })
                 .catch(() => {
-                    document.getElementById('detailModalContent').innerHTML = '<p>Erro ao consultar agendamento.</p>';
-                    document.getElementById('detailModal').classList.remove('hidden');
+                    document.getElementById('statusModalContent').innerHTML = '<p>Erro ao consultar agendamento.</p>';
+                    document.getElementById('statusModal').classList.remove('hidden');
                 });
         }
 
