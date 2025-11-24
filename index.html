@@ -837,13 +837,11 @@
         function consultarStatus() {
             const codigo = document.getElementById('codigoConsulta').value;
             if (!codigo) return;
-            // Busca os dados do agendamento via API
-            fetch(`${API_BASE_URL}/api/agendamento/${codigo}`)
+            // Busca os dados do agendamento via API (endpoint correto)
+            fetch(`${API_BASE_URL}/api/agendamentos/consultar/${codigo}`)
                 .then(res => res.json())
                 .then(data => {
-                    if (data && data.id) {
-                        // Exibe os detalhes no modal
-                        // Exemplo: preenche o modal com os dados
+                    if (data && data.codigo) {
                         document.querySelector('#consultaModal h3').textContent = `Agendamento: ${codigo}`;
                         document.querySelector('#consultaModal p').textContent = `Status: ${data.status || 'Indisponível'}\nData: ${data.dataEntrega || '-'}\nHorário: ${data.horarioEntrega || '-'}`;
                     } else {
