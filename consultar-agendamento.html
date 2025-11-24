@@ -440,11 +440,10 @@
             // Timeline dinâmica: cada status vira um ponto
             const timelineStatuses = [
                 { key: 'pendente', label: 'Aguardando Confirmação', icon: 'fa-clock' },
-                { key: 'confirmado', label: 'Confirmado', icon: 'fa-calendar-check' },
+                { key: 'confirmado', label: 'Confirmado (Aguardando entrega do material no CD)', icon: 'fa-calendar-check' },
                 { key: 'em_transito', label: 'Em Trânsito', icon: 'fa-truck-fast' },
                 { key: 'entregue', label: 'Entregue', icon: 'fa-box-open' }
             ];
-            // Posição do caminhão: índice do status atual
             const currentIdx = timelineStatuses.findIndex(s => s.key === currentStatus);
             let stepsHTML = '';
             timelineStatuses.forEach((step, idx) => {
@@ -459,8 +458,15 @@
                     </div>
                 `;
             });
-            // Caminhão avança/recuar conforme status
+            // Caminhão 3D animado
             const truckLeft = (currentIdx * 140) + 40;
+            const truck3D = `
+                <div id="timeline-truck" class="absolute top-0" style="left:${truckLeft}px;transition:left 1s;">
+                    <div style="perspective: 500px;">
+                        <i class="fas fa-truck-fast text-4xl text-orange-primary truck-icon" style="animation: float-3d 5s ease-in-out infinite;"></i>
+                    </div>
+                </div>
+            `;
             const timelineHTML = `
                 <div class="timeline-container rounded-2xl p-8 mb-10 overflow-x-auto shadow-deep">
                     <h3 class="text-2xl font-extrabold text-white mb-8 flex items-center gap-3">
@@ -471,9 +477,7 @@
                     <div class="relative h-24 w-full mb-10 overflow-x-auto">
                         <div class="flex items-center h-24 relative" style="min-width:${timelineStatuses.length * 140}px;">
                             ${stepsHTML}
-                            <div id="timeline-truck" class="absolute top-0" style="left:${truckLeft}px;transition:left 1s;">
-                                <i class="fas fa-truck-fast text-4xl text-orange-primary truck-icon"></i>
-                            </div>
+                            ${truck3D}
                         </div>
                     </div>
                 </div>
