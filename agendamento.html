@@ -1088,31 +1088,29 @@
       
       function formatMoneyOnInput(input) {
           let value = input.value.replace(/\D/g, ''); // Remove tudo que não é dígito
-          
           if (value === "") {
               input.value = ""; // Permite apagar
               return;
           }
 
-          // Remove zeros à esquerda
+          // Remove zeros à esquerda, mas mantém pelo menos um zero para valores pequenos
           value = value.replace(/^0+/, '');
-
           if (value.length === 0) {
             input.value = 'R$ 0,00';
-          } else if (value.length === 1) {
-            input.value = 'R$ 0,0' + value;
-          } else if (value.length === 2) {
-            input.value = 'R$ 0,' + value;
-          } else {
-            let intPart = value.substring(0, value.length - 2);
-            let decPart = value.substring(value.length - 2);
-            
-            // Adiciona pontos de milhar
-            intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            
-            input.value = 'R$ ' + intPart + ',' + decPart;
+            return;
           }
-          
+
+          // Garante pelo menos duas casas decimais
+          while (value.length < 3) {
+            value = '0' + value;
+          }
+
+          let intPart = value.substring(0, value.length - 2);
+          let decPart = value.substring(value.length - 2);
+          // Adiciona pontos de milhar
+          intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          input.value = 'R$ ' + intPart + ',' + decPart;
+
           // Move o cursor para o final
           if (typeof input.selectionStart === 'number') {
             input.setSelectionRange(input.value.length, input.value.length);
