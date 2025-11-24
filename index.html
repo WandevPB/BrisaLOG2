@@ -488,26 +488,6 @@
                     Consultar Status
                 </button>
             </div>
-
-            <!-- Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 max-w-5xl mx-auto">
-                <div class="stat-card">
-                    <div class="stat-number" data-target="1200">0</div>
-                    <p class="text-gray-400 mt-2">Agendamentos</p>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" data-target="98">0</div>
-                    <p class="text-gray-400 mt-2">% Satisfação</p>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" data-target="24">0</div>
-                    <p class="text-gray-400 mt-2">Horas/Dia</p>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" data-target="15">0</div>
-                    <p class="text-gray-400 mt-2">CDs Ativos</p>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -855,7 +835,11 @@
         function consultarStatus() {
             const codigo = document.getElementById('codigoConsulta').value;
             if (codigo) {
-                window.location.href = `/consultar-status.html?codigo=${codigo}`;
+                // Aqui você pode abrir o modal de detalhes, exibir info, etc.
+                // Exemplo: abre um modal de detalhes (substitua pelo seu modal real)
+                alert('Detalhes do agendamento: ' + codigo);
+                // Se tiver um modal customizado, chame a função para abrir ele aqui
+                // openDetalhesModal(codigo);
             }
         }
 
