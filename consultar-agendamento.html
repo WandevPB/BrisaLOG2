@@ -678,17 +678,26 @@
         }
 
         function calcularValorNF(valorStr) {
-            // Corrige para aceitar valor informado pelo fornecedor sem multiplicar por 100
-            let cleanStr = String(valorStr).replace(/\./g, ''); // Remove pontos de milhar
-            // Se o valor tem apenas dígitos, trata como inteiro
-            if (/^\d+$/.test(cleanStr)) {
-                // Ex: "2000" => 2000.00
-                return Number(cleanStr).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            // Corrige para tratar valores inteiros como reais e não centavos
+            let str = String(valorStr).trim();
+            // Remove pontos de milhar, mas preserva vírgula decimal
+            if (str.includes(',')) {
+                str = str.replace(/\./g, '');
+                str = str.replace(',', '.');
+                const v = parseFloat(str) || 0;
+                return v.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            } else if (str.includes('.')) {
+                // Se vier com ponto decimal, trata como float
+                str = str.replace(/\./g, '.');
+                const v = parseFloat(str) || 0;
+                return v.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            } else if (/^\d+$/.test(str)) {
+                // Se vier só dígitos, trata como reais
+                const v = parseInt(str, 10) || 0;
+                return v.toLocaleString('pt-BR', {minimumFractionDigits: 2});
             }
-            // Se tem vírgula, converte para float
-            cleanStr = cleanStr.replace(',', '.');
-            const v = parseFloat(cleanStr) || 0;
-            return v.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            // fallback
+            return '0,00';
         }
         
         function renderAgendamentoDetalhes(data) {
