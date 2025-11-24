@@ -834,13 +834,27 @@
 
         function consultarStatus() {
             const codigo = document.getElementById('codigoConsulta').value;
-            if (codigo) {
-                // Exibe o modal de detalhes (reutilizando o modal existente)
-                // Aqui você pode popular o modal com os dados do código
-                document.getElementById('consultaModal').classList.remove('hidden');
-                document.getElementById('consultaModal').classList.add('flex');
-                // Se quiser mostrar detalhes, pode preencher campos do modal aqui
-            }
+            if (!codigo) return;
+            // Busca os dados do agendamento via API
+            fetch(`${API_BASE_URL}/api/agendamento/${codigo}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.id) {
+                        // Exibe os detalhes no modal
+                        // Exemplo: preenche o modal com os dados
+                        document.querySelector('#consultaModal h3').textContent = `Agendamento: ${codigo}`;
+                        document.querySelector('#consultaModal p').textContent = `Status: ${data.status || 'Indisponível'}\nData: ${data.dataEntrega || '-'}\nHorário: ${data.horarioEntrega || '-'}`;
+                    } else {
+                        document.querySelector('#consultaModal p').textContent = 'Agendamento não encontrado.';
+                    }
+                    document.getElementById('consultaModal').classList.remove('hidden');
+                    document.getElementById('consultaModal').classList.add('flex');
+                })
+                .catch(() => {
+                    document.querySelector('#consultaModal p').textContent = 'Erro ao consultar agendamento.';
+                    document.getElementById('consultaModal').classList.remove('hidden');
+                    document.getElementById('consultaModal').classList.add('flex');
+                });
         }
 
         // Efeito de transição entre páginas
