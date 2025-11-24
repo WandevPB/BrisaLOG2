@@ -569,21 +569,35 @@ class AgendamentoForm {
     // Helper para converter string 'R$ 1.234,56' para número 1234.56
     parseCurrency(valor) {
         if (!valor) return 0;
+        
+        console.log('[parseCurrency] Valor recebido:', valor, 'Tipo:', typeof valor);
+        
+        // Remove caracteres não numéricos exceto ponto e vírgula
         let valorStr = String(valor).replace(/[^\d,.]/g, '');
+        console.log('[parseCurrency] Após limpeza:', valorStr);
+        
         // FORMATO BRASILEIRO: se tem vírgula, ela é o separador decimal
         // Pontos são separadores de milhares (remover)
         if (valorStr.includes(',')) {
+            // Remove TODOS os pontos (separadores de milhares)
             valorStr = valorStr.split('.').join('');
+            console.log('[parseCurrency] Após remover pontos (milhares):', valorStr);
+            // Troca vírgula por ponto (decimal)
             valorStr = valorStr.replace(',', '.');
+            console.log('[parseCurrency] Após trocar vírgula por ponto:', valorStr);
         } else if (valorStr.includes('.')) {
+            // FORMATO US/OUTRO: se tem só ponto(s), último é decimal
             const lastDotIndex = valorStr.lastIndexOf('.');
             if (lastDotIndex !== -1) {
                 valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + '.' + valorStr.substring(lastDotIndex + 1);
+                console.log('[parseCurrency] Formato com pontos (último=decimal):', valorStr);
             }
         }
-        // Corrige: se o valor for abreviado (ex: 2,00 para 2000), garante que não está dividindo por 1000
-        // Se valorStr for inteiro, parse normalmente
+        
+        console.log('[parseCurrency] Valor final antes de parseFloat:', valorStr);
+        
         const valorNumerico = parseFloat(valorStr);
+        console.log('[parseCurrency] Resultado numérico:', valorNumerico);
         return isNaN(valorNumerico) ? 0 : valorNumerico;
     }
 
@@ -766,17 +780,17 @@ class AgendamentoForm {
 
         // Card ainda mais largo
         const resumoHTML = `
-            <div class="max-w-6xl mx-auto bg-[#181818] rounded-3xl shadow-2xl p-12 card-3d border-4 border-orange-100">
+            <div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl p-12 card-3d border-4 border-orange-100">
                 <div class="flex items-center gap-3 mb-8">
                     <div class="bg-green-100 rounded-full p-3"><i class="fas fa-check text-green-600 text-xl"></i></div>
                     <div>
-                        <h2 class="text-3xl font-bold text-orange-400">Revisão e Confirmação</h2>
+                        <h2 class="text-3xl font-bold text-gray-dark">Revisão e Confirmação</h2>
                         <p class="text-gray-medium">Confira os dados antes de enviar a solicitação</p>
                     </div>
                 </div>
                 <div class="mb-8">
                     <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-truck"></i> Dados do Transportador</div>
-                    <div class="grid md:grid-cols-2 gap-6 bg-[#181818] rounded-xl p-6 shadow">
+                    <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
                         <div>
                             <div class="text-xs text-gray-medium">CNPJ</div>
                             <div class="font-semibold">${this.formData.transportador.documento || 'Não informado'}</div>
@@ -793,7 +807,7 @@ class AgendamentoForm {
                 </div>
                 <div class="mb-8">
                     <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-id-card"></i> Dados do Motorista</div>
-                    <div class="grid md:grid-cols-2 gap-6 bg-[#181818] rounded-xl p-6 shadow">
+                    <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
                         <div>
                             <div class="text-xs text-gray-medium">Nome</div>
                             <div class="font-semibold">${this.formData.transportador.nomeResponsavel || 'Não informado'}</div>
@@ -810,7 +824,7 @@ class AgendamentoForm {
                 </div>
                 <div class="mb-8">
                     <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-map-marker-alt"></i> Detalhes da Entrega</div>
-                    <div class="grid md:grid-cols-2 gap-6 bg-[#181818] rounded-xl p-6 shadow">
+                    <div class="grid md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6 shadow">
                         <div>
                             <div class="text-xs text-gray-medium">Quantidade de Volumes</div>
                             <div class="font-semibold">${quantidadeVolumes}</div>
@@ -831,28 +845,30 @@ class AgendamentoForm {
                 </div>
                 <div>
                     <div class="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-xl"><i class="fas fa-file-invoice"></i> Pedidos e Notas Fiscais (${notasFiscaisCount})</div>
-                    <div class="bg-[#181818] rounded-xl p-6 shadow">
+                    <div class="bg-gray-50 rounded-xl p-6 shadow">
                         ${this.formData.pedidos.map((pedido, idx) => {
                             // *** CORREÇÃO AQUI: 'pedido.numero' agora contém o número correto ***
                             return `
                                 <div class="mb-8 border-b pb-6 last:border-b-0 last:pb-0">
-                                    <div class="flex items-center gap-2 mb-2 text-lg font-bold text-orange-400"><i class="fas fa-shopping-cart text-orange-500"></i> Pedido: ${pedido.numero}</div>
+                                    <div class="flex items-center gap-2 mb-2 text-lg font-bold text-gray-dark"><i class="fas fa-shopping-cart text-orange-500"></i> Pedido: ${pedido.numero}</div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                                        <div class="text-xs font-semibold text-orange-400">Total do Pedido</div>
-                                        <div class="font-bold text-lg text-green-400">${pedido.valor}</div>
+                                        <div class="text-xs text-gray-medium">Total do Pedido</div>
+                                        <div class="font-semibold text-green-700">${pedido.valor}</div>
                                     </div>
                                     <div class="mb-2">
                                         <div class="text-xs text-gray-medium mb-1">Notas Fiscais:</div>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             ${pedido.notasFiscais.map(nf => `
-                                                <div class="bg-[#181818] rounded-xl border-2 border-orange-400 p-4 mb-2 shadow-md flex items-center gap-4">
-                                                    <div class="flex-1">
-                                                        <div class="text-xs font-semibold text-orange-400 mb-1">Nº NF</div>
-                                                        <div class="font-bold text-lg text-white">${nf.numero}</div>
-                                                    </div>
-                                                    <div class="flex-1 text-right">
-                                                        <div class="text-xs font-semibold text-orange-400 mb-1">Valor</div>
-                                                        <div class="font-bold text-lg text-green-400">${nf.valor}</div>
+                                                <div class="bg-white rounded-lg border p-4 mb-2 shadow-sm">
+                                                    <div class="grid grid-cols-2 gap-2">
+                                                        <div>
+                                                            <div class="text-xs text-gray-medium">Nº NF</div>
+                                                            <div class="font-semibold">${nf.numero}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-xs text-gray-medium">Valor</div>
+                                                            <div class="font-semibold">${nf.valor}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             `).join('')}
