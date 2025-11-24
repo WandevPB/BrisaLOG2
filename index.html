@@ -745,15 +745,19 @@
         </div>
     </div>
     <!-- Modal de Detalhes -->
-    <div id="statusModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center">
-        <div class="bg-gray-900 rounded-2xl p-8 max-w-md w-full mx-4 border border-orange-500/20">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold" id="statusModalTitle">Status do Agendamento</h3>
-                <button onclick="closeStatusModal()" class="text-gray-400 hover:text-white">
-                    <i class="fas fa-times text-2xl"></i>
+    <!-- Modal de Detalhes Completo (extraído do index-old.html, adaptado para dark) -->
+    <div id="status-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center modal-backdrop p-4">
+        <div class="bg-gray-900 rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-3d border border-orange-500/20">
+            <div class="flex-shrink-0 bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <i class="fas fa-search mr-3"></i>
+                    Status do Agendamento
+                </h2>
+                <button onclick="closeStatusModal()" class="text-white hover:text-orange-200 transition-colors duration-300">
+                    <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
-            <div id="statusModalContent" class="text-gray-300"></div>
+            <div id="status-content" class="flex-1 overflow-y-auto p-6 text-gray-200"></div>
         </div>
     </div>
 

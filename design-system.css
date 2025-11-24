@@ -69,6 +69,51 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+/* Modal de Detalhes (Dark Theme) */
+.modal-backdrop {
+  background: rgba(0,0,0,0.85);
+}
+
+#status-modal {
+  /* já tem bg-black/80 no HTML, reforça para fallback */
+  background: rgba(0,0,0,0.85);
+}
+
+#status-modal .rounded-2xl {
+  background: #18181b;
+  color: #f3f3f3;
+  border: 1px solid rgba(255,140,0,0.15);
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.45);
+}
+
+#status-modal h2, #status-modal h3 {
+  color: #fff;
+}
+
+#status-modal .text-gray-200, #status-modal .text-gray-300 {
+  color: #e5e7eb;
+}
+
+#status-modal .bg-gradient-to-r {
+  background: linear-gradient(90deg, #ff9800 0%, #ff5722 100%);
+  color: #fff;
+}
+
+#status-modal button {
+  color: #fff;
+  transition: color 0.2s;
+}
+#status-modal button:hover {
+  color: #ffd699;
+}
+
+#status-modal .border-orange-500\/20 {
+  border-color: rgba(255,140,0,0.15);
+}
+
+#status-modal .shadow-3d {
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.45);
+}
 @layer base {
   * {
     @apply border-border;
