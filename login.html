@@ -869,7 +869,7 @@
             loginCD = new LoginCD();
         });
 
-        // Fade-in na entrada
+        // Fade-in na entrada (padronizado)
         window.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
                 const overlay = document.getElementById('page-transition');
@@ -877,7 +877,7 @@
                 overlay.style.pointerEvents = 'none';
             }, 400);
         });
-        // Fade-out ao clicar em voltar ao início
+        // Fade-out ao clicar em voltar ao início (padronizado)
         document.querySelectorAll('.btn-voltar').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
