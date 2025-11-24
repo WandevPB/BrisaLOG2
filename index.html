@@ -744,6 +744,18 @@
             </button>
         </div>
     </div>
+    <!-- Modal de Detalhes -->
+    <div id="statusModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-gray-900 rounded-2xl p-8 max-w-md w-full mx-4 border border-orange-500/20">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold" id="statusModalTitle">Status do Agendamento</h3>
+                <button onclick="closeStatusModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="statusModalContent" class="text-gray-300"></div>
+        </div>
+    </div>
 
     <!-- Overlay de Transição de Página -->
     <div id="page-transition" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#181818;opacity:1;pointer-events:auto;z-index:9999;transition:opacity 0.5s;"></div>
@@ -833,27 +845,36 @@
             document.getElementById('consultaModal').classList.add('hidden');
             document.getElementById('consultaModal').classList.remove('flex');
         }
-
+        // Modal de Detalhes
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.add('hidden');
+        }
         function consultarStatus() {
-            const codigo = document.getElementById('codigoConsulta').value;
+            const codigo = document.getElementById('codigoConsulta').value.trim();
             if (!codigo) return;
-            // Busca os dados do agendamento via API (endpoint correto)
             fetch(`${API_BASE_URL}/api/agendamentos/consultar/${codigo}`)
                 .then(res => res.json())
-                .then(data => {
-                    if (data && data.codigo) {
-                        document.querySelector('#consultaModal h3').textContent = `Agendamento: ${codigo}`;
-                        document.querySelector('#consultaModal p').textContent = `Status: ${data.status || 'Indisponível'}\nData: ${data.dataEntrega || '-'}\nHorário: ${data.horarioEntrega || '-'}`;
+                .then(result => {
+                    if (result.success && result.data) {
+                        closeConsultaModal();
+                        const ag = result.data;
+                        let html = `<p><strong>Código:</strong> ${ag.codigo}</p>`;
+                        html += `<p><strong>Status:</strong> ${ag.status}</p>`;
+                        html += `<p><strong>Data:</strong> ${ag.dataEntrega}</p>`;
+                        html += `<p><strong>Horário:</strong> ${ag.horarioEntrega}</p>`;
+                        html += `<p><strong>Transportador:</strong> ${ag.fornecedor?.nome || '-'}</p>`;
+                        html += `<p><strong>Motorista:</strong> ${ag.motoristaNome || '-'}</p>`;
+                        html += `<p><strong>Placa:</strong> ${ag.placaVeiculo || '-'}</p>`;
+                        document.getElementById('statusModalContent').innerHTML = html;
+                        document.getElementById('statusModal').classList.remove('hidden');
                     } else {
-                        document.querySelector('#consultaModal p').textContent = 'Agendamento não encontrado.';
+                        document.getElementById('statusModalContent').innerHTML = '<p>Agendamento não encontrado.</p>';
+                        document.getElementById('statusModal').classList.remove('hidden');
                     }
-                    document.getElementById('consultaModal').classList.remove('hidden');
-                    document.getElementById('consultaModal').classList.add('flex');
                 })
                 .catch(() => {
-                    document.querySelector('#consultaModal p').textContent = 'Erro ao consultar agendamento.';
-                    document.getElementById('consultaModal').classList.remove('hidden');
-                    document.getElementById('consultaModal').classList.add('flex');
+                    document.getElementById('statusModalContent').innerHTML = '<p>Erro ao consultar agendamento.</p>';
+                    document.getElementById('statusModal').classList.remove('hidden');
                 });
         }
 
