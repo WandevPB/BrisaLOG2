@@ -156,7 +156,7 @@
     overflow: hidden;
     color: var(--muted-foreground);
   }
-  .file-input-label.file-selected span.file-name {
+  .file-input-label.file-selected span.file.name {
     color: var(--foreground); /* Texto normal quando selecionado */
   }
   .file-input-native {
@@ -197,7 +197,7 @@
             <p class="text-xs text-white">Agendamento de Entrega</p>
           </div>
         </div>
-        <a href="/" class="flex items-center text-white hover:text-orange-200 transition-colors">
+        <a href="/" class="flex items-center text-white hover:text-orange-200 transition-colors" id="btn-voltar">
           <i class="fas fa-home mr-2"></i>
           Voltar ao Início
         </a>
@@ -1017,6 +1017,15 @@
         overlay.style.opacity = '0';
         overlay.style.pointerEvents = 'none';
       }, 400);
+      document.getElementById('btn-voltar').addEventListener('click', function(e) {
+        e.preventDefault();
+        const overlay = document.getElementById('page-transition');
+        overlay.style.pointerEvents = 'auto';
+        overlay.style.opacity = '1';
+        setTimeout(function() {
+          window.location.href = '/';
+        }, 500);
+      });
     });
   </script>
 </body>
