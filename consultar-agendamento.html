@@ -561,7 +561,7 @@
         function init() {
             const codigo = new URLSearchParams(window.location.search).get('codigo');
             if (codigo) {
-                fetchAgendamentoAndRender(codigo);
+                fetchAgendamentoAndRender(codigo); // Chama a função para buscar e renderizar agendamento
             } else {
                 // Exibe a mensagem de inicialização se não houver código na URL
                 document.getElementById('agendamento-detalhes').innerHTML = `
@@ -583,6 +583,28 @@
                     window.location.href = `consultar-agendamento.html?codigo=${encodeURIComponent(codigoInput)}`;
                 }
             });
+        }
+
+        // --- Função global para buscar e renderizar agendamento ---
+        async function fetchAgendamentoAndRender(codigo) {
+            document.getElementById('display-codigo').textContent = codigo;
+            document.getElementById('display-codigo').classList.add('animate-pulse');
+            const agendamentoDiv = document.getElementById('agendamento-detalhes');
+            agendamentoDiv.innerHTML = `<div class="card-detail text-center p-10"><p class="text-xl text-orange-400"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando detalhes para ${codigo}...</p></div>`;
+            try {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const response = await fetch(`${API_BASE_URL}/api/agendamentos/consultar/${codigo}`);
+                const result = await response.json();
+                if (result.success && result.data) {
+                    renderAgendamentoDetalhes(result.data);
+                } else {
+                    agendamentoDiv.innerHTML = `<div class="card-detail text-center p-10 bg-red-900/30 border-red-700 text-red-400"><i class="fas fa-times-circle mr-2"></i>Agendamento ${codigo} não encontrado.</div>`;
+                    showNotification(`Agendamento ${codigo} não encontrado.`, 'error');
+                }
+            } catch (error) {
+                agendamentoDiv.innerHTML = `<div class="card-detail text-center p-10 bg-red-900/30 border-red-700 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>Erro ao consultar o agendamento. Verifique a conexão com a API.</div>`;
+                showNotification('Erro de conexão com a API.', 'error');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', init);
