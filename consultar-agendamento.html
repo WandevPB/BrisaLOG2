@@ -335,8 +335,11 @@
             return total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
         }
         function viewPDF(arquivo) {
-            showNotification(`Simulação: Tentando abrir arquivo: ${arquivo}.`, 'info');
-            // window.open(`${API_BASE_URL}/api/files/${arquivo}`, '_blank');
+            if (!arquivo) {
+                showNotification('Arquivo PDF não disponível.', 'error');
+                return;
+            }
+            window.open(`${API_BASE_URL}/api/files/${arquivo}`, '_blank');
         }
 
         // --- Funções de Modal e Ação (Reincorporadas) ---
@@ -361,6 +364,21 @@
                 e.preventDefault();
                 enviarContraProposta(e);
             };
+            // Carregar horários disponíveis dinamicamente
+            const horarioSelect = document.getElementById('contra-proposta-horario');
+            horarioSelect.innerHTML = '<option value="">Carregando horários...</option>';
+            fetch(`${API_BASE_URL}/api/agendamentos/${codigo}/horarios-disponiveis`)
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success && Array.isArray(result.horarios)) {
+                        horarioSelect.innerHTML = '<option value="">Selecione o horário</option>' + result.horarios.map(h => `<option value="${h}">${h}</option>`).join('');
+                    } else {
+                        horarioSelect.innerHTML = '<option value="">08:00 às 12:00</option><option value="13:00-17:00">13:00 às 17:00</option><option value="08:00-17:00">08:00 às 17:00 (Dia Inteiro)</option>';
+                    }
+                })
+                .catch(() => {
+                    horarioSelect.innerHTML = '<option value="">08:00 às 12:00</option><option value="13:00-17:00">13:00 às 17:00</option><option value="08:00-17:00">08:00 às 17:00 (Dia Inteiro)</option>';
+                });
             document.getElementById('contra-proposta-modal').classList.remove('hidden');
         }
         function fecharContraPropostaModal() { document.getElementById('contra-proposta-modal').classList.add('hidden'); currentCodigoReagendamento = null; }
@@ -635,14 +653,13 @@
                     </div>
                     
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
                         <!-- COLUNA 1: DADOS PRINCIPAIS -->
-                        <div class="lg:col-span-1 space-y-6">
-                            <div class="card-detail p-6 rounded-xl">
+                        <div class="lg:col-span-1 h-full flex flex-col justify-between">
+                            <div class="card-detail p-6 rounded-xl h-full flex flex-col justify-between">
                                 <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2 border-b border-border-dark/50 pb-3">
                                     <i class="fas fa-calendar-alt text-orange-primary"></i> Agendamento & CD
                                 </h3>
-                                <div class="space-y-3 text-sm">
+                                <div class="space-y-3 text-sm flex-1">
                                     <div><span class="text-text-secondary block">Data Solicitada:</span> <span class="font-semibold text-gray-light">${formatDateBrFromISO(data.dataEntrega)}</span></div>
                                     <div><span class="text-text-secondary block">Horário:</span> <span class="font-semibold text-gray-light">${data.horarioEntrega}</span></div>
                                     <div><span class="text-text-secondary block">CD Destino:</span> <span class="font-extrabold text-orange-secondary">${data.cdDestino || 'N/A'}</span></div>
@@ -650,14 +667,13 @@
                                 </div>
                             </div>
                         </div>
-
                         <!-- COLUNA 2: DADOS DO TRANSPORTADOR -->
-                        <div class="lg:col-span-1 space-y-6">
-                            <div class="card-detail p-6 rounded-xl">
+                        <div class="lg:col-span-1 h-full flex flex-col justify-between">
+                            <div class="card-detail p-6 rounded-xl h-full flex flex-col justify-between">
                                 <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2 border-b border-border-dark/50 pb-3">
                                     <i class="fas fa-truck-moving text-blue-400"></i> Transportador
                                 </h3>
-                                <div class="space-y-3 text-sm">
+                                <div class="space-y-3 text-sm flex-1">
                                     <div><span class="text-text-secondary block">Empresa:</span> <span class="font-semibold text-gray-light">${data.fornecedor || 'N/A'}</span></div>
                                     <div><span class="text-text-secondary block">CNPJ:</span> <span class="font-semibold text-gray-light">${data.cnpj || 'N/A'}</span></div>
                                     <div><span class="text-text-secondary block">Contato:</span> <span class="font-semibold text-gray-light truncate" title="${data.email || 'N/A'}">${data.email || 'N/A'}</span></div>
@@ -669,9 +685,8 @@
                                 </div>
                             </div>
                         </div>
-
                         <!-- COLUNA 3: RESUMO GERAL -->
-                        <div class="lg:col-span-1 space-y-6">
+                        <div class="lg:col-span-1 h-full flex flex-col justify-between">
                             <div class="card-detail p-6 rounded-xl h-full flex flex-col justify-between">
                                 <div>
                                     <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2 border-b border-border-dark/50 pb-3">
