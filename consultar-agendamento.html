@@ -678,8 +678,15 @@
         }
 
         function calcularValorNF(valorStr) {
+            // Corrige para aceitar valor informado pelo fornecedor sem multiplicar por 100
             let cleanStr = String(valorStr).replace(/\./g, ''); // Remove pontos de milhar
-            cleanStr = cleanStr.replace(',', '.'); // Troca vírgula por ponto decimal
+            // Se o valor tem apenas dígitos, trata como inteiro
+            if (/^\d+$/.test(cleanStr)) {
+                // Ex: "2000" => 2000.00
+                return Number(cleanStr).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            }
+            // Se tem vírgula, converte para float
+            cleanStr = cleanStr.replace(',', '.');
             const v = parseFloat(cleanStr) || 0;
             return v.toLocaleString('pt-BR', {minimumFractionDigits: 2});
         }
