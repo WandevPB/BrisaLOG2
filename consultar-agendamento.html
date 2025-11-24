@@ -537,6 +537,10 @@
 
         function renderTimeline3D(currentStatus, historico = []) {
             const statusInfo = statusMap[currentStatus];
+            // Garante que orbitRingsHTML está definido
+            let orbitRingsHTML = '';
+            // Se quiser adicionar animação, pode definir aqui
+            // orbitRingsHTML = `<div class='orbit-rings'></div>`;
 
             // Novo fluxo logístico completo
             const timelineStatuses = [
