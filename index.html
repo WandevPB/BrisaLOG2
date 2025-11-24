@@ -757,6 +757,19 @@
         </div>
     </div>
 
+    <!-- Modal de Detalhes Completo -->
+    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-gray-900 rounded-2xl p-8 max-w-2xl w-full mx-4 border border-orange-500/20 overflow-y-auto" style="max-height:90vh;">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold" id="detailModalTitle">Detalhes do Agendamento</h3>
+                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="detailModalContent" class="text-gray-300"></div>
+        </div>
+    </div>
+
     <!-- Overlay de Transição de Página -->
     <div id="page-transition" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#181818;opacity:1;pointer-events:auto;z-index:9999;transition:opacity 0.5s;"></div>
 
@@ -849,6 +862,10 @@
         function closeStatusModal() {
             document.getElementById('statusModal').classList.add('hidden');
         }
+        // Modal de Detalhes Completo
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
         function consultarStatus() {
             const codigo = document.getElementById('codigoConsulta').value.trim();
             if (!codigo) return;
@@ -858,23 +875,38 @@
                     if (result.success && result.data) {
                         closeConsultaModal();
                         const ag = result.data;
-                        let html = `<p><strong>Código:</strong> ${ag.codigo}</p>`;
-                        html += `<p><strong>Status:</strong> ${ag.status}</p>`;
-                        html += `<p><strong>Data:</strong> ${ag.dataEntrega}</p>`;
-                        html += `<p><strong>Horário:</strong> ${ag.horarioEntrega}</p>`;
-                        html += `<p><strong>Transportador:</strong> ${ag.fornecedor?.nome || '-'}</p>`;
-                        html += `<p><strong>Motorista:</strong> ${ag.motoristaNome || '-'}</p>`;
-                        html += `<p><strong>Placa:</strong> ${ag.placaVeiculo || '-'}</p>`;
-                        document.getElementById('statusModalContent').innerHTML = html;
-                        document.getElementById('statusModal').classList.remove('hidden');
+                        let html = `<div class='mb-4'><span class='font-bold text-lg'>Código:</span> ${ag.codigo}</div>`;
+                        html += `<div class='mb-4'><span class='font-bold'>Status:</span> ${ag.status}</div>`;
+                        html += `<div class='mb-4'><span class='font-bold'>Data:</span> ${ag.dataEntrega}</div>`;
+                        html += `<div class='mb-4'><span class='font-bold'>Horário:</span> ${ag.horarioEntrega}</div>`;
+                        html += `<div class='mb-4'><span class='font-bold'>Transportador:</span> ${ag.fornecedor?.nome || '-'}</div>`;
+                        html += `<div class='mb-4'><span class='font-bold'>Motorista:</span> ${ag.motoristaNome || '-'}</div>`;
+                        html += `<div class='mb-4'><span class='font-bold'>Placa:</span> ${ag.placaVeiculo || '-'}</div>`;
+                        html += `<div class='mb-4'><span class='font-bold'>Valor Total:</span> R$ ${ag.valorTotal || '-'}</div>`;
+                        html += `<div class='mb-4'><span class='font-bold'>Observações:</span> ${ag.observacoes || '-'}</div>`;
+                        // Histórico de ações
+                        if (ag.historicoAcoes && ag.historicoAcoes.length) {
+                            html += `<div class='mb-4'><span class='font-bold'>Histórico de Ações:</span><ul class='mt-2'>`;
+                            ag.historicoAcoes.forEach(h => {
+                                html += `<li class='mb-2 border-b border-gray-700 pb-2'><span class='font-semibold'>${h.acao}</span> - ${h.usuario || ''} <br><span class='text-xs text-gray-400'>${new Date(h.createdAt).toLocaleString('pt-BR')}</span><br>${h.detalhes || ''}</li>`;
+                            });
+                            html += `</ul></div>`;
+                        }
+                        // Ações para reagendar/cancelar/aceitar
+                        if (ag.status === 'reagendamento' && ag.dataSugestao) {
+                            html += `<div class='mb-4'><span class='font-bold'>Nova Data Sugerida:</span> ${ag.dataSugestao} <br><span class='font-bold'>Novo Horário:</span> ${ag.horarioSugestao}</div>`;
+                            html += `<div class='flex gap-3 mb-4'><button class='bg-green-500 text-white px-4 py-2 rounded' onclick="aceitarReagendamento('${ag.codigo}')">Aceitar</button><button class='bg-blue-500 text-white px-4 py-2 rounded' onclick="sugerirNovaData('${ag.codigo}')">Sugerir Outra Data</button><button class='bg-red-500 text-white px-4 py-2 rounded' onclick="rejeitarReagendamento('${ag.codigo}')">Rejeitar</button></div>`;
+                        }
+                        document.getElementById('detailModalContent').innerHTML = html;
+                        document.getElementById('detailModal').classList.remove('hidden');
                     } else {
-                        document.getElementById('statusModalContent').innerHTML = '<p>Agendamento não encontrado.</p>';
-                        document.getElementById('statusModal').classList.remove('hidden');
+                        document.getElementById('detailModalContent').innerHTML = '<p>Agendamento não encontrado.</p>';
+                        document.getElementById('detailModal').classList.remove('hidden');
                     }
                 })
                 .catch(() => {
-                    document.getElementById('statusModalContent').innerHTML = '<p>Erro ao consultar agendamento.</p>';
-                    document.getElementById('statusModal').classList.remove('hidden');
+                    document.getElementById('detailModalContent').innerHTML = '<p>Erro ao consultar agendamento.</p>';
+                    document.getElementById('detailModal').classList.remove('hidden');
                 });
         }
 
