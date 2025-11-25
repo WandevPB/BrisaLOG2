@@ -697,9 +697,11 @@
             } 
             else if (data.status === 'nao-veio') {
                 buttons += `
-                    <p class="text-lg font-semibold text-red-400">🚨 É necessário reagendar a entrega!</p>
-                    <button onclick="abrirContraProposta('${data.codigo}')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-redo mr-2"></i>Reagendar Entrega</button>
-                    <button onclick="abrirCancelarSolicitacaoModal('${data.codigo}')" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-times-circle mr-2"></i>Cancelar Agendamento</button>
+                    <p class="text-lg font-semibold text-red-400 mb-4">🚨 É necessário reagendar a entrega!</p>
+                    <div class="flex flex-col gap-3 w-full">
+                        <button onclick="abrirContraProposta('${data.codigo}')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"><i class="fas fa-redo mr-2"></i>Reagendar Entrega</button>
+                        <button onclick="abrirCancelarSolicitacaoModal('${data.codigo}')" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"><i class="fas fa-times-circle mr-2"></i>Cancelar Agendamento</button>
+                    </div>
                 `;
             }
             else if (data.status === 'pendente' || data.status === 'confirmado' || data.status === 'aguardando_resposta_cd' || data.status === 'em_transito') {
