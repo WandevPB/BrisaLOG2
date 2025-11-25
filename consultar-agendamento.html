@@ -227,9 +227,14 @@
         
         .card-detail {
             background: #181818;
-            border: 1px solid #2E2E2E;
+            border: 2px solid #FF6B35;
             border-radius: 1rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 10px rgba(255, 107, 53, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 107, 53, 0.15);
+            transition: box-shadow 0.3s, border-color 0.3s;
+        }
+        .card-detail:hover {
+            box-shadow: 0 16px 40px rgba(255, 107, 53, 0.25), 0 0 30px rgba(255, 107, 53, 0.25);
+            border-color: #FF8C42;
         }
     </style>
 </head>
@@ -254,17 +259,19 @@
     </nav>
     
     <main class="max-w-7xl mx-auto px-4 py-12">
-        <header class="text-center mb-10">
-            <h1 class="text-5xl font-black text-white mb-2 tracking-tight">
-                STATUS DO AGENDAMENTO <span id="display-codigo" class="text-orange-primary font-mono">...</span>
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-black text-white mb-2 tracking-tight">
+                DASHBOARD DO AGENDAMENTO <span id="display-codigo" class="text-orange-primary font-mono">...</span>
             </h1>
-            <p class="text-xl text-text-secondary">Visão em tempo real do seu fluxo logístico na BrisaNET.</p>
+            <p class="text-lg text-text-secondary">Todos os dados do seu agendamento em uma única tela.</p>
         </header>
 
         <div id="agendamento-detalhes">
-            <div class="text-center p-10 bg-card-dark rounded-2xl shadow-deep">
-                <i class="fas fa-route text-6xl text-orange-primary mb-4 animate-float"></i>
-                <p class="text-xl text-text-secondary"><i class="fas fa-spinner fa-spin mr-2"></i>Carregando detalhes...</p>
+            <div class="grid grid-cols-2 gap-8 items-stretch">
+                <div class="card-detail p-10 rounded-2xl flex flex-col items-center justify-center">
+                    <i class="fas fa-route text-6xl text-orange-primary mb-4 animate-float"></i>
+                    <p class="text-xl text-text-secondary"><i class="fas fa-spinner fa-spin mr-2"></i>Carregando detalhes...</p>
+                </div>
             </div>
         </div>
     </main>
@@ -843,86 +850,72 @@
             document.getElementById('display-codigo').textContent = data.codigo || 'N/A';
             document.getElementById('display-codigo').classList.remove('animate-pulse');
 
-            const statusSectionHTML = renderTimeline3D(data.status, data.historico);
             const buttonsHTML = renderActionButtons(data);
             const communicationHistoryHTML = renderCommunicationHistory(data);
             const nfsHTML = renderPedidosENotasFiscais(data);
 
+            // Novo layout: grid dash sem scroll, cards lado a lado
             const detailsHTML = `
-                <div class="space-y-8">
-                    ${statusSectionHTML}
-
-                    <div class="card-detail p-6 rounded-2xl flex flex-wrap gap-4 items-center justify-center border-orange-primary/30">
-                        ${buttonsHTML}
+                <div class="grid grid-cols-2 gap-8 items-stretch">
+                    <div class="card-detail p-6 rounded-2xl flex flex-col gap-4 border-orange-primary/30">
+                        <h2 class="text-2xl font-black text-white mb-2 flex items-center gap-2">
+                            <i class="fas ${statusMap[data.status]?.icon || 'fa-info-circle'} text-orange-primary"></i>
+                            ${statusMap[data.status]?.text || 'Status'}
+                        </h2>
+                        <p class="text-text-secondary mb-2">${statusMap[data.status]?.description || ''}</p>
+                        <div class="flex flex-wrap gap-2">${buttonsHTML}</div>
                     </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div class="lg:col-span-1 h-full flex flex-col justify-between">
-                            <div class="card-detail p-6 rounded-xl h-full flex flex-col justify-between">
-                                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2 border-b border-border-dark/50 pb-3">
-                                    <i class="fas fa-calendar-alt text-orange-primary"></i> Agendamento & CD
-                                </h3>
-                                <div class="space-y-3 text-sm flex-1">
-                                    <div><span class="text-text-secondary block">Data Solicitada:</span> <span class="font-semibold text-gray-light">${formatDateBrFromISO(data.dataEntrega)}</span></div>
-                                    <div><span class="text-text-secondary block">Horário:</span> <span class="font-semibold text-gray-light">${data.horarioEntrega}</span></div>
-                                    <div><span class="text-text-secondary block">CD Destino:</span> <span class="font-extrabold text-orange-secondary">${data.cdDestino || 'N/A'}</span></div>
-                                    <div><span class="text-text-secondary block">Criação:</span> <span class="font-semibold text-gray-light">${formatDateBrFromISO(data.dataCriacao)}</span></div>
-                                </div>
-                            </div>
+                    <div class="card-detail p-6 rounded-2xl flex flex-col gap-4">
+                        <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                            <i class="fas fa-calendar-alt text-orange-primary"></i> Agendamento & CD
+                        </h3>
+                        <div class="space-y-2 text-sm">
+                            <div><span class="text-text-secondary">Data Solicitada:</span> <span class="font-semibold text-gray-light">${formatDateBrFromISO(data.dataEntrega)}</span></div>
+                            <div><span class="text-text-secondary">Horário:</span> <span class="font-semibold text-gray-light">${data.horarioEntrega}</span></div>
+                            <div><span class="text-text-secondary">CD Destino:</span> <span class="font-extrabold text-orange-secondary">${data.cdDestino || 'N/A'}</span></div>
+                            <div><span class="text-text-secondary">Criação:</span> <span class="font-semibold text-gray-light">${formatDateBrFromISO(data.dataCriacao)}</span></div>
                         </div>
-                        <div class="lg:col-span-1 h-full flex flex-col justify-between">
-                            <div class="card-detail p-6 rounded-xl h-full flex flex-col justify-between">
-                                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2 border-b border-border-dark/50 pb-3">
-                                    <i class="fas fa-truck-moving text-blue-400"></i> Transportador
-                                </h3>
-                                <div class="space-y-3 text-sm flex-1">
-                                    <div><span class="text-text-secondary block">Empresa:</span> <span class="font-semibold text-gray-light">${data.fornecedor?.nome || 'N/A'}</span></div>
-                                    <div><span class="text-text-secondary block">CNPJ:</span> <span class="font-semibold text-gray-light">${data.fornecedor?.documento || 'N/A'}</span></div>
-                                    <div><span class="text-text-secondary block">Contato:</span> <span class="font-semibold text-gray-light truncate" title="${data.fornecedor?.email || 'N/A'}">${data.fornecedor?.email || 'N/A'}</span></div>
-                                    <div class="border-t border-border-dark/50 pt-3 mt-3">
-                                        <p class="font-semibold text-orange-400 mb-1">Motorista & Veículo</p>
-                                        <div><span class="text-text-secondary block">Motorista:</span> <span class="font-semibold text-gray-light">${data.motoristaNome || 'N/A'}</span></div>
-                                        <div><span class="text-text-secondary block">Placa / Tipo:</span> <span class="font-bold text-orange-secondary">${data.placaVeiculo || 'N/A'} / ${data.tipoVeiculo || 'N/A'}</span></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="lg:col-span-1 h-full flex flex-col justify-between">
-                            <div class="card-detail p-6 rounded-xl h-full flex flex-col justify-between">
-                                <div>
-                                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2 border-b border-border-dark/50 pb-3">
-                                        <i class="fas fa-calculator text-green-400"></i> Resumo Financeiro
-                                    </h3>
-                                    <div class="space-y-3 text-sm">
-                                        <div class="flex justify-between"><span class="text-text-secondary">Total de Pedidos:</span> <span class="font-bold text-white">${data.pedidos?.length || 0}</span></div>
-                                        <div class="flex justify-between"><span class="text-text-secondary">Total de Notas Fiscais:</span> <span class="font-bold text-white">${data.pedidos?.reduce((acc, p) => acc + (p.notasFiscais?.length || 0), 0) || 0}</span></div>
-                                    </div>
-                                </div>
-                                <div class="mt-6 pt-4 border-t border-border-dark/50">
-                                    <p class="text-text-secondary mb-1">Valor Total Estimado:</p>
-                                    <p class="text-3xl font-black text-green-400">R$ ${calcularValorTotal(data)}</p>
-                                </div>
+                    </div>
+                    <div class="card-detail p-6 rounded-2xl flex flex-col gap-4">
+                        <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                            <i class="fas fa-truck-moving text-blue-400"></i> Transportador
+                        </h3>
+                        <div class="space-y-2 text-sm">
+                            <div><span class="text-text-secondary">Empresa:</span> <span class="font-semibold text-gray-light">${data.fornecedor?.nome || 'N/A'}</span></div>
+                            <div><span class="text-text-secondary">CNPJ:</span> <span class="font-semibold text-gray-light">${data.fornecedor?.documento || 'N/A'}</span></div>
+                            <div><span class="text-text-secondary">Contato:</span> <span class="font-semibold text-gray-light truncate" title="${data.fornecedor?.email || 'N/A'}">${data.fornecedor?.email || 'N/A'}</span></div>
+                            <div class="border-t border-border-dark/50 pt-2 mt-2">
+                                <p class="font-semibold text-orange-400 mb-1">Motorista & Veículo</p>
+                                <div><span class="text-text-secondary">Motorista:</span> <span class="font-semibold text-gray-light">${data.motoristaNome || 'N/A'}</span></div>
+                                <div><span class="text-text-secondary">Placa / Tipo:</span> <span class="font-bold text-orange-secondary">${data.placaVeiculo || 'N/A'} / ${data.tipoVeiculo || 'N/A'}</span></div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="card-detail p-6 rounded-2xl">
-                        <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                    <div class="card-detail p-6 rounded-2xl flex flex-col gap-4">
+                        <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                            <i class="fas fa-calculator text-green-400"></i> Resumo Financeiro
+                        </h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-text-secondary">Total de Pedidos:</span> <span class="font-bold text-white">${data.pedidos?.length || 0}</span></div>
+                            <div class="flex justify-between"><span class="text-text-secondary">Total de Notas Fiscais:</span> <span class="font-bold text-white">${data.pedidos?.reduce((acc, p) => acc + (p.notasFiscais?.length || 0), 0) || 0}</span></div>
+                            <div class="flex justify-between"><span class="text-text-secondary">Valor Total Estimado:</span> <span class="font-black text-green-400">R$ ${calcularValorTotal(data)}</span></div>
+                        </div>
+                    </div>
+                    <div class="card-detail p-6 rounded-2xl flex flex-col gap-4 col-span-2">
+                        <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
                             <i class="fas fa-file-invoice-dollar text-green-400"></i> Itens Detalhados da Entrega
                         </h3>
                         ${nfsHTML}
                     </div>
-
-                    <div class="card-detail p-6 rounded-2xl">
-                        <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                    <div class="card-detail p-6 rounded-2xl flex flex-col gap-4 col-span-2">
+                        <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
                             <i class="fas fa-timeline-ol text-yellow-400"></i> Comunicação e Histórico
                         </h3>
                         ${communicationHistoryHTML}
                     </div>
-
                     ${data.observacoes ? `
-                        <div class="card-detail p-6 rounded-2xl">
-                            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <div class="card-detail p-6 rounded-2xl flex flex-col gap-4 col-span-2">
+                            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
                                 <i class="fas fa-comment-alt text-gray-500"></i> Observações
                             </h3>
                             <p class="text-text-secondary bg-bg-dark p-4 rounded-lg border border-border-dark">${data.observacoes}</p>
