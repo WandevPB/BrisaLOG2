@@ -979,6 +979,18 @@
             document.getElementById('consulta-form')?.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const codigoInput = document.getElementById('codigo-consulta').value.trim();
+                // Validação de placa no step 1 (se existir campo de placa)
+                const placaInput = document.getElementById('placaVeiculo');
+                if (placaInput) {
+                    const placa = placaInput.value.trim().toUpperCase();
+                    // Regex: AAA1A11 ou AAA1111
+                    const regex = /^[A-Z]{3}\d{1}[A-Z]{1}\d{2}$|^[A-Z]{3}\d{4}$/;
+                    if (!regex.test(placa)) {
+                        showNotification('A placa está fora do padrão permitido (AAA1A11 ou AAA1111).', 'error');
+                        placaInput.focus();
+                        return;
+                    }
+                }
                 if (codigoInput) {
                     closeConsultaModal();
                     window.location.href = `consultar-agendamento.html?codigo=${encodeURIComponent(codigoInput)}`;
