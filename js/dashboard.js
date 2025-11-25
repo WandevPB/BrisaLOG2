@@ -1130,35 +1130,7 @@ class CDDashboard {
                         this.updateAgendamentoStatus(id, 'nao-veio');
                     }
                 };
-                <!-- Alerta de entrega para hoje removido conforme solicitado -->
-                
-                <div class="flex justify-between items-start mb-3">
-                    <div class="flex-1">
-                        <h4 class="font-bold text-gray-dark text-sm">${agendamento.codigo}</h4>
-                        <p class="text-gray-600 text-xs truncate">${agendamento.transportador.nome}</p>
-                    </div>
-                    <div class="px-2 py-1 rounded text-white text-xs font-semibold ${statusClass}">
-                        <i class="${statusIcon}"></i>
-                    </div>
-                </div>
-                
-                ${cdIndicator}
-                
-                <div class="space-y-1 mb-3 text-xs text-gray-600">
-                    <div class="flex items-center">
-                        <i class="fas fa-calendar w-3 mr-2 text-orange-primary"></i>
-                        <span class="${isToday ? 'font-bold text-gray-700' : ''}">${this.formatDate(agendamento.dataEntrega)}</span>
-                        ${isToday ? '<i class="fas fa-exclamation-circle text-gray-600 ml-1"></i>' : ''}
-                    </div>
-                    <div class="flex items-center">
-                        <i class="fas fa-clock w-3 mr-2 text-orange-primary"></i>
-                        <span>${agendamento.horarioEntrega}</span>
-                    </div>
-                    <div class="flex items-center">
-                        <i class="fas fa-boxes w-3 mr-2 text-orange-primary"></i>
-                        <span class="truncate">${this.getTipoCargaText(agendamento.tipoCarga)}</span>
-                    </div>
-                </div>
+                // ...existing code...
                 
                 ${this.getColumnCardActions(agendamento)}
                 
