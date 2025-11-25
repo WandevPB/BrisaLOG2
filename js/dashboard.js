@@ -2881,16 +2881,7 @@ class CDDashboard {
         let priorityClass = '';
         let urgentClass = '';
         if (agendamento.status === 'confirmado') {
-            if (isToday) {
-                urgentClass = '';
-            } else if (daysDiff <= 1) {
-                priorityClass = 'priority-high';
-            } else if (daysDiff <= 3) {
-                priorityClass = 'priority-medium';
-            } else {
-                priorityClass = 'priority-low';
-            }
-        }
+        // Renderização do card completo
         return `
             <div class="card-agendamento ${statusClass} ${priorityClass}">
                 <div class="flex items-center justify-between mb-2">
@@ -2905,18 +2896,6 @@ class CDDashboard {
                 </div>
             </div>
         `;
-        if (document.getElementById('filter-periodo')) document.getElementById('filter-periodo').value = '';
-        if (document.getElementById('filter-sort')) document.getElementById('filter-sort').value = 'data-asc';
-        if (document.getElementById('search-input')) document.getElementById('search-input').value = '';
-        this.applyFilters();
-    }
-
-    verificarAlertasAtrasados() {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        
-        const atrasados = this.agendamentos.filter(ag => {
-            const dataEntrega = new Date(ag.dataEntrega);
             dataEntrega.setHours(0, 0, 0, 0);
             return dataEntrega < hoje && ag.status !== 'entregue' && ag.status !== 'nao-veio';
         });
