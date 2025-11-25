@@ -1103,31 +1103,33 @@ class CDDashboard {
                 </button>
             `;
                 
-                    // Métodos para solicitar código antes de cada ação
-                    async solicitarCodigoEAceitar(id, cdId) {
-                        const result = await solicitarCodigoUsuario(cdId);
-                        if (result && result.valido) {
-                            this.updateAgendamentoStatus(id, 'confirmado');
-                        }
+                }
+
+                // Métodos para solicitar código antes de cada ação (fora da classe, no protótipo)
+                CDDashboard.prototype.solicitarCodigoEAceitar = async function(id, cdId) {
+                    const result = await solicitarCodigoUsuario(cdId);
+                    if (result && result.valido) {
+                        this.updateAgendamentoStatus(id, 'confirmado');
                     }
-                    async solicitarCodigoEReagendar(id, cdId) {
-                        const result = await solicitarCodigoUsuario(cdId);
-                        if (result && result.valido) {
-                            this.suggestNewDate(id);
-                        }
+                };
+                CDDashboard.prototype.solicitarCodigoEReagendar = async function(id, cdId) {
+                    const result = await solicitarCodigoUsuario(cdId);
+                    if (result && result.valido) {
+                        this.suggestNewDate(id);
                     }
-                    async solicitarCodigoEEntregue(id, cdId) {
-                        const result = await solicitarCodigoUsuario(cdId);
-                        if (result && result.valido) {
-                            this.updateAgendamentoStatus(id, 'entregue');
-                        }
+                };
+                CDDashboard.prototype.solicitarCodigoEEntregue = async function(id, cdId) {
+                    const result = await solicitarCodigoUsuario(cdId);
+                    if (result && result.valido) {
+                        this.updateAgendamentoStatus(id, 'entregue');
                     }
-                    async solicitarCodigoENaoVeio(id, cdId) {
-                        const result = await solicitarCodigoUsuario(cdId);
-                        if (result && result.valido) {
-                            this.updateAgendamentoStatus(id, 'nao-veio');
-                        }
+                };
+                CDDashboard.prototype.solicitarCodigoENaoVeio = async function(id, cdId) {
+                    const result = await solicitarCodigoUsuario(cdId);
+                    if (result && result.valido) {
+                        this.updateAgendamentoStatus(id, 'nao-veio');
                     }
+                };
                 <!-- Alerta de entrega para hoje removido conforme solicitado -->
                 
                 <div class="flex justify-between items-start mb-3">
