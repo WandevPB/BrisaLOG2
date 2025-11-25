@@ -1079,42 +1079,75 @@ class CDDashboard {
             } else {
                 priorityClass = 'priority-low';
             }
-        const cdId = this.cdId || (sessionStorage.getItem('cdInfo') ? JSON.parse(sessionStorage.getItem('cdInfo')).id : null);
-        if (agendamento.status === 'pendente') {
-            return `
-                <button onclick="dashboard.solicitarCodigoEAceitar(${agendamento.id}, '${cdId}')" 
-                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all font-medium text-sm">
-                    <i class='fas fa-check mr-1'></i>Aceitar Data
-                </button>
-                <button onclick="dashboard.solicitarCodigoEReagendar(${agendamento.id}, '${cdId}')" 
-                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
-                    <i class='fas fa-calendar mr-1'></i>Sugerir Nova Data
-                </button>
-            `;
-        } else if (agendamento.status === 'confirmado') {
-            return `
-                <button onclick="dashboard.solicitarCodigoEEntregue(${agendamento.id}, '${cdId}')" 
-                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
-                    <i class='fas fa-truck mr-1'></i>Marcar Entregue
-                </button>
-                <button onclick="dashboard.solicitarCodigoENaoVeio(${agendamento.id}, '${cdId}')" 
-                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-medium text-sm">
-                    <i class='fas fa-times mr-1'></i>Não Veio
-                </button>
-            `;
+        } else if (agendamento.status === 'pendente') {
+            const dataCriacaoStr = (agendamento.dataCriacao || '').split('T')[0];
+            const dataCriacaoDate = new Date(dataCriacaoStr);
+            const daysSinceCreated = Math.floor((hojeDate - dataCriacaoDate) / (1000 * 60 * 60 * 24));
+            if (daysSinceCreated >= 3) {
+                priorityClass = 'priority-high';
+            } else if (daysSinceCreated >= 1) {
+                priorityClass = 'priority-medium';
+            }
         }
-        return '';
+
+        // Verificar se a entrega foi incluída pelo CD
+        const incluidoPeloCD = agendamento.incluidoPeloCD;
+        const cdIndicator = incluidoPeloCD ? 
+            `<div class="bg-blue-100 border-l-4 border-blue-500 text-blue-800 font-bold text-xs p-2 rounded mb-2 flex items-center">
+                <i class="fas fa-info-circle mr-2"></i>
+                INCLUÍDO PELO CD
+            </div>` : '';
+
+        return `
+            <div class="column-card bg-white rounded-xl p-4 border shadow-sm hover:shadow-md transition-all ${priorityClass} ${urgentClass}"
+                 onclick="dashboard.showAgendamentoDetails(${agendamento.id})">
+                
+                <!-- Alerta de entrega para hoje removido conforme solicitado -->
+                
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-dark text-sm">${agendamento.codigo}</h4>
+                        <p class="text-gray-600 text-xs truncate">${agendamento.transportador.nome}</p>
+                    </div>
+                    <div class="px-2 py-1 rounded text-white text-xs font-semibold ${statusClass}">
+                        <i class="${statusIcon}"></i>
+                    </div>
+                </div>
+                
+                ${cdIndicator}
+                
+                <div class="space-y-1 mb-3 text-xs text-gray-600">
+                    <div class="flex items-center">
+                        <i class="fas fa-calendar w-3 mr-2 text-orange-primary"></i>
+                        <span class="${isToday ? 'font-bold text-gray-700' : ''}">${this.formatDate(agendamento.dataEntrega)}</span>
+                        ${isToday ? '<i class="fas fa-exclamation-circle text-gray-600 ml-1"></i>' : ''}
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-clock w-3 mr-2 text-orange-primary"></i>
+                        <span>${agendamento.horarioEntrega}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-boxes w-3 mr-2 text-orange-primary"></i>
+                        <span class="truncate">${this.getTipoCargaText(agendamento.tipoCarga)}</span>
+                    </div>
+                </div>
+                
+                ${this.getColumnCardActions(agendamento)}
+                
+                ${this.getPriorityIndicator(agendamento, daysDiff)}
+            </div>
+        `;
     }
 
     getColumnCardActions(agendamento) {
         if (agendamento.status === 'pendente') {
             return `
                 <div class="flex space-x-1">
-                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
+                    <button onclick="event.stopPropagation(); dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'confirmado')" 
                         class="flex-1 bg-green-500 text-white py-1 px-2 rounded text-xs hover:bg-green-600 transition-all">
                         <i class="fas fa-check mr-1"></i>Aceitar
                     </button>
-                    <button onclick="event.stopPropagation(); dashboard.suggestNewDate(${agendamento.id})" 
+                    <button onclick="event.stopPropagation(); dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'reagendar')" 
                         class="flex-1 bg-blue-500 text-white py-1 px-2 rounded text-xs hover:bg-blue-600 transition-all">
                         <i class="fas fa-calendar mr-1"></i>Reagendar
                     </button>
@@ -1123,11 +1156,11 @@ class CDDashboard {
         } else if (agendamento.status === 'confirmado') {
             return `
                 <div class="flex space-x-1">
-                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                    <button onclick="event.stopPropagation(); dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'entregue')" 
                         class="flex-1 bg-blue-500 text-white py-1 px-2 rounded text-xs hover:bg-blue-600 transition-all">
                         <i class="fas fa-truck mr-1"></i>Entregue
                     </button>
-                    <button onclick="event.stopPropagation(); dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                    <button onclick="event.stopPropagation(); dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'nao-veio')" 
                         class="flex-1 bg-red-500 text-white py-1 px-2 rounded text-xs hover:bg-red-600 transition-all">
                         <i class="fas fa-times mr-1"></i>Não Veio
                     </button>
@@ -1140,6 +1173,25 @@ class CDDashboard {
                 <i class="fas fa-eye mr-1"></i>Ver Detalhes
             </button>
         `;
+    }
+    // Função para garantir autenticação antes de qualquer ação
+    async solicitarCodigoUsuarioAction(id, acao) {
+        const cdId = this.getCdIdForAgendamento(id);
+        const usuarioData = await solicitarCodigoUsuario(cdId);
+        if (!usuarioData) {
+            this.showNotification('Ação cancelada', 'warning');
+            return;
+        }
+        if (acao === 'reagendar') {
+            this.suggestNewDate(id, usuarioData.usuario.codigo);
+        } else {
+            this.updateAgendamentoStatus(id, acao, usuarioData.usuario.codigo);
+        }
+    }
+    // Função utilitária para obter cdId do agendamento
+    getCdIdForAgendamento(id) {
+        const agendamento = this.agendamentos?.find(a => a.id === id);
+        return agendamento?.cd_id || agendamento?.cdId || null;
     }
 
     getPriorityIndicator(agendamento, daysDiff) {
@@ -2875,27 +2927,60 @@ class CDDashboard {
         const statusText = this.getStatusText(agendamento.status);
     
         statusContent.innerHTML = `
-        const hojeDate = new Date(hojeStr);
-        const entregaDate = new Date(dataEntregaStr);
-        const daysDiff = Math.floor((entregaDate - hojeDate) / (1000 * 60 * 60 * 24));
-        let priorityClass = '';
-        let urgentClass = '';
-        if (agendamento.status === 'confirmado') {
-        // Renderização do card completo
-        return `
-            <div class="card-agendamento ${statusClass} ${priorityClass}">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="font-bold">${agendamento.codigo}</span>
-                    <span class="text-xs ${statusClass}"><i class="${statusIcon}"></i> ${agendamento.status}</span>
+            <div class="space-y-6">
+                <div class="bg-gradient-to-r from-orange-primary to-orange-secondary rounded-xl p-6 text-white text-center">
+                    <h3 class="text-2xl font-bold mb-2">Status do Agendamento</h3>
+                    <p class="text-lg"><strong>Código:</strong> ${agendamento.codigo}</p>
                 </div>
-                <div class="text-xs text-gray-600 mb-1">${agendamento.transportador?.nome || ''}</div>
-                <div class="text-xs text-gray-600 mb-1">${this.formatDate(agendamento.dataEntrega)} ${agendamento.horarioEntrega}</div>
-                <div class="text-xs text-gray-600 mb-1">${this.getTipoCargaText(agendamento.tipoCarga)}</div>
-                <div class="mt-2 flex gap-2">
-                    ${this.getDetailActionButtons(agendamento)}
+                <div class="text-center">
+                    <span class="px-4 py-2 rounded-full text-white text-lg font-semibold ${statusClass}">
+                        <i class="${statusIcon} mr-2"></i>${statusText}
+                    </span>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-6 space-y-3">
+                    <p><strong>Transportador:</strong> ${agendamento.transportador.nome}</p>
+                    <p><strong>Data Programada:</strong> ${this.formatDate(agendamento.dataEntrega)}</p>
+                    <p><strong>Horário:</strong> ${agendamento.horarioEntrega}</p>
                 </div>
             </div>
         `;
+        
+        document.getElementById('status-modal').classList.remove('hidden');
+    }
+
+    // ========================================
+    // NOVAS FUNCIONALIDADES - MELHORIAS V2
+    // ========================================
+
+    filtrarPendentes() {
+        document.getElementById('filter-status').value = 'pendente';
+        this.applyFilters();
+    }
+
+    filtrarHoje() {
+        document.getElementById('filter-periodo').value = 'hoje';
+        this.applyFilters();
+    }
+
+    filtrarAtrasados() {
+        document.getElementById('filter-periodo').value = 'atrasados';
+        this.applyFilters();
+    }
+
+    limparFiltros() {
+        if (document.getElementById('filter-status')) document.getElementById('filter-status').value = '';
+        if (document.getElementById('filter-periodo')) document.getElementById('filter-periodo').value = '';
+        if (document.getElementById('filter-sort')) document.getElementById('filter-sort').value = 'data-asc';
+        if (document.getElementById('search-input')) document.getElementById('search-input').value = '';
+        this.applyFilters();
+    }
+
+    verificarAlertasAtrasados() {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        
+        const atrasados = this.agendamentos.filter(ag => {
+            const dataEntrega = new Date(ag.dataEntrega);
             dataEntrega.setHours(0, 0, 0, 0);
             return dataEntrega < hoje && ag.status !== 'entregue' && ag.status !== 'nao-veio';
         });
