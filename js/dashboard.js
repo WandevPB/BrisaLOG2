@@ -1079,29 +1079,55 @@ class CDDashboard {
             } else {
                 priorityClass = 'priority-low';
             }
-        } else if (agendamento.status === 'pendente') {
-            const dataCriacaoStr = (agendamento.dataCriacao || '').split('T')[0];
-            const dataCriacaoDate = new Date(dataCriacaoStr);
-            const daysSinceCreated = Math.floor((hojeDate - dataCriacaoDate) / (1000 * 60 * 60 * 24));
-            if (daysSinceCreated >= 3) {
-                priorityClass = 'priority-high';
-            } else if (daysSinceCreated >= 1) {
-                priorityClass = 'priority-medium';
-            }
-        }
-
-        // Verificar se a entrega foi incluída pelo CD
-        const incluidoPeloCD = agendamento.incluidoPeloCD;
-        const cdIndicator = incluidoPeloCD ? 
-            `<div class="bg-blue-100 border-l-4 border-blue-500 text-blue-800 font-bold text-xs p-2 rounded mb-2 flex items-center">
-                <i class="fas fa-info-circle mr-2"></i>
-                INCLUÍDO PELO CD
-            </div>` : '';
-
-        return `
-            <div class="column-card bg-white rounded-xl p-4 border shadow-sm hover:shadow-md transition-all ${priorityClass} ${urgentClass}"
-                 onclick="dashboard.showAgendamentoDetails(${agendamento.id})">
+        const cdId = this.cdId || (sessionStorage.getItem('cdInfo') ? JSON.parse(sessionStorage.getItem('cdInfo')).id : null);
+        if (agendamento.status === 'pendente') {
+            return `
+                <button onclick="dashboard.solicitarCodigoEAceitar(${agendamento.id}, '${cdId}')" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all font-medium text-sm">
+                    <i class='fas fa-check mr-1'></i>Aceitar Data
+                </button>
+                <button onclick="dashboard.solicitarCodigoEReagendar(${agendamento.id}, '${cdId}')" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
+                    <i class='fas fa-calendar mr-1'></i>Sugerir Nova Data
+                </button>
+            `;
+        } else if (agendamento.status === 'confirmado') {
+            return `
+                <button onclick="dashboard.solicitarCodigoEEntregue(${agendamento.id}, '${cdId}')" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
+                    <i class='fas fa-truck mr-1'></i>Marcar Entregue
+                </button>
+                <button onclick="dashboard.solicitarCodigoENaoVeio(${agendamento.id}, '${cdId}')" 
+                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-medium text-sm">
+                    <i class='fas fa-times mr-1'></i>Não Veio
+                </button>
+            `;
                 
+                    // Métodos para solicitar código antes de cada ação
+                    async solicitarCodigoEAceitar(id, cdId) {
+                        const result = await solicitarCodigoUsuario(cdId);
+                        if (result && result.valido) {
+                            this.updateAgendamentoStatus(id, 'confirmado');
+                        }
+                    }
+                    async solicitarCodigoEReagendar(id, cdId) {
+                        const result = await solicitarCodigoUsuario(cdId);
+                        if (result && result.valido) {
+                            this.suggestNewDate(id);
+                        }
+                    }
+                    async solicitarCodigoEEntregue(id, cdId) {
+                        const result = await solicitarCodigoUsuario(cdId);
+                        if (result && result.valido) {
+                            this.updateAgendamentoStatus(id, 'entregue');
+                        }
+                    }
+                    async solicitarCodigoENaoVeio(id, cdId) {
+                        const result = await solicitarCodigoUsuario(cdId);
+                        if (result && result.valido) {
+                            this.updateAgendamentoStatus(id, 'nao-veio');
+                        }
+                    }
                 <!-- Alerta de entrega para hoje removido conforme solicitado -->
                 
                 <div class="flex justify-between items-start mb-3">
