@@ -71,6 +71,22 @@ function parseLocalDate(dateInput) {
 }
 
 // Funções globais de máscara para formatação automática
+// Exibe campo de motivo manual se 'Outros' for selecionado no modal de bloqueio
+document.addEventListener('DOMContentLoaded', function() {
+    var motivoBloqueio = document.getElementById('motivo-bloqueio');
+    var motivoOutros = document.getElementById('motivo-outros');
+    if (motivoBloqueio && motivoOutros) {
+        motivoBloqueio.addEventListener('change', function() {
+            if (this.value === 'outros') {
+                motivoOutros.classList.remove('hidden');
+                document.getElementById('motivo-custom').required = true;
+            } else {
+                motivoOutros.classList.add('hidden');
+                document.getElementById('motivo-custom').required = false;
+            }
+        });
+    }
+});
 function maskPhone(value) {
     // Remove tudo que não é dígito
     value = value.replace(/\D/g, '');
