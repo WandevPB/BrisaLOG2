@@ -851,10 +851,6 @@ class AgendamentoForm {
                             return `
                                 <div class="mb-8 border-b pb-6 last:border-b-0 last:pb-0">
                                     <div class="flex items-center gap-2 mb-2 text-lg font-bold text-gray-dark"><i class="fas fa-shopping-cart text-orange-500"></i> Pedido: ${pedido.numero}</div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                                        <div class="text-xs text-gray-medium">Total do Pedido</div>
-                                        <div class="font-semibold text-green-700">${pedido.valor}</div>
-                                    </div>
                                     <div class="mb-2">
                                         <div class="text-xs text-gray-medium mb-1">Notas Fiscais:</div>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
