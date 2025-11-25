@@ -2875,48 +2875,36 @@ class CDDashboard {
         const statusText = this.getStatusText(agendamento.status);
     
         statusContent.innerHTML = `
-            <div class="space-y-6">
-                <div class="bg-gradient-to-r from-orange-primary to-orange-secondary rounded-xl p-6 text-white text-center">
-                    <h3 class="text-2xl font-bold mb-2">Status do Agendamento</h3>
-                    <p class="text-lg"><strong>Código:</strong> ${agendamento.codigo}</p>
+        const hojeDate = new Date(hojeStr);
+        const entregaDate = new Date(dataEntregaStr);
+        const daysDiff = Math.floor((entregaDate - hojeDate) / (1000 * 60 * 60 * 24));
+        let priorityClass = '';
+        let urgentClass = '';
+        if (agendamento.status === 'confirmado') {
+            if (isToday) {
+                urgentClass = '';
+            } else if (daysDiff <= 1) {
+                priorityClass = 'priority-high';
+            } else if (daysDiff <= 3) {
+                priorityClass = 'priority-medium';
+            } else {
+                priorityClass = 'priority-low';
+            }
+        }
+        return `
+            <div class="card-agendamento ${statusClass} ${priorityClass}">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-bold">${agendamento.codigo}</span>
+                    <span class="text-xs ${statusClass}"><i class="${statusIcon}"></i> ${agendamento.status}</span>
                 </div>
-                <div class="text-center">
-                    <span class="px-4 py-2 rounded-full text-white text-lg font-semibold ${statusClass}">
-                        <i class="${statusIcon} mr-2"></i>${statusText}
-                    </span>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-6 space-y-3">
-                    <p><strong>Transportador:</strong> ${agendamento.transportador.nome}</p>
-                    <p><strong>Data Programada:</strong> ${this.formatDate(agendamento.dataEntrega)}</p>
-                    <p><strong>Horário:</strong> ${agendamento.horarioEntrega}</p>
+                <div class="text-xs text-gray-600 mb-1">${agendamento.transportador?.nome || ''}</div>
+                <div class="text-xs text-gray-600 mb-1">${this.formatDate(agendamento.dataEntrega)} ${agendamento.horarioEntrega}</div>
+                <div class="text-xs text-gray-600 mb-1">${this.getTipoCargaText(agendamento.tipoCarga)}</div>
+                <div class="mt-2 flex gap-2">
+                    ${this.getDetailActionButtons(agendamento)}
                 </div>
             </div>
         `;
-        
-        document.getElementById('status-modal').classList.remove('hidden');
-    }
-
-    // ========================================
-    // NOVAS FUNCIONALIDADES - MELHORIAS V2
-    // ========================================
-
-    filtrarPendentes() {
-        document.getElementById('filter-status').value = 'pendente';
-        this.applyFilters();
-    }
-
-    filtrarHoje() {
-        document.getElementById('filter-periodo').value = 'hoje';
-        this.applyFilters();
-    }
-
-    filtrarAtrasados() {
-        document.getElementById('filter-periodo').value = 'atrasados';
-        this.applyFilters();
-    }
-
-    limparFiltros() {
-        if (document.getElementById('filter-status')) document.getElementById('filter-status').value = '';
         if (document.getElementById('filter-periodo')) document.getElementById('filter-periodo').value = '';
         if (document.getElementById('filter-sort')) document.getElementById('filter-sort').value = 'data-asc';
         if (document.getElementById('search-input')) document.getElementById('search-input').value = '';
