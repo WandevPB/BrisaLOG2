@@ -42,6 +42,22 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(255, 107, 53, 0.4);
         }
+    <script>
+    // Exibe campo de motivo manual se 'Outros' for selecionado no modal de bloqueio
+    document.addEventListener('DOMContentLoaded', function() {
+        var motivoBloqueio = document.getElementById('motivo-bloqueio');
+        var motivoOutros = document.getElementById('motivo-outros');
+        if (motivoBloqueio && motivoOutros) {
+            motivoBloqueio.addEventListener('change', function() {
+                if (this.value === 'outros') {
+                    motivoOutros.classList.remove('hidden');
+                } else {
+                    motivoOutros.classList.add('hidden');
+                }
+            });
+        }
+    });
+    </script>
         .btn-3d {
             transform: perspective(1000px) translateZ(0);
             transition: all 0.3s ease;
