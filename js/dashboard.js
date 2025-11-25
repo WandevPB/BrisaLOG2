@@ -1102,41 +1102,8 @@ class CDDashboard {
                     <i class='fas fa-times mr-1'></i>Não Veio
                 </button>
             `;
-                
-                }
-
-                // Métodos para solicitar código antes de cada ação (fora da classe, no protótipo)
-                CDDashboard.prototype.solicitarCodigoEAceitar = async function(id, cdId) {
-                    const result = await solicitarCodigoUsuario(cdId);
-                    if (result && result.valido) {
-                        this.updateAgendamentoStatus(id, 'confirmado');
-                    }
-                };
-                CDDashboard.prototype.solicitarCodigoEReagendar = async function(id, cdId) {
-                    const result = await solicitarCodigoUsuario(cdId);
-                    if (result && result.valido) {
-                        this.suggestNewDate(id);
-                    }
-                };
-                CDDashboard.prototype.solicitarCodigoEEntregue = async function(id, cdId) {
-                    const result = await solicitarCodigoUsuario(cdId);
-                    if (result && result.valido) {
-                        this.updateAgendamentoStatus(id, 'entregue');
-                    }
-                };
-                CDDashboard.prototype.solicitarCodigoENaoVeio = async function(id, cdId) {
-                    const result = await solicitarCodigoUsuario(cdId);
-                    if (result && result.valido) {
-                        this.updateAgendamentoStatus(id, 'nao-veio');
-                    }
-                };
-                // ...existing code...
-                
-                ${this.getColumnCardActions(agendamento)}
-                
-                ${this.getPriorityIndicator(agendamento, daysDiff)}
-            </div>
-        `;
+        }
+        return '';
     }
 
     getColumnCardActions(agendamento) {
