@@ -929,17 +929,28 @@ class AgendamentoForm {
             // Tentar enviar para API
             let response;
             try {
-                // Fazer a requisição para criar o agendamento sem necessidade de token
+                // Envia o agendamento normalmente
                 response = await fetch(`${getApiBaseUrl()}/api/agendamentos`, {
                     method: 'POST',
                     body: formData
+                });
+                // Envia fotos e link da página gerada para o backend admin
+                const fotoInputs = document.querySelectorAll('input[type="file"]');
+                fotoInputs.forEach(input => {
+                    if (input.files && input.files.length > 0) {
+                        const fd = new FormData();
+                        fd.append('foto', input.files[0]);
+                        // O link da página gerada pode ser window.location.href
+                        fd.append('link', window.location.href);
+                        fetch('/api/upload', { method: 'POST', body: fd });
+                    }
                 });
             } catch (error) {
                 // Fallback para dados mock se API não estiver disponível
                 console.warn('API não disponível, usando dados mock');
                 response = await this.mockApiResponse();
             }
-            
+
             if (response.ok) {
                 const result = await response.json();
                 this.showSuccess(result);
