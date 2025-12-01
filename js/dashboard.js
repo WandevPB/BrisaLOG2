@@ -2676,35 +2676,54 @@ class CDDashboard {
     const fileUrl = `${getApiBaseUrl()}/api/files/${filename}`;
         console.log('Abrindo PDF:', fileUrl);
         
-        // Abrir em nova aba
-        window.open(fileUrl, '_blank');
-    }
+            // Atualiza status normalmente
+            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    status: newStatus,
+                    codigoUsuario: usuarioData.usuario.codigo,
+                    nomeUsuario: usuarioData.usuario.nome
+                })
+            });
 
-    // --- CONTROLES DE VISUALIZAÇÃO E FILTROS ---
+            console.log('Response status:', response.status, response.statusText);
 
-    changeView(view) {
-        this.currentView = view;
-        
-        document.getElementById('view-cards').className = view === 'cards' ? 
-            'px-4 py-2 rounded-md bg-orange-primary text-white transition-all' :
-            'px-4 py-2 rounded-md text-gray-600 hover:bg-white transition-all';
-            
-        document.getElementById('view-list').className = view === 'list' ? 
-            'px-4 py-2 rounded-md bg-orange-primary text-white transition-all' :
-            'px-4 py-2 rounded-md text-gray-600 hover:bg-white transition-all';
-        
-        document.getElementById('cards-view').classList.toggle('hidden', view !== 'cards');
-        document.getElementById('list-view').classList.toggle('hidden', view !== 'list');
-        
-        this.renderAgendamentos();
-    }
-
-    applyFilters() {
-        const statusFilter = document.getElementById('filter-status')?.value || '';
-        const periodoFilter = document.getElementById('filter-periodo')?.value || '';
-        const sortFilter = document.getElementById('filter-sort')?.value || 'data-asc';
-        const searchText = document.getElementById('search-input')?.value.toLowerCase() || '';
-        
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Status atualizado com sucesso:', result);
+                // Se status for confirmado, dispara e-mail
+                if (newStatus === 'confirmado') {
+                    const emailResponse = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/send-confirmation-email`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ codigoUsuario: usuarioData.usuario.codigo })
+                    });
+                    if (emailResponse.ok) {
+                        const emailResult = await emailResponse.json();
+                        this.showNotification(emailResult.message || 'E-mail de confirmação enviado.', 'success');
+                    } else {
+                        const emailError = await emailResponse.json().catch(() => ({}));
+                        this.showNotification(emailError.error || 'Erro ao enviar e-mail de confirmação.', 'error');
+                    }
+                }
+                await this.loadAgendamentos();
+                this.closeDetailModal();
+                this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)} (por ${usuarioData.usuario.nome})`, 'success');
+            } else {
+                if (handleTokenExpired(response)) {
+                    return;
+                }
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Erro na resposta:', response.status, errorData);
+                throw new Error(errorData.error || `Erro HTTP ${response.status}`);
+            }
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         
