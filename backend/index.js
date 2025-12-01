@@ -49,4 +49,4 @@ app.get('/admin999', (req, res) => {
 // Servir fotos
 app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.listen(3000, () => console.log('Server running on http://localhost:3000'));
+app.listen(9999, () => console.log('Server running on http://localhost:9999'));
