@@ -2676,54 +2676,7 @@ class CDDashboard {
     const fileUrl = `${getApiBaseUrl()}/api/files/${filename}`;
         console.log('Abrindo PDF:', fileUrl);
         
-            // Atualiza status normalmente
-            const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    status: newStatus,
-                    codigoUsuario: usuarioData.usuario.codigo,
-                    nomeUsuario: usuarioData.usuario.nome
-                })
-            });
-
-            console.log('Response status:', response.status, response.statusText);
-
-            if (response.ok) {
-                const result = await response.json();
-                console.log('Status atualizado com sucesso:', result);
-                // Se status for confirmado, dispara e-mail
-                if (newStatus === 'confirmado') {
-                    const emailResponse = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/send-confirmation-email`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ codigoUsuario: usuarioData.usuario.codigo })
-                    });
-                    if (emailResponse.ok) {
-                        const emailResult = await emailResponse.json();
-                        this.showNotification(emailResult.message || 'E-mail de confirmação enviado.', 'success');
-                    } else {
-                        const emailError = await emailResponse.json().catch(() => ({}));
-                        this.showNotification(emailError.error || 'Erro ao enviar e-mail de confirmação.', 'error');
-                    }
-                }
-                await this.loadAgendamentos();
-                this.closeDetailModal();
-                this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)} (por ${usuarioData.usuario.nome})`, 'success');
-            } else {
-                if (handleTokenExpired(response)) {
-                    return;
-                }
-                const errorData = await response.json().catch(() => ({}));
-                console.error('Erro na resposta:', response.status, errorData);
-                throw new Error(errorData.error || `Erro HTTP ${response.status}`);
-            }
+            // ...existing code...
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         
