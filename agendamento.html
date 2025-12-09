@@ -909,27 +909,7 @@
         // Define valor padrão como próxima data válida
         dataInput.value = minDate;
         
-        // Adiciona CSS customizado para desabilitar datas inválidas visualmente
-        const style = document.createElement('style');
-        style.textContent = `
-          /* Desabilita visualmente finais de semana e dias após 25 */
-          input[type="date"]::-webkit-calendar-picker-indicator {
-            cursor: pointer;
-          }
-          
-          /* Dica visual para o usuário */
-          input[type="date"]::before {
-            content: attr(data-hint);
-            position: absolute;
-            font-size: 0.75rem;
-            color: #999;
-            pointer-events: none;
-          }
-        `;
-        document.head.appendChild(style);
-        
-        // Adiciona dica no placeholder
-        dataInput.setAttribute('data-hint', 'Apenas dias úteis até dia 25');
+        // Adiciona tooltip informativo
         dataInput.setAttribute('title', 'Selecione apenas dias úteis (seg-sex) até o dia 25 de cada mês');
 
         dataInput.addEventListener('change', function() {
