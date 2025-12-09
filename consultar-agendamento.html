@@ -327,24 +327,21 @@
                             <div>
                                 <label for="contra-proposta-data" class="block text-sm font-medium text-white mb-1">Nova Data *</label>
                                 <input type="date" id="contra-proposta-data" name="novaData" required 
-                                    class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             
                             <div>
                                 <label for="contra-proposta-horario" class="block text-sm font-medium text-white mb-1">Novo Horário *</label>
                                 <select id="contra-proposta-horario" name="novoHorario" required 
-                                    class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                     <option value="">Selecione o horário</option>
-                                    <option value="08:00-12:00">08:00 às 12:00</option>
-                                    <option value="13:00-17:00">13:00 às 17:00</option>
-                                    <option value="08:00-17:00">08:00 às 17:00 (Dia Inteiro)</option>
                                 </select>
                             </div>
                             
                             <div>
                                 <label for="contra-proposta-comentario" class="block text-sm font-medium text-white mb-1">Comentário (opcional)</label>
                                 <textarea id="contra-proposta-comentario" name="comentario" rows="3" placeholder="Explique o motivo da nova data sugerida..."
-                                    class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                    class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"></textarea>
                             </div>
                         </div>
                         
@@ -477,6 +474,66 @@
             document.getElementById('cancelar-solicitacao-modal').classList.remove('hidden'); 
         }
         function fecharCancelarSolicitacaoModal() { document.getElementById('cancelar-solicitacao-modal').classList.add('hidden'); document.getElementById('motivo-cancelamento').value = ''; }
+        
+        // Funções de validação de data para reagendamento
+        function isValidScheduleDateReagendar(dateString) {
+            const date = new Date(dateString + 'T00:00:00');
+            const day = date.getDay();
+            const dayOfMonth = date.getDate();
+            if (day === 0 || day === 6) return false;
+            if (dayOfMonth > 25) return false;
+            return true;
+        }
+        
+        function getNextValidDateReagendar(date) {
+            const next = new Date(date);
+            next.setDate(next.getDate() + 1);
+            while (!isValidScheduleDateReagendar(formatDateToISOReagendar(next))) {
+                next.setDate(next.getDate() + 1);
+                if (next.getDate() > 25) {
+                    next.setMonth(next.getMonth() + 1);
+                    next.setDate(1);
+                }
+            }
+            return next;
+        }
+        
+        function formatDateToISOReagendar(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        
+        async function carregarHorariosDisponiveis(data, cdDestino) {
+            const horarioSelect = document.getElementById('contra-proposta-horario');
+            horarioSelect.innerHTML = '<option value="">Carregando horários...</option>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/horarios-disponiveis?date=${data}&cd=${cdDestino}`);
+                const result = await response.json();
+                
+                if (result.horarios && Array.isArray(result.horarios)) {
+                    horarioSelect.innerHTML = '<option value="">Selecione o horário</option>';
+                    result.horarios.forEach(horario => {
+                        const option = document.createElement('option');
+                        option.value = horario.valor;
+                        option.textContent = horario.label;
+                        if (horario.disponivel === false) {
+                            option.disabled = true;
+                            option.textContent += ` (${horario.motivo || 'Indisponível'})`;
+                        }
+                        horarioSelect.appendChild(option);
+                    });
+                } else {
+                    horarioSelect.innerHTML = '<option value="">Selecione o horário</option><option value="08:00">08:00 - 09:00</option><option value="09:00">09:00 - 10:00</option><option value="10:00">10:00 - 11:00</option><option value="11:00">11:00 - 12:00</option><option value="14:00">14:00 - 15:00</option><option value="15:00">15:00 - 16:00</option><option value="16:00">16:00 - 17:00</option><option value="17:00">17:00 - 18:00</option>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar horários:', error);
+                horarioSelect.innerHTML = '<option value="">Selecione o horário</option><option value="08:00">08:00 - 09:00</option><option value="09:00">09:00 - 10:00</option><option value="10:00">10:00 - 11:00</option><option value="11:00">11:00 - 12:00</option><option value="14:00">14:00 - 15:00</option><option value="15:00">15:00 - 16:00</option><option value="16:00">16:00 - 17:00</option><option value="17:00">17:00 - 18:00</option>';
+            }
+        }
+        
         function abrirContraProposta(codigo) {
             currentCodigoReagendamento = codigo;
             const isNaoVeio = currentAgendamento?.status === 'nao-veio';
@@ -486,20 +543,47 @@
                 e.preventDefault();
                 enviarContraProposta(e);
             };
-            const horarioSelect = document.getElementById('contra-proposta-horario');
-            horarioSelect.innerHTML = '<option value="">Carregando horários...</option>';
-            fetch(`${API_BASE_URL}/api/agendamentos/${codigo}/horarios-disponiveis`)
-                .then(res => res.json())
-                .then(result => {
-                    if (result.success && Array.isArray(result.horarios)) {
-                        horarioSelect.innerHTML = '<option value="">Selecione o horário</option>' + result.horarios.map(h => `<option value="${h}">${h}</option>`).join('');
+            
+            // Configurar data mínima e valor padrão
+            const dataInput = document.getElementById('contra-proposta-data');
+            const today = new Date();
+            const nextValid = getNextValidDateReagendar(today);
+            const minDate = formatDateToISOReagendar(nextValid);
+            dataInput.setAttribute('min', minDate);
+            dataInput.value = minDate;
+            dataInput.setAttribute('title', 'Selecione apenas dias úteis (seg-sex) até o dia 25 de cada mês');
+            
+            // Event listener para validar data
+            dataInput.onchange = function() {
+                if (!isValidScheduleDateReagendar(this.value)) {
+                    const selectedDate = new Date(this.value + 'T00:00:00');
+                    const dayOfMonth = selectedDate.getDate();
+                    let message = '';
+                    if (dayOfMonth > 25) {
+                        message = 'Não é possível agendar entregas após o dia 25 do mês. Selecionando próxima data disponível...';
                     } else {
-                        horarioSelect.innerHTML = '<option value="">08:00 às 12:00</option><option value="13:00-17:00">13:00 às 17:00</option><option value="08:00-17:00">08:00 às 17:00 (Dia Inteiro)</option>';
+                        message = 'Por favor, selecione apenas dias úteis (segunda a sexta-feira). Selecionando próxima data disponível...';
                     }
-                })
-                .catch(() => {
-                    horarioSelect.innerHTML = '<option value="">08:00 às 12:00</option><option value="13:00-17:00">13:00 às 17:00</option><option value="08:00-17:00">08:00 às 17:00 (Dia Inteiro)</option>';
-                });
+                    alert(message);
+                    const nextValid = getNextValidDateReagendar(selectedDate);
+                    this.value = formatDateToISOReagendar(nextValid);
+                }
+                // Carregar horários disponíveis ao mudar a data
+                const cdDestino = currentAgendamento?.cdDestino || 'CD1';
+                carregarHorariosDisponiveis(this.value, cdDestino);
+            };
+            
+            // Bloquear digitação manual
+            dataInput.onkeydown = function(e) {
+                if (!['Tab', 'Escape', 'Enter'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            };
+            
+            // Carregar horários para a data padrão
+            const cdDestino = currentAgendamento?.cdDestino || 'CD1';
+            carregarHorariosDisponiveis(minDate, cdDestino);
+            
             document.getElementById('contra-proposta-modal').classList.remove('hidden');
         }
         function fecharContraPropostaModal() { document.getElementById('contra-proposta-modal').classList.add('hidden'); currentCodigoReagendamento = null; }
