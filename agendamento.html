@@ -782,11 +782,73 @@
       const day = date.getDay();
       return day !== 0 && day !== 6;
     }
+    
+    // Verifica se a data é válida para agendamento (dia útil + até dia 25)
+    function isValidScheduleDate(dateString) {
+      const date = new Date(dateString + 'T00:00:00');
+      const day = date.getDay();
+      const dayOfMonth = date.getDate();
+      
+      // Não permite finais de semana (0=domingo, 6=sábado)
+      if (day === 0 || day === 6) return false;
+      
+      // Não permite agendamentos após o dia 25 do mês
+      if (dayOfMonth > 25) return false;
+      
+      return true;
+    }
+    
     function getNextWeekday(date) {
       const next = new Date(date);
       next.setDate(next.getDate() + 1);
       while ([0,6].includes(next.getDay())) next.setDate(next.getDate() + 1);
       return next;
+    }
+    
+    // Retorna a próxima data válida para agendamento
+    function getNextValidDate(date) {
+      const next = new Date(date);
+      next.setDate(next.getDate() + 1);
+      
+      // Loop até encontrar uma data válida
+      while (!isValidScheduleDate(formatDateToISO(next))) {
+        next.setDate(next.getDate() + 1);
+        
+        // Se passar do dia 25, pular para o próximo mês
+        if (next.getDate() > 25) {
+          next.setMonth(next.getMonth() + 1);
+          next.setDate(1);
+        }
+      }
+      
+      return next;
+    }
+    
+    // Helper para formatar data em ISO (YYYY-MM-DD)
+    function formatDateToISO(date) {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    
+    // Gera lista de datas inválidas para desabilitar no input de data
+    function getDisabledDates() {
+      const disabled = [];
+      const today = new Date();
+      const endDate = new Date();
+      endDate.setFullYear(today.getFullYear() + 1); // Até 1 ano à frente
+      
+      let current = new Date(today);
+      while (current <= endDate) {
+        const dateStr = formatDateToISO(current);
+        if (!isValidScheduleDate(dateStr)) {
+          disabled.push(dateStr);
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      
+      return disabled;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -834,24 +896,67 @@
       });
 
 
-      // Data mínima e impedir finais de semana
+      // Data mínima e impedir finais de semana + dias após 25
       const dataInput = document.getElementById('data-entrega');
       if (dataInput) {
         let today = new Date();
-        if ([0,6].includes(today.getDay())) today = getNextWeekday(today);
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth()+1).padStart(2,'0');
-        const dd = String(today.getDate()).padStart(2,'0');
-        const minDate = `${yyyy}-${mm}-${dd}`;
+        
+        // Define data mínima como próxima data válida
+        const nextValid = getNextValidDate(today);
+        const minDate = formatDateToISO(nextValid);
         dataInput.setAttribute('min', minDate);
-        const nextWeekday = getNextWeekday(new Date());
-        dataInput.value = `${nextWeekday.getFullYear()}-${String(nextWeekday.getMonth()+1).padStart(2,'0')}-${String(nextWeekday.getDate()).padStart(2,'0')}`;
+        
+        // Define valor padrão como próxima data válida
+        dataInput.value = minDate;
+        
+        // Adiciona CSS customizado para desabilitar datas inválidas visualmente
+        const style = document.createElement('style');
+        style.textContent = `
+          /* Desabilita visualmente finais de semana e dias após 25 */
+          input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+          }
+          
+          /* Dica visual para o usuário */
+          input[type="date"]::before {
+            content: attr(data-hint);
+            position: absolute;
+            font-size: 0.75rem;
+            color: #999;
+            pointer-events: none;
+          }
+        `;
+        document.head.appendChild(style);
+        
+        // Adiciona dica no placeholder
+        dataInput.setAttribute('data-hint', 'Apenas dias úteis até dia 25');
+        dataInput.setAttribute('title', 'Selecione apenas dias úteis (seg-sex) até o dia 25 de cada mês');
 
         dataInput.addEventListener('change', function() {
-          if (!isWeekday(this.value)) {
-            alert('Por favor, selecione apenas dias úteis (segunda a sexta-feira).');
-            const nwd = getNextWeekday(new Date(this.value + 'T00:00:00'));
-            this.value = `${nwd.getFullYear()}-${String(nwd.getMonth()+1).padStart(2,'0')}-${String(nwd.getDate()).padStart(2,'0')}`;
+          if (!isValidScheduleDate(this.value)) {
+            const selectedDate = new Date(this.value + 'T00:00:00');
+            const dayOfMonth = selectedDate.getDate();
+            
+            let message = '';
+            if (dayOfMonth > 25) {
+              message = 'Não é possível agendar entregas após o dia 25 do mês. Selecionando próxima data disponível...';
+            } else if (!isWeekday(this.value)) {
+              message = 'Por favor, selecione apenas dias úteis (segunda a sexta-feira). Selecionando próxima data disponível...';
+            }
+            
+            if (message) {
+              alert(message);
+              const nextValid = getNextValidDate(selectedDate);
+              this.value = formatDateToISO(nextValid);
+            }
+          }
+        });
+        
+        // Bloqueia a digitação manual de datas inválidas
+        dataInput.addEventListener('keydown', function(e) {
+          // Permite apenas navegação, não digitação manual
+          if (!['Tab', 'Escape', 'Enter'].includes(e.key)) {
+            e.preventDefault();
           }
         });
       }
