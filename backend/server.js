@@ -1,43 +1,4 @@
-// Nova rota: Disparar e-mail de confirmação apenas se o código do usuário for válido
-app.post('/api/agendamentos/:id/send-confirmation-email', async (req, res) => {
-  try {
-    const { codigoUsuario } = req.body;
-    const id = parseInt(req.params.id);
-    // Buscar agendamento e usuário
-    const agendamento = await prisma.agendamento.findFirst({
-      where: { id },
-      include: { fornecedor: true, cd: true }
-    });
-    if (!agendamento) {
-      return res.status(404).json({ error: 'Agendamento não encontrado' });
-    }
-    // Buscar usuário do CD
-    const usuario = await prisma.usuario.findFirst({
-      where: { codigo: codigoUsuario, cdId: agendamento.cdId }
-    });
-    if (!usuario) {
-      return res.status(401).json({ error: 'Código de usuário inválido' });
-    }
-    // Disparar e-mail de confirmação
-    const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
-    await emailService.sendConfirmadoEmail({
-      to: agendamento.fornecedor.email,
-      fornecedorNome: agendamento.fornecedor.nome,
-      agendamentoCodigo: agendamento.codigo,
-      cdNome: agendamento.cd.nome,
-      consultaUrl,
-      motoristaNome: agendamento.motoristaNome,
-      veiculoPlaca: agendamento.placaVeiculo,
-      dataAgendamento: agendamento.dataEntrega,
-      horarioAgendamento: agendamento.horarioEntrega
-    });
-    console.log(`📧 E-mail de confirmação enviado para ${agendamento.fornecedor.email} (agendamento ${agendamento.codigo})`);
-    return res.json({ success: true, message: 'E-mail de confirmação enviado.' });
-  } catch (err) {
-    console.error('Erro ao enviar e-mail de confirmação:', err);
-    return res.status(500).json({ error: 'Erro ao enviar e-mail de confirmação.' });
-  }
-});
+
 // ...existing code...
 require('dotenv').config();
 const emailService = require('./emailService');

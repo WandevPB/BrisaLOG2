@@ -2367,7 +2367,11 @@ class CDDashboard {
                 this.closeDetailModal();
                 
                 // Mostrar notificação de sucesso com nome do usuário
-                this.showNotification(`Status atualizado para: ${this.getStatusText(newStatus)} (por ${usuarioData.usuario.nome})`, 'success');
+                let mensagem = `Status atualizado para: ${this.getStatusText(newStatus)} (por ${usuarioData.usuario.nome})`;
+                if (newStatus === 'confirmado') {
+                    mensagem += ' - E-mail de confirmação enviado ao transportador';
+                }
+                this.showNotification(mensagem, 'success');
                 
             } else {
                 // Verificar se é token expirado
