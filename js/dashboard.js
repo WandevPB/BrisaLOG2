@@ -937,6 +937,31 @@ class CDDashboard {
         updateNumber();
     }
 
+    changeView(view) {
+        this.currentView = view;
+        
+        // Atualizar botões de visualização
+        const cardsBtn = document.getElementById('view-cards');
+        const listBtn = document.getElementById('view-list');
+        
+        if (cardsBtn && listBtn) {
+            if (view === 'cards') {
+                cardsBtn.classList.add('bg-orange-primary', 'text-white');
+                cardsBtn.classList.remove('text-gray-600', 'hover:bg-white');
+                listBtn.classList.remove('bg-orange-primary', 'text-white');
+                listBtn.classList.add('text-gray-600', 'hover:bg-white');
+            } else {
+                listBtn.classList.add('bg-orange-primary', 'text-white');
+                listBtn.classList.remove('text-gray-600', 'hover:bg-white');
+                cardsBtn.classList.remove('bg-orange-primary', 'text-white');
+                cardsBtn.classList.add('text-gray-600', 'hover:bg-white');
+            }
+        }
+        
+        // Renderizar na visualização escolhida
+        this.renderAgendamentos();
+    }
+
     renderAgendamentos() {
         if (this.currentView === 'cards') {
             this.renderKanbanColumns();
