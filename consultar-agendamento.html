@@ -921,9 +921,6 @@
             const v = typeof valor === 'number' ? valor : parseFloat(valor) || 0;
             return v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
-            
-            return '0,00';
-        }
 
         function renderAgendamentoDetalhes(data) {
             currentAgendamento = data;
