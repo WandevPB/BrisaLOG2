@@ -438,19 +438,9 @@
             if (allNFs.length === 0) return '0,00';
             let total = 0;
             allNFs.forEach(nf => {
-                let valor = nf.valor;
-                // Se já for número, usa direto
-                if (typeof valor === 'number') {
-                    total += valor;
-                } else {
-                    // Se for string, converte
-                    let valorStr = String(valor || '0');
-                    // Se tem vírgula, é formato brasileiro
-                    if (valorStr.includes(',')) {
-                        valorStr = valorStr.replace(/\./g, '').replace(',', '.');
-                    }
-                    total += parseFloat(valorStr) || 0;
-                }
+                // Valor vem como número do backend
+                const v = typeof nf.valor === 'number' ? nf.valor : parseFloat(nf.valor) || 0;
+                total += v;
             });
             return total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
@@ -926,38 +916,11 @@
             return html;
         }
 
-        function calcularValorNF(valorStr) {
-            // Se já for um número, formata diretamente
-            if (typeof valorStr === 'number') {
-                return valorStr.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            }
-            
-            let str = String(valorStr).trim();
-            
-            // Se estiver vazio ou inválido
-            if (!str || str === '0' || str === '') {
-                return '0,00';
-            }
-            
-            // Se tem vírgula (formato brasileiro: 1.234,56)
-            if (str.includes(',')) {
-                str = str.replace(/\./g, ''); // Remove separadores de milhar
-                str = str.replace(',', '.'); // Troca vírgula por ponto
-                const v = parseFloat(str) || 0;
-                return v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            }
-            
-            // Se tem ponto, assume que já está em formato decimal (1234.56)
-            if (str.includes('.')) {
-                const v = parseFloat(str) || 0;
-                return v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            }
-            
-            // Se for apenas números inteiros (2000), trata como valor inteiro
-            if (/^\d+$/.test(str)) {
-                const v = parseFloat(str) || 0;
-                return v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            }
+        function calcularValorNF(valor) {
+            // Valor vem como número do backend
+            const v = typeof valor === 'number' ? valor : parseFloat(valor) || 0;
+            return v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
             
             return '0,00';
         }

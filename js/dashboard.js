@@ -1810,17 +1810,8 @@ class CDDashboard {
         let valorTotal = 0;
         if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
             agendamento.notasFiscais.forEach(nf => {
-                // Valor vem como "2.000.00" onde o último .00 são centavos
-                // Troca o último ponto por vírgula, remove os outros pontos
-                let valorStr = String(nf.valor || '0');
-                // Encontra o último ponto e troca por vírgula
-                const lastDotIndex = valorStr.lastIndexOf('.');
-                if (lastDotIndex !== -1) {
-                    valorStr = valorStr.substring(0, lastDotIndex).replace(/\./g, '') + ',' + valorStr.substring(lastDotIndex + 1);
-                }
-                // Agora converte: "2000,00" -> "2000.00"
-                valorStr = valorStr.replace(',', '.');
-                const v = parseFloat(valorStr) || 0;
+                // Valor vem como número do backend
+                const v = typeof nf.valor === 'number' ? nf.valor : parseFloat(nf.valor) || 0;
                 valorTotal += v;
             });
         }

@@ -964,10 +964,18 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
           return false;
         });
 
-        // Corrigir valor: remover R$, pontos, espaços, trocar vírgula por ponto
+        // Corrigir valor: formato brasileiro "R$ 1.234,56" -> 1234.56 (Decimal)
         let valorNF = nf.valor;
         if (typeof valorNF === 'string') {
-          valorNF = valorNF.replace(/[^\d,\.]/g, '').replace(',', '.');
+          // Remove R$, espaços e outros caracteres
+          valorNF = valorNF.replace(/[R$\s]/g, '');
+          // Se tem vírgula (formato BR: 1.234,56)
+          if (valorNF.includes(',')) {
+            valorNF = valorNF.replace(/\./g, ''); // Remove pontos (separadores de milhar)
+            valorNF = valorNF.replace(',', '.'); // Troca vírgula por ponto (decimal)
+          }
+          // Converte para número
+          valorNF = parseFloat(valorNF);
         }
 
         await prisma.notaFiscal.create({
@@ -975,7 +983,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
             numeroPedido: numeroPedido,
             numeroNF: nf.numero,
             serie: nf.serie || null,
-            valor: valorNF ? String(valorNF) : null,
+            valor: valorNF && !isNaN(valorNF) ? valorNF : null,
             arquivoPath: arquivo ? arquivo.filename : null,
             agendamentoId: agendamento.id
           }
