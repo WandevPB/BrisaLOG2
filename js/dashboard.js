@@ -2702,10 +2702,19 @@ class CDDashboard {
         }
         
         // Construir URL do arquivo usando a rota da API
-    const fileUrl = `${getApiBaseUrl()}/api/files/${filename}`;
+        const fileUrl = `${getApiBaseUrl()}/api/files/${filename}`;
         console.log('Abrindo PDF:', fileUrl);
         
-            // ...existing code...
+        // Abrir PDF em nova aba
+        window.open(fileUrl, '_blank');
+    }
+
+    applyFilters() {
+        const statusFilter = document.getElementById('filter-status')?.value || '';
+        const periodoFilter = document.getElementById('filter-periodo')?.value || '';
+        const sortFilter = document.getElementById('filter-ordenar')?.value || '';
+        const searchText = document.getElementById('search-input')?.value?.toLowerCase() || '';
+        
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         
