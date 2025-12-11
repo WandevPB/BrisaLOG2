@@ -783,8 +783,11 @@
             let buttons = '';
             
             if (data.status === 'reagendamento') {
+                const dataSugestao = data.dataSugestaoCD ? formatDateBrFromISO(data.dataSugestaoCD) : 'N/A';
+                const horarioSugestao = data.horarioSugestaoCD || 'não informado';
+                
                 buttons += `
-                    <p class="text-lg font-semibold text-yellow-400">Nova data sugerida pelo CD: ${formatDateBrFromISO(data.dataSugestaoCD)} às ${data.horarioSugestaoCD}</p>
+                    <p class="text-lg font-semibold text-yellow-400">Nova data sugerida pelo CD: ${dataSugestao} às ${horarioSugestao}</p>
                     <button onclick="responderReagendamento('${data.codigo}', 'aceito')" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-check mr-2"></i>Aceitar Nova Data</button>
                     <button onclick="abrirContraProposta('${data.codigo}')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-calendar-plus mr-2"></i>Sugerir Outra Data</button>
                     <button onclick="abrirCancelarSolicitacaoModal('${data.codigo}')" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"><i class="fas fa-times-circle mr-2"></i>Cancelar Solicitação</button>

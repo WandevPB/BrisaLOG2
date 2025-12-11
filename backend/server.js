@@ -1133,6 +1133,9 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
       enderecoCD: `Centro de Distribuição ${agendamento.cd.nome}`,
       status: agendamento.status,
       observacoes: agendamento.observacoes || 'Nenhuma observação',
+      // Campos de reagendamento
+      dataSugestaoCD: agendamento.dataSugestaoCD ? formatarDataBrasilia(agendamento.dataSugestaoCD) : null,
+      horarioSugestaoCD: agendamento.horarioSugestaoCD || null,
       // Apenas repassa o valor total do frontend (step 3), sem recalcular
       valorTotal: agendamento.valorTotal || '',
       tipoCarga: agendamento.tipoCarga,
