@@ -1111,6 +1111,13 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
     // Adicionar objeto fornecedor virtual (se necessário)
     addFornecedorVirtual(agendamento);
 
+    // Debug: verificar campos de reagendamento
+    console.log('📋 [Consulta] Dados de reagendamento:', {
+      dataSugestaoCD: agendamento.dataSugestaoCD,
+      horarioSugestaoCD: agendamento.horarioSugestaoCD,
+      status: agendamento.status
+    });
+
     // Formatar dados para o frontend
     const agendamentoFormatado = {
       codigo: agendamento.codigo,
@@ -1150,7 +1157,7 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
         }
         pedido.notasFiscais.push({
           numero: nf.numeroNF,
-          valor: nf.valor || '0,00',
+          valor: nf.valor || '0,00', // Valor original do banco sem formatação
           arquivo: nf.arquivoPath
         });
         return pedidos;
