@@ -924,31 +924,51 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     }
 
     // Criar agendamento (SEM relação fornecedor - usando snapshot)
-    const agendamento = await prisma.agendamento.create({
-      data: {
-        codigo: codigo,
-        dataEntrega: dataEntregaLocal,
-        horarioEntrega: agendamentoData.entrega.horarioEntrega,
-        tipoCarga: agendamentoData.entrega.tipoCarga,
-        observacoes: observacoesFinal,
-        status: statusFinal,
-        tipoRegistro: agendamentoData.tipoRegistro || 'agendamento',
-        cdId: cd.id,
-        // Dados do fornecedor (snapshot)
-  fornecedorNome: agendamentoData.fornecedor.nomeEmpresa || agendamentoData.fornecedor.nome || '',
-  fornecedorEmail: agendamentoData.fornecedor.email || '',
-  fornecedorTelefone: agendamentoData.fornecedor.telefone || '',
-  fornecedorDocumento: agendamentoData.fornecedor.documento || '',
-        // Motorista fields from step 1 (agendamentoData.fornecedor)
-        motoristaNome: agendamentoData.fornecedor?.nomeResponsavel || '',
-        motoristaCpf: agendamentoData.fornecedor?.cpfMotorista || '',
-        motoristaTelefone: agendamentoData.fornecedor?.telefoneMotorista || '',
-        placaVeiculo: agendamentoData.fornecedor?.placaVeiculo || '',
-        tipoVeiculo: agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo || '',
-        // NÃO incluir fornecedorId - deixar null (migration já aplicada no schema)
-        fornecedorId: null
-      }
+    console.log('[Agendamento Create] Dados:', {
+      codigo,
+      dataEntrega: dataEntregaLocal,
+      horarioEntrega: agendamentoData.entrega.horarioEntrega,
+      tipoCarga: agendamentoData.entrega.tipoCarga,
+      tipoVeiculo: agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo,
+      cdId: cd.id
     });
+
+    let agendamento;
+    try {
+      agendamento = await prisma.agendamento.create({
+        data: {
+          codigo: codigo,
+          dataEntrega: dataEntregaLocal,
+          horarioEntrega: agendamentoData.entrega.horarioEntrega,
+          tipoCarga: agendamentoData.entrega.tipoCarga,
+          observacoes: observacoesFinal,
+          status: statusFinal,
+          tipoRegistro: agendamentoData.tipoRegistro || 'agendamento',
+          cdId: cd.id,
+          // Dados do fornecedor (snapshot)
+    fornecedorNome: agendamentoData.fornecedor.nomeEmpresa || agendamentoData.fornecedor.nome || '',
+    fornecedorEmail: agendamentoData.fornecedor.email || '',
+    fornecedorTelefone: agendamentoData.fornecedor.telefone || '',
+    fornecedorDocumento: agendamentoData.fornecedor.documento || '',
+          // Motorista fields from step 1 (agendamentoData.fornecedor)
+          motoristaNome: agendamentoData.fornecedor?.nomeResponsavel || '',
+          motoristaCpf: agendamentoData.fornecedor?.cpfMotorista || '',
+          motoristaTelefone: agendamentoData.fornecedor?.telefoneMotorista || '',
+          placaVeiculo: agendamentoData.fornecedor?.placaVeiculo || '',
+          tipoVeiculo: agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo || '',
+          // NÃO incluir fornecedorId - deixar null (migration já aplicada no schema)
+          fornecedorId: null
+        }
+      });
+      console.log('[Agendamento Create] Agendamento criado com sucesso, ID:', agendamento.id);
+    } catch (agendamentoError) {
+      console.error('[Agendamento Create] Erro detalhado:', {
+        message: agendamentoError.message,
+        code: agendamentoError.code,
+        meta: agendamentoError.meta
+      });
+      throw agendamentoError;
+    }
 
     // Criar notas fiscais (compatível com novo formato multi-pedido/multi-NF)
     for (const pedido of agendamentoData.pedidos) {
