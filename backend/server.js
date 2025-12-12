@@ -1013,12 +1013,22 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
           }
         }
 
+        // Sanitizar strings para remover bytes nulos (0x00) que causam erro no PostgreSQL
+        const sanitizeString = (str) => {
+          if (!str) return str;
+          return String(str).replace(/\0/g, ''); // Remove null bytes
+        };
+
+        const numeroNFSanitizado = sanitizeString(nf.numero);
+        const serieSanitizada = sanitizeString(nf.serie);
+        const arquivoPathSanitizado = sanitizeString(arquivo?.filename);
+
         console.log('[NF Create] Dados completos:', {
           numeroPedido,
-          numeroNF: nf.numero,
-          serie: nf.serie,
+          numeroNF: numeroNFSanitizado,
+          serie: serieSanitizada,
           valor: valorNF,
-          arquivoPath: arquivo?.filename,
+          arquivoPath: arquivoPathSanitizado,
           agendamentoId: agendamento.id
         });
 
@@ -1026,10 +1036,10 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
           await prisma.notaFiscal.create({
             data: {
               numeroPedido: numeroPedido,
-              numeroNF: nf.numero,
-              serie: nf.serie || null,
+              numeroNF: numeroNFSanitizado,
+              serie: serieSanitizada || null,
               valor: valorNF && !isNaN(valorNF) ? valorNF : null,
-              arquivoPath: arquivo ? arquivo.filename : null,
+              arquivoPath: arquivoPathSanitizado || null,
               agendamentoId: agendamento.id
             }
           });
