@@ -993,18 +993,40 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
           }
         }
 
-        console.log('[NF Create] Valor processado:', valorNF, 'Tipo:', typeof valorNF);
-
-        await prisma.notaFiscal.create({
-          data: {
-            numeroPedido: numeroPedido,
-            numeroNF: nf.numero,
-            serie: nf.serie || null,
-            valor: valorNF && !isNaN(valorNF) ? valorNF : null,
-            arquivoPath: arquivo ? arquivo.filename : null,
-            agendamentoId: agendamento.id
-          }
+        console.log('[NF Create] Dados completos:', {
+          numeroPedido,
+          numeroNF: nf.numero,
+          serie: nf.serie,
+          valor: valorNF,
+          arquivoPath: arquivo?.filename,
+          agendamentoId: agendamento.id
         });
+
+        try {
+          await prisma.notaFiscal.create({
+            data: {
+              numeroPedido: numeroPedido,
+              numeroNF: nf.numero,
+              serie: nf.serie || null,
+              valor: valorNF && !isNaN(valorNF) ? valorNF : null,
+              arquivoPath: arquivo ? arquivo.filename : null,
+              agendamentoId: agendamento.id
+            }
+          });
+          console.log('[NF Create] NF criada com sucesso');
+        } catch (nfError) {
+          console.error('[NF Create] Erro detalhado:', {
+            message: nfError.message,
+            code: nfError.code,
+            meta: nfError.meta,
+            dados: {
+              numeroPedido: String(numeroPedido),
+              numeroNF: nf.numero,
+              valor: valorNF
+            }
+          });
+          throw nfError;
+        }
       }
     }
 
