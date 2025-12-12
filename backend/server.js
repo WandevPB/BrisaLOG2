@@ -952,14 +952,26 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
 
     // Criar notas fiscais (compatível com novo formato multi-pedido/multi-NF)
     for (const pedido of agendamentoData.pedidos) {
-      const numeroPedido = pedido.numero || pedido.numeroPedido || 'UNICO';
+      let numeroPedido = pedido.numero || pedido.numeroPedido || 'UNICO';
+      
+      // Converter numeroPedido para BigInt se for string numérica
+      if (typeof numeroPedido === 'string' && /^\d+$/.test(numeroPedido)) {
+        numeroPedido = BigInt(numeroPedido);
+      } else if (numeroPedido === 'UNICO' || typeof numeroPedido !== 'bigint') {
+        // Se não for número, usa um valor padrão BigInt
+        numeroPedido = BigInt(0);
+      }
+      
+      console.log('[NF Create] numeroPedido:', numeroPedido, 'Tipo:', typeof numeroPedido);
+      
       for (const nf of pedido.notasFiscais) {
         // Encontrar arquivo correspondente
         const arquivo = arquivos.find(f => {
           const info = req.body[`${f.fieldname}_info`];
           if (info) {
             const parsedInfo = JSON.parse(info);
-            return parsedInfo.pedido === numeroPedido && parsedInfo.nf === nf.numero;
+            const pedidoMatch = String(parsedInfo.pedido) === String(pedido.numero || pedido.numeroPedido || 'UNICO');
+            return pedidoMatch && parsedInfo.nf === nf.numero;
           }
           return false;
         });
