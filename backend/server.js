@@ -974,9 +974,14 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
             valorNF = valorNF.replace(/\./g, ''); // Remove pontos (separadores de milhar)
             valorNF = valorNF.replace(',', '.'); // Troca vírgula por ponto (decimal)
           }
-          // Converte para número
+          // Converte para número e arredonda para 2 casas decimais
           valorNF = parseFloat(valorNF);
+          if (!isNaN(valorNF)) {
+            valorNF = Math.round(valorNF * 100) / 100; // Garante max 2 casas decimais
+          }
         }
+
+        console.log('[NF Create] Valor processado:', valorNF, 'Tipo:', typeof valorNF);
 
         await prisma.notaFiscal.create({
           data: {
