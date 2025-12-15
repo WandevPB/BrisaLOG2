@@ -1031,25 +1031,31 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         const serieSanitizada = sanitizeString(nf.serie);
         const arquivoPathSanitizado = sanitizeString(arquivo?.filename);
 
-        console.log('[NF Create] Dados completos:', {
-          numeroPedido,
-          numeroNF: numeroNFSanitizado,
-          serie: serieSanitizada,
-          valor: valorNF,
-          arquivoPath: arquivoPathSanitizado,
+        // Preparar dados para criar NF
+        const nfData = {
+          numeroPedido: numeroPedido,
+          numeroNF: numeroNFSanitizado || '',
+          serie: serieSanitizada || null,
+          valor: valorNF && !isNaN(valorNF) ? valorNF : null,
+          arquivoPath: arquivoPathSanitizado || null,
           agendamentoId: agendamento.id
+        };
+
+        console.log('[NF Create] Dados completos:', nfData);
+        console.log('[NF Create] Inspecionando cada campo:');
+        Object.entries(nfData).forEach(([key, value]) => {
+          if (typeof value === 'string') {
+            const hasNullByte = value.includes('\0');
+            const bytes = Buffer.from(value, 'utf8');
+            console.log(`  ${key}: "${value}" | Null byte: ${hasNullByte} | Bytes: ${bytes.toString('hex')}`);
+          } else {
+            console.log(`  ${key}:`, value, `(${typeof value})`);
+          }
         });
 
         try {
           await prisma.notaFiscal.create({
-            data: {
-              numeroPedido: numeroPedido,
-              numeroNF: numeroNFSanitizado,
-              serie: serieSanitizada || null,
-              valor: valorNF && !isNaN(valorNF) ? valorNF : null,
-              arquivoPath: arquivoPathSanitizado || null,
-              agendamentoId: agendamento.id
-            }
+            data: nfData
           });
           console.log('[NF Create] NF criada com sucesso');
         } catch (nfError) {
