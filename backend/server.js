@@ -930,6 +930,16 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       observacoesFinal = observacoesFinal ? `${observacaoEspecial} | ${observacoesFinal}` : observacaoEspecial;
     }
 
+    // Função para sanitizar strings (remove null bytes e normaliza)
+    const sanitizeStringAg = (str) => {
+      if (!str) return str;
+      return String(str)
+        .replace(/\0/g, '') // Remove null bytes
+        .normalize('NFD') // Decompose caracteres acentuados
+        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .trim();
+    };
+
     // Criar agendamento (SEM relação fornecedor - usando snapshot)
     console.log('[Agendamento Create] Dados:', {
       codigo,
@@ -944,25 +954,25 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     try {
       agendamento = await prisma.agendamento.create({
         data: {
-          codigo: codigo,
+          codigo: sanitizeStringAg(codigo),
           dataEntrega: dataEntregaLocal,
-          horarioEntrega: agendamentoData.entrega.horarioEntrega,
-          tipoCarga: agendamentoData.entrega.tipoCarga,
-          observacoes: observacoesFinal,
-          status: statusFinal,
-          tipoRegistro: agendamentoData.tipoRegistro || 'agendamento',
+          horarioEntrega: sanitizeStringAg(agendamentoData.entrega.horarioEntrega),
+          tipoCarga: sanitizeStringAg(agendamentoData.entrega.tipoCarga),
+          observacoes: sanitizeStringAg(observacoesFinal),
+          status: sanitizeStringAg(statusFinal),
+          tipoRegistro: sanitizeStringAg(agendamentoData.tipoRegistro || 'agendamento'),
           cdId: cd.id,
-          // Dados do fornecedor (snapshot)
-    fornecedorNome: agendamentoData.fornecedor.nomeEmpresa || agendamentoData.fornecedor.nome || '',
-    fornecedorEmail: agendamentoData.fornecedor.email || '',
-    fornecedorTelefone: agendamentoData.fornecedor.telefone || '',
-    fornecedorDocumento: agendamentoData.fornecedor.documento || '',
-          // Motorista fields from step 1 (agendamentoData.fornecedor)
-          motoristaNome: agendamentoData.fornecedor?.nomeResponsavel || '',
-          motoristaCpf: agendamentoData.fornecedor?.cpfMotorista || '',
-          motoristaTelefone: agendamentoData.fornecedor?.telefoneMotorista || '',
-          placaVeiculo: agendamentoData.fornecedor?.placaVeiculo || '',
-          tipoVeiculo: agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo || '',
+          // Dados do fornecedor (snapshot) - sanitizados
+    fornecedorNome: sanitizeStringAg(agendamentoData.fornecedor.nomeEmpresa || agendamentoData.fornecedor.nome || ''),
+    fornecedorEmail: sanitizeStringAg(agendamentoData.fornecedor.email || ''),
+    fornecedorTelefone: sanitizeStringAg(agendamentoData.fornecedor.telefone || ''),
+    fornecedorDocumento: sanitizeStringAg(agendamentoData.fornecedor.documento || ''),
+          // Motorista fields from step 1 (agendamentoData.fornecedor) - sanitizados
+          motoristaNome: sanitizeStringAg(agendamentoData.fornecedor?.nomeResponsavel || ''),
+          motoristaCpf: sanitizeStringAg(agendamentoData.fornecedor?.cpfMotorista || ''),
+          motoristaTelefone: sanitizeStringAg(agendamentoData.fornecedor?.telefoneMotorista || ''),
+          placaVeiculo: sanitizeStringAg(agendamentoData.fornecedor?.placaVeiculo || ''),
+          tipoVeiculo: sanitizeStringAg(agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo || ''),
           // NÃO incluir fornecedorId - deixar null (migration já aplicada no schema)
           fornecedorId: null
         }
