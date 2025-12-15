@@ -1585,12 +1585,28 @@ app.post('/api/agendamentos/:codigo/pedidos', upload.any(), async (req, res) => 
           return false;
         });
 
+        // Processar valor
+        let valorProcessado = nf.valor;
+        if (typeof valorProcessado === 'string') {
+          valorProcessado = valorProcessado.replace(/[R$\s]/g, '');
+          if (valorProcessado.includes(',')) {
+            valorProcessado = valorProcessado.replace(/\./g, '').replace(',', '.');
+          }
+          valorProcessado = parseFloat(valorProcessado);
+          if (!isNaN(valorProcessado)) {
+            valorProcessado = Math.round(valorProcessado * 100) / 100;
+          }
+        }
+
+        // Sanitizar strings
+        const sanitize = (str) => str ? String(str).replace(/\0/g, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim() : str;
+
         await prisma.notaFiscal.create({
           data: {
-            numeroPedido: pedido.numero,
-            numeroNF: nf.numero,
-            valor: nf.valor,
-            arquivoPath: arquivo ? arquivo.filename : null,
+            numeroPedido: BigInt(sanitize(pedido.numero)),
+            numeroNF: sanitize(nf.numero),
+            valor: valorProcessado && !isNaN(valorProcessado) ? valorProcessado : null,
+            arquivoPath: sanitize(arquivo?.filename) || null,
             agendamentoId: agendamento.id
           }
         });
@@ -2098,13 +2114,29 @@ app.post('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais', upload
       return res.status(400).json({ error: 'Já existe uma nota fiscal com este número neste pedido' });
     }
 
+    // Processar valor
+    let valorProcessado = valor;
+    if (typeof valorProcessado === 'string') {
+      valorProcessado = valorProcessado.replace(/[R$\s]/g, '');
+      if (valorProcessado.includes(',')) {
+        valorProcessado = valorProcessado.replace(/\./g, '').replace(',', '.');
+      }
+      valorProcessado = parseFloat(valorProcessado);
+      if (!isNaN(valorProcessado)) {
+        valorProcessado = Math.round(valorProcessado * 100) / 100;
+      }
+    }
+
+    // Sanitizar strings
+    const sanitize = (str) => str ? String(str).replace(/\0/g, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim() : str;
+
     // Criar nota fiscal
     await prisma.notaFiscal.create({
       data: {
-        numeroPedido: numeroPedido,
-        numeroNF: nf.numero,
-        valor: valor,
-        arquivoPath: arquivo ? arquivo.filename : null,
+        numeroPedido: BigInt(sanitize(numeroPedido)),
+        numeroNF: sanitize(numeroNF),
+        valor: valorProcessado && !isNaN(valorProcessado) ? valorProcessado : null,
+        arquivoPath: sanitize(arquivo?.filename) || null,
         agendamentoId: agendamento.id
       }
     });
