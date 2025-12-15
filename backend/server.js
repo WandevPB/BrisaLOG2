@@ -355,7 +355,14 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
+    // Sanitizar filename: remover caracteres especiais e bytes nulos
+    const sanitizedName = file.originalname
+      .normalize('NFD') // Decompose caracteres acentuados
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^\x20-\x7E]/g, '') // Remove caracteres não-ASCII
+      .replace(/\0/g, '') // Remove null bytes
+      .trim();
+    cb(null, uniqueSuffix + '-' + sanitizedName);
   }
 });
 
