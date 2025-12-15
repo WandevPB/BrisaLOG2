@@ -970,9 +970,15 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       throw agendamentoError;
     }
 
+    // Função para sanitizar strings (remove null bytes)
+    const sanitizeString = (str) => {
+      if (!str) return str;
+      return String(str).replace(/\0/g, '').trim();
+    };
+
     // Criar notas fiscais (compatível com novo formato multi-pedido/multi-NF)
     for (const pedido of agendamentoData.pedidos) {
-      let numeroPedido = pedido.numero || pedido.numeroPedido || 'UNICO';
+      let numeroPedido = sanitizeString(pedido.numero || pedido.numeroPedido || 'UNICO');
       
       // Converter numeroPedido para BigInt se for string numérica
       if (typeof numeroPedido === 'string' && /^\d+$/.test(numeroPedido)) {
@@ -1013,12 +1019,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
           }
         }
 
-        // Sanitizar strings para remover bytes nulos (0x00) que causam erro no PostgreSQL
-        const sanitizeString = (str) => {
-          if (!str) return str;
-          return String(str).replace(/\0/g, ''); // Remove null bytes
-        };
-
+        // Sanitizar campos de NF
         const numeroNFSanitizado = sanitizeString(nf.numero);
         const serieSanitizada = sanitizeString(nf.serie);
         const arquivoPathSanitizado = sanitizeString(arquivo?.filename);
