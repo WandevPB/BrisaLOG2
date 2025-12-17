@@ -1576,8 +1576,8 @@ app.put('/api/agendamentos/:id/admin/alterar-status', authenticateToken, async (
       userPerfil
     });
 
-    // Verificar se usuário tem perfil admin ou consultivo
-    if (userPerfil !== 'admin' && userPerfil !== 'consultivo') {
+    // Verificar se usuário tem perfil admin
+    if (userPerfil !== 'admin') {
       console.log(`❌ [PUT /api/agendamentos/${id}/admin/alterar-status] Usuário sem permissão. Perfil: ${userPerfil}`);
       return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem alterar status.' });
     }
