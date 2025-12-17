@@ -1425,7 +1425,7 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
 app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { novaData, novoHorario, motivo } = req.body;
+    const { novaData, novoHorario, motivo, codigoUsuario } = req.body;
     const cdId = req.user.id;
 
     console.log(`🗓️ [POST /api/agendamentos/${id}/reagendar] Iniciando reagendamento...`);
@@ -1433,7 +1433,8 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
       id, 
       novaData, 
       novoHorario, 
-      motivo, 
+      motivo,
+      codigoUsuario, 
       cdId 
     });
 
@@ -1482,11 +1483,25 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
       horarioNovo: agendamentoAtualizado.horarioEntrega
     });
 
+    // Buscar usuário pelo código
+    let usuarioId = null;
+    if (codigoUsuario) {
+      const usuario = await prisma.usuario.findFirst({
+        where: {
+          codigo: codigoUsuario,
+          cdId: cdId
+        }
+      });
+      if (usuario) {
+        usuarioId = usuario.id;
+      }
+    }
+
     // Criar histórico
     await prisma.historicoAcao.create({
       data: {
         acao: 'reagendamento_sugerido',
-        descricao: `Nova data sugerida: ${formatDateBr(novaData)} às ${novoHorario}`,
+        descricao: `Nova data sugerida: ${formatDateBr(novaData)} às ${novoHorario}${codigoUsuario ? ` - Executado por: ${codigoUsuario}` : ''}`,
         dataAnterior: agendamento.dataEntrega,
         dataNova: (function() {
           let d = null;
@@ -1498,7 +1513,8 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
           return isNaN(d.getTime()) ? null : d;
         })(),
         agendamentoId: parseInt(id),
-        cdId: cdId
+        cdId: cdId,
+        usuarioId: usuarioId
       }
     });
 

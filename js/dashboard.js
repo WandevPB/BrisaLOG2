@@ -2442,8 +2442,9 @@ class CDDashboard {
         }
     }
 
-    async suggestNewDate(id) {
+    async suggestNewDate(id, codigoUsuario = null) {
         this.currentAgendamentoId = id;
+        this.currentCodigoUsuario = codigoUsuario; // Salvar código do usuário
         document.getElementById('suggest-date-form').reset();
         this.setMinDate();
         
@@ -2633,7 +2634,8 @@ class CDDashboard {
             console.log(`🔄 Sugerindo nova data para agendamento ${this.currentAgendamentoId}:`, {
                 novaData,
                 novoHorario,
-                motivo
+                motivo,
+                codigoUsuario: this.currentCodigoUsuario
             });
 
             const token = sessionStorage.getItem('token');
@@ -2647,7 +2649,8 @@ class CDDashboard {
                 body: JSON.stringify({
                     novaData,
                     novoHorario,
-                    motivo
+                    motivo,
+                    codigoUsuario: this.currentCodigoUsuario
                 })
             });
 
