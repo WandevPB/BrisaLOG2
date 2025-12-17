@@ -3098,7 +3098,30 @@ app.get('/api/kpis', authenticateToken, async (req, res) => {
   }
 });
 
-// Rota para listar CDs (para select)
+// Rota PÚBLICA para listar CDs ativos (para formulário de agendamento)
+app.get('/api/cds-publicos', async (req, res) => {
+  try {
+    const cds = await prisma.cd.findMany({ 
+      where: { 
+        ativo: true,
+        tipoPerfil: 'cd'
+      },
+      select: { 
+        id: true, 
+        nome: true 
+      },
+      orderBy: {
+        nome: 'asc'
+      }
+    });
+    res.json(cds);
+  } catch (err) {
+    console.error('Erro ao listar CDs públicos:', err);
+    res.status(500).json({ error: 'Erro ao listar CDs' });
+  }
+});
+
+// Rota para listar CDs (para select autenticado)
 app.get('/api/cds', authenticateToken, async (req, res) => {
   try {
     const cds = await prisma.cd.findMany({ select: { id: true, nome: true } });

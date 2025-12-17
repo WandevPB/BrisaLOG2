@@ -3,6 +3,65 @@ function getApiBaseUrl() {
     return typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://brisalog-agenda.online';
 }
 
+// Mapeamento global de CDs (será preenchido dinamicamente)
+let cdMap = {};
+
+// Função para carregar CDs do banco de dados
+async function loadCDsFromDatabase() {
+    try {
+        const response = await fetch(`${getApiBaseUrl()}/api/cds-publicos`);
+        if (!response.ok) {
+            throw new Error('Erro ao carregar CDs');
+        }
+
+        const cds = await response.json();
+        const selectCD = document.getElementById('cd-destino');
+        
+        if (!selectCD) {
+            console.error('Elemento cd-destino não encontrado');
+            return;
+        }
+
+        // Limpar opções existentes (exceto a primeira "Selecione o CD")
+        selectCD.innerHTML = '<option value="">Selecione o CD</option>';
+        
+        // Resetar cdMap
+        cdMap = {};
+
+        // Adicionar CDs dinamicamente
+        cds.forEach(cd => {
+            const option = document.createElement('option');
+            option.value = cd.nome;
+            option.textContent = cd.nome;
+            selectCD.appendChild(option);
+            
+            // Adicionar ao mapeamento
+            cdMap[cd.nome] = cd.id;
+        });
+
+        console.log('✅ CDs carregados:', cds.length, 'CDs disponíveis');
+        console.log('📋 Mapeamento de CDs:', cdMap);
+
+    } catch (error) {
+        console.error('❌ Erro ao carregar CDs:', error);
+        // Fallback: manter opções básicas se houver erro
+        const selectCD = document.getElementById('cd-destino');
+        if (selectCD && selectCD.options.length <= 1) {
+            selectCD.innerHTML = `
+                <option value="">Selecione o CD</option>
+                <option value="Bahia">CD Bahia</option>
+                <option value="Pernambuco">CD Pernambuco</option>
+                <option value="Lagoa Nova">CD Lagoa Nova</option>
+            `;
+            cdMap = {
+                'Bahia': 1,
+                'Pernambuco': 2,
+                'Lagoa Nova': 3
+            };
+        }
+    }
+}
+
 // REMOVIDO as funções nextStep/previousStep seguras do topo
 // para evitar duplicidade. Vamos usar apenas as do final.
 
@@ -1329,7 +1388,10 @@ function formatCurrency(input) {
 }
 
 // Inicializar quando o DOM estiver carregado
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Carregar CDs do banco de dados
+    await loadCDsFromDatabase();
+
     // Inicializa a classe principal
     // E atribui à variável global que as funções acima usam
     agendamentoForm = new AgendamentoForm(); 
@@ -1347,14 +1409,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // Mapeamento de nome para ID dos CDs
-    const cdMap = {
-        'Bahia': 1,
-        'Pernambuco': 2,
-        'Lagoa Nova': 3
-        // Adicione outros CDs conforme necessário
-    };
 
     // Listeners para carregar horários disponíveis ao mudar CD ou data
     const cdInput = document.getElementById('cd-destino');
