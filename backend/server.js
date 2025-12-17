@@ -1501,7 +1501,7 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
     await prisma.historicoAcao.create({
       data: {
         acao: 'reagendamento_sugerido',
-        descricao: `Nova data sugerida: ${formatDateBr(novaData)} às ${novoHorario}${codigoUsuario ? ` - Executado por: ${codigoUsuario}` : ''}`,
+        descricao: `Nova data sugerida: ${formatDateBr(novaData)} às ${novoHorario}`,
         autor: nomeUsuario,
         codigoUsuario: codigoUsuario,
         dataAnterior: agendamento.dataEntrega,
@@ -1895,7 +1895,7 @@ app.post('/api/agendamentos/:codigo/responder-reagendamento', async (req, res) =
       console.log(`🔍 [DEBUG] Formatando data no histórico - novaData original: ${novaData}`);
       const dataFormatada = formatDateBr(novaData);
       console.log(`🔍 [DEBUG] Data formatada: ${dataFormatada}`);
-      descricaoHistorico = `[TESTE] Fornecedor sugeriu nova data: ${dataFormatada} às ${novoHorario}${comentario ? ' - ' + comentario : ''}`;
+      descricaoHistorico = `Fornecedor sugeriu nova data: ${dataFormatada} às ${novoHorario}${comentario ? ' - ' + comentario : ''}`;
     }
 
     await prisma.historicoAcao.create({
