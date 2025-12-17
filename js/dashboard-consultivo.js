@@ -462,11 +462,18 @@ class DashboardConsultivo {
                 ${this.getStatusBadge(status)}
             </td>
             <td class="px-6 py-4 text-center">
-                <button onclick="dashboardConsultivo.verDetalhes(${agendamento.id})" 
-                    class="text-orange-primary hover:text-orange-secondary transition-colors" 
-                    title="Ver Detalhes">
-                    <i class="fas fa-eye text-lg"></i>
-                </button>
+                <div class="flex items-center justify-center space-x-2">
+                    <button onclick="dashboardConsultivo.verDetalhes(${agendamento.id})" 
+                        class="text-orange-primary hover:text-orange-secondary transition-colors" 
+                        title="Ver Detalhes">
+                        <i class="fas fa-eye text-lg"></i>
+                    </button>
+                    <button onclick="dashboardConsultivo.abrirModalAlterarStatus(${agendamento.id})" 
+                        class="text-blue-600 hover:text-blue-800 transition-colors" 
+                        title="Alterar Status">
+                        <i class="fas fa-exchange-alt text-lg"></i>
+                    </button>
+                </div>
             </td>
         `;
 
@@ -1155,6 +1162,144 @@ class DashboardConsultivo {
             notification.classList.remove('show');
             setTimeout(() => notification.remove(), 300);
         }, 5000);
+    }
+
+    // Função para abrir modal de alterar status
+    abrirModalAlterarStatus(agendamentoId) {
+        const agendamento = this.agendamentos.find(a => a.id === agendamentoId);
+        if (!agendamento) {
+            this.showNotification('Agendamento não encontrado', 'error');
+            return;
+        }
+
+        // Criar modal dinamicamente
+        const modalHTML = `
+            <div id="modal-alterar-status" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+                <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+                    <div class="text-center mb-6">
+                        <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-exchange-alt text-blue-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900">Alterar Status</h3>
+                        <p class="text-gray-600 mt-2">Agendamento #${agendamento.codigo}</p>
+                        <p class="text-sm text-gray-500 mt-1">Status atual: <strong>${this.getStatusLabel(agendamento.status)}</strong></p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-list-ul mr-2 text-blue-600"></i>
+                                Novo Status
+                            </label>
+                            <select id="novo-status-select" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:ring-2 focus:ring-blue-600 focus:ring-opacity-20 transition-all">
+                                <option value="">Selecione o status</option>
+                                <option value="pendente">Pendente</option>
+                                <option value="confirmado">Confirmado (Aguardando Entrega)</option>
+                                <option value="entregue">Entregue</option>
+                                <option value="nao-veio">Não Veio</option>
+                                <option value="reagendamento">Reagendamento</option>
+                                <option value="cancelado-fornecedor">Cancelado pelo Fornecedor</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-comment mr-2 text-blue-600"></i>
+                                Motivo/Observação (opcional)
+                            </label>
+                            <textarea id="motivo-alteracao-status" 
+                                rows="3"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:ring-2 focus:ring-blue-600 focus:ring-opacity-20 transition-all"
+                                placeholder="Descreva o motivo da alteração..."></textarea>
+                        </div>
+
+                        <div class="flex space-x-3 mt-6">
+                            <button onclick="dashboardConsultivo.fecharModalAlterarStatus()" 
+                                class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all font-semibold">
+                                <i class="fas fa-times mr-2"></i>
+                                Cancelar
+                            </button>
+                            <button onclick="dashboardConsultivo.confirmarAlteracaoStatus(${agendamentoId})" 
+                                class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transition-all font-semibold">
+                                <i class="fas fa-check mr-2"></i>
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remover modal anterior se existir
+        const modalExistente = document.getElementById('modal-alterar-status');
+        if (modalExistente) {
+            modalExistente.remove();
+        }
+
+        // Adicionar novo modal
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    fecharModalAlterarStatus() {
+        const modal = document.getElementById('modal-alterar-status');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    async confirmarAlteracaoStatus(agendamentoId) {
+        const novoStatus = document.getElementById('novo-status-select').value;
+        const motivo = document.getElementById('motivo-alteracao-status').value;
+
+        if (!novoStatus) {
+            this.showNotification('Selecione um status', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/agendamentos/${agendamentoId}/admin/alterar-status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    novoStatus,
+                    motivo
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao alterar status');
+            }
+
+            const result = await response.json();
+            
+            this.showNotification('Status alterado com sucesso!', 'success');
+            this.fecharModalAlterarStatus();
+            
+            // Recarregar agendamentos
+            await this.loadAgendamentos();
+
+        } catch (error) {
+            console.error('Erro ao alterar status:', error);
+            this.showNotification('Erro ao alterar status: ' + error.message, 'error');
+        }
+    }
+
+    getStatusLabel(status) {
+        const statusMap = {
+            'pendente': 'Pendente',
+            'confirmado': 'Confirmado',
+            'entregue': 'Entregue',
+            'nao-veio': 'Não Veio',
+            'reagendamento': 'Reagendamento',
+            'reagendado': 'Reagendado',
+            'cancelado-fornecedor': 'Cancelado pelo Fornecedor',
+            'cancelado': 'Cancelado'
+        };
+        return statusMap[status] || status;
     }
 }
 

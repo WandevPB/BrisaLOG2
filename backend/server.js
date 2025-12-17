@@ -1559,6 +1559,160 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
   }
 });
 
+// Endpoint ADMIN para alterar status de qualquer agendamento (sem validação de CD)
+app.put('/api/agendamentos/:id/admin/alterar-status', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { novoStatus, motivo } = req.body;
+    const userId = req.user.id;
+    const userPerfil = req.user.tipoPerfil;
+
+    console.log(`🔄 [PUT /api/agendamentos/${id}/admin/alterar-status] Iniciando alteração de status...`);
+    console.log(`📋 [PUT /api/agendamentos/${id}/admin/alterar-status] Dados recebidos:`, { 
+      id, 
+      novoStatus, 
+      motivo,
+      userId,
+      userPerfil
+    });
+
+    // Verificar se usuário tem perfil admin ou consultivo
+    if (userPerfil !== 'admin' && userPerfil !== 'consultivo') {
+      console.log(`❌ [PUT /api/agendamentos/${id}/admin/alterar-status] Usuário sem permissão. Perfil: ${userPerfil}`);
+      return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem alterar status.' });
+    }
+
+    // Validar status
+    const statusValidos = ['pendente', 'confirmado', 'entregue', 'nao-veio', 'reagendamento', 'cancelado-fornecedor'];
+    if (!statusValidos.includes(novoStatus)) {
+      console.log(`❌ [PUT /api/agendamentos/${id}/admin/alterar-status] Status inválido:`, novoStatus);
+      return res.status(400).json({ error: 'Status inválido' });
+    }
+
+    // Buscar agendamento (SEM validação de CD - ADMIN pode alterar qualquer um)
+    const agendamento = await prisma.agendamento.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        cd: true,
+        fornecedor: true
+      }
+    });
+
+    if (!agendamento) {
+      console.log(`❌ [PUT /api/agendamentos/${id}/admin/alterar-status] Agendamento não encontrado`);
+      return res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+
+    console.log(`📄 [PUT /api/agendamentos/${id}/admin/alterar-status] Agendamento atual:`, { 
+      id: agendamento.id, 
+      codigo: agendamento.codigo, 
+      statusAtual: agendamento.status,
+      cd: agendamento.cd.nome
+    });
+
+    const statusAnterior = agendamento.status;
+
+    // Atualizar status
+    const agendamentoAtualizado = await prisma.agendamento.update({
+      where: { id: parseInt(id) },
+      data: {
+        status: novoStatus,
+        observacoes: motivo ? `${agendamento.observacoes || ''} | Admin alterou status: ${motivo}`.trim() : agendamento.observacoes
+      }
+    });
+
+    console.log(`✅ [PUT /api/agendamentos/${id}/admin/alterar-status] Status atualizado com sucesso:`, { 
+      id: agendamentoAtualizado.id, 
+      codigo: agendamentoAtualizado.codigo, 
+      statusAnterior: statusAnterior,
+      statusNovo: agendamentoAtualizado.status 
+    });
+
+    // Criar histórico
+    await prisma.historicoAcao.create({
+      data: {
+        acao: 'status_alterado_admin',
+        descricao: `Status alterado de "${statusAnterior}" para "${novoStatus}" pelo Admin${motivo ? ` - Motivo: ${motivo}` : ''}`,
+        agendamentoId: parseInt(id),
+        cdId: agendamento.cdId
+      }
+    });
+
+    console.log(`📧 [PUT /api/agendamentos/${id}/admin/alterar-status] Verificando envio de email...`);
+
+    // Enviar emails automáticos conforme o novo status
+    try {
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      
+      if (novoStatus === 'confirmado') {
+        await emailService.sendConfirmadoEmail({
+          to: agendamento.fornecedor?.email || agendamento.fornecedorEmail,
+          fornecedorNome: agendamento.fornecedor?.nome || agendamento.fornecedorNome,
+          agendamentoCodigo: agendamento.codigo,
+          cdNome: agendamento.cd.nome,
+          consultaUrl,
+          motoristaNome: agendamento.motoristaNome,
+          veiculoPlaca: agendamento.placaVeiculo,
+          dataAgendamento: agendamento.dataEntrega,
+          horarioAgendamento: agendamento.horarioEntrega
+        });
+        console.log(`✅ [PUT /api/agendamentos/${id}/admin/alterar-status] Email de confirmação enviado`);
+      } else if (novoStatus === 'entregue') {
+        await emailService.sendEntregueEmail({
+          to: agendamento.fornecedor?.email || agendamento.fornecedorEmail,
+          fornecedorNome: agendamento.fornecedor?.nome || agendamento.fornecedorNome,
+          agendamentoCodigo: agendamento.codigo,
+          cdNome: agendamento.cd.nome,
+          consultaUrl,
+          motoristaNome: agendamento.motoristaNome,
+          veiculoPlaca: agendamento.placaVeiculo,
+          dataEntrega: agendamento.dataEntrega,
+          horarioEntrega: agendamento.horarioEntrega
+        });
+        console.log(`✅ [PUT /api/agendamentos/${id}/admin/alterar-status] Email de entregue enviado`);
+      } else if (novoStatus === 'nao-veio') {
+        await emailService.sendNaoVeioEmail({
+          to: agendamento.fornecedor?.email || agendamento.fornecedorEmail,
+          fornecedorNome: agendamento.fornecedor?.nome || agendamento.fornecedorNome,
+          agendamentoCodigo: agendamento.codigo,
+          cdNome: agendamento.cd.nome,
+          consultaUrl,
+          motoristaNome: agendamento.motoristaNome,
+          veiculoPlaca: agendamento.placaVeiculo,
+          dataAgendamento: agendamento.dataEntrega,
+          horarioAgendamento: agendamento.horarioEntrega
+        });
+        console.log(`✅ [PUT /api/agendamentos/${id}/admin/alterar-status] Email de não veio enviado`);
+      } else if (novoStatus === 'cancelado-fornecedor') {
+        await emailService.sendCanceladoFornecedorEmail({
+          to: agendamento.fornecedor?.email || agendamento.fornecedorEmail,
+          fornecedorNome: agendamento.fornecedor?.nome || agendamento.fornecedorNome,
+          agendamentoCodigo: agendamento.codigo,
+          cdNome: agendamento.cd.nome,
+          consultaUrl,
+          motoristaNome: agendamento.motoristaNome,
+          veiculoPlaca: agendamento.placaVeiculo
+        });
+        console.log(`✅ [PUT /api/agendamentos/${id}/admin/alterar-status] Email de cancelamento enviado`);
+      }
+    } catch (emailError) {
+      console.error(`❌ [PUT /api/agendamentos/${id}/admin/alterar-status] Erro ao enviar email:`, emailError);
+    }
+
+    console.log(`🎯 [PUT /api/agendamentos/${id}/admin/alterar-status] Respondendo com sucesso`);
+
+    res.json({
+      success: true,
+      message: 'Status alterado com sucesso',
+      agendamento: agendamentoAtualizado
+    });
+
+  } catch (error) {
+    console.error('Erro ao alterar status (admin):', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Adicionar pedidos e notas fiscais a um agendamento existente
 app.post('/api/agendamentos/:codigo/pedidos', upload.any(), async (req, res) => {
   try {
