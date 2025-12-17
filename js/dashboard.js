@@ -1411,11 +1411,11 @@ class CDDashboard {
                         class="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-all">
                         <i class="fas fa-eye mr-2"></i>Ver Detalhes
                     </button>
-                    <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                    <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'entregue')" 
                         class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all">
                         <i class="fas fa-truck mr-2"></i>Marcar Entregue
                     </button>
-                    <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                    <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'nao-veio')" 
                         class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-all">
                         <i class="fas fa-times"></i>
                     </button>
@@ -1704,24 +1704,35 @@ class CDDashboard {
     getActionButtons(agendamento) {
         if (agendamento.status === 'pendente') {
             return `
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'confirmado')" 
                     class="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg hover:bg-green-600 transition-all text-sm btn-3d">
                     <i class="fas fa-check mr-1"></i>Aceitar
                 </button>
-                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'reagendar')" 
                     class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all text-sm btn-3d">
                     <i class="fas fa-calendar mr-1"></i>Reagendar
                 </button>
             `;
         } else if (agendamento.status === 'confirmado') {
             return `
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'entregue')" 
                     class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all text-sm btn-3d">
                     <i class="fas fa-truck mr-1"></i>Entregue
                 </button>
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'nao-veio')" 
                     class="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg hover:bg-red-600 transition-all text-sm btn-3d">
                     <i class="fas fa-times mr-1"></i>Não Veio
+                </button>
+            `;
+        } else if (agendamento.status === 'reagendamento') {
+            return `
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'confirmado')" 
+                    class="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg hover:bg-green-600 transition-all text-sm btn-3d">
+                    <i class="fas fa-check mr-1"></i>Aceitar Sugestão
+                </button>
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'reagendar')" 
+                    class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-all text-sm btn-3d">
+                    <i class="fas fa-calendar mr-1"></i>Nova Data
                 </button>
             `;
         }
@@ -1731,24 +1742,35 @@ class CDDashboard {
     getActionButtonsCompact(agendamento) {
         if (agendamento.status === 'pendente') {
             return `
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'confirmado')" 
                     class="text-green-500 hover:text-green-700" title="Aceitar">
                     <i class="fas fa-check"></i>
                 </button>
-                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'reagendar')" 
                     class="text-blue-500 hover:text-blue-700" title="Reagendar">
                     <i class="fas fa-calendar"></i>
                 </button>
             `;
         } else if (agendamento.status === 'confirmado') {
             return `
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'entregue')" 
                     class="text-blue-500 hover:text-blue-700" title="Marcar como Entregue">
                     <i class="fas fa-truck"></i>
                 </button>
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'nao-veio')" 
                     class="text-red-500 hover:text-red-700" title="Marcar como Não Veio">
                     <i class="fas fa-times"></i>
+                </button>
+            `;
+        } else if (agendamento.status === 'reagendamento') {
+            return `
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'confirmado')" 
+                    class="text-green-500 hover:text-green-700" title="Aceitar Sugestão">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'reagendar')" 
+                    class="text-blue-500 hover:text-blue-700" title="Nova Data">
+                    <i class="fas fa-calendar"></i>
                 </button>
             `;
         }
@@ -2255,22 +2277,22 @@ class CDDashboard {
     getDetailActionButtons(agendamento) {
         if (agendamento.status === 'pendente') {
             return `
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'confirmado')" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'confirmado')" 
                     class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all font-medium text-sm">
                     <i class="fas fa-check mr-1"></i>Aceitar Data
                 </button>
-                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'reagendar')" 
                     class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
                     <i class="fas fa-calendar mr-1"></i>Sugerir Nova Data
                 </button>
             `;
         } else if (agendamento.status === 'confirmado') {
             return `
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'entregue')" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'entregue')" 
                     class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm">
                     <i class="fas fa-truck mr-1"></i>Marcar Entregue
                 </button>
-                <button onclick="dashboard.updateAgendamentoStatus(${agendamento.id}, 'nao-veio')" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'nao-veio')" 
                     class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-medium text-sm">
                     <i class="fas fa-times mr-1"></i>Não Veio
                 </button>
@@ -2285,7 +2307,7 @@ class CDDashboard {
             `;
         } else if (agendamento.status === 'nao-veio') {
             return `
-                <button onclick="dashboard.suggestNewDate(${agendamento.id})" 
+                <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'reagendar')" 
                     class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-all font-medium text-sm">
                     <i class="fas fa-redo mr-1"></i>Reagendar
                 </button>
