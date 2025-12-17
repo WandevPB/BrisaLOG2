@@ -1525,25 +1525,34 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
     try {
       console.log(`📧 [POST /api/agendamentos/${id}/reagendar] Enviando email para fornecedor...`);
       
-  const consultaUrl = `${process.env.FRONTEND_URL || 'http://18.231.237.253'}/consultar-status.html?codigo=${agendamento.codigo}`;
-      const emailResult = await emailService.sendReagendamentoEmail({
-        to: agendamento.fornecedor.email,
-        fornecedorNome: agendamento.fornecedor.nome,
-        agendamentoCodigo: agendamento.codigo,
-        cdNome: agendamento.cd.nome,
-        dataOriginal: agendamento.dataEntrega,
-        novaDataSugerida: toUTCDateOnly(novaData),
-        novoHorario,
-        motivo,
-        consultaUrl,
-        motoristaNome: agendamento.motoristaNome,
-        veiculoPlaca: agendamento.placaVeiculo
-      });
-
-      if (emailResult.success) {
-        console.log(`✅ [POST /api/agendamentos/${id}/reagendar] Email enviado com sucesso:`, emailResult.messageId);
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://18.231.237.253'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      
+      // Usar campos de snapshot do fornecedor (sempre presentes) ou do relacionamento (se existir)
+      const fornecedorEmail = agendamento.fornecedor?.email || agendamento.fornecedorEmail;
+      const fornecedorNome = agendamento.fornecedor?.nome || agendamento.fornecedorNome;
+      
+      if (!fornecedorEmail) {
+        console.log(`⚠️ [POST /api/agendamentos/${id}/reagendar] Email do fornecedor não encontrado. Pulando envio.`);
       } else {
-        console.log(`⚠️ [POST /api/agendamentos/${id}/reagendar] Erro ao enviar email:`, emailResult.error);
+        const emailResult = await emailService.sendReagendamentoEmail({
+          to: fornecedorEmail,
+          fornecedorNome: fornecedorNome,
+          agendamentoCodigo: agendamento.codigo,
+          cdNome: agendamento.cd.nome,
+          dataOriginal: agendamento.dataEntrega,
+          novaDataSugerida: toUTCDateOnly(novaData),
+          novoHorario,
+          motivo,
+          consultaUrl,
+          motoristaNome: agendamento.motoristaNome,
+          veiculoPlaca: agendamento.placaVeiculo
+        });
+
+        if (emailResult.success) {
+          console.log(`✅ [POST /api/agendamentos/${id}/reagendar] Email enviado com sucesso:`, emailResult.messageId);
+        } else {
+          console.log(`⚠️ [POST /api/agendamentos/${id}/reagendar] Erro ao enviar email:`, emailResult.error);
+        }
       }
     } catch (emailError) {
       console.error(`❌ [POST /api/agendamentos/${id}/reagendar] Erro no envio de email:`, emailError);
