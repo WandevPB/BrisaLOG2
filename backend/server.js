@@ -1483,8 +1483,8 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
       horarioNovo: agendamentoAtualizado.horarioEntrega
     });
 
-    // Buscar usuário pelo código
-    let usuarioId = null;
+    // Buscar usuário pelo código para pegar o nome
+    let nomeUsuario = null;
     if (codigoUsuario) {
       const usuario = await prisma.usuario.findFirst({
         where: {
@@ -1493,7 +1493,7 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
         }
       });
       if (usuario) {
-        usuarioId = usuario.id;
+        nomeUsuario = usuario.nome;
       }
     }
 
@@ -1502,6 +1502,8 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
       data: {
         acao: 'reagendamento_sugerido',
         descricao: `Nova data sugerida: ${formatDateBr(novaData)} às ${novoHorario}${codigoUsuario ? ` - Executado por: ${codigoUsuario}` : ''}`,
+        autor: nomeUsuario,
+        codigoUsuario: codigoUsuario,
         dataAnterior: agendamento.dataEntrega,
         dataNova: (function() {
           let d = null;
@@ -1513,8 +1515,7 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
           return isNaN(d.getTime()) ? null : d;
         })(),
         agendamentoId: parseInt(id),
-        cdId: cdId,
-        usuarioId: usuarioId
+        cdId: cdId
       }
     });
 
