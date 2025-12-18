@@ -1,16 +1,92 @@
+// Template: Email de Recuperação Cadastrado
 module.exports = function ({ nome, email, cd }) {
   return `
-    <div style="font-family: Arial, sans-serif; background: #f9f9f9; padding: 30px;">
-      <div style="max-width: 600px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px;">
-        <h2 style="color: #FF6B35; margin-bottom: 16px;">Cadastro de E-mail de Recuperação</h2>
-        <p style="font-size: 16px; color: #333;">Olá <b>${nome || 'usuário'}</b>,</p>
-        <p style="font-size: 16px; color: #333;">O e-mail <b>${email}</b> foi cadastrado como e-mail de recuperação para o CD <b>${cd}</b> no portal BrisaLOG.</p>
-        <p style="font-size: 15px; color: #666; margin-top: 24px;">Se você não reconhece esta ação, por favor, entre em contato com o suporte imediatamente.</p>
-        <div style="margin-top: 32px; text-align: center;">
-          <a href="https://brisalog-agenda.online/" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Acessar Portal BrisaLOG</a>
-        </div>
-        <p style="font-size: 13px; color: #aaa; margin-top: 32px;">Esta é uma mensagem automática. Não responda este e-mail.</p>
-      </div>
-    </div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-mail de Recuperação Cadastrado - BrisaLOG</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                                ✉️ E-mail de Recuperação Cadastrado
+                            </h1>
+                            <p style="margin: 12px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.95;">
+                                Seu e-mail foi registrado com sucesso
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Olá <strong style="color: #06b6d4;">${nome || 'usuário'}</strong>! 👋
+                            </p>
+                            
+                            <p style="margin: 0 0 30px 0; color: #666666; font-size: 15px; line-height: 1.6;">
+                                O e-mail <strong>${email}</strong> foi cadastrado como e-mail de recuperação para o <strong>CD ${cd}</strong> no portal BrisaLOG.
+                            </p>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); border-left: 4px solid #06b6d4; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <h3 style="margin: 0 0 15px 0; color: #0e7490; font-size: 16px; font-weight: 700;">
+                                            📧 Para que serve?
+                                        </h3>
+                                        <p style="margin: 0; color: #0e7490; font-size: 14px; line-height: 1.8;">
+                                            Este e-mail será usado para recuperar sua senha caso você esqueça. Guarde-o em local seguro!
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <div style="background-color: #fef3c7; border-left: 4px solid #ffc107; border-radius: 6px; padding: 15px; margin-bottom: 30px;">
+                                <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
+                                    <strong>⚠️ Importante:</strong> Se você não reconhece esta ação, entre em contato com o suporte imediatamente.
+                                </p>
+                            </div>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="https://brisalog-agenda.online/" 
+                                           style="display: inline-block; background: linear-gradient(135deg, #06b6d4, #0891b2); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);">
+                                            🌐 Acessar Portal BrisaLOG
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+                            <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px;">
+                                © ${new Date().getFullYear()} <strong style="color: #06b6d4;">BrisaLOG</strong> - Sistema de Agendamento
+                            </p>
+                            <p style="margin: 0; color: #cccccc; font-size: 12px;">
+                                Desenvolvido por Wanderson Davyd. Todos os direitos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+
+                <p style="margin: 20px 0 0 0; color: #999999; font-size: 12px; text-align: center; line-height: 1.5;">
+                    Este é um e-mail automático, por favor não responda.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
   `;
 };

@@ -1,30 +1,141 @@
 // Template: Entrega Realizada
 module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motoristaNome, veiculoPlaca, dataEntrega, horarioEntrega }) {
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%); color: white; border-radius: 10px; padding: 30px 20px; text-align: center;">
-        <h1 style="margin: 0; font-size: 26px;">Entrega Realizada!</h1>
-        <p style="font-size: 18px; margin: 10px 0 0 0;">Seu agendamento foi entregue e finalizado no CD ${cdNome}</p>
-      </div>
-      <div style="background: #fff; border-radius: 10px; margin-top: 20px; padding: 30px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-        <h2 style="color: #FF6B35; margin-top: 0;">Olá, ${transportadorNome}!</h2>
-        <p>O status do seu agendamento <b>${agendamentoCodigo}</b> foi atualizado para <b>ENTREGUE</b>.</p>
-        <div style="background: #f8f9fa; border-left: 4px solid #FF6B35; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <strong>📦 Código do Agendamento:</strong> <span style="font-size: 18px; color: #FF6B35;">${agendamentoCodigo}</span><br>
-          <strong>🚚 Motorista:</strong> ${motoristaNome || 'Não informado'}<br>
-          <strong>🚗 Veículo/Placa:</strong> ${veiculoPlaca || 'Não informado'}<br>
-          <strong>📅 Data da Entrega:</strong> ${dataEntrega ? new Date(dataEntrega).toLocaleDateString('pt-BR') : 'Não informado'}<br>
-          <strong>⏰ Horário:</strong> ${horarioEntrega || 'Não informado'}
-        </div>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="https://brisalog-agenda.online/" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🌐 Acessar Portal BrisaLOG</a>
-        </div>
-        <p style="font-size: 15px; color: #666;">Acesse o portal para consultar o status dos seus agendamentos.</p>
-      </div>
-      <div style="text-align: center; margin-top: 40px; color: #999; font-size: 13px;">
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
-        <p>© ${new Date().getFullYear()} Brisanet. Todos os direitos reservados.</p>
-      </div>
-    </div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrega Realizada - BrisaLOG</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    
+                    <!-- Header com gradiente azul (entregue) -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                                ✅ Entrega Realizada!
+                            </h1>
+                            <p style="margin: 12px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.95;">
+                                Agendamento finalizado com sucesso no CD ${cdNome}
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Conteúdo principal -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Olá <strong style="color: #3b82f6;">${transportadorNome}</strong>! 👋
+                            </p>
+                            
+                            <p style="margin: 0 0 30px 0; color: #666666; font-size: 15px; line-height: 1.6;">
+                                O status do seu agendamento foi atualizado para <strong>ENTREGUE</strong>. Obrigado pela pontualidade!
+                            </p>
+
+                            <!-- Card com informações -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); border-left: 4px solid #3b82f6; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                                        📦 Código do Agendamento
+                                                    </span>
+                                                    <span style="display: block; color: #3b82f6; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                                                        ${agendamentoCodigo}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(59, 130, 246, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        🚚 Motorista
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${motoristaNome || 'Não informado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(59, 130, 246, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        🚗 Veículo / Placa
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${veiculoPlaca || 'Não informado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(59, 130, 246, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        📅 Data da Entrega
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${dataEntrega ? new Date(dataEntrega).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Não informado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 15px 0 0 0; border-top: 1px solid rgba(59, 130, 246, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        ⏰ Horário
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${horarioEntrega || 'Não informado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Botão de acesso -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="https://brisalog-agenda.online/" 
+                                           style="display: inline-block; background: linear-gradient(135deg, #3b82f6, #2563eb); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">
+                                            🌐 Acessar Portal BrisaLOG
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 30px 0 0 0; color: #999999; font-size: 14px; line-height: 1.6; text-align: center;">
+                                Acesse o portal para consultar seus agendamentos.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+                            <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px;">
+                                © ${new Date().getFullYear()} <strong style="color: #3b82f6;">BrisaLOG</strong> - Sistema de Agendamento
+                            </p>
+                            <p style="margin: 0; color: #cccccc; font-size: 12px;">
+                                Desenvolvido por Wanderson Davyd. Todos os direitos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+
+                <p style="margin: 20px 0 0 0; color: #999999; font-size: 12px; text-align: center; line-height: 1.5;">
+                    Este é um e-mail automático, por favor não responda.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
   `;
 };

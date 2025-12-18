@@ -1,30 +1,182 @@
 // Template: Confirmação de Agendamento
 module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motoristaNome, veiculoPlaca, dataAgendamento, horarioAgendamento }) {
+  // Mapa de localizações dos CDs
+  const localizacoes = {
+    'Lagoa Nova': 'https://maps.app.goo.gl/5GdXDmPgmd8ijPd6A',
+    'Pernambuco': 'https://maps.app.goo.gl/qDCpduM2VScnKToD6',
+    'Bahia': 'https://maps.app.goo.gl/WkTXcUywt6vimDY38',
+    'Pereiro (Estoque de frotas)': 'https://maps.app.goo.gl/CzsBYjCtKuoSbfXv5'
+  };
+  
+  const linkMapa = localizacoes[cdNome] || null;
+  
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%); color: white; border-radius: 10px; padding: 30px 20px; text-align: center;">
-        <h1 style="margin: 0; font-size: 26px;">Agendamento Confirmado!</h1>
-        <p style="font-size: 18px; margin: 10px 0 0 0;">Seu agendamento foi confirmado pelo CD ${cdNome}</p>
-      </div>
-      <div style="background: #fff; border-radius: 10px; margin-top: 20px; padding: 30px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-        <h2 style="color: #FF6B35; margin-top: 0;">Olá, ${transportadorNome}!</h2>
-        <p>Seu agendamento <b>${agendamentoCodigo}</b> está confirmado. Compareça no dia e horário agendados.</p>
-        <div style="background: #f8f9fa; border-left: 4px solid #FF6B35; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <strong>📦 Código do Agendamento:</strong> <span style="font-size: 18px; color: #FF6B35;">${agendamentoCodigo}</span><br>
-          <strong>🚚 Motorista:</strong> ${motoristaNome || 'Não informado'}<br>
-          <strong>🚗 Veículo/Placa:</strong> ${veiculoPlaca || 'Não informado'}<br>
-          <strong>📅 Data:</strong> ${dataAgendamento ? new Date(dataAgendamento).toLocaleDateString('pt-BR') : 'Não informado'}<br>
-          <strong>⏰ Horário:</strong> ${horarioAgendamento || 'Não informado'}
-        </div>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="https://brisalog-agenda.online/" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🌐 Acessar Portal BrisaLOG</a>
-        </div>
-        <p style="font-size: 15px; color: #666;">Acesse o portal para consultar o status dos seus agendamentos.</p>
-      </div>
-      <div style="text-align: center; margin-top: 40px; color: #999; font-size: 13px;">
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
-        <p>© ${new Date().getFullYear()} Brisanet. Todos os direitos reservados.</p>
-      </div>
-    </div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento Confirmado - BrisaLOG</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    
+                    <!-- Header com gradiente verde (confirmado) -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                                ✅ Agendamento Confirmado!
+                            </h1>
+                            <p style="margin: 12px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.95;">
+                                Seu agendamento foi aprovado pelo CD ${cdNome}
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Conteúdo principal -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Olá <strong style="color: #10b981;">${transportadorNome}</strong>! 👋
+                            </p>
+                            
+                            <p style="margin: 0 0 30px 0; color: #666666; font-size: 15px; line-height: 1.6;">
+                                Seu agendamento foi <strong>confirmado com sucesso</strong>! Por favor, compareça no dia e horário agendados com toda a documentação necessária.
+                            </p>
+
+                            <!-- Card com informações do agendamento -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #f0fdf4 0%, #f7fef9 100%); border-left: 4px solid #10b981; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                                        📦 Código do Agendamento
+                                                    </span>
+                                                    <span style="display: block; color: #10b981; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                                                        ${agendamentoCodigo}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(16, 185, 129, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        🚚 Motorista
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${motoristaNome || 'Não informado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(16, 185, 129, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        🚗 Veículo / Placa
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${veiculoPlaca || 'Não informado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(16, 185, 129, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        📅 Data da Entrega
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${dataAgendamento ? new Date(dataAgendamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Não informado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 15px 0 0 0; border-top: 1px solid rgba(16, 185, 129, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        ⏰ Horário
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${horarioAgendamento || 'Não informado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            ${linkMapa ? `
+                            <!-- Card de Localização -->
+                            <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                                <h3 style="margin: 0 0 15px 0; color: #1e40af; font-size: 16px; font-weight: 700;">
+                                    📍 Localização do CD ${cdNome}
+                                </h3>
+                                <p style="margin: 0 0 15px 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                                    Clique no botão abaixo para abrir a localização no Google Maps:
+                                </p>
+                                <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <td align="center">
+                                            <a href="${linkMapa}" 
+                                               style="display: inline-block; background: #3b82f6; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">
+                                                📍 Abrir Localização no Maps
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            ` : ''}
+
+                            <!-- Aviso importante -->
+                            <div style="background-color: #fef3c7; border-left: 4px solid #ffc107; border-radius: 6px; padding: 15px; margin-bottom: 30px;">
+                                <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
+                                    <strong>⚠️ Importante:</strong> Chegue com 15 minutos de antecedência e tenha toda a documentação em mãos. Em caso de imprevistos, entre em contato com o CD.
+                                </p>
+                            </div>
+
+                            <!-- Botão de acesso -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="https://brisalog-agenda.online/" 
+                                           style="display: inline-block; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                                            🌐 Acessar Portal BrisaLOG
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 30px 0 0 0; color: #999999; font-size: 14px; line-height: 1.6; text-align: center;">
+                                Acesse o portal para consultar o status atualizado do seu agendamento.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+                            <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px;">
+                                © ${new Date().getFullYear()} <strong style="color: #10b981;">BrisaLOG</strong> - Sistema de Agendamento
+                            </p>
+                            <p style="margin: 0; color: #cccccc; font-size: 12px;">
+                                Desenvolvido por Wanderson Davyd. Todos os direitos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+
+                <!-- Mensagem adicional abaixo do card -->
+                <p style="margin: 20px 0 0 0; color: #999999; font-size: 12px; text-align: center; line-height: 1.5;">
+                    Este é um e-mail automático, por favor não responda.<br>
+                    Em caso de dúvidas, entre em contato com o CD de destino.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
   `;
 };

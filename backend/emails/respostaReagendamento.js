@@ -1,29 +1,133 @@
 // Template: Resposta ao Reagendamento
 module.exports = function({ fornecedorNome, agendamentoCodigo, resposta, novaData, novoHorario, comentario }) {
+  const respostaAceita = resposta && resposta.toLowerCase() === 'aceito';
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%); color: white; border-radius: 10px; padding: 30px 20px; text-align: center;">
-        <h1 style="margin: 0; font-size: 26px;">Resposta ao Reagendamento</h1>
-        <p style="font-size: 18px; margin: 10px 0 0 0;">Sua resposta ao reagendamento foi registrada</p>
-      </div>
-      <div style="background: #fff; border-radius: 10px; margin-top: 20px; padding: 30px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-        <h2 style="color: #FF6B35; margin-top: 0;">Olá, ${fornecedorNome}!</h2>
-        <p>Sua resposta ao reagendamento do agendamento <b>${agendamentoCodigo}</b> foi registrada como: <b>${resposta.toUpperCase()}</b>.</p>
-        <div style="background: #f8f9fa; border-left: 4px solid #FF6B35; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <strong>📦 Código do Agendamento:</strong> <span style="font-size: 18px; color: #FF6B35;">${agendamentoCodigo}</span><br>
-          <strong>🗓️ Nova Data:</strong> ${new Date(novaData).toLocaleDateString('pt-BR')}<br>
-          <strong>⏰ Novo Horário:</strong> ${novoHorario}<br>
-          <strong>💬 Comentário:</strong> ${comentario}
-        </div>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="https://brisalog-agenda.online/" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🌐 Acessar Portal BrisaLOG</a>
-        </div>
-        <p style="font-size: 15px; color: #666;">Acesse o portal para consultar o status dos seus agendamentos.</p>
-      </div>
-      <div style="text-align: center; margin-top: 40px; color: #999; font-size: 13px;">
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
-        <p>© ${new Date().getFullYear()} Brisanet. Todos os direitos reservados.</p>
-      </div>
-    </div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resposta ao Reagendamento - BrisaLOG</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    
+                    <tr>
+                        <td style="background: linear-gradient(135deg, ${respostaAceita ? '#10b981' : '#ef4444'} 0%, ${respostaAceita ? '#059669' : '#dc2626'} 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                                ${respostaAceita ? '✅' : '❌'} Resposta ao Reagendamento
+                            </h1>
+                            <p style="margin: 12px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.95;">
+                                Resposta registrada: ${resposta ? resposta.toUpperCase() : 'N/A'}
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Olá <strong style="color: ${respostaAceita ? '#10b981' : '#ef4444'};">${fornecedorNome}</strong>! 👋
+                            </p>
+                            
+                            <p style="margin: 0 0 30px 0; color: #666666; font-size: 15px; line-height: 1.6;">
+                                Sua resposta ao reagendamento foi <strong>registrada com sucesso</strong>. O CD foi notificado sobre sua decisão.
+                            </p>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, ${respostaAceita ? '#f0fdf4' : '#fef2f2'} 0%, ${respostaAceita ? '#f7fef9' : '#fff5f5'} 100%); border-left: 4px solid ${respostaAceita ? '#10b981' : '#ef4444'}; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                                        📦 Código do Agendamento
+                                                    </span>
+                                                    <span style="display: block; color: ${respostaAceita ? '#10b981' : '#ef4444'}; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                                                        ${agendamentoCodigo}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            ${novaData ? `
+                                            <tr>
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(${respostaAceita ? '16, 185, 129' : '239, 68, 68'}, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        🗓️ Nova Data
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${new Date(novaData).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            ` : ''}
+                                            ${novoHorario ? `
+                                            <tr>
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(${respostaAceita ? '16, 185, 129' : '239, 68, 68'}, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        ⏰ Novo Horário
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${novoHorario}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            ` : ''}
+                                            ${comentario ? `
+                                            <tr>
+                                                <td style="padding: 15px 0 0 0; border-top: 1px solid rgba(${respostaAceita ? '16, 185, 129' : '239, 68, 68'}, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        💬 Comentário
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 15px;">
+                                                        ${comentario}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            ` : ''}
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="https://brisalog-agenda.online/" 
+                                           style="display: inline-block; background: linear-gradient(135deg, ${respostaAceita ? '#10b981, #059669' : '#ef4444, #dc2626'}); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(${respostaAceita ? '16, 185, 129' : '239, 68, 68'}, 0.3);">
+                                            🌐 Acessar Portal BrisaLOG
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 30px 0 0 0; color: #999999; font-size: 14px; line-height: 1.6; text-align: center;">
+                                Acesse o portal para acompanhar o status do agendamento.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+                            <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px;">
+                                © ${new Date().getFullYear()} <strong style="color: ${respostaAceita ? '#10b981' : '#ef4444'};">BrisaLOG</strong> - Sistema de Agendamento
+                            </p>
+                            <p style="margin: 0; color: #cccccc; font-size: 12px;">
+                                Desenvolvido por Wanderson Davyd. Todos os direitos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+
+                <p style="margin: 20px 0 0 0; color: #999999; font-size: 12px; text-align: center; line-height: 1.5;">
+                    Este é um e-mail automático, por favor não responda.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
   `;
 };

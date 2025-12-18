@@ -1,32 +1,144 @@
 // Template: Reagendamento
 module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, dataOriginal, novaDataSugerida, novoHorario, motivo, motoristaNome, veiculoPlaca }) {
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%); color: white; border-radius: 10px; padding: 30px 20px; text-align: center;">
-        <h1 style="margin: 0; font-size: 26px;">Solicitação de Reagendamento</h1>
-        <p style="font-size: 18px; margin: 10px 0 0 0;">O CD ${cdNome} sugeriu uma nova data para seu agendamento</p>
-      </div>
-      <div style="background: #fff; border-radius: 10px; margin-top: 20px; padding: 30px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-        <h2 style="color: #FF6B35; margin-top: 0;">Olá, ${transportadorNome}!</h2>
-        <p>O CD <b>${cdNome}</b> sugeriu reagendar seu agendamento <b>${agendamentoCodigo}</b>.</p>
-        <div style="background: #f8f9fa; border-left: 4px solid #FF6B35; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <strong>📦 Código do Agendamento:</strong> <span style="font-size: 18px; color: #FF6B35;">${agendamentoCodigo}</span><br>
-          <strong>� Motorista:</strong> ${motoristaNome || 'Não informado'}<br>
-          <strong>🚗 Veículo/Placa:</strong> ${veiculoPlaca || 'Não informado'}<br>
-          <strong>�📅 Data Original:</strong> ${dataOriginal ? new Date(dataOriginal).toLocaleDateString('pt-BR') : 'Não informado'}<br>
-          <strong>🗓️ Nova Data Sugerida:</strong> ${novaDataSugerida ? new Date(novaDataSugerida).toLocaleDateString('pt-BR') : 'Não informado'}<br>
-          <strong>⏰ Novo Horário:</strong> ${novoHorario || 'Não informado'}<br>
-          <strong>💬 Motivo:</strong> ${motivo}
-        </div>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="https://brisalog-agenda.online/" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);">🌐 Acessar Portal BrisaLOG</a>
-        </div>
-        <p style="font-size: 15px; color: #666;">Acesse o portal para consultar o status dos seus agendamentos.</p>
-      </div>
-      <div style="text-align: center; margin-top: 40px; color: #999; font-size: 13px;">
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
-        <p>© ${new Date().getFullYear()} Brisanet. Todos os direitos reservados.</p>
-      </div>
-    </div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitação de Reagendamento - BrisaLOG</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                                🔄 Solicitação de Reagendamento
+                            </h1>
+                            <p style="margin: 12px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.95;">
+                                O CD ${cdNome} sugeriu uma nova data
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Olá <strong style="color: #8b5cf6;">${transportadorNome}</strong>! 👋
+                            </p>
+                            
+                            <p style="margin: 0 0 30px 0; color: #666666; font-size: 15px; line-height: 1.6;">
+                                O CD <strong>${cdNome}</strong> solicitou o reagendamento da sua entrega. Por favor, confirme se a nova data é adequada.
+                            </p>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%); border-left: 4px solid #8b5cf6; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                                        📦 Código do Agendamento
+                                                    </span>
+                                                    <span style="display: block; color: #8b5cf6; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                                                        ${agendamentoCodigo}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(139, 92, 246, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        🚚 Motorista
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${motoristaNome || 'Não informado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 15px 0 0 0; border-top: 1px solid rgba(139, 92, 246, 0.1);">
+                                                    <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+                                                        🚗 Veículo / Placa
+                                                    </span>
+                                                    <span style="display: block; color: #333333; font-size: 16px; font-weight: 600;">
+                                                        ${veiculoPlaca || 'Não informado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                                <h3 style="margin: 0 0 15px 0; color: #15803d; font-size: 16px; font-weight: 700;">
+                                    📅 Data Original
+                                </h3>
+                                <p style="margin: 0; color: #15803d; font-size: 18px; font-weight: 600;">
+                                    ${dataOriginal ? new Date(dataOriginal).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Não informado'}
+                                </p>
+                            </div>
+
+                            <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                                <h3 style="margin: 0 0 15px 0; color: #1e40af; font-size: 16px; font-weight: 700;">
+                                    🗓️ Nova Data Sugerida
+                                </h3>
+                                <p style="margin: 0 0 10px 0; color: #1e40af; font-size: 18px; font-weight: 600;">
+                                    ${novaDataSugerida ? new Date(novaDataSugerida).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Não informado'}
+                                </p>
+                                <p style="margin: 0; color: #1e40af; font-size: 16px;">
+                                    ⏰ Horário: <strong>${novoHorario || 'Não informado'}</strong>
+                                </p>
+                            </div>
+
+                            <div style="background-color: #fef3c7; border-left: 4px solid #ffc107; border-radius: 6px; padding: 15px; margin-bottom: 30px;">
+                                <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
+                                    <strong>💬 Motivo do reagendamento:</strong><br>
+                                    ${motivo || 'Não informado'}
+                                </p>
+                            </div>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="https://brisalog-agenda.online/" 
+                                           style="display: inline-block; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
+                                            🌐 Acessar Portal BrisaLOG
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 30px 0 0 0; color: #999999; font-size: 14px; line-height: 1.6; text-align: center;">
+                                Acesse o portal para confirmar ou recusar o reagendamento.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+                            <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px;">
+                                © ${new Date().getFullYear()} <strong style="color: #8b5cf6;">BrisaLOG</strong> - Sistema de Agendamento
+                            </p>
+                            <p style="margin: 0; color: #cccccc; font-size: 12px;">
+                                Desenvolvido por Wanderson Davyd. Todos os direitos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+
+                <p style="margin: 20px 0 0 0; color: #999999; font-size: 12px; text-align: center; line-height: 1.5;">
+                    Este é um e-mail automático, por favor não responda.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
   `;
 };
