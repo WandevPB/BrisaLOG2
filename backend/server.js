@@ -892,14 +892,37 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     console.log('🔍 [POST /api/agendamentos] Buscando fornecedor com CNPJ:', agendamentoData.fornecedor.documento);
     // Não mais usar tabela fornecedores separada
     // Os dados do fornecedor são salvos diretamente no agendamento (snapshot)
-    console.log('� [POST /api/agendamentos] Salvando dados do fornecedor diretamente no agendamento');
+    console.log('📦 [POST /api/agendamentos] Salvando dados do fornecedor diretamente no agendamento');
 
-    // Gerar código único
-    const ultimoAgendamento = await prisma.agendamento.findFirst({
-      orderBy: { id: 'desc' }
-    });
-    const proximoNumero = ultimoAgendamento ? ultimoAgendamento.id + 1 : 1;
-    const codigo = `AGD${String(proximoNumero).padStart(6, '0')}`;
+    // Gerar código único aleatório
+    let codigo;
+    let codigoExiste = true;
+    let tentativas = 0;
+    const MAX_TENTATIVAS = 10;
+
+    while (codigoExiste && tentativas < MAX_TENTATIVAS) {
+      // Gerar 6 dígitos aleatórios
+      const numeroAleatorio = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+      codigo = `AGD${numeroAleatorio}`;
+      
+      // Verificar se já existe
+      const existe = await prisma.agendamento.findFirst({
+        where: { codigo }
+      });
+      
+      codigoExiste = !!existe;
+      tentativas++;
+      
+      if (codigoExiste) {
+        console.log(`⚠️ Código ${codigo} já existe, gerando novo... (tentativa ${tentativas})`);
+      }
+    }
+
+    if (codigoExiste) {
+      throw new Error('Não foi possível gerar um código único após várias tentativas');
+    }
+
+    console.log(`✅ Código gerado: ${codigo}`);
 
     // Bloqueio de agendamento duplicado para mesmo CD, data e horário (apenas para agendamentos pendentes/confirmados)
     // Converte dataEntrega para data local
