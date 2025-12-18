@@ -1,6 +1,9 @@
 // Script para testar todos os templates de email
 // Envia todos os tipos de email para wandevpb@gmail.com
 
+// Carregar variáveis de ambiente
+require('dotenv').config();
+
 const emailService = require('./emailService');
 
 const EMAIL_TESTE = 'wandevpb@gmail.com';
