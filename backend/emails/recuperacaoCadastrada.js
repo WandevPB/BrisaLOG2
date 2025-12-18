@@ -15,7 +15,7 @@ module.exports = function ({ nome, email, cd }) {
                 <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     
                     <tr>
-                        <td style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 40px 30px; text-align: center;">
+                        <td style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 40px 30px; text-align: center;">
                             <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
                                 ✉️ E-mail de Recuperação Cadastrado
                             </h1>
@@ -28,20 +28,20 @@ module.exports = function ({ nome, email, cd }) {
                     <tr>
                         <td style="padding: 40px 30px;">
                             <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
-                                Olá <strong style="color: #06b6d4;">${nome || 'usuário'}</strong>! 👋
+                                Olá <strong style="color: #f97316;">${nome || 'usuário'}</strong>! 👋
                             </p>
                             
                             <p style="margin: 0 0 30px 0; color: #666666; font-size: 15px; line-height: 1.6;">
                                 O e-mail <strong>${email}</strong> foi cadastrado como e-mail de recuperação para o <strong>CD ${cd}</strong> no portal BrisaLOG.
                             </p>
 
-                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); border-left: 4px solid #06b6d4; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-left: 4px solid #f97316; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
                                 <tr>
                                     <td style="padding: 25px;">
-                                        <h3 style="margin: 0 0 15px 0; color: #0e7490; font-size: 16px; font-weight: 700;">
+                                        <h3 style="margin: 0 0 15px 0; color: #c2410c; font-size: 16px; font-weight: 700;">
                                             📧 Para que serve?
                                         </h3>
-                                        <p style="margin: 0; color: #0e7490; font-size: 14px; line-height: 1.8;">
+                                        <p style="margin: 0; color: #c2410c; font-size: 14px; line-height: 1.8;">
                                             Este e-mail será usado para recuperar sua senha caso você esqueça. Guarde-o em local seguro!
                                         </p>
                                     </td>
@@ -58,7 +58,7 @@ module.exports = function ({ nome, email, cd }) {
                                 <tr>
                                     <td align="center">
                                         <a href="https://brisalog-agenda.online/" 
-                                           style="display: inline-block; background: linear-gradient(135deg, #06b6d4, #0891b2); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);">
+                                           style="display: inline-block; background: linear-gradient(135deg, #f97316, #ea580c); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
                                             🌐 Acessar Portal BrisaLOG
                                         </a>
                                     </td>
@@ -70,7 +70,7 @@ module.exports = function ({ nome, email, cd }) {
                     <tr>
                         <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
                             <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px;">
-                                © ${new Date().getFullYear()} <strong style="color: #06b6d4;">BrisaLOG</strong> - Sistema de Agendamento
+                                © ${new Date().getFullYear()} <strong style="color: #f97316;">BrisaLOG</strong> - Sistema de Agendamento
                             </p>
                             <p style="margin: 0; color: #cccccc; font-size: 12px;">
                                 Desenvolvido por Wanderson Davyd. Todos os direitos reservados.

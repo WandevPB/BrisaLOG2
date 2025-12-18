@@ -15,7 +15,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, dataOr
                 <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     
                     <tr>
-                        <td style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 40px 30px; text-align: center;">
+                        <td style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 40px 30px; text-align: center;">
                             <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
                                 🔄 Solicitação de Reagendamento
                             </h1>
@@ -28,14 +28,14 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, dataOr
                     <tr>
                         <td style="padding: 40px 30px;">
                             <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
-                                Olá <strong style="color: #8b5cf6;">${transportadorNome}</strong>! 👋
+                                Olá <strong style="color: #f97316;">${transportadorNome}</strong>! 👋
                             </p>
                             
                             <p style="margin: 0 0 30px 0; color: #666666; font-size: 15px; line-height: 1.6;">
                                 O CD <strong>${cdNome}</strong> solicitou o reagendamento da sua entrega. Por favor, confirme se a nova data é adequada.
                             </p>
 
-                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%); border-left: 4px solid #8b5cf6; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-left: 4px solid #f97316; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
                                 <tr>
                                     <td style="padding: 25px;">
                                         <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -44,13 +44,13 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, dataOr
                                                     <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
                                                         📦 Código do Agendamento
                                                     </span>
-                                                    <span style="display: block; color: #8b5cf6; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                                                    <span style="display: block; color: #f97316; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
                                                         ${agendamentoCodigo}
                                                     </span>
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(139, 92, 246, 0.1);">
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(249, 115, 22, 0.1);">
                                                     <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
                                                         🚚 Motorista
                                                     </span>
@@ -60,7 +60,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, dataOr
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td style="padding: 15px 0 0 0; border-top: 1px solid rgba(139, 92, 246, 0.1);">
+                                                <td style="padding: 15px 0 0 0; border-top: 1px solid rgba(249, 115, 22, 0.1);">
                                                     <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
                                                         🚗 Veículo / Placa
                                                     </span>
@@ -106,7 +106,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, dataOr
                                 <tr>
                                     <td align="center">
                                         <a href="https://brisalog-agenda.online/" 
-                                           style="display: inline-block; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
+                                           style="display: inline-block; background: linear-gradient(135deg, #f97316, #ea580c); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
                                             🌐 Acessar Portal BrisaLOG
                                         </a>
                                     </td>
@@ -122,7 +122,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, dataOr
                     <tr>
                         <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
                             <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px;">
-                                © ${new Date().getFullYear()} <strong style="color: #8b5cf6;">BrisaLOG</strong> - Sistema de Agendamento
+                                © ${new Date().getFullYear()} <strong style="color: #f97316;">BrisaLOG</strong> - Sistema de Agendamento
                             </p>
                             <p style="margin: 0; color: #cccccc; font-size: 12px;">
                                 Desenvolvido por Wanderson Davyd. Todos os direitos reservados.

@@ -438,10 +438,26 @@
             if (allNFs.length === 0) return '0,00';
             let total = 0;
             allNFs.forEach(nf => {
-                // Valor vem como número do backend
-                const v = typeof nf.valor === 'number' ? nf.valor : parseFloat(nf.valor) || 0;
+                console.log('[calcularValorTotal] NF valor recebido:', nf.valor, 'Tipo:', typeof nf.valor);
+                
+                let v = 0;
+                if (typeof nf.valor === 'number') {
+                    v = nf.valor;
+                } else if (typeof nf.valor === 'string') {
+                    let valorStr = nf.valor;
+                    // Se tem vírgula (formato BR: 1.234,56)
+                    if (valorStr.includes(',')) {
+                        valorStr = valorStr.replace(/\./g, '').replace(',', '.');
+                    }
+                    v = parseFloat(valorStr) || 0;
+                } else {
+                    v = 0;
+                }
+                
+                console.log('[calcularValorTotal] Valor convertido:', v);
                 total += v;
             });
+            console.log('[calcularValorTotal] Total final:', total);
             return total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
         

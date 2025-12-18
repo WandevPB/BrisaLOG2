@@ -88,7 +88,7 @@ model NotaFiscal {
   numeroPedido  BigInt
   numeroNF      String
   serie         String?
-  valor         String?
+  valor         Decimal?    @db.Decimal(15, 2)
   arquivoPath   String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

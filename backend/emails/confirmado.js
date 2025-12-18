@@ -24,9 +24,9 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motori
             <td align="center" style="padding: 40px 20px;">
                 <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     
-                    <!-- Header com gradiente verde (confirmado) -->
+                    <!-- Header com gradiente laranja -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center;">
+                        <td style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 40px 30px; text-align: center;">
                             <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
                                 ✅ Agendamento Confirmado!
                             </h1>
@@ -40,7 +40,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motori
                     <tr>
                         <td style="padding: 40px 30px;">
                             <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
-                                Olá <strong style="color: #10b981;">${transportadorNome}</strong>! 👋
+                                Olá <strong style="color: #f97316;">${transportadorNome}</strong>! 👋
                             </p>
                             
                             <p style="margin: 0 0 30px 0; color: #666666; font-size: 15px; line-height: 1.6;">
@@ -48,7 +48,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motori
                             </p>
 
                             <!-- Card com informações do agendamento -->
-                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #f0fdf4 0%, #f7fef9 100%); border-left: 4px solid #10b981; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-left: 4px solid #f97316; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
                                 <tr>
                                     <td style="padding: 25px;">
                                         <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -57,13 +57,13 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motori
                                                     <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
                                                         📦 Código do Agendamento
                                                     </span>
-                                                    <span style="display: block; color: #10b981; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                                                    <span style="display: block; color: #f97316; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
                                                         ${agendamentoCodigo}
                                                     </span>
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(16, 185, 129, 0.1);">
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(249, 115, 22, 0.1);">
                                                     <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
                                                         🚚 Motorista
                                                     </span>
@@ -73,7 +73,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motori
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(16, 185, 129, 0.1);">
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(249, 115, 22, 0.1);">
                                                     <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
                                                         🚗 Veículo / Placa
                                                     </span>
@@ -83,7 +83,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motori
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(16, 185, 129, 0.1);">
+                                                <td style="padding: 15px 0 8px 0; border-top: 1px solid rgba(249, 115, 22, 0.1);">
                                                     <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
                                                         📅 Data da Entrega
                                                     </span>
@@ -93,7 +93,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motori
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td style="padding: 15px 0 0 0; border-top: 1px solid rgba(16, 185, 129, 0.1);">
+                                                <td style="padding: 15px 0 0 0; border-top: 1px solid rgba(249, 115, 22, 0.1);">
                                                     <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; margin-bottom: 4px;">
                                                         ⏰ Horário
                                                     </span>
@@ -109,18 +109,18 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motori
 
                             ${linkMapa ? `
                             <!-- Card de Localização -->
-                            <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
-                                <h3 style="margin: 0 0 15px 0; color: #1e40af; font-size: 16px; font-weight: 700;">
+                            <div style="background-color: #fff7ed; border-left: 4px solid #f97316; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                                <h3 style="margin: 0 0 15px 0; color: #c2410c; font-size: 16px; font-weight: 700;">
                                     📍 Localização do CD ${cdNome}
                                 </h3>
-                                <p style="margin: 0 0 15px 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                                <p style="margin: 0 0 15px 0; color: #c2410c; font-size: 14px; line-height: 1.6;">
                                     Clique no botão abaixo para abrir a localização no Google Maps:
                                 </p>
                                 <table role="presentation" style="width: 100%; border-collapse: collapse;">
                                     <tr>
                                         <td align="center">
                                             <a href="${linkMapa}" 
-                                               style="display: inline-block; background: #3b82f6; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">
+                                               style="display: inline-block; background: #f97316; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);">
                                                 📍 Abrir Localização no Maps
                                             </a>
                                         </td>
@@ -141,7 +141,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motori
                                 <tr>
                                     <td align="center">
                                         <a href="https://brisalog-agenda.online/" 
-                                           style="display: inline-block; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                                           style="display: inline-block; background: linear-gradient(135deg, #f97316, #ea580c); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
                                             🌐 Acessar Portal BrisaLOG
                                         </a>
                                     </td>

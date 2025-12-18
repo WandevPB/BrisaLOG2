@@ -1,3 +1,7 @@
+// Carregar variáveis de ambiente
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
 const templateRecuperacaoCadastrada = require('./emails/recuperacaoCadastrada');
 const templateBoasVindasUsuario = require('./emails/boasVindasUsuario');
 // Alteração fictícia para forçar deploy no Render
