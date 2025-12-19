@@ -2587,13 +2587,14 @@ app.post('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais', upload
     // Formatar dados para retorno
     const pedidos = {};
     agendamentoAtualizado.notasFiscais.forEach(nf => {
-      if (!pedidos[nf.numeroPedido]) {
-        pedidos[nf.numeroPedido] = {
-          numero: nf.numeroPedido,
+      const numeroPedidoStr = nf.numeroPedido.toString();
+      if (!pedidos[numeroPedidoStr]) {
+        pedidos[numeroPedidoStr] = {
+          numero: numeroPedidoStr,
           notasFiscais: []
         };
       }
-      pedidos[nf.numeroPedido].notasFiscais.push({
+      pedidos[numeroPedidoStr].notasFiscais.push({
         numero: nf.numeroNF,
         valor: nf.valor,
         arquivo: nf.arquivoPath
@@ -2710,13 +2711,14 @@ app.put('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF
     // Formatar dados para retorno
     const pedidos = {};
     agendamentoAtualizado.notasFiscais.forEach(nf => {
-      if (!pedidos[nf.numeroPedido]) {
-        pedidos[nf.numeroPedido] = {
-          numero: nf.numeroPedido,
+      const numeroPedidoStr = nf.numeroPedido.toString();
+      if (!pedidos[numeroPedidoStr]) {
+        pedidos[numeroPedidoStr] = {
+          numero: numeroPedidoStr,
           notasFiscais: []
         };
       }
-      pedidos[nf.numeroPedido].notasFiscais.push({
+      pedidos[numeroPedidoStr].notasFiscais.push({
         numero: nf.numeroNF,
         valor: nf.valor,
         arquivo: nf.arquivoPath
@@ -2813,13 +2815,14 @@ app.delete('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numer
     // Formatar dados para retorno
     const pedidos = {};
     agendamentoAtualizado.notasFiscais.forEach(nf => {
-      if (!pedidos[nf.numeroPedido]) {
-        pedidos[nf.numeroPedido] = {
-          numero: nf.numeroPedido,
+      const numeroPedidoStr = nf.numeroPedido.toString();
+      if (!pedidos[numeroPedidoStr]) {
+        pedidos[numeroPedidoStr] = {
+          numero: numeroPedidoStr,
           notasFiscais: []
         };
       }
-      pedidos[nf.numeroPedido].notasFiscais.push({
+      pedidos[numeroPedidoStr].notasFiscais.push({
         numero: nf.numeroNF,
         valor: nf.valor,
         arquivo: nf.arquivoPath
