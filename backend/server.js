@@ -2755,12 +2755,14 @@ app.put('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF
       });
     });
 
-    agendamentoAtualizado.pedidos = Object.values(pedidos);
+    // Remover notasFiscais do objeto antes de retornar (contém BigInt)
+    const { notasFiscais, ...agendamentoSemNF } = agendamentoAtualizado;
+    agendamentoSemNF.pedidos = Object.values(pedidos);
 
     res.json({
       success: true,
       message: 'Nota fiscal atualizada com sucesso',
-      data: agendamentoAtualizado
+      data: agendamentoSemNF
     });
 
   } catch (error) {
