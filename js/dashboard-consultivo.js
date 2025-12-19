@@ -473,6 +473,13 @@ class DashboardConsultivo {
                         title="Alterar Status">
                         <i class="fas fa-exchange-alt text-lg"></i>
                     </button>
+                    ${typeof dashboardAdmin !== 'undefined' ? `
+                    <button onclick="dashboardAdmin.excluirAgendamento(${agendamento.id})" 
+                        class="text-red-600 hover:text-red-800 transition-colors" 
+                        title="Excluir Permanentemente">
+                        <i class="fas fa-trash-alt text-lg"></i>
+                    </button>
+                    ` : ''}
                 </div>
             </td>
         `;

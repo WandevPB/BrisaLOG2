@@ -1165,15 +1165,6 @@ class CDDashboard {
     }
 
     getColumnCardActions(agendamento) {
-        // Botão de exclusão sempre disponível
-        const deleteButton = `
-            <button onclick="event.stopPropagation(); dashboard.excluirAgendamento(${agendamento.id})" 
-                class="w-full bg-gray-700 text-white py-1 px-2 rounded text-xs hover:bg-red-700 transition-all mt-1" 
-                title="Excluir permanentemente do banco">
-                <i class="fas fa-trash mr-1"></i>Excluir
-            </button>
-        `;
-
         if (agendamento.status === 'pendente') {
             return `
                 <div class="flex space-x-1">
@@ -1186,7 +1177,6 @@ class CDDashboard {
                         <i class="fas fa-calendar mr-1"></i>Reagendar
                     </button>
                 </div>
-                ${deleteButton}
             `;
         } else if (agendamento.status === 'confirmado') {
             return `
@@ -1200,7 +1190,6 @@ class CDDashboard {
                         <i class="fas fa-times mr-1"></i>Não Veio
                     </button>
                 </div>
-                ${deleteButton}
             `;
         }
         return `
@@ -1208,7 +1197,6 @@ class CDDashboard {
                 class="w-full bg-gray-500 text-white py-1 px-2 rounded text-xs hover:bg-gray-600 transition-all">
                 <i class="fas fa-eye mr-1"></i>Ver Detalhes
             </button>
-            ${deleteButton}
         `;
     }
     // Função para garantir autenticação antes de qualquer ação
@@ -1752,14 +1740,6 @@ class CDDashboard {
     }
 
     getActionButtonsCompact(agendamento) {
-        // Botão de exclusão sempre disponível
-        const deleteButton = `
-            <button onclick="dashboard.excluirAgendamento(${agendamento.id})" 
-                class="text-gray-700 hover:text-red-700" title="Excluir permanentemente">
-                <i class="fas fa-trash"></i>
-            </button>
-        `;
-
         if (agendamento.status === 'pendente') {
             return `
                 <button onclick="dashboard.solicitarCodigoUsuarioAction(${agendamento.id}, 'confirmado')" 
@@ -1770,7 +1750,6 @@ class CDDashboard {
                     class="text-blue-500 hover:text-blue-700" title="Reagendar">
                     <i class="fas fa-calendar"></i>
                 </button>
-                ${deleteButton}
             `;
         } else if (agendamento.status === 'confirmado') {
             return `
@@ -1782,7 +1761,6 @@ class CDDashboard {
                     class="text-red-500 hover:text-red-700" title="Marcar como Não Veio">
                     <i class="fas fa-times"></i>
                 </button>
-                ${deleteButton}
             `;
         } else if (agendamento.status === 'reagendamento') {
             return `
@@ -1794,10 +1772,9 @@ class CDDashboard {
                     class="text-blue-500 hover:text-blue-700" title="Nova Data">
                     <i class="fas fa-calendar"></i>
                 </button>
-                ${deleteButton}
             `;
         }
-        return deleteButton;
+        return '';
     }
 
     // --- MÉTODOS DE AÇÃO E MODAIS ---

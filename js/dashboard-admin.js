@@ -587,6 +587,91 @@ class DashboardAdmin {
         }
     }
 
+    async excluirAgendamento(id) {
+        try {
+            // Buscar dados do agendamento primeiro
+            const response = await fetch(`${API_BASE_URL}/api/agendamentos/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Agendamento não encontrado');
+            }
+
+            const agendamento = await response.json();
+
+            const confirmacao1 = confirm(
+                `⚠️ ATENÇÃO: Você está prestes a EXCLUIR PERMANENTEMENTE este agendamento do banco de dados!\n\n` +
+                `Código: ${agendamento.codigo || 'N/A'}\n` +
+                `Transportador: ${agendamento.fornecedor?.nome || agendamento.transportadorNome || 'N/A'}\n` +
+                `Status: ${agendamento.status}\n\n` +
+                `Esta ação é IRREVERSÍVEL e o registro será COMPLETAMENTE REMOVIDO.\n\n` +
+                `Deseja continuar?`
+            );
+            
+            if (!confirmacao1) {
+                return;
+            }
+
+            const confirmacao2 = confirm(
+                `🔴 ÚLTIMA CONFIRMAÇÃO!\n\n` +
+                `Confirma a EXCLUSÃO PERMANENTE do agendamento ${agendamento.codigo}?\n\n` +
+                `Não será possível recuperar este registro!`
+            );
+            
+            if (!confirmacao2) {
+                return;
+            }
+
+            // Solicitar código do usuário
+            const codigoUsuario = prompt('Digite seu código de usuário para confirmar a exclusão:');
+            
+            if (!codigoUsuario || codigoUsuario.trim() === '') {
+                this.showNotification('Código de usuário é obrigatório', 'warning');
+                return;
+            }
+
+            // Buscar nome do usuário
+            const usuario = this.usuarios.find(u => u.codigo === codigoUsuario.trim());
+            if (!usuario) {
+                this.showNotification('Usuário não encontrado. Verifique o código digitado.', 'error');
+                return;
+            }
+
+            const deleteResponse = await fetch(`${API_BASE_URL}/api/agendamentos/${id}/excluir`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    codigoUsuario: codigoUsuario.trim(),
+                    nomeUsuario: usuario.nome
+                })
+            });
+
+            if (deleteResponse.ok) {
+                this.showNotification(
+                    `✅ Agendamento ${agendamento.codigo} excluído permanentemente por ${usuario.nome}`, 
+                    'success'
+                );
+                
+                // Recarregar dados se estiver no dashboard consultivo
+                if (typeof dashboardConsultivo !== 'undefined') {
+                    await dashboardConsultivo.loadAgendamentos();
+                }
+            } else {
+                const errorData = await deleteResponse.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Erro ao excluir agendamento');
+            }
+        } catch (error) {
+            console.error('Erro ao excluir agendamento:', error);
+            this.showNotification(`Erro ao excluir agendamento: ${error.message}`, 'error');
+        }
+    }
+
     showNotification(message, type = 'info') {
         if (typeof dashboardConsultivo !== 'undefined') {
             dashboardConsultivo.showNotification(message, type);
