@@ -1314,6 +1314,54 @@ app.get('/api/agendamentos/consultar/:codigo', async (req, res) => {
   }
 });
 
+// Buscar agendamento por ID (para exclusão e detalhes)
+app.get('/api/agendamentos/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    console.log(`🔍 [GET /api/agendamentos/${id}] Buscando agendamento por ID...`);
+
+    const agendamento = await prisma.agendamento.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        fornecedor: true,
+        cd: true,
+        notasFiscais: true,
+        historicoAcoes: {
+          orderBy: { createdAt: 'desc' }
+        },
+        respostasReagendamento: true
+      }
+    });
+
+    if (!agendamento) {
+      console.log(`❌ [GET /api/agendamentos/${id}] Agendamento não encontrado`);
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Agendamento não encontrado' 
+      });
+    }
+
+    console.log(`✅ [GET /api/agendamentos/${id}] Agendamento encontrado:`, {
+      id: agendamento.id,
+      codigo: agendamento.codigo,
+      status: agendamento.status
+    });
+
+    // Adicionar objeto fornecedor virtual (se necessário)
+    addFornecedorVirtual(agendamento);
+
+    res.json(agendamento);
+
+  } catch (error) {
+    console.error(`❌ [GET /api/agendamentos/:id] Erro:`, error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erro interno do servidor' 
+    });
+  }
+});
+
 // Atualizar status do agendamento
 app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
   try {
