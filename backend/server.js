@@ -2539,7 +2539,7 @@ app.post('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais', upload
     const nfExistente = await prisma.notaFiscal.findFirst({
       where: {
         agendamentoId: agendamento.id,
-        numeroPedido: numeroPedido,
+        numeroPedido: BigInt(numeroPedido),
         numeroNF: numeroNF
       }
     });
@@ -2634,7 +2634,7 @@ app.put('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF
     const notaFiscal = await prisma.notaFiscal.findFirst({
       where: {
         agendamentoId: agendamento.id,
-        numeroPedido: numeroPedido,
+        numeroPedido: BigInt(numeroPedido),
         numeroNF: numeroNF
       }
     });
@@ -2648,7 +2648,7 @@ app.put('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF
       const nfExistente = await prisma.notaFiscal.findFirst({
         where: {
           agendamentoId: agendamento.id,
-          numeroPedido: numeroPedido,
+          numeroPedido: BigInt(numeroPedido),
           numeroNF: novoNumeroNF
         }
       });
@@ -2755,7 +2755,7 @@ app.delete('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numer
     const notaFiscal = await prisma.notaFiscal.findFirst({
       where: {
         agendamentoId: agendamento.id,
-        numeroPedido: numeroPedido,
+        numeroPedido: BigInt(numeroPedido),
         numeroNF: numeroNF
       }
     });
@@ -2768,7 +2768,7 @@ app.delete('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numer
     const nfsDoPedido = await prisma.notaFiscal.count({
       where: {
         agendamentoId: agendamento.id,
-        numeroPedido: numeroPedido
+        numeroPedido: BigInt(numeroPedido)
       }
     });
 
