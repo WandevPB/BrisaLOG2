@@ -2435,6 +2435,91 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
 // ============================================================================
 
 // Adicionar nota fiscal a um pedido específico
+// Adicionar Nota Fiscal (rota simplificada - numeroPedido no body)
+app.post('/api/agendamentos/:codigo/notas-fiscais', upload.single('arquivo'), async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const { numeroPedido, numeroNF, valor } = req.body;
+    const arquivo = req.file;
+
+    console.log(`📝 [POST /api/agendamentos/${codigo}/notas-fiscais] Adicionando NF ${numeroNF} ao pedido ${numeroPedido}`);
+
+    // Buscar agendamento
+    const agendamento = await prisma.agendamento.findFirst({
+      where: { codigo: codigo }
+    });
+
+    if (!agendamento) {
+      console.log(`❌ Agendamento ${codigo} não encontrado`);
+      return res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+
+    // Verificar se já existe NF com o mesmo número no mesmo pedido
+    const nfExistente = await prisma.notaFiscal.findFirst({
+      where: {
+        agendamentoId: agendamento.id,
+        numeroPedido: BigInt(numeroPedido),
+        numeroNF: numeroNF
+      }
+    });
+
+    if (nfExistente) {
+      console.log(`❌ NF ${numeroNF} já existe no pedido ${numeroPedido}`);
+      return res.status(400).json({ error: 'Já existe uma nota fiscal com este número neste pedido' });
+    }
+
+    // Processar valor
+    let valorProcessado = valor;
+    if (typeof valorProcessado === 'string') {
+      valorProcessado = valorProcessado.replace(/[R$\s]/g, '');
+      if (valorProcessado.includes(',')) {
+        valorProcessado = valorProcessado.replace(/\./g, '').replace(',', '.');
+      }
+      valorProcessado = parseFloat(valorProcessado);
+      if (!isNaN(valorProcessado)) {
+        valorProcessado = Math.round(valorProcessado * 100) / 100;
+      }
+    }
+
+    // Sanitizar strings
+    const sanitize = (str) => str ? String(str).replace(/\0/g, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim() : str;
+
+    // Criar nota fiscal
+    const nfCriada = await prisma.notaFiscal.create({
+      data: {
+        numeroPedido: BigInt(sanitize(numeroPedido)),
+        numeroNF: sanitize(numeroNF),
+        valor: valorProcessado && !isNaN(valorProcessado) ? valorProcessado : null,
+        arquivoPath: sanitize(arquivo?.filename) || null,
+        agendamentoId: agendamento.id
+      }
+    });
+
+    // Registrar no histórico
+    await prisma.historicoAcao.create({
+      data: {
+        acao: 'nf_adicionada',
+        descricao: `Transportador adicionou NF ${numeroNF}`,
+        autor: 'Transportador',
+        agendamentoId: agendamento.id,
+        cdId: agendamento.cdId
+      }
+    });
+
+    console.log(`✅ NF ${numeroNF} adicionada com sucesso ao pedido ${numeroPedido}`);
+
+    res.json({
+      success: true,
+      message: 'Nota fiscal adicionada com sucesso',
+      data: nfCriada
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao adicionar nota fiscal:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 app.post('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais', upload.single('arquivo'), async (req, res) => {
   try {
     const { codigo, numeroPedido } = req.params;
@@ -2596,6 +2681,23 @@ app.put('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF
       data: dadosAtualizacao
     });
 
+    // Registrar no histórico
+    const nfAntiga = numeroNF;
+    const nfNova = novoNumeroNF || numeroNF;
+    const descricao = nfAntiga !== nfNova 
+      ? `Transportador alterou NF ${nfAntiga} por NF ${nfNova}`
+      : `Transportador atualizou dados da NF ${nfNova}`;
+    
+    await prisma.historicoAcao.create({
+      data: {
+        acao: 'nf_editada',
+        descricao: descricao,
+        autor: 'Transportador',
+        agendamentoId: agendamento.id,
+        cdId: agendamento.cdId
+      }
+    });
+
     // Buscar agendamento atualizado
     const agendamentoAtualizado = await prisma.agendamento.findFirst({
       where: { codigo: codigo },
@@ -2662,6 +2764,19 @@ app.delete('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numer
       return res.status(404).json({ error: 'Nota fiscal não encontrada' });
     }
 
+    // Verificar se é a última NF do pedido
+    const nfsDoPedido = await prisma.notaFiscal.count({
+      where: {
+        agendamentoId: agendamento.id,
+        numeroPedido: numeroPedido
+      }
+    });
+
+    if (nfsDoPedido <= 1) {
+      console.log(`❌ Não é possível excluir a última NF do pedido ${numeroPedido}`);
+      return res.status(400).json({ error: 'Não é possível excluir a última Nota Fiscal do pedido. O pedido deve ter pelo menos uma NF.' });
+    }
+
     // Remover arquivo se existir
     if (notaFiscal.arquivoPath) {
       const arquivoPath = path.join(__dirname, 'uploads', notaFiscal.arquivoPath);
@@ -2673,6 +2788,17 @@ app.delete('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numer
     // Excluir nota fiscal
     await prisma.notaFiscal.delete({
       where: { id: notaFiscal.id }
+    });
+
+    // Registrar no histórico
+    await prisma.historicoAcao.create({
+      data: {
+        acao: 'nf_excluida',
+        descricao: `Transportador excluiu NF ${numeroNF}`,
+        autor: 'Transportador',
+        agendamentoId: agendamento.id,
+        cdId: agendamento.cdId
+      }
     });
 
     // Buscar agendamento atualizado

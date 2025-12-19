@@ -894,10 +894,23 @@
             const pedidosArray = Object.values(allPedidos).filter(p => p.notasFiscais.length > 0);
 
             if (pedidosArray.length === 0) {
-                return '<div class="text-center py-4 text-text-secondary">Nenhum Pedido ou Nota Fiscal vinculada.</div>';
+                return `
+                    <div class="text-center py-8">
+                        <p class="text-text-secondary mb-4">Nenhuma Nota Fiscal vinculada.</p>
+                        <button onclick="abrirModalAdicionarNF()" class="bg-orange-primary hover:bg-orange-secondary text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                            <i class="fas fa-plus-circle mr-2"></i>Adicionar Primeira NF
+                        </button>
+                    </div>
+                `;
             }
 
-            let html = ``;
+            let html = `
+                <div class="flex justify-end mb-4">
+                    <button onclick="abrirModalAdicionarNF()" class="bg-orange-primary hover:bg-orange-secondary text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm">
+                        <i class="fas fa-plus-circle mr-2"></i>Adicionar NF
+                    </button>
+                </div>
+            `;
 
             pedidosArray.forEach(pedido => {
                 html += `
@@ -910,16 +923,25 @@
                             ${pedido.notasFiscais.map(nf => {
                                 const nfValor = calcularValorNF(nf.valor || '0');
                                 const fileButton = nf.arquivo ? 
-                                    `<button onclick="viewPDF('${nf.arquivo}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition-colors"><i class="fas fa-file-pdf mr-1"></i>PDF</button>` : '';
+                                    `<button onclick="viewPDF('${nf.arquivo}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition-colors">
+                                        <i class="fas fa-file-pdf mr-1"></i>PDF
+                                    </button>` : 
+                                    `<span class="text-xs text-gray-500">Sem PDF</span>`;
 
                                 return `
                                     <div class="flex justify-between items-center bg-gray-900 p-3 rounded-lg border border-gray-700">
                                         <div class="flex flex-col">
                                             <span class="font-semibold text-white text-sm">NF: ${nf.numero || 'N/A'}</span>
                                         </div>
-                                        <div class="flex items-center gap-4">
+                                        <div class="flex items-center gap-2">
                                             <span class="text-green-400 font-extrabold text-sm">R$ ${nfValor}</span>
                                             ${fileButton}
+                                            <button onclick="abrirModalEditarNF('${pedido.numero}', '${nf.numero}', '${nfValor}', '${nf.arquivo || ''}')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs transition-colors" title="Editar NF">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="excluirNF('${pedido.numero}', '${nf.numero}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs transition-colors" title="Excluir NF">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 `;
@@ -1096,11 +1118,176 @@
                     if (!document.getElementById('consulta-modal').classList.contains('hidden')) { closeConsultaModal(); }
                     if (!document.getElementById('cancelar-solicitacao-modal').classList.contains('hidden')) { fecharCancelarSolicitacaoModal(); }
                     if (!document.getElementById('contra-proposta-modal').classList.contains('hidden')) { fecharContraPropostaModal(); }
+                    if (!document.getElementById('nf-modal').classList.contains('hidden')) { fecharNFModal(); }
                 }
             });
         }
 
+        // ===== FUNÇÕES PARA GERENCIAR NOTAS FISCAIS =====
+        let nfEmEdicao = null;
+
+        function abrirModalAdicionarNF() {
+            nfEmEdicao = null;
+            document.getElementById('nf-modal-title').innerHTML = '<i class="fas fa-plus-circle mr-2"></i>Adicionar Nova Nota Fiscal';
+            document.getElementById('nf-form').reset();
+            document.getElementById('nf-numero-pedido').value = '';
+            document.getElementById('nf-numero').value = '';
+            document.getElementById('nf-valor').value = '';
+            document.getElementById('nf-arquivo').required = true;
+            document.getElementById('nf-modal').classList.remove('hidden');
+        }
+
+        function abrirModalEditarNF(numeroPedido, numeroNF, valor, arquivo) {
+            nfEmEdicao = { numeroPedido, numeroNF, arquivo };
+            document.getElementById('nf-modal-title').innerHTML = '<i class="fas fa-edit mr-2"></i>Editar Nota Fiscal';
+            document.getElementById('nf-numero-pedido').value = numeroPedido;
+            document.getElementById('nf-numero').value = numeroNF;
+            document.getElementById('nf-valor').value = valor;
+            document.getElementById('nf-arquivo').required = false; // Não obrigatório ao editar
+            document.getElementById('nf-modal').classList.remove('hidden');
+        }
+
+        function fecharNFModal() {
+            document.getElementById('nf-modal').classList.add('hidden');
+            nfEmEdicao = null;
+        }
+
+        async function salvarNF(event) {
+            event.preventDefault();
+
+            const codigo = currentAgendamento.codigo;
+            const numeroPedido = document.getElementById('nf-numero-pedido').value.trim();
+            const numeroNF = document.getElementById('nf-numero').value.trim();
+            const valor = document.getElementById('nf-valor').value.replace(/[^\d,]/g, '').replace(',', '.');
+            const arquivoInput = document.getElementById('nf-arquivo');
+
+            const formData = new FormData();
+            formData.append('numeroPedido', numeroPedido);
+            formData.append('numeroNF', numeroNF);
+            formData.append('valor', valor);
+            
+            if (arquivoInput.files[0]) {
+                formData.append('arquivo', arquivoInput.files[0]);
+            }
+
+            try {
+                let url, method;
+                if (nfEmEdicao) {
+                    // Editar NF existente
+                    url = `${API_BASE_URL}/api/agendamentos/${codigo}/pedidos/${nfEmEdicao.numeroPedido}/notas-fiscais/${nfEmEdicao.numeroNF}`;
+                    method = 'PUT';
+                } else {
+                    // Adicionar nova NF
+                    url = `${API_BASE_URL}/api/agendamentos/${codigo}/notas-fiscais`;
+                    method = 'POST';
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const acao = nfEmEdicao ? 'atualizada' : 'adicionada';
+                    showNotification(`Nota Fiscal ${acao} com sucesso!`, 'success');
+                    fecharNFModal();
+                    // Recarregar dados do agendamento
+                    await fetchAgendamentoAndRender(codigo);
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Erro ao salvar Nota Fiscal', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao salvar NF:', error);
+                showNotification('Erro ao salvar Nota Fiscal', 'error');
+            }
+        }
+
+        async function excluirNF(numeroPedido, numeroNF) {
+            const codigo = currentAgendamento.codigo;
+
+            // Contar quantas NFs existem no pedido
+            const pedido = currentAgendamento.pedidos.find(p => p.numero === numeroPedido);
+            if (pedido && pedido.notasFiscais.length <= 1) {
+                showNotification('Não é possível excluir a última Nota Fiscal do pedido!', 'error');
+                return;
+            }
+
+            if (!confirm(`Tem certeza que deseja excluir a NF ${numeroNF}?\n\nEsta ação não pode ser desfeita!`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/api/agendamentos/${codigo}/pedidos/${numeroPedido}/notas-fiscais/${numeroNF}`,
+                    { method: 'DELETE' }
+                );
+
+                if (response.ok) {
+                    showNotification('Nota Fiscal excluída com sucesso!', 'success');
+                    await fetchAgendamentoAndRender(codigo);
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Erro ao excluir Nota Fiscal', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir NF:', error);
+                showNotification('Erro ao excluir Nota Fiscal', 'error');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', init);
+
+        // Adicionar máscara de valor ao campo de valor da NF
+        document.addEventListener('DOMContentLoaded', () => {
+            const nfValorInput = document.getElementById('nf-valor');
+            if (nfValorInput) {
+                nfValorInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    value = (value / 100).toFixed(2);
+                    e.target.value = 'R$ ' + value.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                });
+            }
+        });
     </script>
+
+    <!-- Modal para Adicionar/Editar Nota Fiscal -->
+    <div id="nf-modal" class="modal-backdrop fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 flex">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-2xl w-full mx-4 border border-orange-primary/30">
+            <h2 id="nf-modal-title" class="text-2xl font-bold text-white mb-6"></h2>
+            
+            <form id="nf-form" onsubmit="salvarNF(event)" class="space-y-6">
+                <div>
+                    <label class="block text-white font-semibold mb-2">Número do Pedido *</label>
+                    <input type="text" id="nf-numero-pedido" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-orange-primary focus:outline-none" placeholder="Ex: 4501234567" required maxlength="10" pattern="450[0-9]{7}">
+                </div>
+
+                <div>
+                    <label class="block text-white font-semibold mb-2">Número da Nota Fiscal *</label>
+                    <input type="text" id="nf-numero" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-orange-primary focus:outline-none" placeholder="Ex: 123456" required>
+                </div>
+
+                <div>
+                    <label class="block text-white font-semibold mb-2">Valor (R$) *</label>
+                    <input type="text" id="nf-valor" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-orange-primary focus:outline-none" placeholder="R$ 0,00" required>
+                </div>
+
+                <div>
+                    <label class="block text-white font-semibold mb-2">Anexo PDF *</label>
+                    <input type="file" id="nf-arquivo" accept=".pdf" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-orange-primary focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-orange-primary file:text-white file:cursor-pointer hover:file:bg-orange-secondary">
+                    <p class="text-xs text-gray-400 mt-2">Deixe em branco para manter o arquivo atual (somente ao editar)</p>
+                </div>
+
+                <div class="flex justify-end gap-4 pt-4">
+                    <button type="button" onclick="fecharNFModal()" class="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Cancelar
+                    </button>
+                    <button type="submit" class="px-6 py-3 bg-orange-primary text-white rounded-lg hover:bg-orange-secondary transition-colors">
+                        <i class="fas fa-save mr-2"></i>Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
