@@ -214,6 +214,91 @@ router.post('/change-password-first-login', async (req, res) => {
     }
 });
 
+// POST /api/auth/first-login (alias com validação de senha temporária)
+router.post('/first-login', async (req, res) => {
+    try {
+        const { usuario, senhaTemporaria, novaSenha, emailRecuperacao } = req.body;
+
+        if (!usuario || !senhaTemporaria || !novaSenha || !emailRecuperacao) {
+            return res.status(400).json({
+                success: false,
+                message: 'Todos os campos são obrigatórios'
+            });
+        }
+
+        // Buscar usuário
+        const user = await prisma.cd.findUnique({
+            where: { usuario: usuario }
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'Usuário não encontrado'
+            });
+        }
+
+        // Verificar se ainda é primeiro login
+        if (!user.primeiroLogin) {
+            return res.status(400).json({
+                success: false,
+                message: 'Este usuário já configurou sua senha. Faça login normalmente.'
+            });
+        }
+
+        // Validar senha temporária
+        const senhaValida = await bcrypt.compare(senhaTemporaria, user.senha);
+        if (!senhaValida) {
+            return res.status(401).json({
+                success: false,
+                message: 'Senha temporária inválida'
+            });
+        }
+
+        // Validar formato do e-mail
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(emailRecuperacao)) {
+            return res.status(400).json({
+                success: false,
+                message: 'E-mail inválido'
+            });
+        }
+
+        // Hash da nova senha
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(novaSenha, saltRounds);
+
+        // Atualizar senha, e-mail e marcar como não sendo mais primeiro login
+        await prisma.cd.update({
+            where: { id: user.id },
+            data: { 
+                senha: hashedPassword,
+                emailRecuperacao: emailRecuperacao,
+                primeiroLogin: false
+            }
+        });
+
+        // Enviar e-mail de confirmação
+        await emailService.sendRecuperacaoCadastradaEmail({
+            to: emailRecuperacao,
+            nome: user.nome,
+            cd: user.nome || usuario
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Acesso configurado com sucesso! Agora você pode fazer login com sua nova senha.'
+        });
+
+    } catch (error) {
+        console.error('Erro ao configurar primeiro acesso:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erro interno do servidor'
+        });
+    }
+});
+
 // POST /api/auth/update-recovery-email
 router.post('/update-recovery-email', async (req, res) => {
     try {
