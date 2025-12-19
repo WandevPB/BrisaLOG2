@@ -2508,10 +2508,19 @@ app.post('/api/agendamentos/:codigo/notas-fiscais', upload.single('arquivo'), as
 
     console.log(`✅ NF ${numeroNF} adicionada com sucesso ao pedido ${numeroPedido}`);
 
+    // Formatar resposta sem BigInt
     res.json({
       success: true,
       message: 'Nota fiscal adicionada com sucesso',
-      data: nfCriada
+      data: {
+        id: nfCriada.id,
+        numeroPedido: nfCriada.numeroPedido.toString(),
+        numeroNF: nfCriada.numeroNF,
+        valor: nfCriada.valor,
+        arquivoPath: nfCriada.arquivoPath,
+        createdAt: nfCriada.createdAt,
+        updatedAt: nfCriada.updatedAt
+      }
     });
 
   } catch (error) {
@@ -2601,12 +2610,14 @@ app.post('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais', upload
       });
     });
 
-    agendamentoAtualizado.pedidos = Object.values(pedidos);
+    // Remover notasFiscais do objeto antes de retornar (contém BigInt)
+    const { notasFiscais, ...agendamentoSemNF } = agendamentoAtualizado;
+    agendamentoSemNF.pedidos = Object.values(pedidos);
 
     res.json({
       success: true,
       message: 'Nota fiscal adicionada com sucesso',
-      data: agendamentoAtualizado
+      data: agendamentoSemNF
     });
 
   } catch (error) {
@@ -2861,12 +2872,14 @@ app.delete('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numer
       });
     });
 
-    agendamentoAtualizado.pedidos = Object.values(pedidos);
+    // Remover notasFiscais do objeto antes de retornar (contém BigInt)
+    const { notasFiscais, ...agendamentoSemNF } = agendamentoAtualizado;
+    agendamentoSemNF.pedidos = Object.values(pedidos);
 
     res.json({
       success: true,
       message: 'Nota fiscal excluída com sucesso',
-      data: agendamentoAtualizado
+      data: agendamentoSemNF
     });
 
   } catch (error) {
