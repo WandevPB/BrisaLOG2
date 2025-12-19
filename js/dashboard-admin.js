@@ -665,7 +665,7 @@ class DashboardAdmin {
 
             if (deleteResponse.ok) {
                 this.showNotification(
-                    `✅ Agendamento ${agendamento.codigo} excluído permanentemente por ${usuario.nome}`, 
+                    `✅ Agendamento ${agendamento.codigo} excluído permanentemente por ${nomeUsuario}`, 
                     'success'
                 );
                 
