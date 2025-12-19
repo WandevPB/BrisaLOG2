@@ -893,6 +893,102 @@
         e.target.setSelectionRange(e.target.value.length, e.target.value.length);
       });
 
+      // Validação de Número do Pedido
+      function validarNumeroPedido(input) {
+        const valor = input.value.trim();
+        let mensagemErro = '';
+        
+        // Remover mensagem de erro anterior
+        const erroExistente = input.parentElement.querySelector('.erro-pedido');
+        if (erroExistente) {
+          erroExistente.remove();
+        }
+        
+        input.classList.remove('border-red-500');
+        
+        // Se estiver vazio, não mostrar erro (required vai cuidar)
+        if (valor === '') {
+          return true;
+        }
+        
+        // Verificar se tem espaços
+        if (/\s/.test(valor)) {
+          mensagemErro = '❌ O número do pedido não pode conter espaços';
+        }
+        // Verificar se tem símbolos
+        else if (/[^0-9]/.test(valor)) {
+          mensagemErro = '❌ O número do pedido não pode conter símbolos ou letras';
+        }
+        // Verificar se não começa com 450
+        else if (valor.length >= 3 && !valor.startsWith('450')) {
+          mensagemErro = '❌ O número do pedido deve começar com 450';
+        }
+        // Verificar tamanho correto
+        else if (valor.length > 0 && valor.length < 10) {
+          mensagemErro = '⚠️ O número do pedido deve ter exatamente 10 dígitos (Ex: 4501234567)';
+        }
+        // Verificar formato completo
+        else if (valor.length === 10 && !/^450[0-9]{7}$/.test(valor)) {
+          mensagemErro = '❌ Formato inválido. O pedido deve começar com 450 seguido de 7 números';
+        }
+        
+        // Mostrar mensagem de erro se houver
+        if (mensagemErro) {
+          input.classList.add('border-red-500');
+          const divErro = document.createElement('div');
+          divErro.className = 'erro-pedido text-red-500 text-sm mt-1 font-semibold';
+          divErro.textContent = mensagemErro;
+          input.parentElement.appendChild(divErro);
+          return false;
+        }
+        
+        // Sucesso - mostrar feedback positivo
+        if (valor.length === 10) {
+          input.classList.add('border-green-500');
+        }
+        
+        return true;
+      }
+      
+      // Adicionar validação em todos os campos de número do pedido
+      function aplicarValidacaoPedidos() {
+        const inputsPedido = document.querySelectorAll('input[name="numeroPedidoLinha"]');
+        inputsPedido.forEach(input => {
+          // Validar ao digitar
+          input.addEventListener('input', (e) => {
+            // Remover qualquer caractere que não seja número
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            validarNumeroPedido(e.target);
+          });
+          
+          // Validar ao sair do campo
+          input.addEventListener('blur', (e) => {
+            validarNumeroPedido(e.target);
+          });
+          
+          // Prevenir colar texto com símbolos/espaços
+          input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const texto = (e.clipboardData || window.clipboardData).getData('text');
+            const apenasNumeros = texto.replace(/[^0-9]/g, '');
+            e.target.value = apenasNumeros.substring(0, 10);
+            validarNumeroPedido(e.target);
+          });
+        });
+      }
+      
+      // Aplicar validação inicial
+      aplicarValidacaoPedidos();
+      
+      // Re-aplicar validação quando adicionar nova NF
+      const observer = new MutationObserver(() => {
+        aplicarValidacaoPedidos();
+      });
+      
+      const containerNFs = document.getElementById('notas-fiscais-container');
+      if (containerNFs) {
+        observer.observe(containerNFs, { childList: true, subtree: true });
+      }
 
       // Data mínima e impedir finais de semana + dias após 25
       const dataInput = document.getElementById('data-entrega');
