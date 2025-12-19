@@ -806,7 +806,7 @@
     // Retorna a próxima data válida para agendamento
     function getNextValidDate(date) {
       const next = new Date(date);
-      next.setDate(next.getDate() + 1);
+      // Não adiciona +1 dia - permite agendamento no mesmo dia
       
       // Loop até encontrar uma data válida
       while (!isValidScheduleDate(formatDateToISO(next))) {
