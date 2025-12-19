@@ -634,11 +634,21 @@ class DashboardAdmin {
                 return;
             }
 
-            // Buscar nome do usuário
-            const usuario = this.usuarios.find(u => u.codigo === codigoUsuario.trim());
-            if (!usuario) {
-                this.showNotification('Usuário não encontrado. Verifique o código digitado.', 'error');
-                return;
+            // Verificar se é código GOD ou usuário cadastrado
+            let nomeUsuario;
+            const CODIGO_GOD = 'BrisaLOG2';
+            
+            if (codigoUsuario.trim() === CODIGO_GOD) {
+                nomeUsuario = 'BrisaLOG2 (GOD)';
+                console.log('🔐 Código GOD utilizado para exclusão');
+            } else {
+                // Buscar nome do usuário cadastrado
+                const usuario = this.usuarios.find(u => u.codigo === codigoUsuario.trim());
+                if (!usuario) {
+                    this.showNotification('Usuário não encontrado. Verifique o código digitado.', 'error');
+                    return;
+                }
+                nomeUsuario = usuario.nome;
             }
 
             const deleteResponse = await fetch(`${API_BASE_URL}/api/agendamentos/${codigo}/excluir`, {
@@ -649,7 +659,7 @@ class DashboardAdmin {
                 },
                 body: JSON.stringify({ 
                     codigoUsuario: codigoUsuario.trim(),
-                    nomeUsuario: usuario.nome
+                    nomeUsuario: nomeUsuario
                 })
             });
 

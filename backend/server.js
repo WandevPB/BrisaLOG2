@@ -289,6 +289,15 @@ async function corrigirAgendamentosExistentes() {
 // ...restante do código do servidor...
 const app = express();
 
+// ===========================
+// CÓDIGO GOD - BrisaLOG2
+// ===========================
+// Função para validar código GOD que pode ser usado em qualquer ação
+function validarCodigoGOD(codigoUsuario) {
+  const CODIGO_GOD = 'BrisaLOG2';
+  return codigoUsuario === CODIGO_GOD;
+}
+
 // NOTA: Endpoint de teste de email disponível apenas em desenvolvimento
 // Para usar em produção, adicione authenticateToken middleware
 if (process.env.NODE_ENV === 'development') {
@@ -1372,6 +1381,13 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
     console.log(`🔄 [PUT /api/agendamentos/${id}/status] Iniciando atualização de status...`);
     console.log(`📋 [PUT /api/agendamentos/${id}/status] Dados recebidos:`, { id, status, observacoes, cdId, codigoUsuario, nomeUsuario });
 
+    // Validar código do usuário (aceita código GOD)
+    let nomeUsuarioFinal = nomeUsuario;
+    if (codigoUsuario && validarCodigoGOD(codigoUsuario)) {
+      nomeUsuarioFinal = 'BrisaLOG2 (GOD)';
+      console.log(`🔐 [PUT /api/agendamentos/${id}/status] Código GOD utilizado!`);
+    }
+
     // Validar status
     const statusValidos = ['pendente', 'confirmado', 'entregue', 'nao-veio', 'reagendamento'];
     if (!statusValidos.includes(status)) {
@@ -1423,7 +1439,7 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
       data: {
         acao: 'status_alterado',
         descricao: `Status alterado de "${agendamento.status}" para "${status}"`,
-        autor: nomeUsuario || null,
+        autor: nomeUsuarioFinal || null,
         codigoUsuario: codigoUsuario || null,
         agendamentoId: parseInt(id),
         cdId: cdId
@@ -2093,6 +2109,32 @@ app.delete('/api/agendamentos/:codigo/excluir', async (req, res) => {
 
     console.log(`🗑️ [DELETE /api/agendamentos/${codigo}/excluir] Exclusão permanente solicitada por: ${nomeUsuario} (${codigoUsuario})`);
 
+    // Validar código do usuário (aceita código GOD ou usuário cadastrado)
+    let usuarioValido = false;
+    let nomeUsuarioFinal = nomeUsuario;
+
+    if (validarCodigoGOD(codigoUsuario)) {
+      usuarioValido = true;
+      nomeUsuarioFinal = 'BrisaLOG2 (GOD)';
+      console.log(`🔐 [DELETE /api/agendamentos/${codigo}/excluir] Código GOD utilizado!`);
+    } else {
+      // Validar se é usuário cadastrado
+      const usuario = await prisma.usuario.findUnique({
+        where: { codigo: codigoUsuario }
+      });
+      
+      if (usuario && usuario.ativo) {
+        usuarioValido = true;
+        nomeUsuarioFinal = usuario.nome;
+        console.log(`👤 [DELETE /api/agendamentos/${codigo}/excluir] Usuário válido: ${usuario.nome}`);
+      }
+    }
+
+    if (!usuarioValido) {
+      console.log(`❌ [DELETE /api/agendamentos/${codigo}/excluir] Código de usuário inválido`);
+      return res.status(403).json({ error: 'Código de usuário inválido ou inativo' });
+    }
+
     // Buscar agendamento com todas as relações pelo código
     const agendamento = await prisma.agendamento.findFirst({
       where: { codigo: codigo },
@@ -2122,7 +2164,7 @@ app.delete('/api/agendamentos/:codigo/excluir', async (req, res) => {
       where: { id: agendamento.id }
     });
 
-    console.log(`✅ [DELETE /api/agendamentos/${codigo}/excluir] Agendamento ${agendamento.codigo} excluído permanentemente por ${nomeUsuario}`);
+    console.log(`✅ [DELETE /api/agendamentos/${codigo}/excluir] Agendamento ${agendamento.codigo} excluído permanentemente por ${nomeUsuarioFinal}`);
 
     res.json({
       success: true,
@@ -2131,7 +2173,7 @@ app.delete('/api/agendamentos/:codigo/excluir', async (req, res) => {
         id: agendamento.id,
         codigo: agendamento.codigo,
         status: agendamento.status,
-        excluido_por: nomeUsuario
+        excluido_por: nomeUsuarioFinal
       }
     });
 
