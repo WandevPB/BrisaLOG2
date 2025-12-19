@@ -2086,16 +2086,16 @@ app.delete('/api/agendamentos/:codigo/cancelar-permanente', async (req, res) => 
 });
 
 // Excluir agendamento permanentemente (CD Admin)
-app.delete('/api/agendamentos/:id/excluir', async (req, res) => {
+app.delete('/api/agendamentos/:codigo/excluir', async (req, res) => {
   try {
-    const { id } = req.params;
+    const { codigo } = req.params;
     const { codigoUsuario, nomeUsuario } = req.body;
 
-    console.log(`🗑️ [DELETE /api/agendamentos/${id}/excluir] Exclusão permanente solicitada por: ${nomeUsuario} (${codigoUsuario})`);
+    console.log(`🗑️ [DELETE /api/agendamentos/${codigo}/excluir] Exclusão permanente solicitada por: ${nomeUsuario} (${codigoUsuario})`);
 
-    // Buscar agendamento com todas as relações
-    const agendamento = await prisma.agendamento.findUnique({
-      where: { id: parseInt(id) },
+    // Buscar agendamento com todas as relações pelo código
+    const agendamento = await prisma.agendamento.findFirst({
+      where: { codigo: codigo },
       include: { 
         fornecedor: true, 
         cd: true,
@@ -2106,23 +2106,23 @@ app.delete('/api/agendamentos/:id/excluir', async (req, res) => {
     });
 
     if (!agendamento) {
-      console.log(`❌ [DELETE /api/agendamentos/${id}/excluir] Agendamento não encontrado`);
+      console.log(`❌ [DELETE /api/agendamentos/${codigo}/excluir] Agendamento não encontrado`);
       return res.status(404).json({ error: 'Agendamento não encontrado' });
     }
 
-    console.log(`📄 [DELETE /api/agendamentos/${id}/excluir] Agendamento encontrado:`, {
+    console.log(`📄 [DELETE /api/agendamentos/${codigo}/excluir] Agendamento encontrado:`, {
       id: agendamento.id,
       codigo: agendamento.codigo,
       status: agendamento.status,
-      transportador: agendamento.fornecedor.nome
+      transportador: agendamento.fornecedor?.nome || agendamento.fornecedorNome
     });
 
     // Remover todas as relações e o agendamento (cascade delete irá ajudar)
     const resultado = await prisma.agendamento.delete({
-      where: { id: parseInt(id) }
+      where: { id: agendamento.id }
     });
 
-    console.log(`✅ [DELETE /api/agendamentos/${id}/excluir] Agendamento ${agendamento.codigo} excluído permanentemente por ${nomeUsuario}`);
+    console.log(`✅ [DELETE /api/agendamentos/${codigo}/excluir] Agendamento ${agendamento.codigo} excluído permanentemente por ${nomeUsuario}`);
 
     res.json({
       success: true,

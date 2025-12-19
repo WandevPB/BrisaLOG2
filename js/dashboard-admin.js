@@ -587,10 +587,10 @@ class DashboardAdmin {
         }
     }
 
-    async excluirAgendamento(id) {
+    async excluirAgendamento(codigo) {
         try {
-            // Buscar dados do agendamento primeiro
-            const response = await fetch(`${API_BASE_URL}/api/agendamentos/${id}`, {
+            // Buscar dados do agendamento primeiro pelo código
+            const response = await fetch(`${API_BASE_URL}/api/agendamentos/consultar/${codigo}`, {
                 headers: {
                     'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                 }
@@ -600,7 +600,8 @@ class DashboardAdmin {
                 throw new Error('Agendamento não encontrado');
             }
 
-            const agendamento = await response.json();
+            const result = await response.json();
+            const agendamento = result.data || result;
 
             const confirmacao1 = confirm(
                 `⚠️ ATENÇÃO: Você está prestes a EXCLUIR PERMANENTEMENTE este agendamento do banco de dados!\n\n` +
@@ -640,7 +641,7 @@ class DashboardAdmin {
                 return;
             }
 
-            const deleteResponse = await fetch(`${API_BASE_URL}/api/agendamentos/${id}/excluir`, {
+            const deleteResponse = await fetch(`${API_BASE_URL}/api/agendamentos/${codigo}/excluir`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
