@@ -284,6 +284,11 @@
     <div id="consulta-modal" class="hidden fixed inset-0 modal-backdrop z-[100] flex items-center justify-center">
         <div class="bg-card-dark rounded-2xl max-w-md w-full mx-4 border border-border-dark shadow-deep">
             <div class="p-6">
+                <div class="flex justify-end mb-4">
+                    <button type="button" onclick="closeConsultaModal()" class="text-text-secondary hover:text-white text-xl transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 <div class="text-center mb-6">
                     <div class="bg-gradient-to-r from-orange-primary to-orange-secondary p-4 rounded-2xl inline-block mb-4">
                         <i class="fas fa-search text-white text-2xl"></i>
@@ -361,7 +366,12 @@
 
     <div id="cancelar-solicitacao-modal" class="hidden fixed inset-0 modal-backdrop z-[110] flex items-center justify-center">
         <div class="bg-card-dark rounded-xl shadow-deep p-8 w-full max-w-md border border-red-600">
-            <h2 class="text-xl font-bold mb-4 text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Confirmação de Cancelamento</h2>
+            <div class="flex justify-between items-start mb-4">
+                <h2 class="text-xl font-bold text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Confirmação de Cancelamento</h2>
+                <button type="button" onclick="fecharCancelarSolicitacaoModal()" class="text-text-secondary hover:text-white text-xl transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
             <p class="text-text-secondary mb-4">Se você cancelar esta solicitação, todos os dados serão permanentemente removidos. Por favor, confirme o motivo.</p>
             <form id="form-cancelar-solicitacao">
                 <label for="motivo-cancelamento" class="block text-sm font-medium text-white mb-2">Motivo do cancelamento:</label>
@@ -1113,14 +1123,7 @@
             document.getElementById('form-cancelar-solicitacao')?.addEventListener('submit', enviarMotivoCancelamento);
             document.getElementById('contra-proposta-form')?.addEventListener('submit', enviarContraProposta);
 
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal-backdrop')) {
-                    if (!document.getElementById('consulta-modal').classList.contains('hidden')) { closeConsultaModal(); }
-                    if (!document.getElementById('cancelar-solicitacao-modal').classList.contains('hidden')) { fecharCancelarSolicitacaoModal(); }
-                    if (!document.getElementById('contra-proposta-modal').classList.contains('hidden')) { fecharContraPropostaModal(); }
-                    if (!document.getElementById('nf-modal').classList.contains('hidden')) { fecharNFModal(); }
-                }
-            });
+            // Removido evento de fechar modal ao clicar fora - apenas com botão X
         }
 
         // ===== FUNÇÕES PARA GERENCIAR NOTAS FISCAIS =====
@@ -1254,7 +1257,12 @@
     <!-- Modal para Adicionar/Editar Nota Fiscal -->
     <div id="nf-modal" class="modal-backdrop fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 flex">
         <div class="bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-2xl w-full mx-4 border border-orange-primary/30">
-            <h2 id="nf-modal-title" class="text-2xl font-bold text-white mb-6"></h2>
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="nf-modal-title" class="text-2xl font-bold text-white"></h2>
+                <button type="button" onclick="fecharNFModal()" class="text-text-secondary hover:text-white text-2xl transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
             
             <form id="nf-form" onsubmit="salvarNF(event)" class="space-y-6">
                 <div>
