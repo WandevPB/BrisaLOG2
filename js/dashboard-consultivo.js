@@ -1024,8 +1024,11 @@ class DashboardConsultivo {
     formatDate(dateString) {
         if (!dateString) return 'N/A';
         try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('pt-BR');
+            // Extrair apenas a parte da data (YYYY-MM-DD) sem timezone
+            const [isoDate] = dateString.split('T');
+            if (!isoDate || isoDate.length < 10) return 'N/A';
+            const [ano, mes, dia] = isoDate.split('-');
+            return `${dia}/${mes}/${ano}`;
         } catch (error) {
             return 'N/A';
         }
