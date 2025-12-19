@@ -658,9 +658,14 @@ class DashboardAdmin {
                     'success'
                 );
                 
-                // Recarregar dados se estiver no dashboard consultivo
-                if (typeof dashboardConsultivo !== 'undefined') {
+                // Recarregar dados do dashboard consultivo
+                if (typeof dashboardConsultivo !== 'undefined' && dashboardConsultivo.loadAgendamentos) {
                     await dashboardConsultivo.loadAgendamentos();
+                } else {
+                    // Se não tiver o método, forçar reload da página
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
                 }
             } else {
                 const errorData = await deleteResponse.json().catch(() => ({}));
