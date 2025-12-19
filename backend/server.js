@@ -2037,6 +2037,62 @@ app.delete('/api/agendamentos/:codigo/cancelar-permanente', async (req, res) => 
   }
 });
 
+// Excluir agendamento permanentemente (CD Admin)
+app.delete('/api/agendamentos/:id/excluir', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { codigoUsuario, nomeUsuario } = req.body;
+
+    console.log(`🗑️ [DELETE /api/agendamentos/${id}/excluir] Exclusão permanente solicitada por: ${nomeUsuario} (${codigoUsuario})`);
+
+    // Buscar agendamento com todas as relações
+    const agendamento = await prisma.agendamento.findUnique({
+      where: { id: parseInt(id) },
+      include: { 
+        fornecedor: true, 
+        cd: true,
+        notasFiscais: true,
+        respostasReagendamento: true,
+        historicoAcoes: true
+      }
+    });
+
+    if (!agendamento) {
+      console.log(`❌ [DELETE /api/agendamentos/${id}/excluir] Agendamento não encontrado`);
+      return res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+
+    console.log(`📄 [DELETE /api/agendamentos/${id}/excluir] Agendamento encontrado:`, {
+      id: agendamento.id,
+      codigo: agendamento.codigo,
+      status: agendamento.status,
+      transportador: agendamento.fornecedor.nome
+    });
+
+    // Remover todas as relações e o agendamento (cascade delete irá ajudar)
+    const resultado = await prisma.agendamento.delete({
+      where: { id: parseInt(id) }
+    });
+
+    console.log(`✅ [DELETE /api/agendamentos/${id}/excluir] Agendamento ${agendamento.codigo} excluído permanentemente por ${nomeUsuario}`);
+
+    res.json({
+      success: true,
+      message: `Agendamento ${agendamento.codigo} excluído permanentemente do banco de dados`,
+      agendamento: {
+        id: agendamento.id,
+        codigo: agendamento.codigo,
+        status: agendamento.status,
+        excluido_por: nomeUsuario
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao excluir agendamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor ao excluir agendamento' });
+  }
+});
+
 // Reagendar entrega (fornecedor em caso de "nao-veio")
 app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
   try {
