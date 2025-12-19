@@ -2622,14 +2622,37 @@ app.put('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF
     const { numeroNF: novoNumeroNF, valor } = req.body;
     const arquivo = req.file;
 
+    console.log(`📝 [PUT] Editando NF:`, { codigo, numeroPedido, numeroNF, novoNumeroNF, valor });
+
     // Buscar agendamento
     const agendamento = await prisma.agendamento.findFirst({
       where: { codigo: codigo }
     });
 
     if (!agendamento) {
+      console.log(`❌ Agendamento ${codigo} não encontrado`);
       return res.status(404).json({ error: 'Agendamento não encontrado' });
     }
+
+    console.log(`✅ Agendamento encontrado: ID ${agendamento.id}`);
+
+    // Listar todas as NFs do agendamento para debug
+    const todasNFs = await prisma.notaFiscal.findMany({
+      where: { agendamentoId: agendamento.id }
+    });
+    console.log(`📋 NFs existentes no agendamento:`, todasNFs.map(nf => ({
+      numeroPedido: nf.numeroPedido.toString(),
+      numeroNF: nf.numeroNF,
+      numeroNFType: typeof nf.numeroNF
+    })));
+
+    console.log(`🔍 Buscando NF com params:`, {
+      agendamentoId: agendamento.id,
+      numeroPedido: numeroPedido,
+      numeroPedidoType: typeof numeroPedido,
+      numeroNF: numeroNF,
+      numeroNFType: typeof numeroNF
+    });
 
     // Buscar nota fiscal
     const notaFiscal = await prisma.notaFiscal.findFirst({
@@ -2641,8 +2664,15 @@ app.put('/api/agendamentos/:codigo/pedidos/:numeroPedido/notas-fiscais/:numeroNF
     });
 
     if (!notaFiscal) {
+      console.log(`❌ NF não encontrada. Tentativa de match:`, {
+        buscando_numeroPedido: numeroPedido,
+        buscando_numeroNF: numeroNF,
+        existentes: todasNFs.map(nf => `pedido=${nf.numeroPedido.toString()}, nf=${nf.numeroNF}`)
+      });
       return res.status(404).json({ error: 'Nota fiscal não encontrada' });
     }
+
+    console.log(`✅ NF encontrada: ID ${notaFiscal.id}`);
 
     // Se o número da NF mudou, verificar se não existe conflito
     if (novoNumeroNF && novoNumeroNF !== numeroNF) {
