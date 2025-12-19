@@ -3,19 +3,8 @@
  * Dispara todos os e-mails de uma vez com as credenciais de primeiro acesso
  */
 
-const nodemailer = require('nodemailer');
+const emailService = require('./emailService');
 const boasVindasAdminTemplate = require('./emails/boasVindasAdmin');
-
-// Configuração do Resend
-const transporter = nodemailer.createTransport({
-  host: 'smtp.resend.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: 'resend',
-    pass: process.env.RESEND_API_KEY
-  }
-});
 
 // Lista de gestores admin
 const gestores = [
@@ -67,17 +56,14 @@ async function enviarEmailBoasVindas(gestor) {
       linkPrimeiroAcesso: linkPrimeiroAcesso
     });
 
-    const mailOptions = {
-      from: 'BrisaLOG - Sistema de Agendamento <noreply@brisalog-agenda.online>',
+    // Usar o emailService existente
+    await emailService.sendEmail({
       to: gestor.email,
       subject: '👑 Boas-vindas! Seu Acesso Admin ao BrisaLOG foi Criado',
       html: htmlContent
-    };
-
-    const info = await transporter.sendMail(mailOptions);
+    });
     
     console.log(`✅ Email enviado para ${gestor.nome} (${gestor.email})`);
-    console.log(`   📧 Message ID: ${info.messageId}`);
     console.log(`   🔗 Link de acesso: ${linkPrimeiroAcesso}`);
     
     return { success: true, gestor: gestor.nome, email: gestor.email };
