@@ -846,6 +846,14 @@
                 alert('Acesso negado! Apenas administradores podem acessar esta página.');
                 window.location.href = 'login.html';
             }
+            
+            // Mostrar aba de perfis apenas para wanderson
+            if (userData.usuario === 'wanderson') {
+                const tabPerfis = document.getElementById('tab-perfis');
+                if (tabPerfis) {
+                    tabPerfis.style.display = 'block';
+                }
+            }
         }
 
         // Função global para fechar modal de detalhes
