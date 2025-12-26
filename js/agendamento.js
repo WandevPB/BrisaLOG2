@@ -1151,9 +1151,9 @@ class AgendamentoForm {
         }, 5000);
     }
 
-    async loadAvailableHours(date, cdDestino) {
+    async loadAvailableHours(date, cdDestino, isCDTorre = false) {
         try {
-            console.log('Carregando horários disponíveis para:', { date, cdDestino });
+            console.log('Carregando horários disponíveis para:', { date, cdDestino, isCDTorre });
             
             // Fazer requisição para a API de horários disponíveis sem necessidade de autenticação
             const response = await fetch(`${getApiBaseUrl()}/api/horarios-disponiveis?date=${date}&cd=${cdDestino}`, {
@@ -1179,9 +1179,23 @@ class AgendamentoForm {
                 // Adicionar horários disponíveis
                 if (data.horarios && Array.isArray(data.horarios)) {
                     data.horarios.forEach(horario => {
+                        // Se for CD Torre, mostrar apenas 08:00 e 13:00
+                        if (isCDTorre && horario.valor !== '08:00' && horario.valor !== '13:00') {
+                            return; // Pular este horário
+                        }
+                        
                         const option = document.createElement('option');
                         option.value = horario.valor;
-                        option.textContent = horario.label;
+                        
+                        // Ajustar label para CD Torre
+                        if (isCDTorre) {
+                            option.textContent = horario.valor === '08:00' 
+                                ? '08:00 (Turno da Manhã)' 
+                                : '13:00 (Turno da Tarde)';
+                        } else {
+                            option.textContent = horario.label;
+                        }
+                        
                         if (horario.disponivel === false) {
                             option.disabled = true;
                             option.textContent += ` (${horario.motivo || 'Indisponível'})`;
@@ -1434,52 +1448,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         horarioSelect.disabled = true;
     }
     
-    // Função para atualizar opções de horário baseado no tipo de CD
-    function atualizarOpcoesHorario() {
-        const cdNome = cdInput?.value;
-        const subcategoriaSelect = document.getElementById('subcategoria-cd');
-        const subCategoria = subcategoriaSelect?.value;
-        
-        // Se CD Lagoa Nova estiver selecionado, usar a subcategoria
-        let cdNomeFinal = cdNome;
-        if (cdNome && cdNome.toLowerCase().includes('lagoa nova') && subCategoria) {
-            cdNomeFinal = subCategoria;
-        }
-        
-        if (!horarioSelect) return;
-        
-        // Verificar se é CD Lagoa Nova - Torre
-        if (cdNomeFinal === 'Cd Lagoa Nova (TORRE)') {
-            // Mostrar apenas 08:00 e 13:00 para CD Torre
-            horarioSelect.innerHTML = `
-                <option value="">Selecione um horário</option>
-                <option value="08:00">08:00 (Turno da Manhã)</option>
-                <option value="13:00">13:00 (Turno da Tarde)</option>
-            `;
-            
-            // Mostrar aviso sobre restrições do CD Torre
-            const avisoTorre = document.getElementById('aviso-cd-torre');
-            if (avisoTorre) {
-                avisoTorre.style.display = 'block';
-            }
-        } else {
-            // Opções normais para outros CDs
-            horarioSelect.innerHTML = `
-                <option value="">Selecione um horário</option>
-                <option value="08:00 - 10:00">08:00 - 10:00</option>
-                <option value="10:00 - 12:00">10:00 - 12:00</option>
-                <option value="14:00 - 16:00">14:00 - 16:00</option>
-                <option value="16:00 - 17:00">16:00 - 17:00</option>
-            `;
-            
-            // Esconder aviso do CD Torre
-            const avisoTorre = document.getElementById('aviso-cd-torre');
-            if (avisoTorre) {
-                avisoTorre.style.display = 'none';
-            }
-        }
-    }
-    
     function atualizarHorarios() {
         const cdNome = cdInput?.value;
         const subcategoriaSelect = document.getElementById('subcategoria-cd');
@@ -1493,19 +1461,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const cdId = cdMap[cdNomeFinal] || cdMap[cdNome];
         const date = dateInput?.value;
+        const isCDTorre = cdNomeFinal === 'Cd Lagoa Nova (TORRE)';
         
-        // Atualizar opções de horário baseado no tipo de CD
-        atualizarOpcoesHorario();
-        
-        // Se for CD Torre, não carregar horários disponíveis (já foi definido manualmente)
-        if (cdNomeFinal === 'Cd Lagoa Nova (TORRE)') {
-            if (horarioSelect) horarioSelect.disabled = false;
-            return; // Não chamar loadAvailableHours
+        // Mostrar/esconder aviso do CD Torre
+        const avisoTorre = document.getElementById('aviso-cd-torre');
+        if (avisoTorre) {
+            avisoTorre.style.display = isCDTorre ? 'block' : 'none';
         }
         
         if (cdId && date) {
             if (horarioSelect) horarioSelect.disabled = false;
-            if (agendamentoForm) agendamentoForm.loadAvailableHours(date, cdId);
+            if (agendamentoForm) agendamentoForm.loadAvailableHours(date, cdId, isCDTorre);
         } else {
             if (horarioSelect) {
                 horarioSelect.disabled = true;
