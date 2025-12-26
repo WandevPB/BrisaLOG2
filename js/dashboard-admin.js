@@ -3,8 +3,10 @@ class DashboardAdmin {
     constructor() {
         this.usuarios = [];
         this.cds = [];
+        this.perfis = [];
         this.currentTab = 'visao-geral';
         this.usuarioEditando = null;
+        this.perfilEditando = null;
         this.init();
     }
 
@@ -82,7 +84,7 @@ class DashboardAdmin {
         if (tabName === 'usuarios') {
             this.renderUsuarios();
         } else if (tabName === 'perfis') {
-            if (!this.perfis) {
+            if (!this.perfis || this.perfis.length === 0) {
                 this.loadPerfis();
             } else {
                 this.renderPerfis();
