@@ -353,6 +353,10 @@ app.use('/api/auth', authRoutes);
 const usuariosRoutes = require('./usuariosRoutes');
 app.use('/api/usuarios', usuariosRoutes);
 
+// Usar rotas de perfis
+const perfisRoutes = require('./perfisRoutes');
+app.use('/api/perfis', perfisRoutes);
+
 // Configuração do Multer para upload de arquivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

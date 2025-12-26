@@ -87,6 +87,10 @@
                     <i class="fas fa-users mr-2"></i>
                     Gerenciar Usuários
                 </button>
+                <button onclick="dashboardAdmin.switchTab('perfis')" class="tab-button px-6 py-4 font-semibold whitespace-nowrap" id="tab-perfis" style="display: none;">
+                    <i class="fas fa-user-cog mr-2"></i>
+                    Gerenciar Perfis
+                </button>
                 <button onclick="dashboardAdmin.switchTab('produtividade')" class="tab-button px-6 py-4 font-semibold whitespace-nowrap">
                     <i class="fas fa-chart-bar mr-2"></i>
                     Produtividade
@@ -468,6 +472,79 @@
             </div>
         </div>
 
+        <!-- Tab: Gerenciar Perfis -->
+        <div id="tab-perfis" class="tab-content" style="display: none;">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    <i class="fas fa-user-cog text-orange-primary mr-2"></i>
+                    Gerenciar Perfis de Acesso
+                </h2>
+                <button onclick="dashboardAdmin.abrirModalNovoPerfil()" class="bg-gradient-to-r from-orange-primary to-orange-secondary text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all font-semibold">
+                    <i class="fas fa-plus mr-2"></i>
+                    Novo Perfil
+                </button>
+            </div>
+
+            <!-- Filtros -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-search mr-2 text-orange-primary"></i>
+                            Buscar
+                        </label>
+                        <input type="text" id="filtro-perfil-busca" placeholder="Nome ou usuário..." 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-user-tag mr-2 text-orange-primary"></i>
+                            Tipo de Perfil
+                        </label>
+                        <select id="filtro-perfil-tipo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                            <option value="">Todos</option>
+                            <option value="cd">CD</option>
+                            <option value="consultivo">Consultivo</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-toggle-on mr-2 text-orange-primary"></i>
+                            Status
+                        </label>
+                        <select id="filtro-perfil-status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                            <option value="">Todos</option>
+                            <option value="true">Ativos</option>
+                            <option value="false">Inativos</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Perfis -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gradient-to-r from-orange-primary to-orange-secondary text-white">
+                            <tr>
+                                <th class="px-6 py-4 text-left font-semibold">Nome</th>
+                                <th class="px-6 py-4 text-left font-semibold">Usuário</th>
+                                <th class="px-6 py-4 text-left font-semibold">Tipo de Perfil</th>
+                                <th class="px-6 py-4 text-left font-semibold">Email</th>
+                                <th class="px-6 py-4 text-center font-semibold">Status</th>
+                                <th class="px-6 py-4 text-center font-semibold">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="perfis-table-body">
+                            <!-- Será preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Tab: Produtividade -->
         <div id="tab-produtividade" class="tab-content">
             <h2 class="text-2xl font-bold text-gray-900 mb-6">
@@ -652,6 +729,95 @@
                     </button>
                     <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-orange-primary to-orange-secondary text-white rounded-lg hover:shadow-lg transition-all font-semibold">
                         Salvar Usuário
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Novo/Editar Perfil -->
+    <div id="modal-perfil" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-900" id="modal-perfil-title">Novo Perfil de Acesso</h3>
+                <button onclick="dashboardAdmin.fecharModalPerfil()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <form id="form-perfil" onsubmit="dashboardAdmin.salvarPerfil(event)" class="space-y-4">
+                <input type="hidden" id="perfil-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Nome do Perfil *
+                        </label>
+                        <input type="text" id="perfil-nome" required placeholder="Ex: CD Bahia, Leonardo Admin"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                        <p class="text-xs text-gray-500 mt-1">Nome que aparecerá no sistema</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Usuário (Login) *
+                        </label>
+                        <input type="text" id="perfil-usuario" required placeholder="Ex: bahia, leonardo"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                        <p class="text-xs text-gray-500 mt-1">Login usado para acessar o sistema</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Tipo de Perfil *
+                    </label>
+                    <select id="perfil-tipo" required onchange="dashboardAdmin.perfilTipoAlterado()"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                        <option value="">Selecione o tipo</option>
+                        <option value="cd">CD - Centro de Distribuição</option>
+                        <option value="consultivo">Consultivo - Perfil de consulta</option>
+                        <option value="admin">Admin - Administrador do sistema</option>
+                    </select>
+                </div>
+
+                <div id="perfil-email-container">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Email <span id="perfil-email-obrigatorio" style="display: none;" class="text-red-500">*</span>
+                    </label>
+                    <input type="email" id="perfil-email" placeholder="email@exemplo.com"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-primary focus:ring-2 focus:ring-orange-primary focus:ring-opacity-20">
+                    <p id="perfil-email-aviso" class="text-xs text-gray-500 mt-1">Opcional para CDs e Consultivos</p>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-500 mt-1 mr-2"></i>
+                        <div class="text-sm text-gray-700">
+                            <strong>Senha inicial:</strong> Brisanet123<br>
+                            <span id="perfil-info-admin" style="display: none;">
+                                <strong class="text-orange-primary">Perfis Admin:</strong> Receberão email de boas-vindas com link para criar senha personalizada.
+                            </span>
+                            <span id="perfil-info-normal">
+                                O usuário deverá alterar a senha no primeiro acesso.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="perfil-ativo" checked class="w-4 h-4 text-orange-primary border-gray-300 rounded focus:ring-orange-primary">
+                    <label for="perfil-ativo" class="text-sm font-semibold text-gray-700">
+                        Perfil Ativo
+                    </label>
+                </div>
+
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="dashboardAdmin.fecharModalPerfil()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all font-semibold">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-orange-primary to-orange-secondary text-white rounded-lg hover:shadow-lg transition-all font-semibold">
+                        Salvar Perfil
                     </button>
                 </div>
             </form>

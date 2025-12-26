@@ -31,11 +31,25 @@ class DashboardAdmin {
         document.getElementById('filtro-usuario-cd')?.addEventListener('change', () => this.filtrarUsuarios());
         document.getElementById('filtro-usuario-status')?.addEventListener('change', () => this.filtrarUsuarios());
 
+        // Filtros de perfis
+        document.getElementById('filtro-perfil-busca')?.addEventListener('input', () => this.filtrarPerfis());
+        document.getElementById('filtro-perfil-tipo')?.addEventListener('change', () => this.filtrarPerfis());
+        document.getElementById('filtro-perfil-status')?.addEventListener('change', () => this.filtrarPerfis());
+
         // Form de usuário
         document.getElementById('form-usuario')?.addEventListener('submit', (e) => {
             e.preventDefault();
             this.salvarUsuario();
         });
+
+        // Verificar se é wanderson para mostrar aba de perfis
+        const userData = JSON.parse(sessionStorage.getItem('cdData') || '{}');
+        if (userData.usuario === 'wanderson') {
+            const tabPerfis = document.getElementById('tab-perfis');
+            if (tabPerfis) {
+                tabPerfis.style.display = 'block';
+            }
+        }
 
         // Definir datas padrão para produtividade (último mês)
         const hoje = new Date();
@@ -67,6 +81,12 @@ class DashboardAdmin {
         // Carregar dados específicos da tab
         if (tabName === 'usuarios') {
             this.renderUsuarios();
+        } else if (tabName === 'perfis') {
+            if (!this.perfis) {
+                this.loadPerfis();
+            } else {
+                this.renderPerfis();
+            }
         } else if (tabName === 'produtividade') {
             this.gerarRelatorioProdutividade();
         }
@@ -711,6 +731,323 @@ class DashboardAdmin {
             dashboardConsultivo.showNotification(message, type);
         } else {
             alert(message);
+        }
+    }
+
+    // ========== GERENCIAMENTO DE PERFIS ==========
+
+    async loadPerfis() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/perfis`, {
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) throw new Error('Erro ao carregar perfis');
+
+            this.perfis = await response.json();
+            this.renderPerfis();
+        } catch (error) {
+            console.error('Erro ao carregar perfis:', error);
+            this.showNotification('Erro ao carregar perfis', 'error');
+        }
+    }
+
+    renderPerfis(perfis = this.perfis) {
+        const tbody = document.getElementById('perfis-table-body');
+        if (!tbody) return;
+
+        if (perfis.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        <i class="fas fa-user-cog text-4xl mb-2"></i>
+                        <p>Nenhum perfil encontrado</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        const getTipoBadge = (tipo) => {
+            const badges = {
+                'cd': '<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">CD</span>',
+                'consultivo': '<span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">Consultivo</span>',
+                'admin': '<span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Admin</span>'
+            };
+            return badges[tipo] || tipo;
+        };
+
+        tbody.innerHTML = perfis.map(perfil => `
+            <tr class="border-b hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4">
+                    <div class="font-semibold text-gray-900">${perfil.nome}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="font-mono text-orange-primary">${perfil.usuario}</span>
+                </td>
+                <td class="px-6 py-4">
+                    ${getTipoBadge(perfil.tipoPerfil)}
+                </td>
+                <td class="px-6 py-4">
+                    <span class="text-gray-700">${perfil.emailRecuperacao || '-'}</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    ${perfil.ativo 
+                        ? '<span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Ativo</span>'
+                        : '<span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Inativo</span>'
+                    }
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <button onclick="dashboardAdmin.editarPerfil(${perfil.id})" class="text-blue-600 hover:text-blue-800 mx-1" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    ${perfil.ativo 
+                        ? `<button onclick="dashboardAdmin.toggleStatusPerfil(${perfil.id}, false)" class="text-yellow-600 hover:text-yellow-800 mx-1" title="Desativar">
+                            <i class="fas fa-ban"></i>
+                           </button>`
+                        : `<button onclick="dashboardAdmin.toggleStatusPerfil(${perfil.id}, true)" class="text-green-600 hover:text-green-800 mx-1" title="Ativar">
+                            <i class="fas fa-check-circle"></i>
+                           </button>`
+                    }
+                    <button onclick="dashboardAdmin.resetarSenhaPerfil(${perfil.id})" class="text-purple-600 hover:text-purple-800 mx-1" title="Resetar Senha">
+                        <i class="fas fa-key"></i>
+                    </button>
+                    ${perfil.usuario !== 'wanderson' 
+                        ? `<button onclick="dashboardAdmin.excluirPerfil(${perfil.id})" class="text-red-600 hover:text-red-800 mx-1" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                           </button>`
+                        : '<span class="text-gray-400 mx-1" title="Perfil protegido"><i class="fas fa-shield-alt"></i></span>'
+                    }
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    filtrarPerfis() {
+        const busca = document.getElementById('filtro-perfil-busca')?.value.toLowerCase() || '';
+        const tipo = document.getElementById('filtro-perfil-tipo')?.value || '';
+        const status = document.getElementById('filtro-perfil-status')?.value || '';
+
+        const perfisFiltrados = this.perfis.filter(perfil => {
+            const matchBusca = !busca || 
+                perfil.nome.toLowerCase().includes(busca) || 
+                perfil.usuario.toLowerCase().includes(busca);
+            
+            const matchTipo = !tipo || perfil.tipoPerfil === tipo;
+            const matchStatus = !status || perfil.ativo.toString() === status;
+
+            return matchBusca && matchTipo && matchStatus;
+        });
+
+        this.renderPerfis(perfisFiltrados);
+    }
+
+    abrirModalNovoPerfil() {
+        this.perfilEditando = null;
+        document.getElementById('modal-perfil-title').textContent = 'Novo Perfil de Acesso';
+        document.getElementById('form-perfil').reset();
+        document.getElementById('perfil-id').value = '';
+        document.getElementById('perfil-ativo').checked = true;
+        this.perfilTipoAlterado(); // Resetar avisos
+        document.getElementById('modal-perfil').classList.remove('hidden');
+    }
+
+    editarPerfil(id) {
+        const perfil = this.perfis.find(p => p.id === id);
+        if (!perfil) return;
+
+        this.perfilEditando = perfil;
+        document.getElementById('modal-perfil-title').textContent = 'Editar Perfil de Acesso';
+        document.getElementById('perfil-id').value = perfil.id;
+        document.getElementById('perfil-nome').value = perfil.nome;
+        document.getElementById('perfil-usuario').value = perfil.usuario;
+        document.getElementById('perfil-tipo').value = perfil.tipoPerfil;
+        document.getElementById('perfil-email').value = perfil.emailRecuperacao || '';
+        document.getElementById('perfil-ativo').checked = perfil.ativo;
+        
+        this.perfilTipoAlterado(); // Atualizar avisos
+        document.getElementById('modal-perfil').classList.remove('hidden');
+    }
+
+    fecharModalPerfil() {
+        document.getElementById('modal-perfil').classList.add('hidden');
+        this.perfilEditando = null;
+    }
+
+    perfilTipoAlterado() {
+        const tipo = document.getElementById('perfil-tipo').value;
+        const emailInput = document.getElementById('perfil-email');
+        const emailObrigatorio = document.getElementById('perfil-email-obrigatorio');
+        const emailAviso = document.getElementById('perfil-email-aviso');
+        const infoAdmin = document.getElementById('perfil-info-admin');
+        const infoNormal = document.getElementById('perfil-info-normal');
+
+        if (tipo === 'admin') {
+            emailInput.required = true;
+            emailObrigatorio.style.display = 'inline';
+            emailAviso.textContent = 'Obrigatório - receberá email de boas-vindas';
+            emailAviso.classList.add('text-orange-primary', 'font-semibold');
+            infoAdmin.style.display = 'inline';
+            infoNormal.style.display = 'none';
+        } else {
+            emailInput.required = false;
+            emailObrigatorio.style.display = 'none';
+            emailAviso.textContent = 'Opcional para CDs e Consultivos';
+            emailAviso.classList.remove('text-orange-primary', 'font-semibold');
+            infoAdmin.style.display = 'none';
+            infoNormal.style.display = 'inline';
+        }
+    }
+
+    async salvarPerfil(e) {
+        e.preventDefault();
+
+        const id = document.getElementById('perfil-id').value;
+        const nome = document.getElementById('perfil-nome').value.trim();
+        const usuario = document.getElementById('perfil-usuario').value.trim().toLowerCase();
+        const tipoPerfil = document.getElementById('perfil-tipo').value;
+        const email = document.getElementById('perfil-email').value.trim();
+        const ativo = document.getElementById('perfil-ativo').checked;
+
+        if (!nome || !usuario || !tipoPerfil) {
+            this.showNotification('Preencha todos os campos obrigatórios', 'warning');
+            return;
+        }
+
+        if (tipoPerfil === 'admin' && !email) {
+            this.showNotification('Email é obrigatório para perfis de Admin', 'warning');
+            return;
+        }
+
+        try {
+            const url = id 
+                ? `${API_BASE_URL}/api/perfis/${id}`
+                : `${API_BASE_URL}/api/perfis`;
+            
+            const method = id ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    nome,
+                    usuario,
+                    tipoPerfil,
+                    email: email || null,
+                    ativo
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao salvar perfil');
+            }
+
+            const mensagem = id 
+                ? `Perfil "${nome}" atualizado com sucesso!`
+                : `Perfil "${nome}" criado com sucesso! ${tipoPerfil === 'admin' && email ? 'Email de boas-vindas enviado.' : 'Senha padrão: Brisanet123'}`;
+
+            this.showNotification(mensagem, 'success');
+            this.fecharModalPerfil();
+            await this.loadPerfis();
+
+        } catch (error) {
+            console.error('Erro ao salvar perfil:', error);
+            this.showNotification(error.message, 'error');
+        }
+    }
+
+    async toggleStatusPerfil(id, novoStatus) {
+        const acao = novoStatus ? 'ativar' : 'desativar';
+        if (!confirm(`Deseja realmente ${acao} este perfil?`)) return;
+
+        try {
+            const perfil = this.perfis.find(p => p.id === id);
+            
+            const response = await fetch(`${API_BASE_URL}/api/perfis/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    nome: perfil.nome,
+                    usuario: perfil.usuario,
+                    tipoPerfil: perfil.tipoPerfil,
+                    email: perfil.emailRecuperacao,
+                    ativo: novoStatus
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || `Erro ao ${acao} perfil`);
+            }
+
+            this.showNotification(`Perfil ${acao} com sucesso!`, 'success');
+            await this.loadPerfis();
+
+        } catch (error) {
+            console.error(`Erro ao ${acao} perfil:`, error);
+            this.showNotification(error.message, 'error');
+        }
+    }
+
+    async resetarSenhaPerfil(id) {
+        if (!confirm('Deseja resetar a senha deste perfil para "Brisanet123"?\n\nO usuário precisará alterar no próximo login.')) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/perfis/${id}/resetar-senha`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao resetar senha');
+            }
+
+            this.showNotification('Senha resetada para "Brisanet123" com sucesso!', 'success');
+            await this.loadPerfis();
+
+        } catch (error) {
+            console.error('Erro ao resetar senha:', error);
+            this.showNotification(error.message, 'error');
+        }
+    }
+
+    async excluirPerfil(id) {
+        const perfil = this.perfis.find(p => p.id === id);
+        if (!perfil) return;
+
+        if (!confirm(`Tem certeza que deseja EXCLUIR PERMANENTEMENTE o perfil "${perfil.nome}"?\n\nEsta ação não pode ser desfeita!`)) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/perfis/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao excluir perfil');
+            }
+
+            this.showNotification('Perfil excluído com sucesso!', 'success');
+            await this.loadPerfis();
+
+        } catch (error) {
+            console.error('Erro ao excluir perfil:', error);
+            this.showNotification(error.message, 'error');
         }
     }
 }
