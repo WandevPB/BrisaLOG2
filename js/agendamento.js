@@ -1430,7 +1430,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!horarioSelect || !cdSelecionado) return;
         
         // Verificar se é CD Lagoa Nova - Torre
-        if (cdSelecionado.nome === 'CD LAGOA NOVA - TORRE') {
+        if (cdSelecionado.nome === 'Cd Lagoa Nova (TORRE)') {
             // Mostrar apenas 08:00 e 13:00 para CD Torre
             horarioSelect.innerHTML = `
                 <option value="">Selecione um horário</option>
