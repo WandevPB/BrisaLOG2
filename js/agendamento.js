@@ -519,8 +519,16 @@ class AgendamentoForm {
                 } else {
                     dataEntregaISO = dataEntregaRaw;
                 }
+                
+                // Determinar CD destino final (considerar subcategoria se houver)
+                let cdDestinoFinal = getElValue('cd-destino');
+                const subcategoriaCD = getElValue('subcategoria-cd');
+                if (cdDestinoFinal === 'Cd Lagoa Nova/CE' && subcategoriaCD) {
+                    cdDestinoFinal = subcategoriaCD;
+                }
+                
                 this.formData.entrega = {
-                    cdDestino: getElValue('cd-destino'),
+                    cdDestino: cdDestinoFinal,
                     tipoCarga: getElValue('tipo-carga'),
                     dataEntrega: dataEntregaISO, // formato ISO
                     horarioEntrega: getElValue('horario-entrega'),
@@ -806,7 +814,10 @@ class AgendamentoForm {
         const cdNames = {
             'Bahia': 'CD Bahia',
             'Pernambuco': 'CD Pernambuco',
-            'Lagoa Nova': 'CD Lagoa Nova'
+            'Lagoa Nova': 'CD Lagoa Nova',
+            'Cd Lagoa Nova/CE': 'CD Lagoa Nova/CE',
+            'Cd Pereiro (FROTAS)': 'CD Pereiro (FROTAS)',
+            'Cd Lagoa Nova (TORRE)': 'CD Lagoa Nova (TORRE)'
         };
         const tipoCargas = {
             'equipamentos': 'Equipamentos de Rede',
@@ -1425,7 +1436,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Função para atualizar opções de horário baseado no tipo de CD
     function atualizarOpcoesHorario() {
         const cdNome = cdInput?.value;
-        const cdSelecionado = cdsData.find(cd => cd.nome === cdNome);
+        const subcategoriaSelect = document.getElementById('subcategoria-cd');
+        const subCategoria = subcategoriaSelect?.value;
+        
+        // Se CD Lagoa Nova estiver selecionado, usar a subcategoria
+        let cdNomeFinal = cdNome;
+        if (cdNome === 'Cd Lagoa Nova/CE' && subCategoria) {
+            cdNomeFinal = subCategoria;
+        }
+        
+        const cdSelecionado = cdsData.find(cd => cd.nome === cdNomeFinal);
         
         if (!horarioSelect || !cdSelecionado) return;
         
@@ -1481,8 +1501,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     if (cdInput && dateInput) {
-        cdInput.addEventListener('change', atualizarHorarios);
+        cdInput.addEventListener('change', function() {
+            // Verificar se selecionou CD Lagoa Nova
+            const cdSelecionado = cdInput.value;
+            const subcategoriaContainer = document.getElementById('subcategoria-cd-container');
+            const subcategoriaSelect = document.getElementById('subcategoria-cd');
+            
+            if (cdSelecionado === 'Cd Lagoa Nova/CE') {
+                // Mostrar subcategoria
+                if (subcategoriaContainer) {
+                    subcategoriaContainer.style.display = 'block';
+                    if (subcategoriaSelect) {
+                        subcategoriaSelect.required = true;
+                    }
+                }
+            } else {
+                // Esconder subcategoria
+                if (subcategoriaContainer) {
+                    subcategoriaContainer.style.display = 'none';
+                    if (subcategoriaSelect) {
+                        subcategoriaSelect.required = false;
+                        subcategoriaSelect.value = '';
+                    }
+                }
+            }
+            
+            atualizarHorarios();
+        });
         dateInput.addEventListener('change', atualizarHorarios);
+        
+        // Listener para subcategoria
+        const subcategoriaSelect = document.getElementById('subcategoria-cd');
+        if (subcategoriaSelect) {
+            subcategoriaSelect.addEventListener('change', atualizarHorarios);
+        }
     }
 
     // Adiciona listeners de input de arquivo (que não são via 'onchange' no HTML)
