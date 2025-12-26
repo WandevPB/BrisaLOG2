@@ -1463,6 +1463,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const date = dateInput?.value;
         const isCDTorre = cdNomeFinal === 'Cd Lagoa Nova (TORRE)';
         
+        console.log('🔍 [DEBUG atualizarHorarios]', {
+            cdNome,
+            subCategoria,
+            cdNomeFinal,
+            cdId,
+            isCDTorre,
+            cdMap
+        });
+        
         // Mostrar/esconder aviso do CD Torre
         const avisoTorre = document.getElementById('aviso-cd-torre');
         if (avisoTorre) {
