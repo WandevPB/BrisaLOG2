@@ -3518,7 +3518,16 @@ app.get('/api/cds-publicos', async (req, res) => {
 // Rota para listar CDs (para select autenticado)
 app.get('/api/cds', authenticateToken, async (req, res) => {
   try {
-    const cds = await prisma.cd.findMany({ select: { id: true, nome: true } });
+    const cds = await prisma.cd.findMany({ 
+      where: { 
+        tipoPerfil: 'cd' 
+      },
+      select: { 
+        id: true, 
+        nome: true, 
+        tipoPerfil: true 
+      } 
+    });
     res.json(cds);
   } catch (err) {
     console.error('Erro ao listar CDs:', err);

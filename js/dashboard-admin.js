@@ -94,9 +94,6 @@ class DashboardAdmin {
         const selectUsuarioCD = document.getElementById('usuario-cd');
         const selectFiltroCD = document.getElementById('filtro-usuario-cd');
 
-        // Filtrar apenas CDs (não incluir admin, consultivo, etc)
-        const apenasCD = this.cds.filter(cd => !cd.tipoPerfil || cd.tipoPerfil === 'cd');
-
         if (selectUsuarioCD) {
             selectUsuarioCD.innerHTML = '<option value="">Selecione um CD</option>';
             
@@ -108,20 +105,20 @@ class DashboardAdmin {
             optionTodos.style.color = '#FF6B35';
             selectUsuarioCD.appendChild(optionTodos);
             
-            // Adicionar CDs individuais
-            apenasCD.forEach(cd => {
+            // Adicionar CDs individuais (já filtrados pelo backend)
+            this.cds.forEach(cd => {
                 const option = document.createElement('option');
                 option.value = cd.id;
                 option.textContent = cd.nome;
                 selectUsuarioCD.appendChild(option);
             });
             
-            console.log('📋 CDs carregados no select:', apenasCD.length, apenasCD);
+            console.log('📋 CDs carregados no select:', this.cds.length, this.cds);
         }
 
         if (selectFiltroCD) {
             selectFiltroCD.innerHTML = '<option value="">Todos os CDs</option>';
-            apenasCD.forEach(cd => {
+            this.cds.forEach(cd => {
                 const option = document.createElement('option');
                 option.value = cd.id;
                 option.textContent = cd.nome;
