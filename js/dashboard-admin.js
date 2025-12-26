@@ -95,7 +95,7 @@ class DashboardAdmin {
         const selectFiltroCD = document.getElementById('filtro-usuario-cd');
 
         // Filtrar apenas CDs (não incluir admin, consultivo, etc)
-        const apenasCD = this.cds.filter(cd => cd.tipoPerfil === 'cd');
+        const apenasCD = this.cds.filter(cd => !cd.tipoPerfil || cd.tipoPerfil === 'cd');
 
         if (selectUsuarioCD) {
             selectUsuarioCD.innerHTML = '<option value="">Selecione um CD</option>';
@@ -115,6 +115,8 @@ class DashboardAdmin {
                 option.textContent = cd.nome;
                 selectUsuarioCD.appendChild(option);
             });
+            
+            console.log('📋 CDs carregados no select:', apenasCD.length, apenasCD);
         }
 
         if (selectFiltroCD) {
