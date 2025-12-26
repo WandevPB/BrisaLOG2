@@ -902,9 +902,9 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     }
 
     // ===================================================================
-    // VALIDAÇÃO ESPECIAL PARA CDs TIPO TORRE
+    // VALIDAÇÃO ESPECIAL PARA CD LAGOA NOVA - TORRE
     // ===================================================================
-    if (cd.tipoCD === 'torre') {
+    if (cd.nome === 'CD LAGOA NOVA - TORRE') {
       const horarioSolicitado = agendamentoData.entrega.horarioEntrega;
       const dataEntregaLocal = toLocalDateOnly(agendamentoData.entrega.dataEntrega);
       
@@ -912,7 +912,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       if (horarioSolicitado !== '08:00' && horarioSolicitado !== '13:00') {
         console.log(`❌ [CD Torre] Horário ${horarioSolicitado} não permitido para CD ${cd.nome}`);
         return res.status(400).json({ 
-          error: `CD Torre permite apenas os horários 08:00 (manhã) ou 13:00 (tarde)`,
+          error: `CD Lagoa Nova - Torre permite apenas os horários 08:00 (manhã) ou 13:00 (tarde)`,
           cdTipo: 'torre'
         });
       }
@@ -941,7 +941,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         const horarioAlternativo = turno === 'manha' ? '13:00 (tarde)' : '08:00 (manhã)';
         console.log(`❌ [CD Torre] Já existe agendamento no turno ${turnoTexto} para ${dataEntregaLocal}`);
         return res.status(400).json({ 
-          error: `CD Torre: Já existe um agendamento no turno da ${turnoTexto} para esta data. Tente o horário ${horarioAlternativo} ou escolha outra data.`,
+          error: `CD Lagoa Nova - Torre: Já existe um agendamento no turno da ${turnoTexto} para esta data. Tente o horário ${horarioAlternativo} ou escolha outra data.`,
           cdTipo: 'torre',
           turnoOcupado: turno
         });
