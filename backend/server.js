@@ -3169,7 +3169,8 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
     const inicioDia = new Date(ano, mes - 1, dia, 0, 0, 0, 0);
     const fimDia = new Date(ano, mes - 1, dia, 23, 59, 59, 999);
     
-    console.log(`📊 [GET /api/horarios-disponiveis] Buscando entre ${inicioDia} e ${fimDia}`);
+    console.log(`📊 [GET /api/horarios-disponiveis] Buscando entre ${inicioDia.toISOString()} e ${fimDia.toISOString()}`);
+    console.log(`📊 [GET /api/horarios-disponiveis] Data local: ${inicioDia.toLocaleDateString()} - ${fimDia.toLocaleDateString()}`);
     
     const agendamentosExistentes = await prisma.agendamento.findMany({
       where: {
@@ -3187,20 +3188,22 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
         codigo: true,
         dataEntrega: true,
         horarioEntrega: true,
-        status: true
+        status: true,
+        cdId: true
       }
     });
     
     console.log(`🔍 [DEBUG] Query executada com critérios:
-       - dataEntrega >= ${inicioDia}
-       - dataEntrega <= ${fimDia}
+       - dataEntrega >= ${inicioDia.toISOString()}
+       - dataEntrega <= ${fimDia.toISOString()}
        - cdId: ${cdId || 'não especificado'}
        - status: not cancelado`);
+    console.log(`🔍 [DEBUG] Agendamentos encontrados: ${agendamentosExistentes.length}`);
     
     if (agendamentosExistentes.length > 0) {
       console.log(`🔍 [DEBUG] Agendamentos encontrados na data:`);
       agendamentosExistentes.forEach(ag => {
-        console.log(`   - ${ag.codigo}: ${ag.dataEntrega} às ${ag.horarioEntrega} (${ag.status})`);
+        console.log(`   - ${ag.codigo}: cdId=${ag.cdId}, data=${ag.dataEntrega.toISOString()}, horário=${ag.horarioEntrega} (${ag.status})`);
       });
     } else {
       console.log(`🔍 [DEBUG] NENHUM agendamento encontrado para os critérios acima`);
