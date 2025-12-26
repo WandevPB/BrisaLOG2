@@ -87,7 +87,7 @@
                     <i class="fas fa-users mr-2"></i>
                     Gerenciar Usuários
                 </button>
-                <button onclick="dashboardAdmin.switchTab('perfis')" class="tab-button px-6 py-4 font-semibold whitespace-nowrap" id="tab-perfis" style="display: none;">
+                <button onclick="dashboardAdmin.switchTab('perfis')" class="tab-button px-6 py-4 font-semibold whitespace-nowrap" id="btn-perfis" style="display: none;">
                     <i class="fas fa-user-cog mr-2"></i>
                     Gerenciar Perfis
                 </button>
@@ -849,9 +849,9 @@
             
             // Mostrar aba de perfis apenas para wanderson
             if (userData.usuario === 'wanderson') {
-                const tabPerfis = document.getElementById('tab-perfis');
-                if (tabPerfis) {
-                    tabPerfis.style.display = 'block';
+                const btnPerfis = document.getElementById('btn-perfis');
+                if (btnPerfis) {
+                    btnPerfis.style.display = 'block';
                 }
             }
         }

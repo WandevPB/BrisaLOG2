@@ -47,9 +47,9 @@ class DashboardAdmin {
         // Verificar se é wanderson para mostrar aba de perfis
         const userData = JSON.parse(sessionStorage.getItem('cdData') || '{}');
         if (userData.usuario === 'wanderson') {
-            const tabPerfis = document.getElementById('tab-perfis');
-            if (tabPerfis) {
-                tabPerfis.style.display = 'block';
+            const btnPerfis = document.getElementById('btn-perfis');
+            if (btnPerfis) {
+                btnPerfis.style.display = 'block';
             }
         }
 
