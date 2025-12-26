@@ -1442,16 +1442,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Se CD Lagoa Nova estiver selecionado, usar a subcategoria
         let cdNomeFinal = cdNome;
-        if (cdNome === 'Cd Lagoa Nova/CE' && subCategoria) {
+        if (cdNome && cdNome.toLowerCase().includes('lagoa nova') && subCategoria) {
             cdNomeFinal = subCategoria;
         }
         
-        const cdSelecionado = cdsData.find(cd => cd.nome === cdNomeFinal);
-        
-        if (!horarioSelect || !cdSelecionado) return;
+        if (!horarioSelect) return;
         
         // Verificar se é CD Lagoa Nova - Torre
-        if (cdSelecionado.nome === 'Cd Lagoa Nova (TORRE)') {
+        if (cdNomeFinal === 'Cd Lagoa Nova (TORRE)') {
             // Mostrar apenas 08:00 e 13:00 para CD Torre
             horarioSelect.innerHTML = `
                 <option value="">Selecione um horário</option>
