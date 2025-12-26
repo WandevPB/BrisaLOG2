@@ -763,7 +763,7 @@ class DashboardAdmin {
         if (perfis.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                         <i class="fas fa-user-cog text-4xl mb-2"></i>
                         <p>Nenhum perfil encontrado</p>
                     </td>
@@ -794,6 +794,12 @@ class DashboardAdmin {
                 </td>
                 <td class="px-6 py-4">
                     <span class="text-gray-700">${perfil.emailRecuperacao || '-'}</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    ${perfil.primeiroLogin 
+                        ? '<span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">Sim</span>'
+                        : '<span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">Não</span>'
+                    }
                 </td>
                 <td class="px-6 py-4 text-center">
                     ${perfil.ativo 
@@ -1001,7 +1007,7 @@ class DashboardAdmin {
     }
 
     async resetarSenhaPerfil(id) {
-        if (!confirm('Deseja resetar a senha deste perfil para "Brisanet123"?\n\nO usuário precisará alterar no próximo login.')) return;
+        if (!confirm('Deseja resetar a senha deste perfil para "Brisanet123"?\n\n⚠️ ATENÇÃO: Isso irá:\n- Resetar a senha para "Brisanet123"\n- Forçar troca no próximo login\n- Remover email de recuperação\n- Limpar token de recuperação')) return;
 
         try {
             const response = await fetch(`${API_BASE_URL}/api/perfis/${id}/resetar-senha`, {

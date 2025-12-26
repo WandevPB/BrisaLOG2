@@ -76,8 +76,7 @@ router.post('/', async (req, res) => {
                 tipoPerfil,
                 emailRecuperacao: email || null,
                 ativo,
-                primeiroLogin: true,
-                recebeNotificacoes: tipoPerfil === 'cd' // Apenas CDs recebem notificações de agendamento
+                primeiroLogin: true
             }
         });
 
@@ -248,14 +247,17 @@ router.post('/:id/resetar-senha', async (req, res) => {
             where: { id: parseInt(id) },
             data: {
                 senha: senhaHash,
-                primeiroLogin: true
+                primeiroLogin: true,
+                emailRecuperacao: null,
+                resetToken: null,
+                resetTokenExpiry: null
             }
         });
 
-        console.log(`🔑 [Senha Resetada] ${perfil.nome} (${perfil.usuario}) - Nova senha: Brisanet123`);
+        console.log(`🔑 [Senha Resetada] ${perfil.nome} (${perfil.usuario}) - Senha, email e tokens limpos`);
 
         res.json({ 
-            message: 'Senha resetada para "Brisanet123" com sucesso',
+            message: 'Perfil resetado com sucesso. Senha: Brisanet123',
             primeiroLogin: true
         });
     } catch (error) {
