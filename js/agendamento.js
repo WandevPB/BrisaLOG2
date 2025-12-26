@@ -1482,11 +1482,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     function atualizarHorarios() {
         const cdNome = cdInput?.value;
-        const cdId = cdMap[cdNome];
+        const subcategoriaSelect = document.getElementById('subcategoria-cd');
+        const subCategoria = subcategoriaSelect?.value;
+        
+        // Se CD Lagoa Nova estiver selecionado, usar a subcategoria
+        let cdNomeFinal = cdNome;
+        if (cdNome && cdNome.toLowerCase().includes('lagoa nova') && subCategoria) {
+            cdNomeFinal = subCategoria;
+        }
+        
+        const cdId = cdMap[cdNomeFinal] || cdMap[cdNome];
         const date = dateInput?.value;
         
         // Atualizar opções de horário baseado no tipo de CD
         atualizarOpcoesHorario();
+        
+        // Se for CD Torre, não carregar horários disponíveis (já foi definido manualmente)
+        if (cdNomeFinal === 'Cd Lagoa Nova (TORRE)') {
+            if (horarioSelect) horarioSelect.disabled = false;
+            return; // Não chamar loadAvailableHours
+        }
         
         if (cdId && date) {
             if (horarioSelect) horarioSelect.disabled = false;
