@@ -1153,10 +1153,13 @@ class AgendamentoForm {
 
     async loadAvailableHours(date, cdDestino, isCDTorre = false) {
         try {
-            console.log('Carregando horários disponíveis para:', { date, cdDestino, isCDTorre });
+            console.log('🔍 Carregando horários disponíveis para:', { date, cdDestino, isCDTorre });
             
             // Fazer requisição para a API de horários disponíveis sem necessidade de autenticação
-            const response = await fetch(`${getApiBaseUrl()}/api/horarios-disponiveis?date=${date}&cd=${cdDestino}`, {
+            const url = `${getApiBaseUrl()}/api/horarios-disponiveis?date=${date}&cd=${cdDestino}`;
+            console.log('🌐 URL chamada:', url);
+            
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1168,7 +1171,8 @@ class AgendamentoForm {
             }
 
             const data = await response.json();
-            console.log('Horários disponíveis recebidos:', data);
+            console.log('📦 Horários disponíveis recebidos:', data);
+            console.log('📊 Total de horários retornados:', data.horarios?.length);
 
             // Atualizar select de horários
             const horarioSelect = document.getElementById('horario-entrega');
@@ -1178,9 +1182,13 @@ class AgendamentoForm {
                 
                 // Adicionar horários disponíveis
                 if (data.horarios && Array.isArray(data.horarios)) {
+                    console.log('🔄 Processando', data.horarios.length, 'horários...');
                     data.horarios.forEach(horario => {
+                        console.log(`   Horário ${horario.valor}: disponível=${horario.disponivel}, motivo=${horario.motivo}`);
+                        
                         // Se for CD Torre, mostrar apenas 08:00 e 13:00
                         if (isCDTorre && horario.valor !== '08:00' && horario.valor !== '13:00') {
+                            console.log(`   ⏭️ Pulando horário ${horario.valor} (não é 08:00 ou 13:00)`);
                             return; // Pular este horário
                         }
                         
@@ -1199,6 +1207,9 @@ class AgendamentoForm {
                         if (horario.disponivel === false) {
                             option.disabled = true;
                             option.textContent += ` (${horario.motivo || 'Indisponível'})`;
+                            console.log(`   ❌ Horário ${horario.valor} marcado como INDISPONÍVEL`);
+                        } else {
+                            console.log(`   ✅ Horário ${horario.valor} marcado como DISPONÍVEL`);
                         }
                         horarioSelect.appendChild(option);
                     });
