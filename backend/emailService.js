@@ -4,6 +4,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const templateRecuperacaoCadastrada = require('./emails/recuperacaoCadastrada');
 const templateBoasVindasUsuario = require('./emails/boasVindasUsuario');
+const templateBoasVindasAdmin = require('./emails/boasVindasAdmin');
 // Alteração fictícia para forçar deploy no Render
 const nodemailer = require('nodemailer');
 
@@ -439,6 +440,21 @@ class EmailService {
         return this.sendEmail({
             to,
             subject: '[BrisaLOG] Bem-vindo ao Sistema - Seu Acesso Foi Criado',
+            html
+        });
+    }
+
+    // E-mail de boas-vindas para novo admin
+    async sendBoasVindasAdmin({ to, nome, usuario }) {
+        const html = templateBoasVindasAdmin({
+            nome,
+            usuario,
+            senha: 'Brisanet123',
+            linkPrimeiroAcesso: 'https://brisalog-agenda.online/login.html'
+        });
+        return this.sendEmail({
+            to,
+            subject: '[BrisaLOG] Boas-vindas - Acesso Admin Criado',
             html
         });
     }
