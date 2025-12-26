@@ -35,8 +35,15 @@ router.get('/cd/:cdId', async (req, res) => {
 
         const usuarios = await prisma.usuario.findMany({
             where: {
-                cdId: parseInt(cdId),
-                ativo: true
+                AND: [
+                    { ativo: true },
+                    {
+                        OR: [
+                            { cdId: 'TODOS' }, // Usuários com acesso a todos os CDs
+                            { cdIdNumerico: parseInt(cdId) } // Usuários específicos do CD
+                        ]
+                    }
+                ]
             },
             orderBy: {
                 nome: 'asc'
@@ -88,8 +95,9 @@ router.post('/validar-codigo', async (req, res) => {
         }
 
         // Validar se o usuário pertence ao CD correto
-        if (cdId && usuario.cdId !== parseInt(cdId)) {
-            console.log('🔍 [Validar Código] CD não corresponde:', { usuarioCdId: usuario.cdId, cdIdRequisitado: cdId });
+        // Se o usuário tem acesso a TODOS os CDs, permite em qualquer CD
+        if (usuario.cdId !== 'TODOS' && cdId && usuario.cdIdNumerico !== parseInt(cdId)) {
+            console.log('🔍 [Validar Código] CD não corresponde:', { usuarioCdId: usuario.cdIdNumerico, cdIdRequisitado: cdId });
             return res.status(403).json({ error: 'Usuário não autorizado para este CD' });
         }
 
@@ -136,7 +144,8 @@ router.post('/', async (req, res) => {
                 codigo: codigo.toUpperCase(),
                 email,
                 cargo,
-                cdId: cdId ? parseInt(cdId) : null
+                cdId: cdId || null,
+                cdIdNumerico: (cdId && cdId !== 'TODOS') ? parseInt(cdId) : null
             },
             include: {
                 cd: {
@@ -149,20 +158,24 @@ router.post('/', async (req, res) => {
         });
 
         // Enviar e-mail de boas-vindas se houver email cadastrado
-        if (email && usuario.cd) {
+        if (email) {
             try {
                 console.log('═══════════════════════════════════════════════════');
                 console.log(`📧 [Novo Usuário] Iniciando envio de e-mail de boas-vindas`);
                 console.log(`📧 [Novo Usuário] Destinatário: ${email}`);
                 console.log(`📧 [Novo Usuário] Nome: ${usuario.nome}`);
                 console.log(`📧 [Novo Usuário] Código: ${usuario.codigo}`);
-                console.log(`📧 [Novo Usuário] CD: ${usuario.cd.nome}`);
+                
+                const cdNome = usuario.cdId === 'TODOS' 
+                    ? 'Todos os CDs' 
+                    : (usuario.cd?.nome || 'N/A');
+                console.log(`📧 [Novo Usuário] CD: ${cdNome}`);
                 
                 const emailResult = await emailService.sendBoasVindasUsuario({
                     to: email,
                     nome: usuario.nome,
                     codigo: usuario.codigo,
-                    cdNome: usuario.cd.nome
+                    cdNome: cdNome
                 });
 
                 console.log(`✅ [Novo Usuário] E-mail enviado com sucesso!`);
@@ -177,7 +190,7 @@ router.post('/', async (req, res) => {
                 console.error('═══════════════════════════════════════════════════');
             }
         } else {
-            console.log(`ℹ️ [Novo Usuário] E-mail não enviado - Email: ${email ? 'OK' : 'FALTANDO'}, CD: ${usuario.cd ? 'OK' : 'FALTANDO'}`);
+            console.log(`ℹ️ [Novo Usuário] E-mail não enviado - Email não fornecido`);
         }
 
         res.status(201).json(usuario);
@@ -201,7 +214,8 @@ router.put('/:id', async (req, res) => {
                 nome,
                 email,
                 cargo,
-                cdId: cdId ? parseInt(cdId) : null,
+                cdId: cdId || null,
+                cdIdNumerico: (cdId && cdId !== 'TODOS') ? parseInt(cdId) : null,
                 ativo
             },
             include: {

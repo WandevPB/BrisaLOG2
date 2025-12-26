@@ -13,6 +13,7 @@ model Cd {
   usuario           String            @unique
   senha             String
   tipoPerfil        String            @default("cd") // cd, consultivo, admin
+  tipoCD            String            @default("normal") // normal, torre
   emailRecuperacao  String?
   primeiroLogin     Boolean           @default(true)
   resetToken        String?
@@ -121,11 +122,12 @@ model Usuario {
   codigo        String   @unique // Código único do usuário (ex: "BHUSER001")
   email         String?
   cargo         String?
-  cdId          Int?     // Vinculado a qual CD (null = usuário admin/consultivo)
+  cdId          String?  // Vinculado a qual CD (pode ser ID numérico ou "TODOS")
+  cdIdNumerico  Int?     // Referência numérica ao CD (null se cdId = "TODOS")
   ativo         Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  cd            Cd?      @relation(fields: [cdId], references: [id])
+  cd            Cd?      @relation(fields: [cdIdNumerico], references: [id])
 
   @@map("usuarios")
 }

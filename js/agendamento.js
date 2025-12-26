@@ -7,6 +7,9 @@ function getApiBaseUrl() {
 let cdMap = {};
 
 // Função para carregar CDs do banco de dados
+// Armazenar informações completas dos CDs (incluindo tipoCD)
+let cdsData = [];
+
 async function loadCDsFromDatabase() {
     try {
         const response = await fetch(`${getApiBaseUrl()}/api/cds-publicos`);
@@ -15,6 +18,7 @@ async function loadCDsFromDatabase() {
         }
 
         const cds = await response.json();
+        cdsData = cds; // Armazenar dados completos dos CDs
         const selectCD = document.getElementById('cd-destino');
         
         if (!selectCD) {
@@ -1418,10 +1422,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         horarioSelect.disabled = true;
     }
     
+    // Função para atualizar opções de horário baseado no tipo de CD
+    function atualizarOpcoesHorario() {
+        const cdNome = cdInput?.value;
+        const cdSelecionado = cdsData.find(cd => cd.nome === cdNome);
+        
+        if (!horarioSelect || !cdSelecionado) return;
+        
+        // Verificar se é CD Torre
+        if (cdSelecionado.tipoCD === 'torre') {
+            // Mostrar apenas 08:00 e 13:00 para CD Torre
+            horarioSelect.innerHTML = `
+                <option value="">Selecione um horário</option>
+                <option value="08:00">08:00 (Turno da Manhã)</option>
+                <option value="13:00">13:00 (Turno da Tarde)</option>
+            `;
+            
+            // Mostrar aviso sobre restrições do CD Torre
+            const avisoTorre = document.getElementById('aviso-cd-torre');
+            if (avisoTorre) {
+                avisoTorre.style.display = 'block';
+            }
+        } else {
+            // Opções normais para outros CDs
+            horarioSelect.innerHTML = `
+                <option value="">Selecione um horário</option>
+                <option value="08:00 - 10:00">08:00 - 10:00</option>
+                <option value="10:00 - 12:00">10:00 - 12:00</option>
+                <option value="14:00 - 16:00">14:00 - 16:00</option>
+                <option value="16:00 - 17:00">16:00 - 17:00</option>
+            `;
+            
+            // Esconder aviso do CD Torre
+            const avisoTorre = document.getElementById('aviso-cd-torre');
+            if (avisoTorre) {
+                avisoTorre.style.display = 'none';
+            }
+        }
+    }
+    
     function atualizarHorarios() {
         const cdNome = cdInput?.value;
         const cdId = cdMap[cdNome];
         const date = dateInput?.value;
+        
+        // Atualizar opções de horário baseado no tipo de CD
+        atualizarOpcoesHorario();
         
         if (cdId && date) {
             if (horarioSelect) horarioSelect.disabled = false;

@@ -94,9 +94,22 @@ class DashboardAdmin {
         const selectUsuarioCD = document.getElementById('usuario-cd');
         const selectFiltroCD = document.getElementById('filtro-usuario-cd');
 
+        // Filtrar apenas CDs (não incluir admin, consultivo, etc)
+        const apenasCD = this.cds.filter(cd => cd.tipoPerfil === 'cd');
+
         if (selectUsuarioCD) {
             selectUsuarioCD.innerHTML = '<option value="">Selecione um CD</option>';
-            this.cds.forEach(cd => {
+            
+            // Opção especial: Todos os CDs
+            const optionTodos = document.createElement('option');
+            optionTodos.value = 'TODOS';
+            optionTodos.textContent = '🌐 Todos os CDs';
+            optionTodos.style.fontWeight = 'bold';
+            optionTodos.style.color = '#FF6B35';
+            selectUsuarioCD.appendChild(optionTodos);
+            
+            // Adicionar CDs individuais
+            apenasCD.forEach(cd => {
                 const option = document.createElement('option');
                 option.value = cd.id;
                 option.textContent = cd.nome;
@@ -106,7 +119,7 @@ class DashboardAdmin {
 
         if (selectFiltroCD) {
             selectFiltroCD.innerHTML = '<option value="">Todos os CDs</option>';
-            this.cds.forEach(cd => {
+            apenasCD.forEach(cd => {
                 const option = document.createElement('option');
                 option.value = cd.id;
                 option.textContent = cd.nome;
@@ -143,7 +156,8 @@ class DashboardAdmin {
                 usuario.nome.toLowerCase().includes(busca) || 
                 usuario.codigo.toLowerCase().includes(busca);
             
-            const matchCD = !cdId || usuario.cdId === parseInt(cdId);
+            // Se o usuário tem acesso a TODOS os CDs, sempre corresponde ao filtro
+            const matchCD = !cdId || usuario.cdId === 'TODOS' || usuario.cdIdNumerico === parseInt(cdId);
             
             const matchStatus = !status || usuario.ativo.toString() === status;
 
@@ -181,7 +195,10 @@ class DashboardAdmin {
                     <span class="text-gray-700">${usuario.cargo || '-'}</span>
                 </td>
                 <td class="px-6 py-4">
-                    <span class="badge-cd">${usuario.cd?.nome || 'N/A'}</span>
+                    ${usuario.cdId === 'TODOS' 
+                        ? '<span class="badge-cd" style="background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); color: white; font-weight: bold;">🌐 Todos os CDs</span>'
+                        : `<span class="badge-cd">${usuario.cd?.nome || 'N/A'}</span>`
+                    }
                 </td>
                 <td class="px-6 py-4">
                     <span class="text-gray-700">${usuario.email || '-'}</span>
@@ -261,7 +278,9 @@ class DashboardAdmin {
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/usuarios/gerar-codigo/${cdId}`);
+            // Se for 'TODOS', usar ID 0 como referência para gerar código genérico
+            const idParaGerar = cdId === 'TODOS' ? 0 : cdId;
+            const response = await fetch(`${API_BASE_URL}/api/usuarios/gerar-codigo/${idParaGerar}`);
             if (!response.ok) throw new Error('Erro ao gerar código');
 
             const data = await response.json();
@@ -304,7 +323,7 @@ class DashboardAdmin {
                     codigo,
                     email: email || null,
                     cargo: cargo || null,
-                    cdId: parseInt(cdId),
+                    cdId: cdId === 'TODOS' ? 'TODOS' : parseInt(cdId),
                     ativo
                 })
             });

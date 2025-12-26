@@ -897,6 +897,56 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       return res.status(400).json({ error: 'Centro de distribuição não encontrado' });
     }
 
+    // ===================================================================
+    // VALIDAÇÃO ESPECIAL PARA CDs TIPO TORRE
+    // ===================================================================
+    if (cd.tipoCD === 'torre') {
+      const horarioSolicitado = agendamentoData.entrega.horarioEntrega;
+      const dataEntregaLocal = toLocalDateOnly(agendamentoData.entrega.dataEntrega);
+      
+      // Permitir apenas 08:00 ou 13:00
+      if (horarioSolicitado !== '08:00' && horarioSolicitado !== '13:00') {
+        console.log(`❌ [CD Torre] Horário ${horarioSolicitado} não permitido para CD ${cd.nome}`);
+        return res.status(400).json({ 
+          error: `CD Torre permite apenas os horários 08:00 (manhã) ou 13:00 (tarde)`,
+          cdTipo: 'torre'
+        });
+      }
+      
+      // Determinar o turno
+      const turno = horarioSolicitado === '08:00' ? 'manha' : 'tarde';
+      
+      // Verificar se já existe agendamento neste turno (na mesma data)
+      const agendamentosNoDia = await prisma.agendamento.findMany({
+        where: {
+          cdId: cd.id,
+          dataEntrega: dataEntregaLocal,
+          status: { in: ['pendente', 'confirmado', 'em_transito'] }
+        }
+      });
+      
+      // Verificar se algum agendamento existente está no mesmo turno
+      const existeNoTurno = agendamentosNoDia.some(ag => {
+        const horario = ag.horarioEntrega;
+        const turnoExistente = horario === '08:00' ? 'manha' : 'tarde';
+        return turnoExistente === turno;
+      });
+      
+      if (existeNoTurno) {
+        const turnoTexto = turno === 'manha' ? 'manhã (08:00)' : 'tarde (13:00)';
+        const horarioAlternativo = turno === 'manha' ? '13:00 (tarde)' : '08:00 (manhã)';
+        console.log(`❌ [CD Torre] Já existe agendamento no turno ${turnoTexto} para ${dataEntregaLocal}`);
+        return res.status(400).json({ 
+          error: `CD Torre: Já existe um agendamento no turno da ${turnoTexto} para esta data. Tente o horário ${horarioAlternativo} ou escolha outra data.`,
+          cdTipo: 'torre',
+          turnoOcupado: turno
+        });
+      }
+      
+      console.log(`✅ [CD Torre] Horário ${horarioSolicitado} disponível para ${dataEntregaLocal}`);
+    }
+    // ===================================================================
+
     // Buscar ou criar fornecedor
     console.log('🔍 [POST /api/agendamentos] Buscando fornecedor com CNPJ:', agendamentoData.fornecedor.documento);
     // Não mais usar tabela fornecedores separada
@@ -3451,7 +3501,8 @@ app.get('/api/cds-publicos', async (req, res) => {
       },
       select: { 
         id: true, 
-        nome: true 
+        nome: true,
+        tipoCD: true
       },
       orderBy: {
         nome: 'asc'

@@ -7,7 +7,7 @@ const usuarios = [
   { nome: 'Wanderson Admin', usuario: 'wanderson' },
   { nome: 'Andrey Admin', usuario: 'andrey' },
   { nome: 'Galhardo Admin', usuario: 'galhardo' },
-  { nome: 'Leonardo Admin', usuario: 'leonardo' }
+  { nome: 'Leonarde Admin', usuario: 'leonarde' }
 ];
 
 async function gerarSQL() {

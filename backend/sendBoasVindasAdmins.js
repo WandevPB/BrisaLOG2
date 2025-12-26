@@ -25,7 +25,7 @@ const gestores = [
   },
   {
     nome: 'Leonarde',
-    usuario: 'leonardo',
+    usuario: 'leonarde',
     email: 'leonarde.frederique@grupobrisanet.com.br'
   }
 ];
