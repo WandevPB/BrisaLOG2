@@ -523,7 +523,8 @@ class AgendamentoForm {
                 // Determinar CD destino final (considerar subcategoria se houver)
                 let cdDestinoFinal = getElValue('cd-destino');
                 const subcategoriaCD = getElValue('subcategoria-cd');
-                if (cdDestinoFinal === 'Cd Lagoa Nova/CE' && subcategoriaCD) {
+                // Se houver subcategoria selecionada e o CD principal contém "Lagoa Nova", usar a subcategoria
+                if (subcategoriaCD && cdDestinoFinal && cdDestinoFinal.toLowerCase().includes('lagoa nova')) {
                     cdDestinoFinal = subcategoriaCD;
                 }
                 
@@ -1502,12 +1503,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (cdInput && dateInput) {
         cdInput.addEventListener('change', function() {
-            // Verificar se selecionou CD Lagoa Nova
+            // Verificar se selecionou CD Lagoa Nova (qualquer variação)
             const cdSelecionado = cdInput.value;
             const subcategoriaContainer = document.getElementById('subcategoria-cd-container');
             const subcategoriaSelect = document.getElementById('subcategoria-cd');
             
-            if (cdSelecionado === 'Cd Lagoa Nova/CE') {
+            // Verificar se é CD Lagoa Nova (aceita "CD Lagoa Nova", "Cd Lagoa Nova/CE", etc)
+            if (cdSelecionado && (cdSelecionado.toLowerCase().includes('cd lagoa nova') || cdSelecionado.toLowerCase().includes('lagoa nova')) 
+                && !cdSelecionado.includes('TORRE') && !cdSelecionado.includes('FROTAS') && !cdSelecionado.includes('Pereiro')) {
                 // Mostrar subcategoria
                 if (subcategoriaContainer) {
                     subcategoriaContainer.style.display = 'block';
