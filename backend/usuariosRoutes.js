@@ -137,6 +137,21 @@ router.post('/', async (req, res) => {
         if (codigoExistente) {
             return res.status(400).json({ error: 'Código já cadastrado' });
         }
+        // Se cdId for numérico, buscar o nome do CD
+        let cdIdFinal = 'TODOS';
+        let cdIdNumericoFinal = null;
+        
+        if (cdId && cdId !== '0' && cdId !== 'TODOS') {
+            const cdNumerico = parseInt(cdId);
+            const cdEncontrado = await prisma.cd.findUnique({
+                where: { id: cdNumerico }
+            });
+            
+            if (cdEncontrado) {
+                cdIdFinal = cdEncontrado.nome; // Salvar o NOME do CD
+                cdIdNumericoFinal = cdNumerico; // Salvar o ID numérico para FK
+            }
+        }
 
         const usuario = await prisma.usuario.create({
             data: {
@@ -144,8 +159,8 @@ router.post('/', async (req, res) => {
                 codigo: codigo.toUpperCase(),
                 email,
                 cargo,
-                cdId: (cdId === '0' || cdId === 'TODOS') ? 'TODOS' : cdId,
-                cdIdNumerico: (cdId && cdId !== 'TODOS' && cdId !== '0') ? parseInt(cdId) : null
+                cdId: cdIdFinal,
+                cdIdNumerico: cdIdNumericoFinal
             },
             include: {
                 cd: {
@@ -206,6 +221,22 @@ router.put('/:id', async (req, res) => {
         const { id } = req.params;
         const { nome, email, cargo, cdId, ativo } = req.body;
 
+        // Se cdId for numérico, buscar o nome do CD
+        let cdIdFinal = 'TODOS';
+        let cdIdNumericoFinal = null;
+        
+        if (cdId && cdId !== '0' && cdId !== 'TODOS') {
+            const cdNumerico = parseInt(cdId);
+            const cdEncontrado = await prisma.cd.findUnique({
+                where: { id: cdNumerico }
+            });
+            
+            if (cdEncontrado) {
+                cdIdFinal = cdEncontrado.nome;
+                cdIdNumericoFinal = cdNumerico;
+            }
+        }
+
         const usuario = await prisma.usuario.update({
             where: {
                 id: parseInt(id)
@@ -214,8 +245,8 @@ router.put('/:id', async (req, res) => {
                 nome,
                 email,
                 cargo,
-                cdId: cdId || null,
-                cdIdNumerico: (cdId && cdId !== 'TODOS') ? parseInt(cdId) : null,
+                cdId: cdIdFinal,
+                cdIdNumerico: cdIdNumericoFinal,
                 ativo
             },
             include: {
