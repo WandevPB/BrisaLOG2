@@ -29,18 +29,24 @@ async function loadCDsFromDatabase() {
         // Limpar opções existentes (exceto a primeira "Selecione o CD")
         selectCD.innerHTML = '<option value="">Selecione o CD</option>';
         
+        // Adicionar "Ceará" como opção especial (agrupador, não é um CD real)
+        const optionCeara = document.createElement('option');
+        optionCeara.value = 'Ceará';
+        optionCeara.textContent = 'Ceará';
+        selectCD.appendChild(optionCeara);
+        
         // Resetar cdMap
         cdMap = {};
 
-        // Filtrar apenas os CDs principais (Ceará, Pernambuco, Bahia)
-        const cdsPermitidos = ['Ceará', 'Pernambuco', 'Bahia'];
+        // Filtrar apenas os CDs principais (Pernambuco, Bahia)
+        const cdsPermitidos = ['Pernambuco', 'Bahia'];
         
         // Adicionar CDs dinamicamente
         cds.forEach(cd => {
             // Adicionar ao mapeamento (todos os CDs)
             cdMap[cd.nome] = cd.id;
             
-            // Adicionar ao select apenas os permitidos
+            // Adicionar ao select apenas os permitidos (não inclui Lagoa Nova, Pereiro, Torre)
             if (cdsPermitidos.includes(cd.nome)) {
                 const option = document.createElement('option');
                 option.value = cd.nome;
@@ -49,7 +55,7 @@ async function loadCDsFromDatabase() {
             }
         });
 
-        console.log('✅ CDs carregados:', cds.length, 'CDs no banco,', cdsPermitidos.length, 'exibidos no select');
+        console.log('✅ CDs carregados:', cds.length, 'CDs no banco,', (cdsPermitidos.length + 1), 'exibidos no select (incluindo Ceará)');
         console.log('📋 Mapeamento de CDs:', cdMap);
 
     } catch (error) {
@@ -1470,13 +1476,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         const subcategoriaSelect = document.getElementById('subcategoria-cd');
         const subCategoria = subcategoriaSelect?.value;
         
-        // Se CD Ceará estiver selecionado, usar a subcategoria
-        let cdNomeFinal = cdNome;
-        if (cdNome && cdNome === 'Ceará' && subCategoria) {
-            cdNomeFinal = subCategoria;
+        // Se CD Ceará estiver selecionado, PRECISA ter subcategoria
+        if (cdNome === 'Ceará') {
+            if (!subCategoria) {
+                // Não buscar horários se não tiver subcategoria selecionada
+                if (horarioSelect) {
+                    horarioSelect.disabled = true;
+                    horarioSelect.innerHTML = '<option value="">Selecione o destino específico primeiro</option>';
+                }
+                return;
+            }
+            // Usar a subcategoria como CD final
+            var cdNomeFinal = subCategoria;
+        } else {
+            // Para outros CDs, usar o nome direto
+            var cdNomeFinal = cdNome;
         }
         
-        const cdId = cdMap[cdNomeFinal] || cdMap[cdNome];
+        const cdId = cdMap[cdNomeFinal];
         const date = dateInput?.value;
         const isCDTorre = cdNomeFinal === 'Cd Lagoa Nova (TORRE)';
         
