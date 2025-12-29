@@ -1524,17 +1524,20 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
       }
     };
 
-    // Verificar se temos os dados do fornecedor para enviar email
-    if (!agendamento.fornecedor || !agendamento.fornecedor.email) {
-      console.warn('⚠️ Agendamento sem fornecedor ou email. Pulando envio de email.');
+    // Usar campos de snapshot do fornecedor (sempre presentes) ou do relacionamento (se existir)
+    const fornecedorEmail = agendamento.fornecedor?.email || agendamento.fornecedorEmail;
+    const fornecedorNome = agendamento.fornecedor?.nome || agendamento.fornecedorNome;
+    
+    if (!fornecedorEmail) {
+      console.warn('⚠️ Agendamento sem email de fornecedor. Pulando envio de email.');
     } else {
       const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
       
       if (status === 'confirmado') {
         enviarEmailComRetry(async () => {
           await emailService.sendConfirmadoEmail({
-            to: agendamento.fornecedor.email,
-            fornecedorNome: agendamento.fornecedor.nome,
+            to: fornecedorEmail,
+            fornecedorNome: fornecedorNome,
             agendamentoCodigo: agendamento.codigo,
             cdNome: agendamento.cd.nome,
             consultaUrl,
@@ -1547,8 +1550,8 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
       } else if (status === 'entregue') {
         enviarEmailComRetry(async () => {
           await emailService.sendEntregueEmail({
-            to: agendamento.fornecedor.email,
-            fornecedorNome: agendamento.fornecedor.nome,
+            to: fornecedorEmail,
+            fornecedorNome: fornecedorNome,
             agendamentoCodigo: agendamento.codigo,
             cdNome: agendamento.cd.nome,
             consultaUrl,
@@ -1561,8 +1564,8 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
       } else if (status === 'nao-veio') {
         enviarEmailComRetry(async () => {
           await emailService.sendNaoVeioEmail({
-            to: agendamento.fornecedor.email,
-          fornecedorNome: agendamento.fornecedor.nome,
+            to: fornecedorEmail,
+          fornecedorNome: fornecedorNome,
           agendamentoCodigo: agendamento.codigo,
           cdNome: agendamento.cd.nome,
           consultaUrl,
