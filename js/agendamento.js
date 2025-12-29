@@ -32,18 +32,24 @@ async function loadCDsFromDatabase() {
         // Resetar cdMap
         cdMap = {};
 
+        // Filtrar apenas os CDs principais (Lagoa Nova, Pernambuco, Bahia)
+        const cdsPermitidos = ['Lagoa Nova', 'Pernambuco', 'Bahia'];
+        
         // Adicionar CDs dinamicamente
         cds.forEach(cd => {
-            const option = document.createElement('option');
-            option.value = cd.nome;
-            option.textContent = cd.nome;
-            selectCD.appendChild(option);
-            
-            // Adicionar ao mapeamento
+            // Adicionar ao mapeamento (todos os CDs)
             cdMap[cd.nome] = cd.id;
+            
+            // Adicionar ao select apenas os permitidos
+            if (cdsPermitidos.includes(cd.nome)) {
+                const option = document.createElement('option');
+                option.value = cd.nome;
+                option.textContent = cd.nome;
+                selectCD.appendChild(option);
+            }
         });
 
-        console.log('✅ CDs carregados:', cds.length, 'CDs disponíveis');
+        console.log('✅ CDs carregados:', cds.length, 'CDs no banco,', cdsPermitidos.length, 'exibidos no select');
         console.log('📋 Mapeamento de CDs:', cdMap);
 
     } catch (error) {
