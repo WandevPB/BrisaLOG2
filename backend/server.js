@@ -1664,7 +1664,10 @@ app.post('/api/agendamentos/:id/reagendar', authenticateToken, async (req, res) 
       const usuario = await prisma.usuario.findFirst({
         where: {
           codigo: codigoUsuario,
-          cdId: cdId
+          OR: [
+            { cdIdNumerico: cdId },
+            { cdId: 'TODOS' }
+          ]
         }
       });
       if (usuario) {
