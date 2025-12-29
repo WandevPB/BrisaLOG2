@@ -843,7 +843,9 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         'lagoa nova': 'Lagoa Nova',
         'LAGOA NOVA': 'Lagoa Nova',
         'LagoaNova': 'Lagoa Nova',
-        'lagoanова': 'Lagoa Nova'
+        'lagoanова': 'Lagoa Nova',
+        'Cd Lagoa Nova (TORRE)': 'Cd Lagoa Nova (TORRE)',
+        'Pereiro (Estoque de frotas)': 'Pereiro (Estoque de frotas)'
       };
       
       const cdNome = cdMap[cdInfo] || cdInfo;
