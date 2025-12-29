@@ -1524,12 +1524,44 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
       }
     };
 
-    const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
-    
-    if (status === 'confirmado') {
-      enviarEmailComRetry(async () => {
-        await emailService.sendConfirmadoEmail({
-          to: agendamento.fornecedor.email,
+    // Verificar se temos os dados do fornecedor para enviar email
+    if (!agendamento.fornecedor || !agendamento.fornecedor.email) {
+      console.warn('⚠️ Agendamento sem fornecedor ou email. Pulando envio de email.');
+    } else {
+      const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
+      
+      if (status === 'confirmado') {
+        enviarEmailComRetry(async () => {
+          await emailService.sendConfirmadoEmail({
+            to: agendamento.fornecedor.email,
+            fornecedorNome: agendamento.fornecedor.nome,
+            agendamentoCodigo: agendamento.codigo,
+            cdNome: agendamento.cd.nome,
+            consultaUrl,
+            motoristaNome: agendamento.motoristaNome,
+            veiculoPlaca: agendamento.placaVeiculo,
+            dataAgendamento: agendamento.dataEntrega,
+            horarioAgendamento: agendamento.horarioEntrega
+          });
+        });
+      } else if (status === 'entregue') {
+        enviarEmailComRetry(async () => {
+          await emailService.sendEntregueEmail({
+            to: agendamento.fornecedor.email,
+            fornecedorNome: agendamento.fornecedor.nome,
+            agendamentoCodigo: agendamento.codigo,
+            cdNome: agendamento.cd.nome,
+            consultaUrl,
+            motoristaNome: agendamento.motoristaNome,
+            veiculoPlaca: agendamento.placaVeiculo,
+            dataEntrega: agendamento.dataEntrega,
+            horarioEntrega: agendamento.horarioEntrega
+          });
+        });
+      } else if (status === 'nao-veio') {
+        enviarEmailComRetry(async () => {
+          await emailService.sendNaoVeioEmail({
+            to: agendamento.fornecedor.email,
           fornecedorNome: agendamento.fornecedor.nome,
           agendamentoCodigo: agendamento.codigo,
           cdNome: agendamento.cd.nome,
@@ -1540,34 +1572,7 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
           horarioAgendamento: agendamento.horarioEntrega
         });
       });
-    } else if (status === 'entregue') {
-      enviarEmailComRetry(async () => {
-        await emailService.sendEntregueEmail({
-          to: agendamento.fornecedor.email,
-          fornecedorNome: agendamento.fornecedor.nome,
-          agendamentoCodigo: agendamento.codigo,
-          cdNome: agendamento.cd.nome,
-          consultaUrl,
-          motoristaNome: agendamento.motoristaNome,
-          veiculoPlaca: agendamento.placaVeiculo,
-          dataEntrega: agendamento.dataEntrega,
-          horarioEntrega: agendamento.horarioEntrega
-        });
-      });
-    } else if (status === 'nao-veio') {
-      enviarEmailComRetry(async () => {
-        await emailService.sendNaoVeioEmail({
-          to: agendamento.fornecedor.email,
-          fornecedorNome: agendamento.fornecedor.nome,
-          agendamentoCodigo: agendamento.codigo,
-          cdNome: agendamento.cd.nome,
-          consultaUrl,
-          motoristaNome: agendamento.motoristaNome,
-          veiculoPlaca: agendamento.placaVeiculo,
-          dataAgendamento: agendamento.dataEntrega,
-          horarioAgendamento: agendamento.horarioEntrega
-        });
-      });
+      }
     }
 
     console.log(`🎯 [PUT /api/agendamentos/${id}/status] Respondendo com sucesso:`, {
