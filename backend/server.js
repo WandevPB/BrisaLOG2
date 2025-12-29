@@ -3503,6 +3503,7 @@ app.get('/api/kpis', authenticateToken, async (req, res) => {
 // Rota PÚBLICA para listar CDs ativos (para formulário de agendamento)
 app.get('/api/cds-publicos', async (req, res) => {
   try {
+    console.log('📋 [GET /api/cds-publicos] Buscando CDs públicos...');
     const cds = await prisma.cd.findMany({ 
       where: { 
         ativo: true,
@@ -3510,16 +3511,17 @@ app.get('/api/cds-publicos', async (req, res) => {
       },
       select: { 
         id: true, 
-        nome: true,
-        tipoCD: true
+        nome: true
       },
       orderBy: {
         nome: 'asc'
       }
     });
+    console.log(`✅ [GET /api/cds-publicos] Retornando ${cds.length} CDs`);
     res.json(cds);
   } catch (err) {
-    console.error('Erro ao listar CDs públicos:', err);
+    console.error('❌ [GET /api/cds-publicos] Erro ao listar CDs públicos:', err);
+    console.error('❌ Stack:', err.stack);
     res.status(500).json({ error: 'Erro ao listar CDs' });
   }
 });
