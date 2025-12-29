@@ -292,12 +292,15 @@ router.get('/gerar-codigo/:cdId', async (req, res) => {
     try {
         const { cdId } = req.params;
 
-        const cd = await prisma.cd.findUnique({
-            where: { id: parseInt(cdId) }
-        });
+        // Se cdId for 0, significa "Todos os CDs" - não precisa validar o CD
+        if (cdId !== '0') {
+            const cd = await prisma.cd.findUnique({
+                where: { id: parseInt(cdId) }
+            });
 
-        if (!cd) {
-            return res.status(404).json({ error: 'CD não encontrado' });
+            if (!cd) {
+                return res.status(404).json({ error: 'CD não encontrado' });
+            }
         }
 
         // Gerar código aleatório de 5 dígitos
