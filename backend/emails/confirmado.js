@@ -3,6 +3,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdNome, motori
   // Mapa de localizações dos CDs
   const localizacoes = {
     'Lagoa Nova': 'https://maps.app.goo.gl/5GdXDmPgmd8ijPd6A',
+    'Cd Lagoa Nova (TORRE)': 'https://maps.app.goo.gl/5GdXDmPgmd8ijPd6A', // Mesma localização do Lagoa Nova/CE
     'Pernambuco': 'https://maps.app.goo.gl/qDCpduM2VScnKToD6',
     'Bahia': 'https://maps.app.goo.gl/WkTXcUywt6vimDY38',
     'Pereiro (Estoque de frotas)': 'https://maps.app.goo.gl/CzsBYjCtKuoSbfXv5'

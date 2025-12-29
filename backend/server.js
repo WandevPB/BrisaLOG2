@@ -1506,9 +1506,28 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
     });
 
     // Enviar emails automáticos conforme o novo status
-    try {
-  const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
-      if (status === 'confirmado') {
+    const enviarEmailComRetry = async (emailFunction, tentativa = 1) => {
+      try {
+        await emailFunction();
+        console.log(`✅ Email enviado com sucesso (tentativa ${tentativa})`);
+      } catch (emailError) {
+        console.error(`❌ Erro ao enviar email (tentativa ${tentativa}):`, emailError);
+        
+        if (tentativa === 1) {
+          console.log('⏳ Tentando reenviar email em 10 segundos...');
+          setTimeout(async () => {
+            await enviarEmailComRetry(emailFunction, 2);
+          }, 10000);
+        } else {
+          console.error('❌ Falha no reenvio após 10 segundos. Email não foi enviado.');
+        }
+      }
+    };
+
+    const consultaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/consultar-status.html?codigo=${agendamento.codigo}`;
+    
+    if (status === 'confirmado') {
+      enviarEmailComRetry(async () => {
         await emailService.sendConfirmadoEmail({
           to: agendamento.fornecedor.email,
           fornecedorNome: agendamento.fornecedor.nome,
@@ -1520,7 +1539,9 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
           dataAgendamento: agendamento.dataEntrega,
           horarioAgendamento: agendamento.horarioEntrega
         });
-      } else if (status === 'entregue') {
+      });
+    } else if (status === 'entregue') {
+      enviarEmailComRetry(async () => {
         await emailService.sendEntregueEmail({
           to: agendamento.fornecedor.email,
           fornecedorNome: agendamento.fornecedor.nome,
@@ -1532,7 +1553,9 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
           dataEntrega: agendamento.dataEntrega,
           horarioEntrega: agendamento.horarioEntrega
         });
-      } else if (status === 'nao-veio') {
+      });
+    } else if (status === 'nao-veio') {
+      enviarEmailComRetry(async () => {
         await emailService.sendNaoVeioEmail({
           to: agendamento.fornecedor.email,
           fornecedorNome: agendamento.fornecedor.nome,
@@ -1544,9 +1567,7 @@ app.put('/api/agendamentos/:id/status', authenticateToken, async (req, res) => {
           dataAgendamento: agendamento.dataEntrega,
           horarioAgendamento: agendamento.horarioEntrega
         });
-      }
-    } catch (emailError) {
-      console.error('Erro ao enviar email de status:', emailError);
+      });
     }
 
     console.log(`🎯 [PUT /api/agendamentos/${id}/status] Respondendo com sucesso:`, {
