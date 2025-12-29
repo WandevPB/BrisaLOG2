@@ -1210,7 +1210,7 @@ class CDDashboard {
         if (acao === 'reagendar') {
             this.suggestNewDate(id, usuarioData.usuario.codigo);
         } else {
-            this.updateAgendamentoStatus(id, acao, usuarioData.usuario.codigo);
+            this.updateAgendamentoStatus(id, acao, usuarioData);
         }
     }
     // Função utilitária para obter cdId do agendamento
@@ -2332,7 +2332,7 @@ class CDDashboard {
         `;
     }
 
-    async updateAgendamentoStatus(id, newStatus) {
+    async updateAgendamentoStatus(id, newStatus, usuarioDataParam = null) {
         try {
             const token = sessionStorage.getItem('token');
             const cdDataString = sessionStorage.getItem('cdData');
@@ -2370,13 +2370,20 @@ class CDDashboard {
             
             console.log('Atualizando status:', { id, newStatus, cdId: cdData.id, token: token ? 'presente' : 'ausente' });
             
-            // Solicitar código do usuário antes de prosseguir
-            const usuarioData = await solicitarCodigoUsuario(cdData.id);
-            
-            if (!usuarioData) {
-                // Usuário cancelou a autenticação
-                this.showNotification('Ação cancelada', 'warning');
-                return;
+            // Solicitar código do usuário apenas se não foi fornecido
+            let usuarioData;
+            if (usuarioDataParam) {
+                // Código já foi validado anteriormente
+                usuarioData = usuarioDataParam;
+            } else {
+                // Solicitar código do usuário
+                usuarioData = await solicitarCodigoUsuario(cdData.id);
+                
+                if (!usuarioData) {
+                    // Usuário cancelou a autenticação
+                    this.showNotification('Ação cancelada', 'warning');
+                    return;
+                }
             }
             
             const response = await fetch(`${getApiBaseUrl()}/api/agendamentos/${id}/status`, {
