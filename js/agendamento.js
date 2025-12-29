@@ -32,8 +32,8 @@ async function loadCDsFromDatabase() {
         // Resetar cdMap
         cdMap = {};
 
-        // Filtrar apenas os CDs principais (Lagoa Nova, Pernambuco, Bahia)
-        const cdsPermitidos = ['Lagoa Nova', 'Pernambuco', 'Bahia'];
+        // Filtrar apenas os CDs principais (Ceará, Pernambuco, Bahia)
+        const cdsPermitidos = ['Ceará', 'Pernambuco', 'Bahia'];
         
         // Adicionar CDs dinamicamente
         cds.forEach(cd => {
@@ -529,8 +529,8 @@ class AgendamentoForm {
                 // Determinar CD destino final (considerar subcategoria se houver)
                 let cdDestinoFinal = getElValue('cd-destino');
                 const subcategoriaCD = getElValue('subcategoria-cd');
-                // Se houver subcategoria selecionada e o CD principal contém "Lagoa Nova", usar a subcategoria
-                if (subcategoriaCD && cdDestinoFinal && cdDestinoFinal.toLowerCase().includes('lagoa nova')) {
+                // Se houver subcategoria selecionada e o CD principal for Ceará, usar a subcategoria
+                if (subcategoriaCD && cdDestinoFinal && cdDestinoFinal === 'Ceará') {
                     cdDestinoFinal = subcategoriaCD;
                 }
                 
@@ -821,6 +821,7 @@ class AgendamentoForm {
         const cdNames = {
             'Bahia': 'CD Bahia',
             'Pernambuco': 'CD Pernambuco',
+            'Ceará': 'CD Ceará',
             'Lagoa Nova': 'CD Lagoa Nova/CE',
             'Pereiro (Estoque de frotas)': 'CD Pereiro (FROTAS)',
             'Cd Lagoa Nova (TORRE)': 'CD Lagoa Nova (TORRE)'
@@ -1469,9 +1470,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const subcategoriaSelect = document.getElementById('subcategoria-cd');
         const subCategoria = subcategoriaSelect?.value;
         
-        // Se CD Lagoa Nova estiver selecionado, usar a subcategoria
+        // Se CD Ceará estiver selecionado, usar a subcategoria
         let cdNomeFinal = cdNome;
-        if (cdNome && cdNome.toLowerCase().includes('lagoa nova') && subCategoria) {
+        if (cdNome && cdNome === 'Ceará' && subCategoria) {
             cdNomeFinal = subCategoria;
         }
         
@@ -1512,8 +1513,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const subcategoriaContainer = document.getElementById('subcategoria-cd-container');
             const subcategoriaSelect = document.getElementById('subcategoria-cd');
             
-            // Verificar se é CD Lagoa Nova principal
-            if (cdSelecionado && cdSelecionado === 'Lagoa Nova') {
+            // Verificar se é CD Ceará (mostra subcategorias)
+            if (cdSelecionado && cdSelecionado === 'Ceará') {
                 // Mostrar subcategoria
                 if (subcategoriaContainer) {
                     subcategoriaContainer.style.display = 'block';
