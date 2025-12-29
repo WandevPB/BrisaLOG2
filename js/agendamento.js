@@ -815,9 +815,8 @@ class AgendamentoForm {
         const cdNames = {
             'Bahia': 'CD Bahia',
             'Pernambuco': 'CD Pernambuco',
-            'Lagoa Nova': 'CD Lagoa Nova',
-            'Cd Lagoa Nova/CE': 'CD Lagoa Nova/CE',
-            'Cd Pereiro (FROTAS)': 'CD Pereiro (FROTAS)',
+            'Lagoa Nova': 'CD Lagoa Nova/CE',
+            'Pereiro (Estoque de frotas)': 'CD Pereiro (FROTAS)',
             'Cd Lagoa Nova (TORRE)': 'CD Lagoa Nova (TORRE)'
         };
         const tipoCargas = {
@@ -1507,9 +1506,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const subcategoriaContainer = document.getElementById('subcategoria-cd-container');
             const subcategoriaSelect = document.getElementById('subcategoria-cd');
             
-            // Verificar se é CD Lagoa Nova (aceita "CD Lagoa Nova", "Cd Lagoa Nova/CE", etc)
-            if (cdSelecionado && (cdSelecionado.toLowerCase().includes('cd lagoa nova') || cdSelecionado.toLowerCase().includes('lagoa nova')) 
-                && !cdSelecionado.includes('TORRE') && !cdSelecionado.includes('FROTAS') && !cdSelecionado.includes('Pereiro')) {
+            // Verificar se é CD Lagoa Nova principal
+            if (cdSelecionado && cdSelecionado === 'Lagoa Nova') {
                 // Mostrar subcategoria
                 if (subcategoriaContainer) {
                     subcategoriaContainer.style.display = 'block';
