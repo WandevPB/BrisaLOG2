@@ -468,11 +468,6 @@ class DashboardConsultivo {
                         title="Ver Detalhes">
                         <i class="fas fa-eye text-lg"></i>
                     </button>
-                    <button onclick="dashboardConsultivo.abrirModalAlterarStatus(${agendamento.id})" 
-                        class="text-blue-600 hover:text-blue-800 transition-colors" 
-                        title="Alterar Status">
-                        <i class="fas fa-exchange-alt text-lg"></i>
-                    </button>
                     ${typeof dashboardAdmin !== 'undefined' ? `
                     <button onclick="dashboardAdmin.excluirAgendamento('${agendamento.codigo}')" 
                         class="text-red-600 hover:text-red-800 transition-colors" 
