@@ -144,8 +144,8 @@ router.post('/', async (req, res) => {
                 codigo: codigo.toUpperCase(),
                 email,
                 cargo,
-                cdId: cdId || null,
-                cdIdNumerico: (cdId && cdId !== 'TODOS') ? parseInt(cdId) : null
+                cdId: (cdId === '0' || cdId === 'TODOS') ? 'TODOS' : cdId,
+                cdIdNumerico: (cdId && cdId !== 'TODOS' && cdId !== '0') ? parseInt(cdId) : null
             },
             include: {
                 cd: {
