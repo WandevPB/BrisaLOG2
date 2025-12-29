@@ -500,7 +500,7 @@ class DashboardConsultivo {
         const config = statusMap[status] || { class: 'status-pendente', icon: 'question', label: status || 'Pendente' };
 
         return `
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white ${config.class}">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-gray-900 ${config.class}">
                 <i class="fas fa-${config.icon} mr-1"></i>
                 ${config.label}
             </span>
