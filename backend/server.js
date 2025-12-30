@@ -2275,40 +2275,18 @@ app.delete('/api/agendamentos/:codigo/excluir', async (req, res) => {
 });
 
 // Cancelar agendamento (Admin com motivo e envio de email)
-app.post('/api/agendamentos/:codigo/cancelar', async (req, res) => {
+app.post('/api/agendamentos/:codigo/cancelar', authenticateToken, async (req, res) => {
   try {
     const { codigo } = req.params;
-    const { motivo, codigoUsuario, nomeUsuario } = req.body;
+    const { motivo } = req.body;
+    const adminData = req.user; // Dados do admin autenticado via token
 
-    console.log(`🚫 [POST /api/agendamentos/${codigo}/cancelar] Cancelamento solicitado por: ${nomeUsuario} (${codigoUsuario})`);
+    console.log(`🚫 [POST /api/agendamentos/${codigo}/cancelar] Cancelamento solicitado pelo admin`);
     console.log(`📝 [POST /api/agendamentos/${codigo}/cancelar] Motivo: ${motivo}`);
 
     // Validar motivo
     if (!motivo || motivo.trim() === '') {
       return res.status(400).json({ error: 'Motivo do cancelamento é obrigatório' });
-    }
-
-    // Validar código do usuário (aceita código GOD)
-    let nomeUsuarioFinal = nomeUsuario;
-    if (codigoUsuario && validarCodigoGOD(codigoUsuario)) {
-      nomeUsuarioFinal = 'BrisaLOG2 (GOD)';
-      console.log(`🔐 [POST /api/agendamentos/${codigo}/cancelar] Código GOD utilizado!`);
-    } else if (codigoUsuario) {
-      // Validar código de usuário admin
-      const usuario = await prisma.cd.findFirst({
-        where: {
-          codigo: codigoUsuario,
-          tipoPerfil: 'admin'
-        }
-      });
-
-      if (usuario) {
-        nomeUsuarioFinal = usuario.nome;
-        console.log(`👤 [POST /api/agendamentos/${codigo}/cancelar] Admin válido: ${usuario.nome}`);
-      } else {
-        console.log(`❌ [POST /api/agendamentos/${codigo}/cancelar] Código de admin inválido`);
-        return res.status(403).json({ error: 'Código de usuário inválido ou sem permissão de admin' });
-      }
     }
 
     // Buscar agendamento
@@ -2345,8 +2323,8 @@ app.post('/api/agendamentos/:codigo/cancelar', async (req, res) => {
       data: {
         acao: 'cancelado_admin',
         descricao: `Agendamento cancelado pelo admin. Motivo: ${motivo}`,
-        autor: nomeUsuarioFinal,
-        codigoUsuario: codigoUsuario || null,
+        autor: adminData.nome || 'Admin',
+        codigoUsuario: adminData.codigo || null,
         agendamentoId: agendamento.id,
         cdId: agendamento.cdId
       }
@@ -2376,7 +2354,7 @@ app.post('/api/agendamentos/:codigo/cancelar', async (req, res) => {
       console.warn(`⚠️ [POST /api/agendamentos/${codigo}/cancelar] Email do fornecedor não encontrado`);
     }
 
-    console.log(`✅ [POST /api/agendamentos/${codigo}/cancelar] Agendamento ${agendamento.codigo} cancelado por ${nomeUsuarioFinal}`);
+    console.log(`✅ [POST /api/agendamentos/${codigo}/cancelar] Agendamento ${agendamento.codigo} cancelado por admin`);
 
     res.json({
       success: true,
@@ -2386,7 +2364,7 @@ app.post('/api/agendamentos/:codigo/cancelar', async (req, res) => {
         codigo: agendamento.codigo,
         status: 'cancelado',
         motivo: motivo,
-        cancelado_por: nomeUsuarioFinal
+        cancelado_por: adminData.nome || 'Admin'
       }
     });
 

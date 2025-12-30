@@ -650,7 +650,6 @@ class DashboardAdmin {
             
             // Limpar campos
             document.getElementById('cancelar-motivo').value = '';
-            document.getElementById('cancelar-codigo-usuario').value = '';
             this.esconderErroCancelar();
             
             // Guardar código do agendamento para uso posterior
@@ -668,7 +667,6 @@ class DashboardAdmin {
     fecharModalCancelar() {
         document.getElementById('modal-cancelar-agendamento').classList.add('hidden');
         document.getElementById('cancelar-motivo').value = '';
-        document.getElementById('cancelar-codigo-usuario').value = '';
         this.esconderErroCancelar();
     }
 
@@ -1143,39 +1141,15 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             const motivo = document.getElementById('cancelar-motivo').value.trim();
-            const codigoUsuario = document.getElementById('cancelar-codigo-usuario').value.trim().toUpperCase();
             
             if (!motivo) {
                 dashboardAdmin.mostrarErroCancelar('Motivo do cancelamento é obrigatório');
-                return;
-            }
-            
-            if (!codigoUsuario) {
-                dashboardAdmin.mostrarErroCancelar('Código de usuário é obrigatório');
                 return;
             }
 
             try {
                 dashboardAdmin.esconderErroCancelar();
                 dashboardAdmin.mostrarLoadingCancelar(true);
-
-                // Verificar se é código GOD ou usuário cadastrado
-                let nomeUsuario;
-                const CODIGO_GOD = 'BRISALOG2';
-                
-                if (codigoUsuario === CODIGO_GOD) {
-                    nomeUsuario = 'BrisaLOG2 (GOD)';
-                    console.log('🔐 Código GOD utilizado para cancelamento');
-                } else {
-                    // Buscar nome do usuário cadastrado
-                    const usuario = dashboardAdmin.usuarios.find(u => u.codigo === codigoUsuario);
-                    if (!usuario) {
-                        dashboardAdmin.mostrarLoadingCancelar(false);
-                        dashboardAdmin.mostrarErroCancelar('Usuário não encontrado. Verifique o código digitado.');
-                        return;
-                    }
-                    nomeUsuario = usuario.nome;
-                }
 
                 const cancelResponse = await fetch(`${API_BASE_URL}/api/agendamentos/${dashboardAdmin.agendamentoCancelarCodigo}/cancelar`, {
                     method: 'POST',
@@ -1184,9 +1158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ 
-                        motivo: motivo,
-                        codigoUsuario: codigoUsuario,
-                        nomeUsuario: nomeUsuario
+                        motivo: motivo
                     })
                 });
 
@@ -1216,14 +1188,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 dashboardAdmin.mostrarLoadingCancelar(false);
                 dashboardAdmin.mostrarErroCancelar('Erro ao cancelar agendamento: ' + error.message);
             }
-        });
-    }
-
-    // Auto uppercase no código de usuário
-    const inputCodigoUsuario = document.getElementById('cancelar-codigo-usuario');
-    if (inputCodigoUsuario) {
-        inputCodigoUsuario.addEventListener('input', (e) => {
-            e.target.value = e.target.value.toUpperCase();
         });
     }
 });
