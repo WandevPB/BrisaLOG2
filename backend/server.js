@@ -854,16 +854,27 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       const cdNome = cdMap[cdInfo] || cdInfo;
       console.log('🔍 [POST /api/agendamentos] Nome do CD mapeado:', cdNome);
       
-      const cd = await prisma.cd.findFirst({
+      // Buscar CD com match EXATO primeiro para evitar confusão entre "Lagoa Nova" e "Cd Lagoa Nova (TORRE)"
+      let cd = await prisma.cd.findFirst({
         where: {
           OR: [
             { nome: { equals: cdNome, mode: 'insensitive' } },
-            { usuario: { equals: cdNome, mode: 'insensitive' } },
-            { nome: { contains: cdNome, mode: 'insensitive' } },
-            { usuario: { contains: cdNome, mode: 'insensitive' } }
+            { usuario: { equals: cdNome, mode: 'insensitive' } }
           ]
         }
       });
+      
+      // Se não encontrar com match exato, tentar com contains (fallback)
+      if (!cd) {
+        cd = await prisma.cd.findFirst({
+          where: {
+            OR: [
+              { nome: { contains: cdNome, mode: 'insensitive' } },
+              { usuario: { contains: cdNome, mode: 'insensitive' } }
+            ]
+          }
+        });
+      }
       
       console.log('🔍 [POST /api/agendamentos] CD encontrado:', cd);
       
@@ -2336,13 +2347,20 @@ app.post('/api/agendamentos/:codigo/cancelar', authenticateToken, async (req, re
 
     if (fornecedorEmail) {
       try {
+        // Formatar data para exibição no email
+        const dataFormatada = new Date(agendamento.dataEntrega).toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+
         await emailService.sendCanceladoCDEmail({
           to: fornecedorEmail,
           fornecedorNome: fornecedorNome,
           agendamentoCodigo: agendamento.codigo,
           cdNome: agendamento.cd.nome,
           motivo: motivo,
-          dataAgendamento: agendamento.dataEntrega,
+          dataAgendamento: dataFormatada,
           horarioAgendamento: agendamento.horarioEntrega
         });
         console.log(`✅ [POST /api/agendamentos/${codigo}/cancelar] Email de cancelamento enviado para ${fornecedorEmail}`);
