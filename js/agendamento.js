@@ -1163,9 +1163,9 @@ class AgendamentoForm {
         }, 5000);
     }
 
-    async loadAvailableHours(date, cdDestino, isCDTorre = false) {
+    async loadAvailableHours(date, cdDestino, isCDTorre = false, isCDLagoaNova = false) {
         try {
-            console.log('🔍 Carregando horários disponíveis para:', { date, cdDestino, isCDTorre });
+            console.log('🔍 Carregando horários disponíveis para:', { date, cdDestino, isCDTorre, isCDLagoaNova });
             
             // Fazer requisição para a API de horários disponíveis sem necessidade de autenticação
             const url = `${getApiBaseUrl()}/api/horarios-disponiveis?date=${date}&cd=${cdDestino}`;
@@ -1202,6 +1202,16 @@ class AgendamentoForm {
                         if (isCDTorre && horario.valor !== '08:00' && horario.valor !== '13:00') {
                             console.log(`   ⏭️ Pulando horário ${horario.valor} (não é 08:00 ou 13:00)`);
                             return; // Pular este horário
+                        }
+                        
+                        // Se for CD Lagoa Nova, limitar horários da tarde até 15:00
+                        if (isCDLagoaNova) {
+                            const horaInt = parseInt(horario.valor.split(':')[0]);
+                            // Permitir manhã (08-11) e tarde até 15:00 (14-15)
+                            if (horaInt > 15 || (horaInt >= 12 && horaInt < 14)) {
+                                console.log(`   ⏭️ Pulando horário ${horario.valor} (CD Lagoa Nova: tarde só até 15:00)`);
+                                return; // Pular horários após 15h e horário de almoço
+                            }
                         }
                         
                         const option = document.createElement('option');
@@ -1496,6 +1506,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cdId = cdMap[cdNomeFinal];
         const date = dateInput?.value;
         const isCDTorre = cdNomeFinal === 'Cd Lagoa Nova (TORRE)';
+        const isCDLagoaNova = cdNomeFinal === 'Lagoa Nova';
         
         console.log('🔍 [DEBUG atualizarHorarios]', {
             cdNome,
@@ -1503,6 +1514,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             cdNomeFinal,
             cdId,
             isCDTorre,
+            isCDLagoaNova,
             cdMap
         });
         
@@ -1514,7 +1526,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (cdId && date) {
             if (horarioSelect) horarioSelect.disabled = false;
-            if (agendamentoForm) agendamentoForm.loadAvailableHours(date, cdId, isCDTorre);
+            if (agendamentoForm) agendamentoForm.loadAvailableHours(date, cdId, isCDTorre, isCDLagoaNova);
         } else {
             if (horarioSelect) {
                 horarioSelect.disabled = true;

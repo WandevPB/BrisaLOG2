@@ -832,9 +832,14 @@
     }
     
     // Retorna a próxima data válida para agendamento
-    function getNextValidDate(date) {
+    function getNextValidDate(date, cdNome = null) {
       const next = new Date(date);
-      // Não adiciona +1 dia - permite agendamento no mesmo dia
+      
+      // CD Lagoa Nova: não permite agendamento no mesmo dia (D+1 mínimo)
+      if (cdNome === 'Lagoa Nova') {
+        next.setDate(next.getDate() + 1);
+      }
+      // Outros CDs: permite agendamento no mesmo dia
       
       // Loop até encontrar uma data válida
       while (!isValidScheduleDate(formatDateToISO(next))) {
@@ -1023,7 +1028,39 @@
       if (dataInput) {
         let today = new Date();
         
-        // Define data mínima como próxima data válida
+        // Função para atualizar data mínima baseada no CD selecionado
+        function atualizarDataMinima() {
+          const cdInput = document.getElementById('cd-destino');
+          const subcategoriaInput = document.getElementById('subcategoria-cd');
+          let cdNome = cdInput?.value;
+          
+          // Se for Ceará, verificar subcategoria
+          if (cdNome === 'Ceará' && subcategoriaInput?.value) {
+            cdNome = subcategoriaInput.value;
+          }
+          
+          const nextValid = getNextValidDate(new Date(), cdNome);
+          const minDate = formatDateToISO(nextValid);
+          dataInput.setAttribute('min', minDate);
+          
+          // Se data atual for menor que a mínima, atualizar para a mínima
+          if (dataInput.value && dataInput.value < minDate) {
+            const oldDate = dataInput.value;
+            dataInput.value = minDate;
+            if (cdNome === 'Lagoa Nova') {
+              alert('⚠️ CD Lagoa Nova não permite agendamento no mesmo dia. Data ajustada para o próximo dia útil disponível.');
+            }
+          }
+          
+          // Atualizar tooltip
+          if (cdNome === 'Lagoa Nova') {
+            dataInput.setAttribute('title', 'CD Lagoa Nova: agendamento somente a partir do próximo dia útil (seg-sex) até o dia 25');
+          } else {
+            dataInput.setAttribute('title', 'Selecione apenas dias úteis (seg-sex) até o dia 25 de cada mês');
+          }
+        }
+        
+        // Define data mínima inicial
         const nextValid = getNextValidDate(today);
         const minDate = formatDateToISO(nextValid);
         dataInput.setAttribute('min', minDate);
@@ -1031,8 +1068,18 @@
         // Define valor padrão como próxima data válida
         dataInput.value = minDate;
         
-        // Adiciona tooltip informativo
+        // Adiciona tooltip informativo inicial
         dataInput.setAttribute('title', 'Selecione apenas dias úteis (seg-sex) até o dia 25 de cada mês');
+        
+        // Adicionar listeners para atualizar data quando CD mudar
+        const cdInput = document.getElementById('cd-destino');
+        const subcategoriaInput = document.getElementById('subcategoria-cd');
+        if (cdInput) {
+          cdInput.addEventListener('change', atualizarDataMinima);
+        }
+        if (subcategoriaInput) {
+          subcategoriaInput.addEventListener('change', atualizarDataMinima);
+        }
 
         dataInput.addEventListener('change', function() {
           if (!isValidScheduleDate(this.value)) {
