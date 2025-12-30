@@ -439,6 +439,10 @@ class DashboardConsultivo {
         const horario = agendamento.horarioEntrega || 'N/A';
         const status = agendamento.status || 'pendente';
 
+        // Verificar se é admin
+        const cdDataString = sessionStorage.getItem('cdData');
+        const isAdmin = cdDataString ? JSON.parse(cdDataString).tipoPerfil === 'admin' : false;
+
         tr.innerHTML = `
             <td class="px-6 py-4">
                 <span class="badge-cd">${cdNome}</span>
@@ -468,6 +472,13 @@ class DashboardConsultivo {
                         title="Ver Detalhes">
                         <i class="fas fa-eye text-lg"></i>
                     </button>
+                    ${isAdmin ? `
+                    <button onclick="dashboardConsultivo.abrirModalAlterarStatus(${agendamento.id})" 
+                        class="text-blue-600 hover:text-blue-800 transition-colors" 
+                        title="Alterar Status">
+                        <i class="fas fa-exchange-alt text-lg"></i>
+                    </button>
+                    ` : ''}
                     ${typeof dashboardAdmin !== 'undefined' ? `
                     <button onclick="dashboardAdmin.excluirAgendamento('${agendamento.codigo}')" 
                         class="text-red-600 hover:text-red-800 transition-colors" 
