@@ -119,6 +119,30 @@ class DashboardConsultivo {
         }
     }
 
+    async atualizarDados() {
+        try {
+            // Mostrar feedback visual no botão
+            const btnAtualizar = event.target.closest('button');
+            const icon = btnAtualizar.querySelector('i');
+            icon.classList.add('fa-spin');
+            btnAtualizar.disabled = true;
+
+            // Recarregar dados
+            await this.loadAgendamentos();
+
+            this.showNotification('Dados atualizados com sucesso!', 'success');
+        } catch (error) {
+            console.error('Erro ao atualizar dados:', error);
+            this.showNotification('Erro ao atualizar dados', 'error');
+        } finally {
+            // Restaurar botão
+            const btnAtualizar = event.target.closest('button');
+            const icon = btnAtualizar.querySelector('i');
+            icon.classList.remove('fa-spin');
+            btnAtualizar.disabled = false;
+        }
+    }
+
     updateStatistics() {
         const total = this.agendamentos.length;
         const pendentes = this.agendamentos.filter(a => a.status === 'pendente').length;

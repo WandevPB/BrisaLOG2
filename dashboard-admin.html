@@ -67,10 +67,16 @@
                         <p class="text-orange-100 text-sm">Gestão completa do sistema</p>
                     </div>
                 </div>
-                <button onclick="logout()" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all">
-                    <i class="fas fa-sign-out-alt mr-2"></i>
-                    Sair
-                </button>
+                <div class="flex items-center space-x-3">
+                    <button onclick="dashboardAdmin.atualizarDados()" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all" title="Atualizar dados">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Atualizar
+                    </button>
+                    <button onclick="logout()" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all">
+                        <i class="fas fa-sign-out-alt mr-2"></i>
+                        Sair
+                    </button>
+                </div>
             </div>
         </div>
     </header>

@@ -94,6 +94,40 @@ class DashboardAdmin {
         }
     }
 
+    async atualizarDados() {
+        try {
+            // Mostrar feedback visual no botão
+            const btnAtualizar = event.target.closest('button');
+            const icon = btnAtualizar.querySelector('i');
+            icon.classList.add('fa-spin');
+            btnAtualizar.disabled = true;
+
+            // Recarregar dados conforme a tab ativa
+            if (this.currentTab === 'visao-geral' && window.dashboardConsultivo) {
+                await window.dashboardConsultivo.init();
+            } else if (this.currentTab === 'usuarios') {
+                await this.loadUsuarios();
+                this.renderUsuarios();
+            } else if (this.currentTab === 'perfis') {
+                await this.loadPerfis();
+                this.renderPerfis();
+            } else if (this.currentTab === 'produtividade') {
+                this.gerarRelatorioProdutividade();
+            }
+
+            this.showNotification('Dados atualizados com sucesso!', 'success');
+        } catch (error) {
+            console.error('Erro ao atualizar dados:', error);
+            this.showNotification('Erro ao atualizar dados', 'error');
+        } finally {
+            // Restaurar botão
+            const btnAtualizar = event.target.closest('button');
+            const icon = btnAtualizar.querySelector('i');
+            icon.classList.remove('fa-spin');
+            btnAtualizar.disabled = false;
+        }
+    }
+
     async loadCDs() {
         try {
             const response = await fetch(`${API_BASE_URL}/api/cds`, {
