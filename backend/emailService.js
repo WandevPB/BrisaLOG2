@@ -15,6 +15,7 @@ const templateNaoVeio = require('./emails/naoVeio');
 const templateReagendamento = require('./emails/reagendamento');
 const templateRespostaReagendamento = require('./emails/respostaReagendamento');
 const templateCanceladoFornecedor = require('./emails/canceladoFornecedor');
+const templateCanceladoCD = require('./emails/canceladoCD');
 const templateEntregaSemAgendamento = require('./emails/entregaSemAgendamento');
 
 class EmailService {
@@ -190,6 +191,23 @@ class EmailService {
         return this.sendEmail({
             to,
             subject: '[BrisaLOG] Entrega Não Realizada',
+            html
+        });
+    }
+
+    // E-mail de cancelamento pelo CD/Admin
+    async sendCanceladoCDEmail({ to, fornecedorNome, agendamentoCodigo, cdNome, motivo, dataAgendamento, horarioAgendamento }) {
+        const html = templateCanceladoCD({
+            fornecedorNome,
+            agendamentoCodigo,
+            cdNome,
+            motivo,
+            dataAgendamento,
+            horarioAgendamento
+        });
+        return this.sendEmail({
+            to,
+            subject: '[BrisaLOG] Agendamento Cancelado',
             html
         });
     }

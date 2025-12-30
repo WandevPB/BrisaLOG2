@@ -627,6 +627,107 @@ class DashboardAdmin {
         }
     }
 
+    async cancelarAgendamento(codigo) {
+        try {
+            // Buscar dados do agendamento primeiro
+            const response = await fetch(`${API_BASE_URL}/api/agendamentos/consultar/${codigo}`, {
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Agendamento não encontrado');
+            }
+
+            const result = await response.json();
+            const agendamento = result.data || result;
+
+            const confirmacao = confirm(
+                `⚠️ Cancelar Agendamento\n\n` +
+                `Código: ${agendamento.codigo || 'N/A'}\n` +
+                `Transportador: ${agendamento.fornecedor?.nome || agendamento.transportadorNome || 'N/A'}\n` +
+                `Status: ${agendamento.status}\n\n` +
+                `O transportador será notificado por e-mail.\n\n` +
+                `Deseja continuar?`
+            );
+            
+            if (!confirmacao) {
+                return;
+            }
+
+            // Solicitar motivo do cancelamento
+            const motivo = prompt('Digite o motivo do cancelamento (obrigatório):');
+            
+            if (!motivo || motivo.trim() === '') {
+                this.showNotification('Motivo do cancelamento é obrigatório', 'warning');
+                return;
+            }
+
+            // Solicitar código do usuário
+            const codigoUsuario = prompt('Digite seu código de usuário para confirmar o cancelamento:');
+            
+            if (!codigoUsuario || codigoUsuario.trim() === '') {
+                this.showNotification('Código de usuário é obrigatório', 'warning');
+                return;
+            }
+
+            // Verificar se é código GOD ou usuário cadastrado
+            let nomeUsuario;
+            const CODIGO_GOD = 'BrisaLOG2';
+            
+            if (codigoUsuario.trim() === CODIGO_GOD) {
+                nomeUsuario = 'BrisaLOG2 (GOD)';
+                console.log('🔐 Código GOD utilizado para cancelamento');
+            } else {
+                // Buscar nome do usuário cadastrado
+                const usuario = this.usuarios.find(u => u.codigo === codigoUsuario.trim());
+                if (!usuario) {
+                    this.showNotification('Usuário não encontrado. Verifique o código digitado.', 'error');
+                    return;
+                }
+                nomeUsuario = usuario.nome;
+            }
+
+            const cancelResponse = await fetch(`${API_BASE_URL}/api/agendamentos/${codigo}/cancelar`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    motivo: motivo.trim(),
+                    codigoUsuario: codigoUsuario.trim(),
+                    nomeUsuario: nomeUsuario
+                })
+            });
+
+            if (cancelResponse.ok) {
+                this.showNotification(
+                    `✅ Agendamento ${agendamento.codigo} cancelado com sucesso. E-mail enviado ao transportador.`, 
+                    'success'
+                );
+                
+                // Recarregar dados do dashboard consultivo
+                if (typeof dashboardConsultivo !== 'undefined' && dashboardConsultivo.loadAgendamentos) {
+                    await dashboardConsultivo.loadAgendamentos();
+                } else {
+                    // Se não tiver o método, forçar reload da página
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            } else {
+                const errorData = await cancelResponse.json();
+                throw new Error(errorData.error || 'Erro ao cancelar agendamento');
+            }
+
+        } catch (error) {
+            console.error('Erro ao cancelar agendamento:', error);
+            this.showNotification('Erro ao cancelar agendamento: ' + error.message, 'error');
+        }
+    }
+
     async excluirAgendamento(codigo) {
         try {
             // Buscar dados do agendamento primeiro pelo código

@@ -2274,6 +2274,128 @@ app.delete('/api/agendamentos/:codigo/excluir', async (req, res) => {
   }
 });
 
+// Cancelar agendamento (Admin com motivo e envio de email)
+app.post('/api/agendamentos/:codigo/cancelar', async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const { motivo, codigoUsuario, nomeUsuario } = req.body;
+
+    console.log(`🚫 [POST /api/agendamentos/${codigo}/cancelar] Cancelamento solicitado por: ${nomeUsuario} (${codigoUsuario})`);
+    console.log(`📝 [POST /api/agendamentos/${codigo}/cancelar] Motivo: ${motivo}`);
+
+    // Validar motivo
+    if (!motivo || motivo.trim() === '') {
+      return res.status(400).json({ error: 'Motivo do cancelamento é obrigatório' });
+    }
+
+    // Validar código do usuário (aceita código GOD)
+    let nomeUsuarioFinal = nomeUsuario;
+    if (codigoUsuario && validarCodigoGOD(codigoUsuario)) {
+      nomeUsuarioFinal = 'BrisaLOG2 (GOD)';
+      console.log(`🔐 [POST /api/agendamentos/${codigo}/cancelar] Código GOD utilizado!`);
+    } else if (codigoUsuario) {
+      // Validar código de usuário admin
+      const usuario = await prisma.cd.findFirst({
+        where: {
+          codigo: codigoUsuario,
+          tipoPerfil: 'admin'
+        }
+      });
+
+      if (usuario) {
+        nomeUsuarioFinal = usuario.nome;
+        console.log(`👤 [POST /api/agendamentos/${codigo}/cancelar] Admin válido: ${usuario.nome}`);
+      } else {
+        console.log(`❌ [POST /api/agendamentos/${codigo}/cancelar] Código de admin inválido`);
+        return res.status(403).json({ error: 'Código de usuário inválido ou sem permissão de admin' });
+      }
+    }
+
+    // Buscar agendamento
+    const agendamento = await prisma.agendamento.findFirst({
+      where: { codigo },
+      include: {
+        fornecedor: true,
+        cd: true
+      }
+    });
+
+    if (!agendamento) {
+      console.log(`❌ [POST /api/agendamentos/${codigo}/cancelar] Agendamento não encontrado`);
+      return res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+
+    console.log(`📄 [POST /api/agendamentos/${codigo}/cancelar] Agendamento encontrado:`, {
+      id: agendamento.id,
+      codigo: agendamento.codigo,
+      status: agendamento.status,
+      fornecedor: agendamento.fornecedor?.nome || agendamento.fornecedorNome
+    });
+
+    // Atualizar status para cancelado
+    const agendamentoAtualizado = await prisma.agendamento.update({
+      where: { id: agendamento.id },
+      data: {
+        status: 'cancelado'
+      }
+    });
+
+    // Criar histórico
+    await prisma.historicoAcao.create({
+      data: {
+        acao: 'cancelado_admin',
+        descricao: `Agendamento cancelado pelo admin. Motivo: ${motivo}`,
+        autor: nomeUsuarioFinal,
+        codigoUsuario: codigoUsuario || null,
+        agendamentoId: agendamento.id,
+        cdId: agendamento.cdId
+      }
+    });
+
+    // Enviar email para o fornecedor
+    const fornecedorEmail = agendamento.fornecedor?.email || agendamento.fornecedorEmail;
+    const fornecedorNome = agendamento.fornecedor?.nome || agendamento.fornecedorNome;
+
+    if (fornecedorEmail) {
+      try {
+        await emailService.sendCanceladoCDEmail({
+          to: fornecedorEmail,
+          fornecedorNome: fornecedorNome,
+          agendamentoCodigo: agendamento.codigo,
+          cdNome: agendamento.cd.nome,
+          motivo: motivo,
+          dataAgendamento: agendamento.dataEntrega,
+          horarioAgendamento: agendamento.horarioEntrega
+        });
+        console.log(`✅ [POST /api/agendamentos/${codigo}/cancelar] Email de cancelamento enviado para ${fornecedorEmail}`);
+      } catch (emailError) {
+        console.error(`❌ [POST /api/agendamentos/${codigo}/cancelar] Erro ao enviar email:`, emailError);
+        // Não falhar a requisição se o email não for enviado
+      }
+    } else {
+      console.warn(`⚠️ [POST /api/agendamentos/${codigo}/cancelar] Email do fornecedor não encontrado`);
+    }
+
+    console.log(`✅ [POST /api/agendamentos/${codigo}/cancelar] Agendamento ${agendamento.codigo} cancelado por ${nomeUsuarioFinal}`);
+
+    res.json({
+      success: true,
+      message: `Agendamento ${agendamento.codigo} cancelado com sucesso`,
+      agendamento: {
+        id: agendamento.id,
+        codigo: agendamento.codigo,
+        status: 'cancelado',
+        motivo: motivo,
+        cancelado_por: nomeUsuarioFinal
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao cancelar agendamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor ao cancelar agendamento' });
+  }
+});
+
 // Reagendar entrega (fornecedor em caso de "nao-veio")
 app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
   try {

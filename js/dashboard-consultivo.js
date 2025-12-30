@@ -480,6 +480,11 @@ class DashboardConsultivo {
                     </button>
                     ` : ''}
                     ${typeof dashboardAdmin !== 'undefined' ? `
+                    <button onclick="dashboardAdmin.cancelarAgendamento('${agendamento.codigo}')" 
+                        class="text-yellow-600 hover:text-yellow-800 transition-colors" 
+                        title="Cancelar Agendamento">
+                        <i class="fas fa-ban text-lg"></i>
+                    </button>
                     <button onclick="dashboardAdmin.excluirAgendamento('${agendamento.codigo}')" 
                         class="text-red-600 hover:text-red-800 transition-colors" 
                         title="Excluir Permanentemente">
