@@ -94,13 +94,17 @@ class DashboardAdmin {
         }
     }
 
-    async atualizarDados() {
+    async atualizarDados(event) {
         try {
             // Mostrar feedback visual no botão
-            const btnAtualizar = event.target.closest('button');
-            const icon = btnAtualizar.querySelector('i');
-            icon.classList.add('fa-spin');
-            btnAtualizar.disabled = true;
+            const btnAtualizar = event?.target?.closest('button') || document.querySelector('button[onclick*="atualizarDados"]');
+            const icon = btnAtualizar?.querySelector('i');
+            if (icon) {
+                icon.classList.add('fa-spin');
+            }
+            if (btnAtualizar) {
+                btnAtualizar.disabled = true;
+            }
 
             // Recarregar dados conforme a tab ativa
             if (this.currentTab === 'visao-geral' && window.dashboardConsultivo) {
@@ -121,10 +125,14 @@ class DashboardAdmin {
             this.showNotification('Erro ao atualizar dados', 'error');
         } finally {
             // Restaurar botão
-            const btnAtualizar = event.target.closest('button');
-            const icon = btnAtualizar.querySelector('i');
-            icon.classList.remove('fa-spin');
-            btnAtualizar.disabled = false;
+            const btnAtualizar = event?.target?.closest('button') || document.querySelector('button[onclick*="atualizarDados"]');
+            const icon = btnAtualizar?.querySelector('i');
+            if (icon) {
+                icon.classList.remove('fa-spin');
+            }
+            if (btnAtualizar) {
+                btnAtualizar.disabled = false;
+            }
         }
     }
 
