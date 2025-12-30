@@ -643,88 +643,56 @@ class DashboardAdmin {
             const result = await response.json();
             const agendamento = result.data || result;
 
-            const confirmacao = confirm(
-                `⚠️ Cancelar Agendamento\n\n` +
-                `Código: ${agendamento.codigo || 'N/A'}\n` +
-                `Transportador: ${agendamento.fornecedor?.nome || agendamento.transportadorNome || 'N/A'}\n` +
-                `Status: ${agendamento.status}\n\n` +
-                `O transportador será notificado por e-mail.\n\n` +
-                `Deseja continuar?`
-            );
+            // Preencher informações no modal
+            document.getElementById('cancelar-codigo').textContent = agendamento.codigo || 'N/A';
+            document.getElementById('cancelar-status').textContent = agendamento.status || 'N/A';
+            document.getElementById('cancelar-transportador').textContent = agendamento.fornecedor?.nome || agendamento.transportadorNome || 'N/A';
             
-            if (!confirmacao) {
-                return;
-            }
-
-            // Solicitar motivo do cancelamento
-            const motivo = prompt('Digite o motivo do cancelamento (obrigatório):');
+            // Limpar campos
+            document.getElementById('cancelar-motivo').value = '';
+            document.getElementById('cancelar-codigo-usuario').value = '';
+            this.esconderErroCancelar();
             
-            if (!motivo || motivo.trim() === '') {
-                this.showNotification('Motivo do cancelamento é obrigatório', 'warning');
-                return;
-            }
-
-            // Solicitar código do usuário
-            const codigoUsuario = prompt('Digite seu código de usuário para confirmar o cancelamento:');
+            // Guardar código do agendamento para uso posterior
+            this.agendamentoCancelarCodigo = codigo;
             
-            if (!codigoUsuario || codigoUsuario.trim() === '') {
-                this.showNotification('Código de usuário é obrigatório', 'warning');
-                return;
-            }
-
-            // Verificar se é código GOD ou usuário cadastrado
-            let nomeUsuario;
-            const CODIGO_GOD = 'BrisaLOG2';
-            
-            if (codigoUsuario.trim() === CODIGO_GOD) {
-                nomeUsuario = 'BrisaLOG2 (GOD)';
-                console.log('🔐 Código GOD utilizado para cancelamento');
-            } else {
-                // Buscar nome do usuário cadastrado
-                const usuario = this.usuarios.find(u => u.codigo === codigoUsuario.trim());
-                if (!usuario) {
-                    this.showNotification('Usuário não encontrado. Verifique o código digitado.', 'error');
-                    return;
-                }
-                nomeUsuario = usuario.nome;
-            }
-
-            const cancelResponse = await fetch(`${API_BASE_URL}/api/agendamentos/${codigo}/cancelar`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    motivo: motivo.trim(),
-                    codigoUsuario: codigoUsuario.trim(),
-                    nomeUsuario: nomeUsuario
-                })
-            });
-
-            if (cancelResponse.ok) {
-                this.showNotification(
-                    `✅ Agendamento ${agendamento.codigo} cancelado com sucesso. E-mail enviado ao transportador.`, 
-                    'success'
-                );
-                
-                // Recarregar dados do dashboard consultivo
-                if (typeof dashboardConsultivo !== 'undefined' && dashboardConsultivo.loadAgendamentos) {
-                    await dashboardConsultivo.loadAgendamentos();
-                } else {
-                    // Se não tiver o método, forçar reload da página
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                }
-            } else {
-                const errorData = await cancelResponse.json();
-                throw new Error(errorData.error || 'Erro ao cancelar agendamento');
-            }
+            // Mostrar modal
+            document.getElementById('modal-cancelar-agendamento').classList.remove('hidden');
 
         } catch (error) {
-            console.error('Erro ao cancelar agendamento:', error);
-            this.showNotification('Erro ao cancelar agendamento: ' + error.message, 'error');
+            console.error('Erro ao buscar agendamento:', error);
+            this.showNotification('Erro ao buscar agendamento: ' + error.message, 'error');
+        }
+    }
+
+    fecharModalCancelar() {
+        document.getElementById('modal-cancelar-agendamento').classList.add('hidden');
+        document.getElementById('cancelar-motivo').value = '';
+        document.getElementById('cancelar-codigo-usuario').value = '';
+        this.esconderErroCancelar();
+    }
+
+    mostrarErroCancelar(mensagem) {
+        const errorDiv = document.getElementById('cancelar-error-message');
+        const errorText = document.getElementById('cancelar-error-text');
+        errorText.textContent = mensagem;
+        errorDiv.classList.remove('hidden');
+    }
+
+    esconderErroCancelar() {
+        document.getElementById('cancelar-error-message').classList.add('hidden');
+    }
+
+    mostrarLoadingCancelar(show) {
+        const form = document.getElementById('form-cancelar-agendamento');
+        const loading = document.getElementById('cancelar-loading');
+        
+        if (show) {
+            form.classList.add('hidden');
+            loading.classList.remove('hidden');
+        } else {
+            form.classList.remove('hidden');
+            loading.classList.add('hidden');
         }
     }
 
@@ -1167,4 +1135,96 @@ let dashboardAdmin;
 // Inicializar quando DOM carregar
 document.addEventListener('DOMContentLoaded', () => {
     dashboardAdmin = new DashboardAdmin();
+
+    // Handler do formulário de cancelamento
+    const formCancelar = document.getElementById('form-cancelar-agendamento');
+    if (formCancelar) {
+        formCancelar.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const motivo = document.getElementById('cancelar-motivo').value.trim();
+            const codigoUsuario = document.getElementById('cancelar-codigo-usuario').value.trim().toUpperCase();
+            
+            if (!motivo) {
+                dashboardAdmin.mostrarErroCancelar('Motivo do cancelamento é obrigatório');
+                return;
+            }
+            
+            if (!codigoUsuario) {
+                dashboardAdmin.mostrarErroCancelar('Código de usuário é obrigatório');
+                return;
+            }
+
+            try {
+                dashboardAdmin.esconderErroCancelar();
+                dashboardAdmin.mostrarLoadingCancelar(true);
+
+                // Verificar se é código GOD ou usuário cadastrado
+                let nomeUsuario;
+                const CODIGO_GOD = 'BRISALOG2';
+                
+                if (codigoUsuario === CODIGO_GOD) {
+                    nomeUsuario = 'BrisaLOG2 (GOD)';
+                    console.log('🔐 Código GOD utilizado para cancelamento');
+                } else {
+                    // Buscar nome do usuário cadastrado
+                    const usuario = dashboardAdmin.usuarios.find(u => u.codigo === codigoUsuario);
+                    if (!usuario) {
+                        dashboardAdmin.mostrarLoadingCancelar(false);
+                        dashboardAdmin.mostrarErroCancelar('Usuário não encontrado. Verifique o código digitado.');
+                        return;
+                    }
+                    nomeUsuario = usuario.nome;
+                }
+
+                const cancelResponse = await fetch(`${API_BASE_URL}/api/agendamentos/${dashboardAdmin.agendamentoCancelarCodigo}/cancelar`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        motivo: motivo,
+                        codigoUsuario: codigoUsuario,
+                        nomeUsuario: nomeUsuario
+                    })
+                });
+
+                if (cancelResponse.ok) {
+                    dashboardAdmin.fecharModalCancelar();
+                    dashboardAdmin.showNotification(
+                        `✅ Agendamento cancelado com sucesso. E-mail enviado ao transportador.`, 
+                        'success'
+                    );
+                    
+                    // Recarregar dados do dashboard consultivo
+                    if (typeof dashboardConsultivo !== 'undefined' && dashboardConsultivo.loadAgendamentos) {
+                        await dashboardConsultivo.loadAgendamentos();
+                    } else {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    }
+                } else {
+                    const errorData = await cancelResponse.json();
+                    dashboardAdmin.mostrarLoadingCancelar(false);
+                    dashboardAdmin.mostrarErroCancelar(errorData.error || 'Erro ao cancelar agendamento');
+                }
+
+            } catch (error) {
+                console.error('Erro ao cancelar agendamento:', error);
+                dashboardAdmin.mostrarLoadingCancelar(false);
+                dashboardAdmin.mostrarErroCancelar('Erro ao cancelar agendamento: ' + error.message);
+            }
+        });
+    }
+
+    // Auto uppercase no código de usuário
+    const inputCodigoUsuario = document.getElementById('cancelar-codigo-usuario');
+    if (inputCodigoUsuario) {
+        inputCodigoUsuario.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    }
 });
+
