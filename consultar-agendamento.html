@@ -884,11 +884,13 @@
         function renderPedidosENotasFiscais(data) {
             const allPedidos = {}; 
             
-            // Verificar se o agendamento já foi entregue ou cancelado
-            const isEntregueOuCancelado = data.status === 'entregue' || data.status === 'cancelado';
+            // Verificar se o agendamento foi confirmado, entregue ou cancelado (não permite mais edição)
+            const isEntregueOuCancelado = data.status === 'confirmado' || data.status === 'entregue' || data.status === 'cancelado';
             const botaoDisabled = isEntregueOuCancelado ? 'disabled' : '';
             const botaoClasses = isEntregueOuCancelado ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-secondary cursor-pointer';
-            const botaoTitle = isEntregueOuCancelado ? 'Não é possível editar após a entrega' : '';
+            const botaoTitle = isEntregueOuCancelado ? 
+                (data.status === 'confirmado' ? 'Não é possível editar após confirmação do CD' : 'Não é possível editar após a entrega') : 
+                '';
             
             if (data.pedidos && data.pedidos.length > 0) {
                 data.pedidos.forEach(p => {
@@ -914,7 +916,7 @@
                     <div class="text-center py-8">
                         <p class="text-text-secondary mb-4">Nenhuma Nota Fiscal vinculada.</p>
                         ${isEntregueOuCancelado ? 
-                            `<p class="text-gray-500 text-sm"><i class="fas fa-lock mr-2"></i>Agendamento finalizado - não é possível adicionar NFs</p>` :
+                            `<p class="text-gray-500 text-sm"><i class="fas fa-lock mr-2"></i>Agendamento ${data.status === 'confirmado' ? 'confirmado pelo CD' : 'finalizado'} - não é possível adicionar NFs</p>` :
                             `<button onclick="abrirModalAdicionarNF()" class="bg-orange-primary hover:bg-orange-secondary text-white px-6 py-3 rounded-lg font-semibold transition-colors">
                                 <i class="fas fa-plus-circle mr-2"></i>Adicionar Primeira NF
                             </button>`
@@ -938,7 +940,7 @@
                 html += `
                     <div class="flex justify-end mb-4">
                         <p class="text-gray-500 text-sm bg-gray-800 px-4 py-2 rounded-lg border border-gray-700">
-                            <i class="fas fa-lock mr-2"></i>Agendamento finalizado - edição bloqueada
+                            <i class="fas fa-lock mr-2"></i>Agendamento ${data.status === 'confirmado' ? 'confirmado pelo CD' : 'finalizado'} - edição bloqueada
                         </p>
                     </div>
                 `;
@@ -969,10 +971,10 @@
                                             <span class="text-green-400 font-extrabold text-sm">R$ ${nfValor}</span>
                                             ${fileButton}
                                             ${isEntregueOuCancelado ? 
-                                                `<button disabled class="bg-gray-600 text-gray-400 px-3 py-1 rounded text-xs cursor-not-allowed opacity-50" title="Não é possível editar após a entrega">
+                                                `<button disabled class="bg-gray-600 text-gray-400 px-3 py-1 rounded text-xs cursor-not-allowed opacity-50" title="Não é possível editar após ${data.status === 'confirmado' ? 'confirmação do CD' : 'a entrega'}">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button disabled class="bg-gray-600 text-gray-400 px-3 py-1 rounded text-xs cursor-not-allowed opacity-50" title="Não é possível excluir após a entrega">
+                                                <button disabled class="bg-gray-600 text-gray-400 px-3 py-1 rounded text-xs cursor-not-allowed opacity-50" title="Não é possível excluir após ${data.status === 'confirmado' ? 'confirmação do CD' : 'a entrega'}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>` :
                                                 `<button onclick="abrirModalEditarNF('${pedido.numero}', '${nf.numero}', '${nfValor}', '${nf.arquivo || ''}')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs transition-colors" title="Editar NF">
