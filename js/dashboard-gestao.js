@@ -244,10 +244,11 @@ class DashboardGestao {
             : 0;
         document.getElementById('kpi-tempo-confirmacao').textContent = `${tempoMedio}h`;
         
-        // Média por dia (capacidade operacional)
-        const diasNoPeriodo = Math.max(1, Math.ceil((fim - inicio) / (1000 * 60 * 60 * 24)));
-        const mediaPorDia = (total / diasNoPeriodo).toFixed(1);
-        document.getElementById('kpi-media-dia').textContent = mediaPorDia;
+        // Volume total de NFs (throughput real)
+        const volumeNFs = agendamentos.reduce((sum, ag) => {
+            return sum + (ag.notasFiscais?.length || 0);
+        }, 0);
+        document.getElementById('kpi-volume-nfs').textContent = volumeNFs.toLocaleString('pt-BR');
         
         // CD mais ativo (hotspot operacional)
         const cdCounts = {};
@@ -436,7 +437,8 @@ class DashboardGestao {
         const fornecedorStats = {};
         
         agendamentos.forEach(ag => {
-            const fornNome = ag.nomeFornecedor || 'Não informado';
+            // Busca fornecedor no campo correto (fornecedor é objeto ou string)
+            const fornNome = ag.fornecedor?.nome || ag.fornecedor || ag.nomeFornecedor || 'Não informado';
             if (!fornecedorStats[fornNome]) {
                 fornecedorStats[fornNome] = {
                     total: 0,
