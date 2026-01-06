@@ -107,7 +107,7 @@ class DashboardGestao {
             });
             
             // Carregar agendamentos
-            const responseAgendamentos = await apiRequest('/api/agendamentos-all');
+            const responseAgendamentos = await apiRequest('/api/agendamentos/todos');
             this.agendamentos = responseAgendamentos;
             
         } catch (error) {

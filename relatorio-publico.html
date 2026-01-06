@@ -269,8 +269,17 @@
                     const allCds = await responseCds.json();
                     this.cds = allCds.filter(cd => cd.tipoPerfil === 'cd');
 
-                    // Carregar agendamentos
-                    const responseAgendamentos = await fetch('/api/agendamentos-all');
+                    // Carregar agendamentos (sem autenticação - público)
+                    const responseAgendamentos = await fetch('/api/agendamentos/todos', {
+                        headers: {
+                            'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`
+                        }
+                    });
+                    
+                    if (!responseAgendamentos.ok) {
+                        throw new Error('Erro ao carregar agendamentos');
+                    }
+                    
                     const allAgendamentos = await responseAgendamentos.json();
 
                     // Aplicar filtros
