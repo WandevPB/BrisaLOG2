@@ -51,6 +51,12 @@ class DashboardAdmin {
             if (btnPerfis) {
                 btnPerfis.style.display = 'block';
             }
+            
+            // Mostrar link Dashboard de Gestão
+            const linkDashboardGestao = document.getElementById('link-dashboard-gestao');
+            if (linkDashboardGestao) {
+                linkDashboardGestao.style.display = 'flex';
+            }
         }
 
         // Definir datas padrão para produtividade (último mês)
