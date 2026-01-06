@@ -23,11 +23,13 @@ class DashboardGestao {
             return;
         }
 
-        // Verificar se é wanderson
-        const usuario = JSON.parse(sessionStorage.getItem('usuario') || '{}');
-        if (usuario.usuario !== 'wanderson') {
-            alert('Acesso negado. Esta página é exclusiva para o perfil wanderson.');
-            window.location.href = 'dashboard.html';
+        // Verificar se é wanderson (EXCLUSIVO)
+        const cdData = JSON.parse(sessionStorage.getItem('cdData') || '{}');
+        if (cdData.usuario !== 'wanderson') {
+            alert('❌ Acesso negado. Esta página é exclusiva para o usuário wanderson.');
+            window.location.href = 'dashboard-admin.html';
+            return;
+        }
             return;
         }
 
