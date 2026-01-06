@@ -164,8 +164,7 @@ router.put('/:id', async (req, res) => {
                 usuario,
                 tipoPerfil,
                 emailRecuperacao: email || null,
-                ativo,
-                recebeNotificacoes: tipoPerfil === 'cd'
+                ativo
             }
         });
 
