@@ -357,6 +357,10 @@ app.use('/api/usuarios', usuariosRoutes);
 const perfisRoutes = require('./perfisRoutes');
 app.use('/api/perfis', perfisRoutes);
 
+// Usar rotas de relatórios públicos
+const relatoriosPublicosRoutes = require('./relatoriosPublicosRoutes');
+app.use('/api/relatorios-publicos', relatoriosPublicosRoutes);
+
 // Configuração do Multer para upload de arquivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

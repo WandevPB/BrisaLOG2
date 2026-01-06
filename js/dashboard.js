@@ -745,6 +745,15 @@ class CDDashboard {
         if (usuarioNomeEl && usuario) {
             usuarioNomeEl.textContent = usuario;
         }
+        
+        // Mostrar link Dashboard de Gestão apenas para wanderson
+        if (usuario === 'wanderson') {
+            const menuDashboardGestao = document.getElementById('menu-dashboard-gestao');
+            if (menuDashboardGestao) {
+                menuDashboardGestao.style.display = 'block';
+            }
+        }
+        
         const cd = sessionStorage.getItem('cd');
         const cdInfo = sessionStorage.getItem('cdInfo');
         // Preencher o nome do CD no header
