@@ -41,8 +41,6 @@ class DashboardGestao {
             window.location.href = 'dashboard-admin.html';
             return;
         }
-            return;
-        }
 
         // Configurar event listeners
         this.setupEventListeners();
