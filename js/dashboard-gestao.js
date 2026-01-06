@@ -24,8 +24,19 @@ class DashboardGestao {
         }
 
         // Verificar se é wanderson (EXCLUSIVO)
-        const cdData = JSON.parse(sessionStorage.getItem('cdData') || '{}');
-        if (cdData.usuario !== 'wanderson') {
+        const cdData = sessionStorage.getItem('cdData');
+        let usuarioLogado = null;
+        
+        if (cdData) {
+            try {
+                const cdObj = JSON.parse(cdData);
+                usuarioLogado = cdObj.usuario;
+            } catch (e) {
+                console.error('Erro ao parsear cdData:', e);
+            }
+        }
+        
+        if (usuarioLogado !== 'wanderson') {
             alert('❌ Acesso negado. Esta página é exclusiva para o usuário wanderson.');
             window.location.href = 'dashboard-admin.html';
             return;
@@ -322,7 +333,7 @@ class DashboardGestao {
                 datasets: [{
                     label: 'Agendamentos',
                     data: cdEntries.map(e => e[1]),
-                    backgroundColor: '#667eea'
+                    backgroundColor: '#FF6B35'
                 }]
             },
             options: {
@@ -365,8 +376,8 @@ class DashboardGestao {
                 datasets: [{
                     label: 'Agendamentos',
                     data: timelineEntries.map(e => e[1]),
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderColor: '#FF6B35',
+                    backgroundColor: 'rgba(255, 107, 53, 0.1)',
                     tension: 0.4,
                     fill: true
                 }]
