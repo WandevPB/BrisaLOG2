@@ -280,7 +280,8 @@
                         throw new Error('Erro ao carregar agendamentos');
                     }
                     
-                    const allAgendamentos = await responseAgendamentos.json();
+                    const result = await responseAgendamentos.json();
+                    const allAgendamentos = result.data || result;
 
                     // Aplicar filtros
                     const { inicio, fim } = this.calcularPeriodo(filtros.periodo, filtros.dataInicio, filtros.dataFim);

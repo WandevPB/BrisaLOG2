@@ -108,7 +108,7 @@ class DashboardGestao {
             
             // Carregar agendamentos
             const responseAgendamentos = await apiRequest('/api/agendamentos/todos');
-            this.agendamentos = responseAgendamentos;
+            this.agendamentos = responseAgendamentos.data || responseAgendamentos;
             
         } catch (error) {
             console.error('Erro ao carregar dados:', error);
