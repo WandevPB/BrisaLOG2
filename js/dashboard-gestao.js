@@ -208,26 +208,28 @@ class DashboardGestao {
         const confirmados = agendamentos.filter(ag => ag.status === 'confirmado' || ag.status === 'entregue').length;
         const entregues = agendamentos.filter(ag => ag.status === 'entregue').length;
         const naoVeio = agendamentos.filter(ag => ag.status === 'nao-veio').length;
+        const pendentes = agendamentos.filter(ag => ag.status === 'pendente').length;
+        const cancelados = agendamentos.filter(ag => ag.status === 'cancelado').length;
         
-        // Total
+        // Total com animação
         document.getElementById('kpi-total').textContent = total.toLocaleString('pt-BR');
         
-        // Taxa de confirmação
+        // Taxa de confirmação (SLA)
         const taxaConfirmacao = total > 0 ? (confirmados / total * 100).toFixed(1) : 0;
         document.getElementById('kpi-confirmacao').textContent = `${taxaConfirmacao}%`;
         document.getElementById('kpi-confirmacao-qtd').textContent = `${confirmados} confirmados de ${total}`;
         
-        // Taxa de entrega
+        // Taxa de entrega (efetividade)
         const taxaEntrega = total > 0 ? (entregues / total * 100).toFixed(1) : 0;
         document.getElementById('kpi-entrega').textContent = `${taxaEntrega}%`;
         document.getElementById('kpi-entrega-qtd').textContent = `${entregues} entregues de ${total}`;
         
-        // Não veio
+        // Taxa de não comparecimento (problema crítico)
         const taxaNaoVeio = total > 0 ? (naoVeio / total * 100).toFixed(1) : 0;
         document.getElementById('kpi-nao-veio').textContent = `${taxaNaoVeio}%`;
         document.getElementById('kpi-nao-veio-qtd').textContent = `${naoVeio} não vieram`;
         
-        // Tempo médio de confirmação
+        // Tempo médio de confirmação (SLA operacional)
         const temposConfirmacao = agendamentos
             .filter(ag => ag.status === 'confirmado' || ag.status === 'entregue')
             .filter(ag => ag.updatedAt && ag.createdAt)
@@ -242,12 +244,12 @@ class DashboardGestao {
             : 0;
         document.getElementById('kpi-tempo-confirmacao').textContent = `${tempoMedio}h`;
         
-        // Média por dia
+        // Média por dia (capacidade operacional)
         const diasNoPeriodo = Math.max(1, Math.ceil((fim - inicio) / (1000 * 60 * 60 * 24)));
         const mediaPorDia = (total / diasNoPeriodo).toFixed(1);
         document.getElementById('kpi-media-dia').textContent = mediaPorDia;
         
-        // CD mais ativo
+        // CD mais ativo (hotspot operacional)
         const cdCounts = {};
         agendamentos.forEach(ag => {
             const cdNome = this.cds.find(cd => cd.id === ag.cdId)?.nome || 'Desconhecido';
@@ -257,10 +259,40 @@ class DashboardGestao {
         const cdTop = Object.entries(cdCounts).sort((a, b) => b[1] - a[1])[0];
         if (cdTop) {
             document.getElementById('kpi-cd-top').textContent = cdTop[0];
-            document.getElementById('kpi-cd-top-qtd').textContent = `${cdTop[1]} agendamentos`;
+            document.getElementById('kpi-cd-top-qtd').textContent = `${cdTop[1]} agendamentos (${((cdTop[1]/total)*100).toFixed(0)}%)`;
         } else {
             document.getElementById('kpi-cd-top').textContent = '-';
             document.getElementById('kpi-cd-top-qtd').textContent = '0 agendamentos';
+        }
+        
+        // NOVOS KPIs EXECUTIVOS
+        // Taxa de assertividade (confirmados que foram entregues)
+        const taxaAssertividade = confirmados > 0 ? (entregues / confirmados * 100).toFixed(1) : 0;
+        if (document.getElementById('kpi-assertividade')) {
+            document.getElementById('kpi-assertividade').textContent = `${taxaAssertividade}%`;
+            document.getElementById('kpi-assertividade-qtd').textContent = `${entregues} de ${confirmados} confirmados`;
+        }
+        
+        // Índice de cancelamento
+        const taxaCancelamento = total > 0 ? (cancelados / total * 100).toFixed(1) : 0;
+        if (document.getElementById('kpi-cancelamento')) {
+            document.getElementById('kpi-cancelamento').textContent = `${taxaCancelamento}%`;
+            document.getElementById('kpi-cancelamento-qtd').textContent = `${cancelados} cancelados`;
+        }
+        
+        // Agendamentos pendentes (urgência)
+        if (document.getElementById('kpi-pendentes')) {
+            document.getElementById('kpi-pendentes').textContent = pendentes;
+            document.getElementById('kpi-pendentes-qtd').textContent = `Aguardando confirmação`;
+        }
+        
+        // Volume total de NFs
+        const totalNFs = agendamentos.reduce((sum, ag) => {
+            return sum + (ag.notasFiscais?.length || 0);
+        }, 0);
+        if (document.getElementById('kpi-total-nfs')) {
+            document.getElementById('kpi-total-nfs').textContent = totalNFs.toLocaleString('pt-BR');
+            document.getElementById('kpi-total-nfs-qtd').textContent = `Notas fiscais processadas`;
         }
     }
 
