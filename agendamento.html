@@ -393,9 +393,9 @@
                 <select id="subcategoria-cd" name="subCategoriaCD" required
                   class="input-themed select-themed">
                   <option value="">Selecione o destino</option>
-                  <option value="Lagoa Nova">CD LAGOA NOVA/CE</option>
-                  <option value="Pereiro (Estoque de frotas)">CD PEREIRO (FROTAS)</option>
-                  <option value="Cd Lagoa Nova (TORRE)">CD LAGOA NOVA (TORRE)</option>
+                  <option value="Lagoa Nova">CD LAGOA NOVA (SEDE)</option>
+                  <option value="Pereiro (Estoque de frotas)">CD PEREIRO (PEÇAS DE VEICULOS)</option>
+                  <option value="Cd Lagoa Nova (TORRE)">CD LAGOA NOVA (Itens de TORRE)</option>
                 </select>
                 <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
               </div>
@@ -1215,13 +1215,13 @@
             const oldDate = dataInput.value;
             dataInput.value = minDate;
             if (cdNome === 'Lagoa Nova') {
-              alert('⚠️ CD Lagoa Nova não permite agendamento no mesmo dia. Data ajustada para o próximo dia útil disponível.');
+              alert('⚠️ CD LAGOA NOVA (SEDE) não permite agendamento no mesmo dia. Data ajustada para o próximo dia útil disponível.');
             }
           }
           
           // Atualizar tooltip
           if (cdNome === 'Lagoa Nova') {
-            dataInput.setAttribute('title', 'CD Lagoa Nova: agendamento somente a partir do próximo dia útil (seg-sex) até o dia 25');
+            dataInput.setAttribute('title', 'CD LAGOA NOVA (SEDE): agendamento somente a partir do próximo dia útil (seg-sex) até o dia 25');
           } else {
             dataInput.setAttribute('title', 'Selecione apenas dias úteis (seg-sex) até o dia 25 de cada mês');
           }
