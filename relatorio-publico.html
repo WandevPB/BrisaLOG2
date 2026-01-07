@@ -482,6 +482,7 @@
                                     <th>Status</th>
                                     <th>NFs</th>
                                     <th>Horário</th>
+                                    <th>Motivo</th>
                                 </tr>
                             </thead>
                             <tbody id="cd-tickets-tbody"></tbody>
@@ -891,6 +892,17 @@
                 const ticketsCD = this.agendamentos.filter(ag => ag.cdId === cd.id);
                 document.getElementById('cd-tickets-title').textContent = `Agendamentos de ${cdNome} (${ticketsCD.length})`;
 
+                // Atualizar cabeçalho da tabela
+                const thead = document.querySelector('#cd-tickets-tbody').closest('table').querySelector('thead tr');
+                thead.innerHTML = `
+                    <th>Data</th>
+                    <th>Transportador</th>
+                    <th>Status</th>
+                    <th>NFs</th>
+                    <th>Horário</th>
+                    <th>Motivo</th>
+                `;
+
                 const tbody = document.getElementById('cd-tickets-tbody');
                 tbody.innerHTML = ticketsCD.map(ag => {
                     const fornecedor = ag.fornecedorNome || ag.fornecedor?.nome || ag.nomeFornecedor || 'Não informado';
@@ -908,6 +920,7 @@
                             <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
                             <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
                             <td>${ag.horarioEntrega || '-'}</td>
+                            <td>${ag.status === 'cancelado' && ag.observacoes ? ag.observacoes : '-'}</td>
                         </tr>
                     `;
                 }).join('');
@@ -929,6 +942,17 @@
                 document.getElementById('cd-tickets-title').textContent = 
                     `Agendamentos com status "${statusTextos[status]}" (${ticketsFiltrados.length})`;
 
+                // Atualizar cabeçalho da tabela
+                const thead = document.querySelector('#cd-tickets-tbody').closest('table').querySelector('thead tr');
+                thead.innerHTML = `
+                    <th>Data</th>
+                    <th>Transportador</th>
+                    <th>Status</th>
+                    <th>NFs</th>
+                    <th>Horário</th>
+                    <th>Motivo</th>
+                `;
+
                 const tbody = document.getElementById('cd-tickets-tbody');
                 tbody.innerHTML = ticketsFiltrados.map(ag => {
                     const cdNome = this.cds.find(cd => cd.id === ag.cdId)?.nome || 'Desconhecido';
@@ -943,6 +967,7 @@
                             <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
                             <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
                             <td>${ag.horarioEntrega || '-'}</td>
+                            <td>${ag.status === 'cancelado' && ag.observacoes ? ag.observacoes : '-'}</td>
                         </tr>
                     `;
                 }).join('');
@@ -958,6 +983,17 @@
 
                 document.getElementById('cd-tickets-title').textContent = 
                     `Agendamentos de ${data} (${ticketsFiltrados.length})`;
+
+                // Atualizar cabeçalho da tabela (aqui mostra CD em vez de Data)
+                const thead = document.querySelector('#cd-tickets-tbody').closest('table').querySelector('thead tr');
+                thead.innerHTML = `
+                    <th>CD</th>
+                    <th>Transportador</th>
+                    <th>Status</th>
+                    <th>NFs</th>
+                    <th>Horário</th>
+                    <th>Motivo</th>
+                `;
 
                 const tbody = document.getElementById('cd-tickets-tbody');
                 tbody.innerHTML = ticketsFiltrados.map(ag => {
@@ -977,6 +1013,7 @@
                             <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
                             <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
                             <td>${ag.horarioEntrega || '-'}</td>
+                            <td>${ag.status === 'cancelado' && ag.observacoes ? ag.observacoes : '-'}</td>
                         </tr>
                     `;
                 }).join('');
