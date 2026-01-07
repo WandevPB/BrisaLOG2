@@ -828,9 +828,9 @@ class AgendamentoForm {
             'Bahia': 'CD Bahia',
             'Pernambuco': 'CD Pernambuco',
             'Ceará': 'CD Ceará',
-            'Lagoa Nova': 'CD Lagoa Nova/CE',
-            'Pereiro (Estoque de frotas)': 'CD Pereiro (FROTAS)',
-            'Cd Lagoa Nova (TORRE)': 'CD Lagoa Nova (TORRE)'
+            'LagoaNova': 'CD LAGOA NOVA (SEDE)',
+            'pereiro-frota': 'CD PEREIRO (PEÇAS DE VEICULOS)',
+            'cd lagoa nova (torre)': 'CD LAGOA NOVA (Itens de TORRE)'
         };
         const tipoCargas = {
             'equipamentos': 'Equipamentos de Rede',
@@ -1505,8 +1505,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const cdId = cdMap[cdNomeFinal];
         const date = dateInput?.value;
-        const isCDTorre = cdNomeFinal === 'Cd Lagoa Nova (TORRE)';
-        const isCDLagoaNova = cdNomeFinal === 'Lagoa Nova';
+        const isCDTorre = cdNomeFinal === 'cd lagoa nova (torre)';
+        const isCDLagoaNova = cdNomeFinal === 'LagoaNova';
         
         console.log('🔍 [DEBUG atualizarHorarios]', {
             cdNome,
