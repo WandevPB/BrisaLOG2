@@ -3,70 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório Público | BrisaLOG</title>
+    <title>Dashboard Executivo | BrisaLOG</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="design-system.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .kpi-card {
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+        }
+
+        /* Animação Fullscreen */
+        #fullscreen-intro {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
-            border-radius: 16px;
-            padding: 24px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.5s ease;
+        }
+
+        #fullscreen-intro.show {
+            display: flex;
+        }
+
+        .logo-intro {
+            text-align: center;
             color: white;
-            box-shadow: 0 10px 40px rgba(255, 107, 53, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: scaleIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
-        .kpi-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 50px rgba(255, 107, 53, 0.4);
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        .kpi-green { 
-            background: linear-gradient(135deg, #10b981 0%, #34d399 100%); 
-            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3);
+
+        @keyframes scaleIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
-        .kpi-green:hover { box-shadow: 0 15px 50px rgba(16, 185, 129, 0.4); }
-        
-        .kpi-orange { 
-            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); 
-            box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3);
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
         }
-        .kpi-orange:hover { box-shadow: 0 15px 50px rgba(245, 158, 11, 0.4); }
-        
-        .kpi-blue { 
-            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%); 
-            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+
+        /* Dashboard Container */
+        .dashboard-container {
+            padding: 8px;
+            max-width: 100%;
+            margin: 0 auto;
         }
-        .kpi-blue:hover { box-shadow: 0 15px 50px rgba(59, 130, 246, 0.4); }
-        
-        .kpi-purple { 
-            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); 
-            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3);
-        }
-        .kpi-purple:hover { box-shadow: 0 15px 50px rgba(139, 92, 246, 0.4); }
-        
-        .chart-container {
-            position: relative;
-            height: 300px;
-            background: white;
-            border-radius: 16px;
+
+        :fullscreen .dashboard-container {
             padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .chart-container:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+
+        /* KPI Cards */
+        .kpi-card-mini {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border-left: 4px solid;
+            position: relative;
+            overflow: hidden;
         }
+
+        .kpi-card-mini:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .kpi-card-mini::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 100px; height: 100px;
+            opacity: 0.05;
+            font-size: 80px;
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+        }
+
+        .kpi-main { border-left-color: #FF6B35; }
+        .kpi-success { border-left-color: #10b981; }
+        .kpi-warning { border-left-color: #f59e0b; }
+        .kpi-danger { border-left-color: #ef4444; }
+        .kpi-info { border-left-color: #3b82f6; }
+        .kpi-purple { border-left-color: #8b5cf6; }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 8px 0;
+            line-height: 1;
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .kpi-subtitle {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
+
+        /* Chart Containers */
+        .chart-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            height: 100%;
+        }
+
+        .chart-box:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-canvas {
+            position: relative;
+            height: 280px;
+        }
+
+        /* Grid Layout */
+        .grid-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .grid-charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        /* Fullscreen Mode */
+        :fullscreen {
+            background: #f0f2f5;
+        }
+
+        :fullscreen .header-bar {
+            display: none;
+        }
+
+        :fullscreen .chart-box {
+            display: none;
+        }
+
+        :fullscreen .grid-dashboard {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        :fullscreen .kpi-value {
+            font-size: 4rem;
+        }
+
+        /* Header */
+        .header-bar {
+            background: linear-gradient(to right, #FF6B35, #FF8C42);
+            color: white;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-fullscreen {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-fullscreen:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
         .loading-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 9999;
         }
+
         .error-screen {
             min-height: 100vh;
             display: flex;
@@ -74,191 +233,262 @@
             justify-content: center;
             background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
         }
-        
-        /* Fullscreen Styles */
-        :fullscreen {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            overflow-y: auto;
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .grid-dashboard {
+                grid-template-columns: 1fr;
+            }
+            .grid-charts {
+                grid-template-columns: 1fr;
+            }
+            .kpi-value {
+                font-size: 2rem;
+            }
         }
-        :-webkit-full-screen {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            overflow-y: auto;
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
-        :-moz-full-screen {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            overflow-y: auto;
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        
-        .pulse-animation {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+        .data-table thead {
+            background: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .7; }
+
+        .data-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+
+        .data-table td {
+            padding: 12px 16px;
+            font-size: 0.875rem;
+            color: #1f2937;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-pendente { background: #fef3c7; color: #92400e; }
+        .status-confirmado { background: #dbeafe; color: #1e40af; }
+        .status-entregue { background: #d1fae5; color: #065f46; }
+        .status-cancelado { background: #fee2e2; color: #991b1b; }
+        .status-nao-veio { background: #fed7aa; color: #9a3412; }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Error Screen (mostrado se link inválido) -->
-    <div id="error-screen" class="error-screen hidden" style="display: none;">
+<body>
+    <!-- Error Screen -->
+    <div id="error-screen" class="error-screen" style="display: none;">
         <div class="text-center text-white px-6">
             <i class="fas fa-exclamation-triangle text-6xl mb-4"></i>
             <h1 class="text-4xl font-bold mb-4">Ops!</h1>
             <p id="error-message" class="text-xl mb-8">Link inválido ou expirado</p>
-            <a href="login.html" class="bg-white text-purple-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition inline-block">
+            <a href="login.html" style="background: white; color: #FF6B35; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                 Ir para Login
             </a>
         </div>
     </div>
 
+    <!-- Fullscreen Intro Animation -->
+    <div id="fullscreen-intro">
+        <div class="logo-intro">
+            <i class="fas fa-chart-line" style="font-size: 80px; margin-bottom: 20px;"></i>
+            <h1 style="font-size: 4rem; font-weight: 700; margin: 0;">BrisaLOG</h1>
+            <p style="font-size: 1.5rem; opacity: 0.9; margin-top: 8px;">Agenda</p>
+        </div>
+    </div>
+
     <!-- Main Content -->
-    <div id="main-content" class="hidden" style="display: none;">
+    <div id="main-content" style="display: none;">
         <!-- Header -->
-        <header style="background: linear-gradient(to right, #FF6B35, #FF8C42);" class="text-white shadow-lg">
-            <div class="container mx-auto px-6 py-4">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-4">
-                        <i class="fas fa-chart-line text-3xl"></i>
-                        <div>
-                            <h1 id="relatorio-nome" class="text-2xl font-bold">Relatório Público</h1>
-                            <p id="relatorio-descricao" class="text-orange-100 text-sm"></p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <!-- Botão Tela Cheia -->
-                        <button id="btn-fullscreen" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg flex items-center gap-2 transition transform hover:scale-105">
-                            <i class="fas fa-expand"></i>
-                            <span>Tela Cheia</span>
-                        </button>
-                        <div class="text-right text-sm">
-                            <p class="text-orange-100">Gerado em</p>
-                            <p id="relatorio-data" class="font-semibold">-</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Filtros Aplicados -->
-        <div class="container mx-auto px-6 py-6">
-            <div class="bg-orange-50 border-l-4 border-orange-400 p-4 mb-6 rounded">
-                <div class="flex">
-                    <i class="fas fa-info-circle text-orange-400 text-xl mr-3 mt-1"></i>
+        <div class="header-bar">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <i class="fas fa-chart-bar" style="font-size: 28px;"></i>
                     <div>
-                        <p class="font-bold text-orange-800 mb-1">Filtros Aplicados neste Relatório:</p>
-                        <p id="filtros-resumo" class="text-sm text-orange-700"></p>
+                        <h1 id="relatorio-nome" style="font-size: 1.5rem; font-weight: 700; margin: 0;">Dashboard Executivo</h1>
+                        <p id="relatorio-descricao" style="font-size: 0.875rem; opacity: 0.9; margin: 4px 0 0 0;"></p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <button id="btn-fullscreen" class="btn-fullscreen">
+                        <i class="fas fa-expand"></i>
+                        <span>Apresentação</span>
+                    </button>
+                    <div style="text-align: right; font-size: 0.875rem;">
+                        <p style="opacity: 0.8; margin: 0;">Gerado em</p>
+                        <p id="relatorio-data" style="font-weight: 600; margin: 4px 0 0 0;">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-container">
+            <!-- Filtros -->
+            <div style="background: #fff3cd; border-left: 4px solid #fbbf24; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-filter" style="color: #f59e0b; font-size: 20px;"></i>
+                    <div>
+                        <p style="font-weight: 600; color: #92400e; margin: 0;">Filtros Aplicados:</p>
+                        <p id="filtros-resumo" style="font-size: 0.875rem; color: #78350f; margin: 4px 0 0 0;"></p>
                     </div>
                 </div>
             </div>
 
-            <!-- KPIs Principais -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div class="kpi-card">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-white text-opacity-80 text-sm mb-1">Total de Agendamentos</p>
-                            <h2 id="kpi-total" class="text-4xl font-bold">0</h2>
-                        </div>
-                        <i class="fas fa-calendar-alt text-3xl opacity-50"></i>
+            <!-- KPIs Grid -->
+            <div class="grid-dashboard">
+                <!-- Total Agendamentos -->
+                <div class="kpi-card-mini kpi-main">
+                    <p class="kpi-label"><i class="fas fa-calendar-alt"></i> Total de Agendamentos</p>
+                    <p class="kpi-value" style="color: #FF6B35;"><span id="kpi-total">0</span></p>
+                    <p class="kpi-subtitle" id="kpi-total-sub">No período</p>
+                </div>
+
+                <!-- Taxa de Confirmação -->
+                <div class="kpi-card-mini kpi-success">
+                    <p class="kpi-label"><i class="fas fa-check-circle"></i> Taxa de Confirmação</p>
+                    <p class="kpi-value" style="color: #10b981;"><span id="kpi-confirmacao">0</span>%</p>
+                    <p class="kpi-subtitle" id="kpi-confirmacao-sub">0 confirmados</p>
+                </div>
+
+                <!-- Taxa de Entrega -->
+                <div class="kpi-card-mini kpi-info">
+                    <p class="kpi-label"><i class="fas fa-truck"></i> Taxa de Entrega</p>
+                    <p class="kpi-value" style="color: #3b82f6;"><span id="kpi-entrega">0</span>%</p>
+                    <p class="kpi-subtitle" id="kpi-entrega-sub">0 entregues</p>
+                </div>
+
+                <!-- Taxa de Assertividade -->
+                <div class="kpi-card-mini kpi-purple">
+                    <p class="kpi-label"><i class="fas fa-bullseye"></i> Assertividade</p>
+                    <p class="kpi-value" style="color: #8b5cf6;"><span id="kpi-assertividade">0</span>%</p>
+                    <p class="kpi-subtitle" id="kpi-assertividade-sub">Confirmados × Entregues</p>
+                </div>
+
+                <!-- Taxa de Cancelamento -->
+                <div class="kpi-card-mini kpi-danger">
+                    <p class="kpi-label"><i class="fas fa-ban"></i> Taxa de Cancelamento</p>
+                    <p class="kpi-value" style="color: #ef4444;"><span id="kpi-cancelamento">0</span>%</p>
+                    <p class="kpi-subtitle" id="kpi-cancelamento-sub">0 cancelados</p>
+                </div>
+
+                <!-- Não Comparecimento -->
+                <div class="kpi-card-mini kpi-warning">
+                    <p class="kpi-label"><i class="fas fa-exclamation-triangle"></i> Não Compareceram</p>
+                    <p class="kpi-value" style="color: #f59e0b;"><span id="kpi-nao-veio">0</span>%</p>
+                    <p class="kpi-subtitle" id="kpi-nao-veio-sub">0 não vieram</p>
+                </div>
+
+                <!-- Volume de NFs -->
+                <div class="kpi-card-mini kpi-info">
+                    <p class="kpi-label"><i class="fas fa-file-invoice"></i> Volume de NFs</p>
+                    <p class="kpi-value" style="color: #3b82f6;"><span id="kpi-nfs">0</span></p>
+                    <p class="kpi-subtitle">Notas fiscais processadas</p>
+                </div>
+
+                <!-- CD Mais Ativo -->
+                <div class="kpi-card-mini kpi-main">
+                    <p class="kpi-label"><i class="fas fa-trophy"></i> CD Mais Ativo</p>
+                    <p class="kpi-value" style="color: #FF6B35; font-size: 1.5rem;" id="kpi-cd-top">-</p>
+                    <p class="kpi-subtitle" id="kpi-cd-top-sub">0 agendamentos</p>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid-charts">
+                <!-- Status Distribution -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-pie" style="color: #FF6B35;"></i>
+                        Distribuição por Status
+                    </h3>
+                    <div class="chart-canvas">
+                        <canvas id="chart-status"></canvas>
                     </div>
                 </div>
 
-                <div class="kpi-card kpi-green">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-white text-opacity-80 text-sm mb-1">Taxa de Confirmação</p>
-                            <h2 id="kpi-confirmacao" class="text-4xl font-bold">0%</h2>
-                            <p id="kpi-confirmacao-qtd" class="text-sm mt-2">0 confirmados</p>
-                        </div>
-                        <i class="fas fa-check-circle text-3xl opacity-50"></i>
-                    </div>
-                </div>
-
-                <div class="kpi-card kpi-blue">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-white text-opacity-80 text-sm mb-1">Taxa de Entrega</p>
-                            <h2 id="kpi-entrega" class="text-4xl font-bold">0%</h2>
-                            <p id="kpi-entrega-qtd" class="text-sm mt-2">0 entregues</p>
-                        </div>
-                        <i class="fas fa-truck text-3xl opacity-50"></i>
-                    </div>
-                </div>
-
-                <div class="kpi-card kpi-orange">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-white text-opacity-80 text-sm mb-1">Não Comparecimento</p>
-                            <h2 id="kpi-nao-veio" class="text-4xl font-bold">0%</h2>
-                            <p id="kpi-nao-veio-qtd" class="text-sm mt-2">0 não vieram</p>
-                        </div>
-                        <i class="fas fa-exclamation-triangle text-3xl opacity-50"></i>
+                <!-- CDs -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-bar" style="color: #FF6B35;"></i>
+                        Top 10 CDs
+                        <span style="font-size: 0.75rem; color: #9ca3af; font-weight: normal;">(clique para detalhes)</span>
+                    </h3>
+                    <div class="chart-canvas">
+                        <canvas id="chart-cd" style="cursor: pointer;"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Gráficos -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div class="chart-container">
-                    <h3 class="text-lg font-bold mb-4 text-gray-800">
-                        <i class="fas fa-chart-pie mr-2 text-orange-500"></i>Distribuição por Status
+            <!-- Timeline / Tickets -->
+            <div class="chart-box" style="margin-bottom: 12px;">
+                <div id="section-timeline">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-line" style="color: #FF6B35;"></i>
+                        Evolução Temporal
                     </h3>
-                    <canvas id="chart-status"></canvas>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="chart-timeline"></canvas>
+                    </div>
                 </div>
 
-                <div class="chart-container">
-                    <h3 class="text-lg font-bold mb-4 text-gray-800">
-                        <i class="fas fa-chart-bar mr-2 text-orange-500"></i>Agendamentos por CD
-                        <span class="text-xs text-gray-500 font-normal">(clique para ver detalhes)</span>
-                    </h3>
-                    <canvas id="chart-cd" style="cursor: pointer;"></canvas>
-                </div>
-            </div>
-
-            <!-- Timeline / Lista de Agendamentos do CD -->
-            <div class="chart-container mb-6" style="height: 400px;">
-                <!-- Gráfico Timeline (mostrado por padrão) -->
-                <div id="section-timeline" style="height: 100%;">
-                    <h3 class="text-lg font-bold mb-4 text-gray-800">
-                        <i class="fas fa-chart-line mr-2 text-orange-500"></i>Evolução Temporal
-                    </h3>
-                    <canvas id="chart-timeline"></canvas>
-                </div>
-
-                <!-- Lista de Agendamentos do CD (oculto inicialmente) -->
-                <div id="section-cd-tickets" style="display: none; height: 100%; overflow-y: auto;">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-gray-800">
-                            <i class="fas fa-clipboard-list mr-2 text-orange-500"></i>
+                <div id="section-cd-tickets" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 class="chart-title" style="margin: 0;">
+                            <i class="fas fa-clipboard-list" style="color: #FF6B35;"></i>
                             <span id="cd-tickets-title">Agendamentos do CD</span>
                         </h3>
-                        <button onclick="relatorioPublico.voltarTimeline()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition flex items-center gap-2">
+                        <button onclick="relatorioPublico.voltarTimeline()" style="background: #FF6B35; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
                             <i class="fas fa-arrow-left"></i>
-                            Voltar ao Gráfico
+                            Voltar
                         </button>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fornecedor</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NFs</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário</th>
+                                    <th>Data</th>
+                                    <th>Fornecedor</th>
+                                    <th>Status</th>
+                                    <th>NFs</th>
+                                    <th>Horário</th>
                                 </tr>
                             </thead>
-                            <tbody id="cd-tickets-tbody" class="bg-white divide-y divide-gray-200">
-                                <!-- Preenchido via JS -->
-                            </tbody>
+                            <tbody id="cd-tickets-tbody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="text-center text-gray-500 text-sm mt-8 pb-6">
-                <i class="fas fa-lock mr-2"></i>
+            <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 0.875rem;">
+                <i class="fas fa-lock"></i>
                 Relatório gerado automaticamente pelo BrisaLOG | Este link pode expirar
             </div>
         </div>
@@ -266,12 +496,13 @@
 
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay">
-        <div class="text-center text-white">
-            <i class="fas fa-spinner fa-spin text-6xl mb-4"></i>
-            <p class="text-xl">Carregando relatório...</p>
+        <div style="text-align: center; color: white;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 60px; margin-bottom: 20px;"></i>
+            <p style="font-size: 1.25rem;">Carregando relatório...</p>
         </div>
     </div>
 
+    <script src="js/apiRequest.js"></script>
     <script>
         class RelatorioPublico {
             constructor() {
@@ -284,10 +515,10 @@
             }
 
             async init() {
-                // Configurar botão de fullscreen
+                console.log('🔍 [1/4] Iniciando carregamento do relatório...');
+                
                 this.setupFullscreen();
                 
-                // Obter token da URL
                 const urlParams = new URLSearchParams(window.location.search);
                 this.token = urlParams.get('token');
 
@@ -304,15 +535,29 @@
                 
                 btnFullscreen.addEventListener('click', () => {
                     if (!document.fullscreenElement) {
-                        document.documentElement.requestFullscreen().catch(err => {
-                            console.error('Erro ao ativar fullscreen:', err);
-                        });
+                        // Mostrar animação
+                        const intro = document.getElementById('fullscreen-intro');
+                        intro.classList.add('show');
+                        
+                        setTimeout(() => {
+                            document.documentElement.requestFullscreen().then(() => {
+                                setTimeout(() => {
+                                    intro.style.animation = 'fadeOut 0.5s ease';
+                                    setTimeout(() => {
+                                        intro.classList.remove('show');
+                                        intro.style.animation = '';
+                                    }, 500);
+                                }, 1500);
+                            }).catch(err => {
+                                console.error('Erro ao ativar fullscreen:', err);
+                                intro.classList.remove('show');
+                            });
+                        }, 100);
                     } else {
                         document.exitFullscreen();
                     }
                 });
 
-                // Detectar mudanças de fullscreen
                 document.addEventListener('fullscreenchange', () => {
                     this.isFullscreen = !!document.fullscreenElement;
                     this.atualizarBotaoFullscreen();
@@ -322,17 +567,14 @@
             atualizarBotaoFullscreen() {
                 const btnFullscreen = document.getElementById('btn-fullscreen');
                 if (this.isFullscreen) {
-                    btnFullscreen.innerHTML = '<i class="fas fa-compress"></i><span>Sair da Tela Cheia</span>';
+                    btnFullscreen.innerHTML = '<i class="fas fa-compress"></i><span>Sair</span>';
                 } else {
-                    btnFullscreen.innerHTML = '<i class="fas fa-expand"></i><span>Tela Cheia</span>';
+                    btnFullscreen.innerHTML = '<i class="fas fa-expand"></i><span>Apresentação</span>';
                 }
             }
 
             async carregarRelatorio() {
                 try {
-                    console.log('🔍 [1/4] Iniciando carregamento do relatório...');
-                    
-                    // Carregar dados do relatório
                     const response = await fetch(`/api/relatorios-publicos/acesso/${this.token}`);
                     
                     if (!response.ok) {
@@ -343,20 +585,16 @@
                     const relatorio = await response.json();
                     console.log('✅ [2/4] Metadados do relatório carregados:', relatorio.nome);
 
-                    // Preencher informações do relatório
                     document.getElementById('relatorio-nome').textContent = relatorio.nome;
                     document.getElementById('relatorio-descricao').textContent = relatorio.descricao || '';
                     document.getElementById('relatorio-data').textContent = new Date(relatorio.criadoEm).toLocaleString('pt-BR');
 
-                    // Mostrar resumo dos filtros
                     this.mostrarFiltros(relatorio.filtros);
                     console.log('✅ [3/4] Filtros aplicados, carregando dados...');
 
-                    // Carregar dados
                     await this.carregarDados(relatorio.filtros);
                     console.log('✅ [4/4] Dados carregados, exibindo conteúdo...');
 
-                    // Mostrar conteúdo
                     document.getElementById('loading-overlay').style.display = 'none';
                     document.getElementById('main-content').style.display = 'block';
                     
@@ -378,7 +616,7 @@
                     'personalizado': `${filtros.dataInicio || '?'} até ${filtros.dataFim || '?'}`
                 };
 
-                let resumo = `📅 Período: ${periodoText[filtros.periodo]} | `;
+                let resumo = `📅 ${periodoText[filtros.periodo]} | `;
                 
                 if (!filtros.cds.includes('todos')) {
                     resumo += `🏭 CDs selecionados | `;
@@ -387,7 +625,7 @@
                 }
                 
                 if (!filtros.status.includes('todos')) {
-                    resumo += `📊 Status: ${filtros.status.join(', ')}`;
+                    resumo += `📊 ${filtros.status.join(', ')}`;
                 } else {
                     resumo += `📊 Todos os status`;
                 }
@@ -397,7 +635,6 @@
 
             async carregarDados(filtros) {
                 try {
-                    // Carregar TUDO via endpoint público (sem autenticação)
                     const response = await fetch(`/api/relatorios-publicos/dados/${this.token}`);
                     
                     if (!response.ok) {
@@ -409,7 +646,6 @@
                     
                     this.cds = cds;
 
-                    // Aplicar filtros do relatório
                     const { inicio, fim } = this.calcularPeriodo(filtrosRelatorio.periodo, filtrosRelatorio.dataInicio, filtrosRelatorio.dataFim);
 
                     this.agendamentos = agendamentos.filter(ag => {
@@ -422,7 +658,6 @@
 
                     console.log(`✅ [Relatório Público] Carregados ${this.agendamentos.length} agendamentos filtrados de ${agendamentos.length} totais`);
 
-                    // Atualizar visualizações
                     this.atualizarKPIs();
                     this.atualizarGraficos();
 
@@ -433,39 +668,24 @@
             }
 
             calcularPeriodo(periodo, dataInicio, dataFim) {
-                const hoje = new Date();
-                hoje.setHours(23, 59, 59, 999);
-                let inicio, fim = new Date(hoje);
+                let inicio = new Date();
+                let fim = new Date();
 
-                switch (periodo) {
-                    case 'hoje':
-                        inicio = new Date(hoje);
-                        inicio.setHours(0, 0, 0, 0);
-                        break;
-                    case '7dias':
-                        inicio = new Date(hoje);
-                        inicio.setDate(inicio.getDate() - 7);
-                        inicio.setHours(0, 0, 0, 0);
-                        break;
-                    case '30dias':
-                        inicio = new Date(hoje);
-                        inicio.setDate(inicio.getDate() - 30);
-                        inicio.setHours(0, 0, 0, 0);
-                        break;
-                    case 'mes':
-                        inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-                        break;
-                    case 'mesAnterior':
-                        inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
-                        fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
-                        break;
-                    case 'personalizado':
-                        inicio = dataInicio ? new Date(dataInicio + 'T00:00:00') : new Date(hoje);
-                        fim = dataFim ? new Date(dataFim + 'T23:59:59') : new Date(hoje);
-                        break;
-                    default:
-                        inicio = new Date(hoje);
-                        inicio.setDate(inicio.getDate() - 30);
+                if (periodo === 'personalizado' && dataInicio && dataFim) {
+                    inicio = new Date(dataInicio);
+                    fim = new Date(dataFim);
+                } else if (periodo === 'hoje') {
+                    inicio.setHours(0, 0, 0, 0);
+                    fim.setHours(23, 59, 59, 999);
+                } else if (periodo === '7dias') {
+                    inicio.setDate(inicio.getDate() - 7);
+                } else if (periodo === '30dias') {
+                    inicio.setDate(inicio.getDate() - 30);
+                } else if (periodo === 'mes') {
+                    inicio = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+                } else if (periodo === 'mesAnterior') {
+                    inicio = new Date(inicio.getFullYear(), inicio.getMonth() - 1, 1);
+                    fim = new Date(inicio.getFullYear(), inicio.getMonth(), 0);
                 }
 
                 return { inicio, fim };
@@ -476,35 +696,61 @@
                 const confirmados = this.agendamentos.filter(ag => ag.status === 'confirmado' || ag.status === 'entregue').length;
                 const entregues = this.agendamentos.filter(ag => ag.status === 'entregue').length;
                 const naoVeio = this.agendamentos.filter(ag => ag.status === 'nao-veio').length;
+                const cancelados = this.agendamentos.filter(ag => ag.status === 'cancelado').length;
 
+                // Total
                 document.getElementById('kpi-total').textContent = total.toLocaleString('pt-BR');
 
+                // Confirmação
                 const taxaConfirmacao = total > 0 ? (confirmados / total * 100).toFixed(1) : 0;
-                document.getElementById('kpi-confirmacao').textContent = `${taxaConfirmacao}%`;
-                document.getElementById('kpi-confirmacao-qtd').textContent = `${confirmados} confirmados`;
+                document.getElementById('kpi-confirmacao').textContent = taxaConfirmacao;
+                document.getElementById('kpi-confirmacao-sub').textContent = `${confirmados} confirmados de ${total}`;
 
+                // Entrega
                 const taxaEntrega = total > 0 ? (entregues / total * 100).toFixed(1) : 0;
-                document.getElementById('kpi-entrega').textContent = `${taxaEntrega}%`;
-                document.getElementById('kpi-entrega-qtd').textContent = `${entregues} entregues`;
+                document.getElementById('kpi-entrega').textContent = taxaEntrega;
+                document.getElementById('kpi-entrega-sub').textContent = `${entregues} entregues`;
 
+                // Assertividade
+                const taxaAssertividade = confirmados > 0 ? (entregues / confirmados * 100).toFixed(1) : 0;
+                document.getElementById('kpi-assertividade').textContent = taxaAssertividade;
+
+                // Cancelamento
+                const taxaCancelamento = total > 0 ? (cancelados / total * 100).toFixed(1) : 0;
+                document.getElementById('kpi-cancelamento').textContent = taxaCancelamento;
+                document.getElementById('kpi-cancelamento-sub').textContent = `${cancelados} cancelados`;
+
+                // Não veio
                 const taxaNaoVeio = total > 0 ? (naoVeio / total * 100).toFixed(1) : 0;
-                document.getElementById('kpi-nao-veio').textContent = `${taxaNaoVeio}%`;
-                document.getElementById('kpi-nao-veio-qtd').textContent = `${naoVeio} não vieram`;
+                document.getElementById('kpi-nao-veio').textContent = taxaNaoVeio;
+                document.getElementById('kpi-nao-veio-sub').textContent = `${naoVeio} não vieram`;
+
+                // NFs
+                const totalNFs = this.agendamentos.reduce((sum, ag) => sum + (ag.notasFiscais?.length || 0), 0);
+                document.getElementById('kpi-nfs').textContent = totalNFs.toLocaleString('pt-BR');
+
+                // CD Top
+                const cdCounts = {};
+                this.agendamentos.forEach(ag => {
+                    const cdNome = this.cds.find(cd => cd.id === ag.cdId)?.nome || 'Desconhecido';
+                    cdCounts[cdNome] = (cdCounts[cdNome] || 0) + 1;
+                });
+                
+                const cdTop = Object.entries(cdCounts).sort((a, b) => b[1] - a[1])[0];
+                if (cdTop) {
+                    document.getElementById('kpi-cd-top').textContent = cdTop[0];
+                    document.getElementById('kpi-cd-top-sub').textContent = `${cdTop[1]} agendamentos (${((cdTop[1]/total)*100).toFixed(0)}%)`;
+                }
             }
 
             atualizarGraficos() {
-                // Gráfico de Status
-                const statusCounts = {
-                    'pendente': 0,
-                    'confirmado': 0,
-                    'entregue': 0,
-                    'cancelado': 0,
-                    'nao-veio': 0
-                };
-                this.agendamentos.forEach(ag => {
-                    statusCounts[ag.status] = (statusCounts[ag.status] || 0) + 1;
-                });
-
+                Object.values(this.charts).forEach(chart => chart.destroy());
+                this.charts = {};
+                
+                // Status
+                const statusCounts = { 'pendente': 0, 'confirmado': 0, 'entregue': 0, 'cancelado': 0, 'nao-veio': 0 };
+                this.agendamentos.forEach(ag => statusCounts[ag.status]++);
+                
                 const ctxStatus = document.getElementById('chart-status').getContext('2d');
                 this.charts.status = new Chart(ctxStatus, {
                     type: 'doughnut',
@@ -512,23 +758,23 @@
                         labels: ['Pendente', 'Confirmado', 'Entregue', 'Cancelado', 'Não Veio'],
                         datasets: [{
                             data: [statusCounts.pendente, statusCounts.confirmado, statusCounts.entregue, statusCounts.cancelado, statusCounts['nao-veio']],
-                            backgroundColor: ['#FCD34D', '#60A5FA', '#34D399', '#F87171', '#FB923C']
+                            backgroundColor: ['#fbbf24', '#3b82f6', '#10b981', '#ef4444', '#f59e0b'],
+                            borderWidth: 0
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom' } }
+                        plugins: { legend: { position: 'bottom', labels: { padding: 15, font: { size: 12 } } } }
                     }
                 });
 
-                // Gráfico de CDs
+                // CDs
                 const cdCounts = {};
                 this.agendamentos.forEach(ag => {
                     const cdNome = this.cds.find(cd => cd.id === ag.cdId)?.nome || 'Desconhecido';
                     cdCounts[cdNome] = (cdCounts[cdNome] || 0) + 1;
                 });
-
                 const cdEntries = Object.entries(cdCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
                 const ctxCd = document.getElementById('chart-cd').getContext('2d');
@@ -539,35 +785,31 @@
                         datasets: [{
                             label: 'Agendamentos',
                             data: cdEntries.map(e => e[1]),
-                            backgroundColor: '#FF6B35'
+                            backgroundColor: '#FF6B35',
+                            borderRadius: 8
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false }
-                        },
-                        scales: { 
-                            y: { beginAtZero: true, ticks: { stepSize: 1 } } 
-                        },
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
                         onClick: (event, activeElements) => {
                             if (activeElements.length > 0) {
                                 const index = activeElements[0].index;
-                                const cdNome = cdEntries[index][0];
-                                this.mostrarTicketsCD(cdNome);
+                                this.mostrarTicketsCD(cdEntries[index][0]);
                             }
                         }
                     }
                 });
 
-                // Gráfico Timeline
+                // Timeline
                 const timelineCounts = {};
                 this.agendamentos.forEach(ag => {
                     const data = new Date(ag.dataEntrega).toLocaleDateString('pt-BR');
                     timelineCounts[data] = (timelineCounts[data] || 0) + 1;
                 });
-
+                
                 const timelineEntries = Object.entries(timelineCounts).sort((a, b) => {
                     const [diaA, mesA, anoA] = a[0].split('/');
                     const [diaB, mesB, anoB] = b[0].split('/');
@@ -582,10 +824,11 @@
                         datasets: [{
                             label: 'Agendamentos',
                             data: timelineEntries.map(e => e[1]),
-                            borderColor: '#667eea',
-                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderColor: '#FF6B35',
+                            backgroundColor: 'rgba(255, 107, 53, 0.1)',
                             tension: 0.4,
-                            fill: true
+                            fill: true,
+                            borderWidth: 3
                         }]
                     },
                     options: {
@@ -598,61 +841,33 @@
             }
 
             mostrarTicketsCD(cdNome) {
-                // Filtrar agendamentos do CD selecionado
                 const cd = this.cds.find(c => c.nome === cdNome);
                 if (!cd) return;
 
                 const ticketsCD = this.agendamentos.filter(ag => ag.cdId === cd.id);
-
-                // Atualizar título
                 document.getElementById('cd-tickets-title').textContent = `Agendamentos de ${cdNome} (${ticketsCD.length})`;
 
-                // Popular tabela
                 const tbody = document.getElementById('cd-tickets-tbody');
                 tbody.innerHTML = ticketsCD.map(ag => {
-                    const statusColors = {
-                        'pendente': 'bg-yellow-100 text-yellow-800',
-                        'confirmado': 'bg-blue-100 text-blue-800',
-                        'entregue': 'bg-green-100 text-green-800',
-                        'cancelado': 'bg-red-100 text-red-800',
-                        'nao-veio': 'bg-orange-100 text-orange-800'
-                    };
-
-                    const statusTextos = {
-                        'pendente': 'Pendente',
-                        'confirmado': 'Confirmado',
-                        'entregue': 'Entregue',
-                        'cancelado': 'Cancelado',
-                        'nao-veio': 'Não Veio'
-                    };
-
                     const fornecedor = ag.fornecedor?.nome || ag.fornecedor || ag.nomeFornecedor || 'Não informado';
                     const nfs = ag.notasFiscais?.length || 0;
+                    const statusClass = `status-${ag.status}`;
+                    const statusTextos = {
+                        'pendente': 'Pendente', 'confirmado': 'Confirmado', 'entregue': 'Entregue',
+                        'cancelado': 'Cancelado', 'nao-veio': 'Não Veio'
+                    };
 
                     return `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                ${new Date(ag.dataEntrega).toLocaleDateString('pt-BR')}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                ${fornecedor}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[ag.status]}">
-                                    ${statusTextos[ag.status]}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                ${nfs} NF${nfs !== 1 ? 's' : ''}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                ${ag.horarioEntrega || '-'}
-                            </td>
+                        <tr>
+                            <td>${new Date(ag.dataEntrega).toLocaleDateString('pt-BR')}</td>
+                            <td>${fornecedor}</td>
+                            <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
+                            <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
+                            <td>${ag.horarioEntrega || '-'}</td>
                         </tr>
                     `;
                 }).join('');
 
-                // Esconder timeline e mostrar lista
                 document.getElementById('section-timeline').style.display = 'none';
                 document.getElementById('section-cd-tickets').style.display = 'block';
             }
@@ -669,10 +884,7 @@
             }
         }
 
-        // Variável global para acessar a instância
         let relatorioPublico;
-
-        // Inicializar
         document.addEventListener('DOMContentLoaded', () => {
             relatorioPublico = new RelatorioPublico();
         });
