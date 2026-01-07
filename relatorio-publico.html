@@ -916,7 +916,12 @@
                     // Buscar motivo do cancelamento no histórico
                     let motivoCancelamento = '-';
                     if (ag.status === 'cancelado' && ag.historicoAcoes) {
-                        const acaoCancelamento = ag.historicoAcoes.find(h => h.acao === 'cancelar' || h.acao === 'cancelamento');
+                        const acaoCancelamento = ag.historicoAcoes.find(h => 
+                            h.acao === 'cancelar' || 
+                            h.acao === 'cancelamento' || 
+                            h.acao === 'cancelado_admin' ||
+                            h.acao === 'cancelado_fornecedor'
+                        );
                         if (acaoCancelamento && acaoCancelamento.descricao) {
                             // Extrair apenas o texto após "Motivo:"
                             const match = acaoCancelamento.descricao.match(/Motivo:\s*(.+)/);
@@ -974,7 +979,12 @@
                     // Buscar motivo do cancelamento no histórico
                     let motivoCancelamento = '-';
                     if (ag.status === 'cancelado' && ag.historicoAcoes) {
-                        const acaoCancelamento = ag.historicoAcoes.find(h => h.acao === 'cancelar' || h.acao === 'cancelamento');
+                        const acaoCancelamento = ag.historicoAcoes.find(h => 
+                            h.acao === 'cancelar' || 
+                            h.acao === 'cancelamento' || 
+                            h.acao === 'cancelado_admin' ||
+                            h.acao === 'cancelado_fornecedor'
+                        );
                         if (acaoCancelamento && acaoCancelamento.descricao) {
                             // Extrair apenas o texto após "Motivo:"
                             const match = acaoCancelamento.descricao.match(/Motivo:\s*(.+)/);
@@ -1031,7 +1041,12 @@
                     // Buscar motivo do cancelamento no histórico
                     let motivoCancelamento = '-';
                     if (ag.status === 'cancelado' && ag.historicoAcoes) {
-                        const acaoCancelamento = ag.historicoAcoes.find(h => h.acao === 'cancelar' || h.acao === 'cancelamento');
+                        const acaoCancelamento = ag.historicoAcoes.find(h => 
+                            h.acao === 'cancelar' || 
+                            h.acao === 'cancelamento' || 
+                            h.acao === 'cancelado_admin' ||
+                            h.acao === 'cancelado_fornecedor'
+                        );
                         if (acaoCancelamento && acaoCancelamento.descricao) {
                             // Extrair apenas o texto após "Motivo:"
                             const match = acaoCancelamento.descricao.match(/Motivo:\s*(.+)/);
