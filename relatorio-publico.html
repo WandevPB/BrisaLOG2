@@ -913,6 +913,15 @@
                         'cancelado': 'Cancelado', 'nao-veio': 'Não Veio'
                     };
 
+                    // Buscar motivo do cancelamento no histórico
+                    let motivoCancelamento = '-';
+                    if (ag.status === 'cancelado' && ag.historicoAcoes) {
+                        const acaoCancelamento = ag.historicoAcoes.find(h => h.acao === 'cancelar' || h.acao === 'cancelamento');
+                        if (acaoCancelamento) {
+                            motivoCancelamento = acaoCancelamento.descricao || '-';
+                        }
+                    }
+
                     return `
                         <tr>
                             <td>${new Date(ag.dataEntrega).toLocaleDateString('pt-BR')}</td>
@@ -920,7 +929,7 @@
                             <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
                             <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
                             <td>${ag.horarioEntrega || '-'}</td>
-                            <td>${ag.status === 'cancelado' && ag.observacoes ? ag.observacoes : '-'}</td>
+                            <td>${motivoCancelamento}</td>
                         </tr>
                     `;
                 }).join('');
@@ -960,6 +969,15 @@
                     const nfs = ag.notasFiscais?.length || 0;
                     const statusClass = `status-${ag.status}`;
 
+                    // Buscar motivo do cancelamento no histórico
+                    let motivoCancelamento = '-';
+                    if (ag.status === 'cancelado' && ag.historicoAcoes) {
+                        const acaoCancelamento = ag.historicoAcoes.find(h => h.acao === 'cancelar' || h.acao === 'cancelamento');
+                        if (acaoCancelamento) {
+                            motivoCancelamento = acaoCancelamento.descricao || '-';
+                        }
+                    }
+
                     return `
                         <tr>
                             <td>${new Date(ag.dataEntrega).toLocaleDateString('pt-BR')}</td>
@@ -967,7 +985,7 @@
                             <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
                             <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
                             <td>${ag.horarioEntrega || '-'}</td>
-                            <td>${ag.status === 'cancelado' && ag.observacoes ? ag.observacoes : '-'}</td>
+                            <td>${motivoCancelamento}</td>
                         </tr>
                     `;
                 }).join('');
@@ -1006,6 +1024,15 @@
                         'cancelado': 'Cancelado', 'nao-veio': 'Não Veio'
                     };
 
+                    // Buscar motivo do cancelamento no histórico
+                    let motivoCancelamento = '-';
+                    if (ag.status === 'cancelado' && ag.historicoAcoes) {
+                        const acaoCancelamento = ag.historicoAcoes.find(h => h.acao === 'cancelar' || h.acao === 'cancelamento');
+                        if (acaoCancelamento) {
+                            motivoCancelamento = acaoCancelamento.descricao || '-';
+                        }
+                    }
+
                     return `
                         <tr>
                             <td>${cdNome}</td>
@@ -1013,7 +1040,7 @@
                             <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
                             <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
                             <td>${ag.horarioEntrega || '-'}</td>
-                            <td>${ag.status === 'cancelado' && ag.observacoes ? ag.observacoes : '-'}</td>
+                            <td>${motivoCancelamento}</td>
                         </tr>
                     `;
                 }).join('');

@@ -207,6 +207,11 @@ router.get('/dados/:token', async (req, res) => {
                             id: true,
                             nome: true
                         }
+                    },
+                    historicoAcoes: {
+                        orderBy: {
+                            createdAt: 'desc'
+                        }
                     }
                 },
                 orderBy: {
