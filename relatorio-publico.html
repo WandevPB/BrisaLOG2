@@ -97,11 +97,10 @@
             50% { opacity: .7; }
         }
     </style>
-    </style>
 </head>
 <body class="bg-gray-50">
     <!-- Error Screen (mostrado se link inválido) -->
-    <div id="error-screen" class="error-screen hidden">
+    <div id="error-screen" class="error-screen hidden" style="display: none;">
         <div class="text-center text-white px-6">
             <i class="fas fa-exclamation-triangle text-6xl mb-4"></i>
             <h1 class="text-4xl font-bold mb-4">Ops!</h1>
@@ -113,7 +112,7 @@
     </div>
 
     <!-- Main Content -->
-    <div id="main-content" class="hidden">
+    <div id="main-content" class="hidden" style="display: none;">
         <!-- Header -->
         <header class="bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg">
             <div class="container mx-auto px-6 py-4">
@@ -324,8 +323,8 @@
                     console.log('✅ [4/4] Dados carregados, exibindo conteúdo...');
 
                     // Mostrar conteúdo
-                    document.getElementById('loading-overlay').classList.add('hidden');
-                    document.getElementById('main-content').classList.remove('hidden');
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
                     
                     console.log('🎉 Relatório público carregado com sucesso!');
 
@@ -554,9 +553,9 @@
             }
 
             mostrarErro(mensagem) {
-                document.getElementById('loading-overlay').classList.add('hidden');
+                document.getElementById('loading-overlay').style.display = 'none';
                 document.getElementById('error-message').textContent = mensagem;
-                document.getElementById('error-screen').classList.remove('hidden');
+                document.getElementById('error-screen').style.display = 'flex';
             }
         }
 
