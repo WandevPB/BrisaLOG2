@@ -297,6 +297,8 @@
 
             async carregarRelatorio() {
                 try {
+                    console.log('🔍 [1/4] Iniciando carregamento do relatório...');
+                    
                     // Carregar dados do relatório
                     const response = await fetch(`/api/relatorios-publicos/acesso/${this.token}`);
                     
@@ -306,6 +308,7 @@
                     }
 
                     const relatorio = await response.json();
+                    console.log('✅ [2/4] Metadados do relatório carregados:', relatorio.nome);
 
                     // Preencher informações do relatório
                     document.getElementById('relatorio-nome').textContent = relatorio.nome;
@@ -314,16 +317,20 @@
 
                     // Mostrar resumo dos filtros
                     this.mostrarFiltros(relatorio.filtros);
+                    console.log('✅ [3/4] Filtros aplicados, carregando dados...');
 
                     // Carregar dados
                     await this.carregarDados(relatorio.filtros);
+                    console.log('✅ [4/4] Dados carregados, exibindo conteúdo...');
 
                     // Mostrar conteúdo
                     document.getElementById('loading-overlay').classList.add('hidden');
                     document.getElementById('main-content').classList.remove('hidden');
+                    
+                    console.log('🎉 Relatório público carregado com sucesso!');
 
                 } catch (error) {
-                    console.error('Erro ao carregar relatório:', error);
+                    console.error('❌ Erro ao carregar relatório:', error);
                     this.mostrarErro(error.message);
                 }
             }
