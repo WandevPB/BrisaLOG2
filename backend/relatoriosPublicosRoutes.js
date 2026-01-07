@@ -221,9 +221,18 @@ router.get('/dados/:token', async (req, res) => {
 
         console.log(`📦 [Relatório Público - Dados] Carregados ${agendamentos.length} agendamentos via token ${token.substring(0, 16)}...`);
 
+        // Converter BigInt para Number antes de serializar
+        const agendamentosSerializaveis = JSON.parse(JSON.stringify(agendamentos, (key, value) =>
+            typeof value === 'bigint' ? Number(value) : value
+        ));
+
+        const cdsSerializaveis = JSON.parse(JSON.stringify(cds, (key, value) =>
+            typeof value === 'bigint' ? Number(value) : value
+        ));
+
         res.json({
-            agendamentos,
-            cds,
+            agendamentos: agendamentosSerializaveis,
+            cds: cdsSerializaveis,
             filtros: JSON.parse(relatorio.filtros)
         });
 
