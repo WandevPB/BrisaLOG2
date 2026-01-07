@@ -175,9 +175,7 @@
             display: none;
         }
 
-        :fullscreen .chart-box {
-            display: none;
-        }
+        /* Charts visíveis em fullscreen */
 
         :fullscreen .grid-dashboard {
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -336,6 +334,10 @@
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 16px;">
+                    <button id="btn-atualizar" class="btn-fullscreen">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Atualizar</span>
+                    </button>
                     <button id="btn-fullscreen" class="btn-fullscreen">
                         <i class="fas fa-expand"></i>
                         <span>Apresentação</span>
@@ -427,9 +429,10 @@
                     <h3 class="chart-title">
                         <i class="fas fa-chart-pie" style="color: #FF6B35;"></i>
                         Distribuição por Status
+                        <span style="font-size: 0.75rem; color: #9ca3af; font-weight: normal;">(clique para detalhes)</span>
                     </h3>
                     <div class="chart-canvas">
-                        <canvas id="chart-status"></canvas>
+                        <canvas id="chart-status" style="cursor: pointer;"></canvas>
                     </div>
                 </div>
 
@@ -452,9 +455,10 @@
                     <h3 class="chart-title">
                         <i class="fas fa-chart-line" style="color: #FF6B35;"></i>
                         Evolução Temporal
+                        <span style="font-size: 0.75rem; color: #9ca3af; font-weight: normal;">(clique para detalhes do dia)</span>
                     </h3>
                     <div style="height: 300px; position: relative;">
-                        <canvas id="chart-timeline"></canvas>
+                        <canvas id="chart-timeline" style="cursor: pointer;"></canvas>
                     </div>
                 </div>
 
@@ -474,7 +478,7 @@
                             <thead>
                                 <tr>
                                     <th>Data</th>
-                                    <th>Fornecedor</th>
+                                    <th>Transportador</th>
                                     <th>Status</th>
                                     <th>NFs</th>
                                     <th>Horário</th>
@@ -532,6 +536,28 @@
 
             setupFullscreen() {
                 const btnFullscreen = document.getElementById('btn-fullscreen');
+                const btnAtualizar = document.getElementById('btn-atualizar');
+                
+                // Botão atualizar
+                btnAtualizar.addEventListener('click', async () => {
+                    btnAtualizar.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Atualizando...</span>';
+                    btnAtualizar.disabled = true;
+                    
+                    try {
+                        await this.carregarRelatorio();
+                        btnAtualizar.innerHTML = '<i class="fas fa-check"></i><span>Atualizado!</span>';
+                        setTimeout(() => {
+                            btnAtualizar.innerHTML = '<i class="fas fa-sync-alt"></i><span>Atualizar</span>';
+                            btnAtualizar.disabled = false;
+                        }, 2000);
+                    } catch (error) {
+                        btnAtualizar.innerHTML = '<i class="fas fa-times"></i><span>Erro</span>';
+                        setTimeout(() => {
+                            btnAtualizar.innerHTML = '<i class="fas fa-sync-alt"></i><span>Atualizar</span>';
+                            btnAtualizar.disabled = false;
+                        }, 2000);
+                    }
+                });
                 
                 btnFullscreen.addEventListener('click', () => {
                     if (!document.fullscreenElement) {
@@ -765,7 +791,14 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom', labels: { padding: 15, font: { size: 12 } } } }
+                        plugins: { legend: { position: 'bottom', labels: { padding: 15, font: { size: 12 } } } },
+                        onClick: (event, activeElements) => {
+                            if (activeElements.length > 0) {
+                                const index = activeElements[0].index;
+                                const statusNomes = ['pendente', 'confirmado', 'entregue', 'cancelado', 'nao-veio'];
+                                this.mostrarTicketsPorStatus(statusNomes[index]);
+                            }
+                        }
                     }
                 });
 
@@ -835,7 +868,13 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                        onClick: (event, activeElements) => {
+                            if (activeElements.length > 0) {
+                                const index = activeElements[0].index;
+                                this.mostrarTicketsPorData(timelineEntries[index][0]);
+                            }
+                        }
                     }
                 });
             }
@@ -849,7 +888,7 @@
 
                 const tbody = document.getElementById('cd-tickets-tbody');
                 tbody.innerHTML = ticketsCD.map(ag => {
-                    const fornecedor = ag.fornecedor?.nome || ag.fornecedor || ag.nomeFornecedor || 'Não informado';
+                    const fornecedor = ag.transportador?.nome || ag.transportador || ag.nomeFornecedor || ag.fornecedor?.nome || ag.fornecedor || 'Não informado';
                     const nfs = ag.notasFiscais?.length || 0;
                     const statusClass = `status-${ag.status}`;
                     const statusTextos = {
@@ -860,6 +899,75 @@
                     return `
                         <tr>
                             <td>${new Date(ag.dataEntrega).toLocaleDateString('pt-BR')}</td>
+                            <td>${fornecedor}</td>
+                            <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
+                            <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
+                            <td>${ag.horarioEntrega || '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('section-timeline').style.display = 'none';
+                document.getElementById('section-cd-tickets').style.display = 'block';
+            }
+
+            mostrarTicketsPorStatus(status) {
+                const statusTextos = {
+                    'pendente': 'Pendente',
+                    'confirmado': 'Confirmado',
+                    'entregue': 'Entregue',
+                    'cancelado': 'Cancelado',
+                    'nao-veio': 'Não Veio'
+                };
+
+                const ticketsFiltrados = this.agendamentos.filter(ag => ag.status === status);
+                document.getElementById('cd-tickets-title').textContent = 
+                    `Agendamentos com status "${statusTextos[status]}" (${ticketsFiltrados.length})`;
+
+                const tbody = document.getElementById('cd-tickets-tbody');
+                tbody.innerHTML = ticketsFiltrados.map(ag => {
+                    const cdNome = this.cds.find(cd => cd.id === ag.cdId)?.nome || 'Desconhecido';
+                    const fornecedor = ag.transportador?.nome || ag.transportador || ag.nomeFornecedor || ag.fornecedor?.nome || ag.fornecedor || 'Não informado';
+                    const nfs = ag.notasFiscais?.length || 0;
+                    const statusClass = `status-${ag.status}`;
+
+                    return `
+                        <tr>
+                            <td>${new Date(ag.dataEntrega).toLocaleDateString('pt-BR')}</td>
+                            <td>${fornecedor}</td>
+                            <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
+                            <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
+                            <td>${ag.horarioEntrega || '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('section-timeline').style.display = 'none';
+                document.getElementById('section-cd-tickets').style.display = 'block';
+            }
+
+            mostrarTicketsPorData(data) {
+                const ticketsFiltrados = this.agendamentos.filter(ag => {
+                    return new Date(ag.dataEntrega).toLocaleDateString('pt-BR') === data;
+                });
+
+                document.getElementById('cd-tickets-title').textContent = 
+                    `Agendamentos de ${data} (${ticketsFiltrados.length})`;
+
+                const tbody = document.getElementById('cd-tickets-tbody');
+                tbody.innerHTML = ticketsFiltrados.map(ag => {
+                    const cdNome = this.cds.find(cd => cd.id === ag.cdId)?.nome || 'Desconhecido';
+                    const fornecedor = ag.transportador?.nome || ag.transportador || ag.nomeFornecedor || ag.fornecedor?.nome || ag.fornecedor || 'Não informado';
+                    const nfs = ag.notasFiscais?.length || 0;
+                    const statusClass = `status-${ag.status}`;
+                    const statusTextos = {
+                        'pendente': 'Pendente', 'confirmado': 'Confirmado', 'entregue': 'Entregue',
+                        'cancelado': 'Cancelado', 'nao-veio': 'Não Veio'
+                    };
+
+                    return `
+                        <tr>
+                            <td>${cdNome}</td>
                             <td>${fornecedor}</td>
                             <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
                             <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
