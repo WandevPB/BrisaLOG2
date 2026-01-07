@@ -201,7 +201,13 @@ router.get('/dados/:token', async (req, res) => {
         const [agendamentos, cds] = await Promise.all([
             prisma.agendamento.findMany({
                 include: {
-                    notasFiscais: true
+                    notasFiscais: true,
+                    fornecedor: {
+                        select: {
+                            id: true,
+                            nome: true
+                        }
+                    }
                 },
                 orderBy: {
                     createdAt: 'desc'
