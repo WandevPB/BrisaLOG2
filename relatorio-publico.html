@@ -209,17 +209,51 @@
                 <div class="chart-container">
                     <h3 class="text-lg font-bold mb-4 text-gray-800">
                         <i class="fas fa-chart-bar mr-2 text-orange-500"></i>Agendamentos por CD
+                        <span class="text-xs text-gray-500 font-normal">(clique para ver detalhes)</span>
                     </h3>
-                    <canvas id="chart-cd"></canvas>
+                    <canvas id="chart-cd" style="cursor: pointer;"></canvas>
                 </div>
             </div>
 
-            <!-- Timeline -->
+            <!-- Timeline / Lista de Agendamentos do CD -->
             <div class="chart-container mb-6" style="height: 400px;">
-                <h3 class="text-lg font-bold mb-4 text-gray-800">
-                    <i class="fas fa-chart-line mr-2 text-orange-500"></i>Evolução Temporal
-                </h3>
-                <canvas id="chart-timeline"></canvas>
+                <!-- Gráfico Timeline (mostrado por padrão) -->
+                <div id="section-timeline" style="height: 100%;">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800">
+                        <i class="fas fa-chart-line mr-2 text-orange-500"></i>Evolução Temporal
+                    </h3>
+                    <canvas id="chart-timeline"></canvas>
+                </div>
+
+                <!-- Lista de Agendamentos do CD (oculto inicialmente) -->
+                <div id="section-cd-tickets" style="display: none; height: 100%; overflow-y: auto;">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">
+                            <i class="fas fa-clipboard-list mr-2 text-orange-500"></i>
+                            <span id="cd-tickets-title">Agendamentos do CD</span>
+                        </h3>
+                        <button onclick="relatorioPublico.voltarTimeline()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition flex items-center gap-2">
+                            <i class="fas fa-arrow-left"></i>
+                            Voltar ao Gráfico
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fornecedor</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NFs</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cd-tickets-tbody" class="bg-white divide-y divide-gray-200">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- Footer -->
@@ -505,14 +539,25 @@
                         datasets: [{
                             label: 'Agendamentos',
                             data: cdEntries.map(e => e[1]),
-                            backgroundColor: '#667eea'
+                            backgroundColor: '#FF6B35'
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                        plugins: { 
+                            legend: { display: false }
+                        },
+                        scales: { 
+                            y: { beginAtZero: true, ticks: { stepSize: 1 } } 
+                        },
+                        onClick: (event, activeElements) => {
+                            if (activeElements.length > 0) {
+                                const index = activeElements[0].index;
+                                const cdNome = cdEntries[index][0];
+                                this.mostrarTicketsCD(cdNome);
+                            }
+                        }
                     }
                 });
 
@@ -552,6 +597,71 @@
                 });
             }
 
+            mostrarTicketsCD(cdNome) {
+                // Filtrar agendamentos do CD selecionado
+                const cd = this.cds.find(c => c.nome === cdNome);
+                if (!cd) return;
+
+                const ticketsCD = this.agendamentos.filter(ag => ag.cdId === cd.id);
+
+                // Atualizar título
+                document.getElementById('cd-tickets-title').textContent = `Agendamentos de ${cdNome} (${ticketsCD.length})`;
+
+                // Popular tabela
+                const tbody = document.getElementById('cd-tickets-tbody');
+                tbody.innerHTML = ticketsCD.map(ag => {
+                    const statusColors = {
+                        'pendente': 'bg-yellow-100 text-yellow-800',
+                        'confirmado': 'bg-blue-100 text-blue-800',
+                        'entregue': 'bg-green-100 text-green-800',
+                        'cancelado': 'bg-red-100 text-red-800',
+                        'nao-veio': 'bg-orange-100 text-orange-800'
+                    };
+
+                    const statusTextos = {
+                        'pendente': 'Pendente',
+                        'confirmado': 'Confirmado',
+                        'entregue': 'Entregue',
+                        'cancelado': 'Cancelado',
+                        'nao-veio': 'Não Veio'
+                    };
+
+                    const fornecedor = ag.fornecedor?.nome || ag.fornecedor || ag.nomeFornecedor || 'Não informado';
+                    const nfs = ag.notasFiscais?.length || 0;
+
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${new Date(ag.dataEntrega).toLocaleDateString('pt-BR')}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${fornecedor}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[ag.status]}">
+                                    ${statusTextos[ag.status]}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${nfs} NF${nfs !== 1 ? 's' : ''}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${ag.horarioEntrega || '-'}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Esconder timeline e mostrar lista
+                document.getElementById('section-timeline').style.display = 'none';
+                document.getElementById('section-cd-tickets').style.display = 'block';
+            }
+
+            voltarTimeline() {
+                document.getElementById('section-cd-tickets').style.display = 'none';
+                document.getElementById('section-timeline').style.display = 'block';
+            }
+
             mostrarErro(mensagem) {
                 document.getElementById('loading-overlay').style.display = 'none';
                 document.getElementById('error-message').textContent = mensagem;
@@ -559,9 +669,12 @@
             }
         }
 
+        // Variável global para acessar a instância
+        let relatorioPublico;
+
         // Inicializar
         document.addEventListener('DOMContentLoaded', () => {
-            new RelatorioPublico();
+            relatorioPublico = new RelatorioPublico();
         });
     </script>
 </body>
