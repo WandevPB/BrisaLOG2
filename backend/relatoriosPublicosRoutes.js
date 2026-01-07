@@ -174,6 +174,65 @@ router.get('/acesso/:token', async (req, res) => {
     }
 });
 
+// Carregar dados do relatório público (SEM AUTENTICAÇÃO - endpoint público)
+router.get('/dados/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        // Validar token do relatório
+        const relatorio = await prisma.relatorioPublico.findUnique({
+            where: { token }
+        });
+
+        if (!relatorio) {
+            return res.status(404).json({ error: 'Relatório não encontrado' });
+        }
+
+        if (!relatorio.ativo) {
+            return res.status(403).json({ error: 'Relatório desativado' });
+        }
+
+        // Verificar expiração
+        if (relatorio.expiraEm && new Date() > new Date(relatorio.expiraEm)) {
+            return res.status(403).json({ error: 'Link expirado' });
+        }
+
+        // Carregar TODOS os agendamentos e CDs (sem autenticação)
+        const [agendamentos, cds] = await Promise.all([
+            prisma.agendamento.findMany({
+                include: {
+                    notasFiscais: true
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            }),
+            prisma.cd.findMany({
+                where: {
+                    tipoPerfil: 'cd'
+                },
+                select: {
+                    id: true,
+                    nome: true,
+                    usuario: true
+                }
+            })
+        ]);
+
+        console.log(`📦 [Relatório Público - Dados] Carregados ${agendamentos.length} agendamentos via token ${token.substring(0, 16)}...`);
+
+        res.json({
+            agendamentos,
+            cds,
+            filtros: JSON.parse(relatorio.filtros)
+        });
+
+    } catch (error) {
+        console.error('Erro ao carregar dados do relatório público:', error);
+        res.status(500).json({ error: 'Erro ao carregar dados' });
+    }
+});
+
 // Desativar relatório público
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {

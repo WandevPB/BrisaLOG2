@@ -577,15 +577,21 @@ class DashboardGestao {
         this.mostrarLoading(true);
         
         try {
+            const payload = {
+                nome,
+                descricao,
+                filtros: this.filtros,
+                validadeHoras
+            };
+            
+            console.log('🔍 [Debug] Gerando link com payload:', payload);
+            
             const response = await apiRequest('/api/relatorios-publicos', {
                 method: 'POST',
-                body: JSON.stringify({
-                    nome,
-                    descricao,
-                    filtros: this.filtros,
-                    validadeHoras
-                })
+                body: JSON.stringify(payload)
             });
+            
+            console.log('✅ [Debug] Link gerado com sucesso:', response);
             
             this.linkGerado = `${window.location.origin}/relatorio-publico.html?token=${response.token}`;
             document.getElementById('link-gerado-url').textContent = this.linkGerado;

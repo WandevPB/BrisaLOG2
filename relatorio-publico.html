@@ -357,35 +357,30 @@
 
             async carregarDados(filtros) {
                 try {
-                    // Carregar CDs (endpoint público ou cache)
-                    const responseCds = await fetch('/api/perfis');
-                    const allCds = await responseCds.json();
-                    this.cds = allCds.filter(cd => cd.tipoPerfil === 'cd');
-
-                    // Carregar agendamentos (sem autenticação - público)
-                    const responseAgendamentos = await fetch('/api/agendamentos/todos', {
-                        headers: {
-                            'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`
-                        }
-                    });
+                    // Carregar TUDO via endpoint público (sem autenticação)
+                    const response = await fetch(`/api/relatorios-publicos/dados/${this.token}`);
                     
-                    if (!responseAgendamentos.ok) {
-                        throw new Error('Erro ao carregar agendamentos');
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Erro ao carregar dados');
                     }
                     
-                    const result = await responseAgendamentos.json();
-                    const allAgendamentos = result.data || result;
+                    const { agendamentos, cds, filtros: filtrosRelatorio } = await response.json();
+                    
+                    this.cds = cds;
 
-                    // Aplicar filtros
-                    const { inicio, fim } = this.calcularPeriodo(filtros.periodo, filtros.dataInicio, filtros.dataFim);
+                    // Aplicar filtros do relatório
+                    const { inicio, fim } = this.calcularPeriodo(filtrosRelatorio.periodo, filtrosRelatorio.dataInicio, filtrosRelatorio.dataFim);
 
-                    this.agendamentos = allAgendamentos.filter(ag => {
+                    this.agendamentos = agendamentos.filter(ag => {
                         const dataAg = new Date(ag.dataEntrega);
                         if (dataAg < inicio || dataAg > fim) return false;
-                        if (!filtros.cds.includes('todos') && !filtros.cds.includes(ag.cdId.toString())) return false;
-                        if (!filtros.status.includes('todos') && !filtros.status.includes(ag.status)) return false;
+                        if (!filtrosRelatorio.cds.includes('todos') && !filtrosRelatorio.cds.includes(ag.cdId.toString())) return false;
+                        if (!filtrosRelatorio.status.includes('todos') && !filtrosRelatorio.status.includes(ag.status)) return false;
                         return true;
                     });
+
+                    console.log(`✅ [Relatório Público] Carregados ${this.agendamentos.length} agendamentos filtrados de ${agendamentos.length} totais`);
 
                     // Atualizar visualizações
                     this.atualizarKPIs();
