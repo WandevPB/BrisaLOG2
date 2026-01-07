@@ -917,8 +917,10 @@
                     let motivoCancelamento = '-';
                     if (ag.status === 'cancelado' && ag.historicoAcoes) {
                         const acaoCancelamento = ag.historicoAcoes.find(h => h.acao === 'cancelar' || h.acao === 'cancelamento');
-                        if (acaoCancelamento) {
-                            motivoCancelamento = acaoCancelamento.descricao || '-';
+                        if (acaoCancelamento && acaoCancelamento.descricao) {
+                            // Extrair apenas o texto após "Motivo:"
+                            const match = acaoCancelamento.descricao.match(/Motivo:\s*(.+)/);
+                            motivoCancelamento = match ? match[1].trim() : acaoCancelamento.descricao;
                         }
                     }
 
@@ -973,8 +975,10 @@
                     let motivoCancelamento = '-';
                     if (ag.status === 'cancelado' && ag.historicoAcoes) {
                         const acaoCancelamento = ag.historicoAcoes.find(h => h.acao === 'cancelar' || h.acao === 'cancelamento');
-                        if (acaoCancelamento) {
-                            motivoCancelamento = acaoCancelamento.descricao || '-';
+                        if (acaoCancelamento && acaoCancelamento.descricao) {
+                            // Extrair apenas o texto após "Motivo:"
+                            const match = acaoCancelamento.descricao.match(/Motivo:\s*(.+)/);
+                            motivoCancelamento = match ? match[1].trim() : acaoCancelamento.descricao;
                         }
                     }
 
@@ -1028,8 +1032,10 @@
                     let motivoCancelamento = '-';
                     if (ag.status === 'cancelado' && ag.historicoAcoes) {
                         const acaoCancelamento = ag.historicoAcoes.find(h => h.acao === 'cancelar' || h.acao === 'cancelamento');
-                        if (acaoCancelamento) {
-                            motivoCancelamento = acaoCancelamento.descricao || '-';
+                        if (acaoCancelamento && acaoCancelamento.descricao) {
+                            // Extrair apenas o texto após "Motivo:"
+                            const match = acaoCancelamento.descricao.match(/Motivo:\s*(.+)/);
+                            motivoCancelamento = match ? match[1].trim() : acaoCancelamento.descricao;
                         }
                     }
 
