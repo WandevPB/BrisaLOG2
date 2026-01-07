@@ -893,7 +893,7 @@
 
                 const tbody = document.getElementById('cd-tickets-tbody');
                 tbody.innerHTML = ticketsCD.map(ag => {
-                    const fornecedor = ag.fornecedor?.nome || ag.nomeFornecedor || ag.transportador || 'Não informado';
+                    const fornecedor = ag.fornecedorNome || ag.fornecedor?.nome || ag.nomeFornecedor || 'Não informado';
                     const nfs = ag.notasFiscais?.length || 0;
                     const statusClass = `status-${ag.status}`;
                     const statusTextos = {
@@ -932,7 +932,7 @@
                 const tbody = document.getElementById('cd-tickets-tbody');
                 tbody.innerHTML = ticketsFiltrados.map(ag => {
                     const cdNome = this.cds.find(cd => cd.id === ag.cdId)?.nome || 'Desconhecido';
-                    const fornecedor = ag.fornecedor?.nome || ag.nomeFornecedor || ag.transportador || 'Não informado';
+                    const fornecedor = ag.fornecedorNome || ag.fornecedor?.nome || ag.nomeFornecedor || 'Não informado';
                     const nfs = ag.notasFiscais?.length || 0;
                     const statusClass = `status-${ag.status}`;
 
@@ -962,7 +962,7 @@
                 const tbody = document.getElementById('cd-tickets-tbody');
                 tbody.innerHTML = ticketsFiltrados.map(ag => {
                     const cdNome = this.cds.find(cd => cd.id === ag.cdId)?.nome || 'Desconhecido';
-                    const fornecedor = ag.fornecedor?.nome || ag.nomeFornecedor || ag.transportador || 'Não informado';
+                    const fornecedor = ag.fornecedorNome || ag.fornecedor?.nome || ag.nomeFornecedor || 'Não informado';
                     const nfs = ag.notasFiscais?.length || 0;
                     const statusClass = `status-${ag.status}`;
                     const statusTextos = {
