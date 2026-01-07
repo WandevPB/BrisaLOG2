@@ -1,10 +1,13 @@
 -- =============================================
--- SCRIPT: Criar Tabela RelatorioPublico
+-- SCRIPT: Criar Tabela relatorios_publicos (NOME CORRETO!)
 -- EXECUTAR NO VPS (PostgreSQL)
 -- =============================================
 
--- 1. Criar a tabela RelatorioPublico
-CREATE TABLE IF NOT EXISTS "RelatorioPublico" (
+-- 1. Dropar tabela antiga com nome errado (se existir)
+DROP TABLE IF EXISTS "RelatorioPublico" CASCADE;
+
+-- 2. Criar a tabela com o nome correto que o Prisma espera
+CREATE TABLE IF NOT EXISTS relatorios_publicos (
     id SERIAL PRIMARY KEY,
     token VARCHAR(255) UNIQUE NOT NULL,
     nome VARCHAR(255) NOT NULL,
@@ -14,13 +17,19 @@ CREATE TABLE IF NOT EXISTS "RelatorioPublico" (
     "criadoEm" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "expiraEm" TIMESTAMP(3),
     acessos INTEGER NOT NULL DEFAULT 0,
-    ativo BOOLEAN NOT NULL DEFAULT true
+    ativo BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Criar índices para performance
-CREATE INDEX IF NOT EXISTS "RelatorioPublico_token_idx" ON "RelatorioPublico"(token);
-CREATE INDEX IF NOT EXISTS "RelatorioPublico_criadoPor_idx" ON "RelatorioPublico"("criadoPor");
-CREATE INDEX IF NOT EXISTS "RelatorioPublico_ativo_idx" ON "RelatorioPublico"(ativo);
+-- 3. Criar índices para performance
+CREATE INDEX IF NOT EXISTS relatorios_publicos_token_idx ON relatorios_publicos(token);
+CREATE INDEX IF NOT EXISTS relatorios_publicos_criadoPor_idx ON relatorios_publicos("criadoPor");
+CREATE INDEX IF NOT EXISTS relatorios_publicos_ativo_idx ON relatorios_publicos(ativo);
+
+-- 4. Dar permissões ao usuário postgres
+GRANT ALL PRIVILEGES ON TABLE relatorios_publicos TO postgres;
+GRANT ALL PRIVILEGES ON SEQUENCE relatorios_publicos_id_seq TO postgres;
 
 -- 3. Verificar se a tabela foi criada
 SELECT 

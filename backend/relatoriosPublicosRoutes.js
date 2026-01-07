@@ -61,6 +61,8 @@ router.post('/', authenticateToken, async (req, res) => {
         }
 
         // Criar relatório público
+        console.log(`📝 [Relatórios Públicos] Criando relatório: ${nome}, Filtros: ${JSON.stringify(filtros).substring(0, 100)}...`);
+        
         const relatorio = await prisma.relatorioPublico.create({
             data: {
                 token,
@@ -80,7 +82,7 @@ router.post('/', authenticateToken, async (req, res) => {
             token: relatorio.token,
             nome: relatorio.nome,
             expiraEm: relatorio.expiraEm,
-            createdAt: relatorio.createdAt
+            criadoEm: relatorio.criadoEm
         });
 
     } catch (error) {
