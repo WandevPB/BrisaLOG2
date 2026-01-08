@@ -420,6 +420,24 @@
                     <p class="kpi-value" style="color: #FF6B35; font-size: 1.5rem;" id="kpi-cd-top">-</p>
                     <p class="kpi-subtitle" id="kpi-cd-top-sub">0 agendamentos</p>
                 </div>
+
+                <!-- Quantidade de Volumes -->
+                <div class="kpi-card-mini kpi-success">
+                    <p class="kpi-label"><i class="fas fa-boxes"></i> Total de Volumes</p>
+                    <p class="kpi-value" style="color: #10b981;"><span id="kpi-volumes">0</span></p>
+                    <p class="kpi-subtitle" id="kpi-volumes-sub">Volumes recebidos</p>
+                </div>
+            </div>
+
+            <!-- Filtro Ativo (quando clica em CD ou Status) -->
+            <div id="filtro-ativo" style="display: none; margin: 20px 0; padding: 15px; background: #f3f4f6; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span style="font-weight: 600; color: #374151;">Filtro ativo: </span>
+                    <span id="filtro-ativo-texto" style="color: #FF6B35; font-weight: 600;"></span>
+                </div>
+                <button onclick="relatorioPublico.limparFiltro()" style="background: #FF6B35; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-times"></i> Limpar Filtro
+                </button>
             </div>
 
             <!-- Charts Grid -->
@@ -513,9 +531,11 @@
             constructor() {
                 this.token = null;
                 this.agendamentos = [];
+                this.agendamentosTodos = []; // Backup de todos os agendamentos
                 this.cds = [];
                 this.charts = {};
                 this.isFullscreen = false;
+                this.filtroAtivo = null; // { tipo: 'cd'|'status', valor: '...', nome: '...' }
                 this.init();
             }
 
@@ -710,6 +730,9 @@
 
                     console.log(`✅ [Relatório Público] ${this.agendamentos.length} agendamentos após filtro de período (de ${agendamentos.length} totais)`);
 
+                    // Salvar backup de todos os agendamentos
+                    this.agendamentosTodos = [...this.agendamentos];
+
                     this.atualizarKPIs();
                     this.atualizarGraficos();
 
@@ -799,6 +822,24 @@
                 const totalNFs = this.agendamentos.reduce((sum, ag) => sum + (ag.notasFiscais?.length || 0), 0);
                 document.getElementById('kpi-nfs').textContent = totalNFs.toLocaleString('pt-BR');
 
+                // Volumes
+                const totalVolumes = this.agendamentos.reduce((sum, ag) => {
+                    const qtd = parseInt(ag.quantidadeVolumes) || 0;
+                    return sum + qtd;
+                }, 0);
+                document.getElementById('kpi-volumes').textContent = totalVolumes.toLocaleString('pt-BR');
+                
+                // Tipos de volumes mais comuns
+                const tiposVolumes = {};
+                this.agendamentos.forEach(ag => {
+                    if (ag.tipoVolume) {
+                        tiposVolumes[ag.tipoVolume] = (tiposVolumes[ag.tipoVolume] || 0) + (parseInt(ag.quantidadeVolumes) || 0);
+                    }
+                });
+                const tipoMaisComum = Object.entries(tiposVolumes).sort((a, b) => b[1] - a[1])[0];
+                const tipoTexto = tipoMaisComum ? `${tipoMaisComum[0]} (${tipoMaisComum[1]})` : 'N/A';
+                document.getElementById('kpi-volumes-sub').textContent = tipoTexto;
+
                 // CD Top
                 const cdCounts = {};
                 this.agendamentos.forEach(ag => {
@@ -840,7 +881,7 @@
                             if (activeElements.length > 0) {
                                 const index = activeElements[0].index;
                                 const statusNomes = ['pendente', 'confirmado', 'entregue', 'cancelado', 'nao-veio'];
-                                this.mostrarTicketsPorStatus(statusNomes[index]);
+                                this.filtrarPorStatus(statusNomes[index]);
                             }
                         }
                     }
@@ -874,7 +915,7 @@
                         onClick: (event, activeElements) => {
                             if (activeElements.length > 0) {
                                 const index = activeElements[0].index;
-                                this.mostrarTicketsCD(cdEntries[index][0]);
+                                this.filtrarPorCD(cdEntries[index][0]);
                             }
                         }
                     }
@@ -921,6 +962,70 @@
                         }
                     }
                 });
+            }
+
+            filtrarPorCD(cdNome) {
+                const cd = this.cds.find(c => c.nome === cdNome);
+                if (!cd) return;
+
+                // Filtrar agendamentos por CD
+                this.agendamentos = this.agendamentosTodos.filter(ag => ag.cdId === cd.id);
+                
+                // Marcar filtro ativo
+                this.filtroAtivo = { tipo: 'cd', valor: cd.id, nome: cdNome };
+                this.mostrarFiltroAtivo();
+
+                // Atualizar KPIs e gráficos
+                this.atualizarKPIs();
+                this.atualizarGraficos();
+            }
+
+            filtrarPorStatus(status) {
+                const statusTextos = {
+                    'pendente': 'Pendente',
+                    'confirmado': 'Confirmado',
+                    'entregue': 'Entregue',
+                    'cancelado': 'Cancelado',
+                    'nao-veio': 'Não Veio'
+                };
+
+                // Filtrar agendamentos por status
+                this.agendamentos = this.agendamentosTodos.filter(ag => ag.status === status);
+                
+                // Marcar filtro ativo
+                this.filtroAtivo = { tipo: 'status', valor: status, nome: statusTextos[status] };
+                this.mostrarFiltroAtivo();
+
+                // Atualizar KPIs e gráficos
+                this.atualizarKPIs();
+                this.atualizarGraficos();
+            }
+
+            limparFiltro() {
+                // Restaurar todos os agendamentos
+                this.agendamentos = [...this.agendamentosTodos];
+                this.filtroAtivo = null;
+
+                // Esconder aviso de filtro
+                document.getElementById('filtro-ativo').style.display = 'none';
+
+                // Atualizar KPIs e gráficos
+                this.atualizarKPIs();
+                this.atualizarGraficos();
+            }
+
+            mostrarFiltroAtivo() {
+                const filtroDiv = document.getElementById('filtro-ativo');
+                const filtroTexto = document.getElementById('filtro-ativo-texto');
+                
+                if (this.filtroAtivo) {
+                    filtroTexto.textContent = this.filtroAtivo.tipo === 'cd' 
+                        ? `CD: ${this.filtroAtivo.nome}` 
+                        : `Status: ${this.filtroAtivo.nome}`;
+                    filtroDiv.style.display = 'flex';
+                } else {
+                    filtroDiv.style.display = 'none';
+                }
             }
 
             mostrarTicketsCD(cdNome) {

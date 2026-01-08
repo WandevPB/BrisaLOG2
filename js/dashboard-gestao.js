@@ -259,6 +259,24 @@ class DashboardGestao {
             return sum + (ag.notasFiscais?.length || 0);
         }, 0);
         document.getElementById('kpi-volume-nfs').textContent = volumeNFs.toLocaleString('pt-BR');
+
+        // Total de Volumes
+        const totalVolumes = agendamentos.reduce((sum, ag) => {
+            const qtd = parseInt(ag.quantidadeVolumes) || 0;
+            return sum + qtd;
+        }, 0);
+        document.getElementById('kpi-volumes').textContent = totalVolumes.toLocaleString('pt-BR');
+        
+        // Tipos de volumes mais comuns
+        const tiposVolumes = {};
+        agendamentos.forEach(ag => {
+            if (ag.tipoVolume) {
+                tiposVolumes[ag.tipoVolume] = (tiposVolumes[ag.tipoVolume] || 0) + (parseInt(ag.quantidadeVolumes) || 0);
+            }
+        });
+        const tipoMaisComum = Object.entries(tiposVolumes).sort((a, b) => b[1] - a[1])[0];
+        const tipoTexto = tipoMaisComum ? `${tipoMaisComum[0]} (${tipoMaisComum[1]})` : 'N/A';
+        document.getElementById('kpi-volumes-sub').textContent = tipoTexto;
         
         // CD mais ativo (hotspot operacional)
         const cdCounts = {};
