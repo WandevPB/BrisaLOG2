@@ -675,17 +675,37 @@
                     console.log('🔍 Filtros do relatório:', filtrosRelatorio);
                     console.log('📊 Total de agendamentos recebidos do backend:', agendamentos.length);
                     
+                    if (agendamentos.length > 0) {
+                        console.log('📋 Primeiro agendamento:', {
+                            codigo: agendamentos[0].codigo,
+                            dataEntrega: agendamentos[0].dataEntrega,
+                            status: agendamentos[0].status
+                        });
+                    }
+                    
                     this.cds = cds;
 
                     // Aplicar filtro de período no frontend
                     const { inicio, fim } = this.calcularPeriodo(filtrosRelatorio.periodo, filtrosRelatorio.dataInicio, filtrosRelatorio.dataFim);
                     
-                    console.log('📅 Período calculado:', { inicio, fim });
+                    console.log('📅 Período calculado:', { 
+                        inicio: inicio.toISOString(), 
+                        fim: fim.toISOString() 
+                    });
 
                     this.agendamentos = agendamentos.filter(ag => {
                         const dataAg = new Date(ag.dataEntrega);
-                        if (dataAg < inicio || dataAg > fim) return false;
-                        return true;
+                        const dentroPeriodo = dataAg >= inicio && dataAg <= fim;
+                        
+                        if (!dentroPeriodo) {
+                            console.log(`❌ Agendamento ${ag.codigo} FORA do período:`, {
+                                dataEntrega: dataAg.toISOString(),
+                                inicio: inicio.toISOString(),
+                                fim: fim.toISOString()
+                            });
+                        }
+                        
+                        return dentroPeriodo;
                     });
 
                     console.log(`✅ [Relatório Público] ${this.agendamentos.length} agendamentos após filtro de período (de ${agendamentos.length} totais)`);
