@@ -725,19 +725,29 @@
 
                 if (periodo === 'personalizado' && dataInicio && dataFim) {
                     inicio = new Date(dataInicio);
+                    inicio.setHours(0, 0, 0, 0);
                     fim = new Date(dataFim);
+                    fim.setHours(23, 59, 59, 999);
                 } else if (periodo === 'hoje') {
                     inicio.setHours(0, 0, 0, 0);
                     fim.setHours(23, 59, 59, 999);
                 } else if (periodo === '7dias') {
                     inicio.setDate(inicio.getDate() - 7);
+                    inicio.setHours(0, 0, 0, 0);
+                    fim.setHours(23, 59, 59, 999);
                 } else if (periodo === '30dias') {
                     inicio.setDate(inicio.getDate() - 30);
+                    inicio.setHours(0, 0, 0, 0);
+                    fim.setHours(23, 59, 59, 999);
                 } else if (periodo === 'mes') {
                     inicio = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+                    inicio.setHours(0, 0, 0, 0);
+                    fim.setHours(23, 59, 59, 999);
                 } else if (periodo === 'mesAnterior') {
                     inicio = new Date(inicio.getFullYear(), inicio.getMonth() - 1, 1);
+                    inicio.setHours(0, 0, 0, 0);
                     fim = new Date(inicio.getFullYear(), inicio.getMonth(), 0);
+                    fim.setHours(23, 59, 59, 999);
                 }
 
                 return { inicio, fim };
