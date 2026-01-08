@@ -646,6 +646,11 @@ class DashboardGestao {
         
         let resumo = `📅 Período: ${periodoText[this.filtros.periodo]}<br>`;
         
+        // Adicionar regional ao resumo
+        if (this.filtros.regional && this.filtros.regional !== 'todas') {
+            resumo += `🌍 Regional: ${this.filtros.regional}<br>`;
+        }
+        
         if (!this.filtros.cds.includes('todos')) {
             const cdNomes = this.filtros.cds.map(id => 
                 this.cds.find(cd => cd.id === parseInt(id))?.nome || id

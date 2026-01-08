@@ -368,7 +368,7 @@
             <div style="background: #fff3cd; border-left: 4px solid #fbbf24; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <i class="fas fa-filter" style="color: #f59e0b; font-size: 20px;"></i>
-                    <div>
+                    <div style="flex: 1;">
                         <p style="font-weight: 600; color: #92400e; margin: 0;">Filtros Aplicados:</p>
                         <p id="filtros-resumo" style="font-size: 0.875rem; color: #78350f; margin: 4px 0 0 0;"></p>
                     </div>
@@ -693,6 +693,7 @@
 
             mostrarFiltros(filtros) {
                 const periodoText = {
+                    'todos': 'Todos os períodos',
                     'hoje': 'Hoje',
                     '7dias': 'Últimos 7 dias',
                     '30dias': 'Últimos 30 dias',
@@ -701,18 +702,25 @@
                     'personalizado': `${filtros.dataInicio || '?'} até ${filtros.dataFim || '?'}`
                 };
 
-                let resumo = `📅 ${periodoText[filtros.periodo]} | `;
+                let resumo = `📅 ${periodoText[filtros.periodo]}`;
+                
+                // Adicionar regional se não for "todas"
+                if (filtros.regional && filtros.regional !== 'todas') {
+                    resumo += ` | 🌍 ${filtros.regional}`;
+                }
                 
                 if (!filtros.cds.includes('todos')) {
-                    resumo += `🏭 CDs selecionados | `;
+                    resumo += ` | 🏭 CDs selecionados`;
+                } else if (filtros.regional && filtros.regional !== 'todas') {
+                    resumo += ` | 🏭 Todos os CDs da regional`;
                 } else {
-                    resumo += `🏭 Todos os CDs | `;
+                    resumo += ` | 🏭 Todos os CDs`;
                 }
                 
                 if (!filtros.status.includes('todos')) {
-                    resumo += `📊 ${filtros.status.join(', ')}`;
+                    resumo += ` | 📊 ${filtros.status.join(', ')}`;
                 } else {
-                    resumo += `📊 Todos os status`;
+                    resumo += ` | 📊 Todos os status`;
                 }
 
                 document.getElementById('filtros-resumo').textContent = resumo;
