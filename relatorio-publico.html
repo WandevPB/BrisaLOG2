@@ -671,6 +671,10 @@
                     
                     const { agendamentos, cds, filtros: filtrosRelatorio } = await response.json();
                     
+                    // Debug: verificar filtros aplicados
+                    console.log('🔍 Filtros do relatório:', filtrosRelatorio);
+                    console.log('📊 Total de agendamentos recebidos:', agendamentos.length);
+                    
                     // Debug: verificar estrutura dos dados
                     if (agendamentos.length > 0) {
                         console.log('📋 Exemplo de agendamento:', agendamentos[0]);
@@ -679,6 +683,8 @@
                     this.cds = cds;
 
                     const { inicio, fim } = this.calcularPeriodo(filtrosRelatorio.periodo, filtrosRelatorio.dataInicio, filtrosRelatorio.dataFim);
+                    
+                    console.log('📅 Período calculado:', { inicio, fim });
 
                     this.agendamentos = agendamentos.filter(ag => {
                         const dataAg = new Date(ag.dataEntrega);
