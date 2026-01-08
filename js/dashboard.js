@@ -1884,6 +1884,18 @@ class CDDashboard {
                                 <span class="text-gray-600">Tipo:</span>
                                 <span class="font-semibold text-xs">${this.getTipoCargaText(agendamento.tipoCarga)}</span>
                             </div>
+                            ${agendamento.quantidadeVolumes ? `
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Qtd. Volumes:</span>
+                                <span class="font-semibold">${agendamento.quantidadeVolumes}</span>
+                            </div>
+                            ` : ''}
+                            ${agendamento.tipoVolume ? `
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tipo Volume:</span>
+                                <span class="font-semibold text-xs">${agendamento.tipoVolume}</span>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                     <!-- Transportador -->

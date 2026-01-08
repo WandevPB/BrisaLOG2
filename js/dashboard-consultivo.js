@@ -620,6 +620,18 @@ class DashboardConsultivo {
                         <label class="text-xs text-gray-600 font-semibold uppercase">Placa do Veículo</label>
                         <p class="text-gray-900 font-mono text-base">${agendamento.placaVeiculo || 'N/A'}</p>
                     </div>
+                    ${agendamento.quantidadeVolumes ? `
+                    <div>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Quantidade de Volumes</label>
+                        <p class="text-gray-900 text-base font-semibold">${agendamento.quantidadeVolumes}</p>
+                    </div>
+                    ` : ''}
+                    ${agendamento.tipoVolume ? `
+                    <div>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Tipo de Volume</label>
+                        <p class="text-gray-900 text-base">${agendamento.tipoVolume}</p>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
 
