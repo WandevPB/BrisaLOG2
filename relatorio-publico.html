@@ -474,7 +474,7 @@
                 <div class="chart-box">
                     <h3 class="chart-title">
                         <i class="fas fa-chart-bar" style="color: #FF6B35;"></i>
-                        Top 10 CDs
+                        CDs Selecionados
                         <span style="font-size: 0.75rem; color: #9ca3af; font-weight: normal;">(clique para detalhes)</span>
                     </h3>
                     <div class="chart-canvas">
@@ -849,10 +849,10 @@
                 document.getElementById('kpi-confirmacao').textContent = taxaConfirmacao;
                 document.getElementById('kpi-confirmacao-sub').textContent = `${confirmados} confirmados de ${total}`;
 
-                // Entrega
-                const taxaEntrega = total > 0 ? (entregues / total * 100).toFixed(1) : 0;
+                // Entrega (calculada sobre confirmados)
+                const taxaEntrega = confirmados > 0 ? (entregues / confirmados * 100).toFixed(1) : 0;
                 document.getElementById('kpi-entrega').textContent = taxaEntrega;
-                document.getElementById('kpi-entrega-sub').textContent = `${entregues} entregues`;
+                document.getElementById('kpi-entrega-sub').textContent = `${entregues} de ${confirmados} confirmados`;
 
                 // Assertividade
                 const taxaAssertividade = confirmados > 0 ? (entregues / confirmados * 100).toFixed(1) : 0;
@@ -868,23 +868,29 @@
                 document.getElementById('kpi-nao-veio').textContent = taxaNaoVeio;
                 document.getElementById('kpi-nao-veio-sub').textContent = `${naoVeio} não vieram`;
 
-                // NFs
-                const totalNFs = this.agendamentos.reduce((sum, ag) => sum + (ag.notasFiscais?.length || 0), 0);
+                // NFs (excluindo cancelados)
+                const totalNFs = this.agendamentos
+                    .filter(ag => ag.status !== 'cancelado')
+                    .reduce((sum, ag) => sum + (ag.notasFiscais?.length || 0), 0);
                 document.getElementById('kpi-nfs').textContent = totalNFs.toLocaleString('pt-BR');
 
-                // Calcular volumes para a seção detalhada
-                const totalVolumes = this.agendamentos.reduce((sum, ag) => {
-                    const qtd = parseInt(ag.quantidadeVolumes) || 0;
-                    return sum + qtd;
-                }, 0);
+                // Calcular volumes para a seção detalhada (excluindo cancelados)
+                const totalVolumes = this.agendamentos
+                    .filter(ag => ag.status !== 'cancelado')
+                    .reduce((sum, ag) => {
+                        const qtd = parseInt(ag.quantidadeVolumes) || 0;
+                        return sum + qtd;
+                    }, 0);
                 
-                // Tipos de volumes
+                // Tipos de volumes (excluindo cancelados)
                 const tiposVolumes = {};
-                this.agendamentos.forEach(ag => {
-                    if (ag.tipoVolume) {
-                        tiposVolumes[ag.tipoVolume] = (tiposVolumes[ag.tipoVolume] || 0) + (parseInt(ag.quantidadeVolumes) || 0);
-                    }
-                });
+                this.agendamentos
+                    .filter(ag => ag.status !== 'cancelado')
+                    .forEach(ag => {
+                        if (ag.tipoVolume) {
+                            tiposVolumes[ag.tipoVolume] = (tiposVolumes[ag.tipoVolume] || 0) + (parseInt(ag.quantidadeVolumes) || 0);
+                        }
+                    });
 
                 // Atualizar seção de volumes por tipo
                 this.atualizarVolumesPorTipo(tiposVolumes, totalVolumes);
