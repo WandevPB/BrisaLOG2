@@ -1079,6 +1079,9 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
           motoristaTelefone: sanitizeStringAg(agendamentoData.fornecedor?.telefoneMotorista || ''),
           placaVeiculo: sanitizeStringAg(agendamentoData.fornecedor?.placaVeiculo || ''),
           tipoVeiculo: sanitizeStringAg(agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo || ''),
+          // Dados de volume
+          quantidadeVolumes: sanitizeStringAg(agendamentoData.entrega?.quantidadeVolumes || ''),
+          tipoVolume: sanitizeStringAg(agendamentoData.entrega?.tipoVolume || ''),
           // NÃO incluir fornecedorId - deixar null (migration já aplicada no schema)
           fornecedorId: null
         }

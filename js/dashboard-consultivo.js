@@ -673,6 +673,26 @@ class DashboardConsultivo {
             </div>
             ` : ''}
 
+            <!-- Informações de Volumes (se tiver) -->
+            ${(agendamento.quantidadeVolumes || agendamento.tipoVolume) ? `
+            <div class="mb-6">
+                <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-boxes text-orange-primary mr-2"></i>
+                    Volumes
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                    <div>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Quantidade</label>
+                        <p class="text-gray-900 text-base">${agendamento.quantidadeVolumes || 'Não informado'}</p>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600 font-semibold uppercase">Tipo de Volume</label>
+                        <p class="text-gray-900 text-base">${agendamento.tipoVolume || 'Não informado'}</p>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
             <!-- Notas Fiscais -->
             ${notasFiscais.length > 0 ? `
             <div class="mb-6">

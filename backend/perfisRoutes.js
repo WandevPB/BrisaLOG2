@@ -14,6 +14,7 @@ router.get('/', async (req, res) => {
                 nome: true,
                 usuario: true,
                 tipoPerfil: true,
+                regional: true,
                 emailRecuperacao: true,
                 ativo: true,
                 primeiroLogin: true,
