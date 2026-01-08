@@ -14,8 +14,6 @@ model Cd {
   senha             String
   tipoPerfil        String            @default("cd") // cd, consultivo, admin
   tipoCD            String            @default("normal") // normal, torre
-  estado            String?           // CE, BA, PE, etc
-  regional          String?           // Central, Regional 2, etc
   emailRecuperacao  String?
   primeiroLogin     Boolean           @default(true)
   resetToken        String?
