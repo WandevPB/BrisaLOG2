@@ -3,7 +3,7 @@ class DashboardGestao {
         this.agendamentos = [];
         this.cds = [];
         this.filtros = {
-            periodo: '30dias',
+            periodo: 'todos',
             dataInicio: null,
             dataFim: null,
             cds: ['todos'],
@@ -170,6 +170,11 @@ class DashboardGestao {
         let inicio, fim = new Date(hoje);
         
         switch (periodo) {
+            case 'todos':
+                // Período amplo: de 2020 até hoje
+                inicio = new Date('2020-01-01T00:00:00');
+                fim = new Date(hoje);
+                break;
             case 'hoje':
                 inicio = new Date(hoje);
                 inicio.setHours(0, 0, 0, 0);
@@ -196,8 +201,9 @@ class DashboardGestao {
                 fim = dataFim ? new Date(dataFim + 'T23:59:59') : new Date(hoje);
                 break;
             default:
-                inicio = new Date(hoje);
-                inicio.setDate(inicio.getDate() - 30);
+                // Padrão: todos os períodos
+                inicio = new Date('2020-01-01T00:00:00');
+                fim = new Date(hoje);
         }
         
         return { inicio, fim };
