@@ -1277,6 +1277,7 @@
                     return `
                         <tr>
                             <td>${cdNome}</td>
+                            <td>${new Date(ag.dataEntrega).toLocaleDateString('pt-BR')}</td>
                             <td>${fornecedor}</td>
                             <td><span class="status-badge ${statusClass}">${statusTextos[ag.status]}</span></td>
                             <td>${nfs} NF${nfs !== 1 ? 's' : ''}</td>
