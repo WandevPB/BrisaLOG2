@@ -441,6 +441,17 @@
                 </div>
             </div>
 
+            <!-- Volumes por Tipo -->
+            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                    <i class="fas fa-boxes" style="color: #FF6B35; font-size: 24px; margin-right: 12px;"></i>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin: 0;">Movimentação de Volumes por Tipo</h3>
+                </div>
+                <div id="volumes-por-tipo" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                    <!-- Será preenchido dinamicamente -->
+                </div>
+            </div>
+
             <!-- Filtro Ativo (quando clica em CD ou Status) -->
             <div id="filtro-ativo" style="display: none; margin: 20px 0; padding: 15px; background: #f3f4f6; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -886,6 +897,9 @@
                 const tipoTexto = tipoMaisComum ? `${tipoMaisComum[0]} (${tipoMaisComum[1]})` : 'N/A';
                 document.getElementById('kpi-volumes-sub').textContent = tipoTexto;
 
+                // Atualizar seção de volumes por tipo
+                this.atualizarVolumesPorTipo(tiposVolumes, totalVolumes);
+
                 // CD Top
                 const cdCounts = {};
                 this.agendamentos.forEach(ag => {
@@ -898,6 +912,34 @@
                     document.getElementById('kpi-cd-top').textContent = cdTop[0];
                     document.getElementById('kpi-cd-top-sub').textContent = `${cdTop[1]} agendamentos (${((cdTop[1]/total)*100).toFixed(0)}%)`;
                 }
+            }
+
+            atualizarVolumesPorTipo(tiposVolumes, totalVolumes) {
+                const container = document.getElementById('volumes-por-tipo');
+                if (!container) return;
+
+                if (Object.keys(tiposVolumes).length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #9ca3af; grid-column: 1 / -1;">Nenhum volume registrado no período</p>';
+                    return;
+                }
+
+                // Ordenar por quantidade
+                const volumesOrdenados = Object.entries(tiposVolumes).sort((a, b) => b[1] - a[1]);
+
+                container.innerHTML = volumesOrdenados.map(([tipo, qtd]) => {
+                    const percentual = totalVolumes > 0 ? ((qtd / totalVolumes) * 100).toFixed(1) : 0;
+                    return `
+                        <div style="background: linear-gradient(135deg, #fff5eb 0%, #ffe6cc 100%); border-radius: 12px; padding: 20px; border: 2px solid #FF6B35; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)';">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                <i class="fas fa-cube" style="font-size: 32px; color: #FF6B35;"></i>
+                                <span style="font-size: 0.75rem; font-weight: 700; color: white; background: #FF6B35; padding: 4px 12px; border-radius: 20px;">${percentual}%</span>
+                            </div>
+                            <h4 style="font-size: 0.875rem; font-weight: 600; color: #4b5563; margin: 0 0 8px 0;">${tipo}</h4>
+                            <p style="font-size: 2rem; font-weight: 700; color: #FF6B35; margin: 0;">${qtd.toLocaleString('pt-BR')}</p>
+                            <p style="font-size: 0.75rem; color: #6b7280; margin: 4px 0 0 0;">${qtd === 1 ? 'volume' : 'volumes'}</p>
+                        </div>
+                    `;
+                }).join('');
             }
 
             atualizarGraficos() {
