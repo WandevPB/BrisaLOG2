@@ -694,12 +694,12 @@
                     });
 
                     this.agendamentos = agendamentos.filter(ag => {
-                        const dataAg = new Date(ag.dataEntrega);
+                        const dataAg = new Date(ag.createdAt); // Data de CRIAÇÃO, não de entrega
                         const dentroPeriodo = dataAg >= inicio && dataAg <= fim;
                         
                         if (!dentroPeriodo) {
                             console.log(`❌ Agendamento ${ag.codigo} FORA do período:`, {
-                                dataEntrega: dataAg.toISOString(),
+                                criadoEm: dataAg.toISOString(),
                                 inicio: inicio.toISOString(),
                                 fim: fim.toISOString()
                             });
