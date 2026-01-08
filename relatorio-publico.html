@@ -673,28 +673,12 @@
                     
                     // Debug: verificar filtros aplicados
                     console.log('🔍 Filtros do relatório:', filtrosRelatorio);
-                    console.log('📊 Total de agendamentos recebidos:', agendamentos.length);
-                    
-                    // Debug: verificar estrutura dos dados
-                    if (agendamentos.length > 0) {
-                        console.log('📋 Exemplo de agendamento:', agendamentos[0]);
-                    }
+                    console.log('📊 Total de agendamentos recebidos (JÁ FILTRADOS):', agendamentos.length);
                     
                     this.cds = cds;
+                    this.agendamentos = agendamentos;
 
-                    const { inicio, fim } = this.calcularPeriodo(filtrosRelatorio.periodo, filtrosRelatorio.dataInicio, filtrosRelatorio.dataFim);
-                    
-                    console.log('📅 Período calculado:', { inicio, fim });
-
-                    this.agendamentos = agendamentos.filter(ag => {
-                        const dataAg = new Date(ag.dataEntrega);
-                        if (dataAg < inicio || dataAg > fim) return false;
-                        if (!filtrosRelatorio.cds.includes('todos') && !filtrosRelatorio.cds.includes(ag.cdId.toString())) return false;
-                        if (!filtrosRelatorio.status.includes('todos') && !filtrosRelatorio.status.includes(ag.status)) return false;
-                        return true;
-                    });
-
-                    console.log(`✅ [Relatório Público] Carregados ${this.agendamentos.length} agendamentos filtrados de ${agendamentos.length} totais`);
+                    console.log(`✅ [Relatório Público] Carregados ${this.agendamentos.length} agendamentos`);
 
                     this.atualizarKPIs();
                     this.atualizarGraficos();

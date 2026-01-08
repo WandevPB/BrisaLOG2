@@ -197,9 +197,64 @@ router.get('/dados/:token', async (req, res) => {
             return res.status(403).json({ error: 'Link expirado' });
         }
 
-        // Carregar TODOS os agendamentos e CDs (sem autenticação)
+        // Parse dos filtros
+        const filtros = JSON.parse(relatorio.filtros);
+        
+        // Construir where clause baseado nos filtros
+        const whereClause = {};
+        
+        // Filtro de CDs
+        if (filtros.cds && !filtros.cds.includes('todos')) {
+            whereClause.cdId = {
+                in: filtros.cds.map(id => parseInt(id))
+            };
+        }
+        
+        // Filtro de Status
+        if (filtros.status && !filtros.status.includes('todos')) {
+            whereClause.status = {
+                in: filtros.status
+            };
+        }
+        
+        // Filtro de Período
+        if (filtros.periodo) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            let dataInicio = new Date(hoje);
+            let dataFim = new Date(hoje);
+            
+            switch (filtros.periodo) {
+                case 'hoje':
+                    dataFim.setHours(23, 59, 59, 999);
+                    break;
+                case '7dias':
+                    dataInicio.setDate(hoje.getDate() - 7);
+                    dataFim.setHours(23, 59, 59, 999);
+                    break;
+                case '30dias':
+                    dataInicio.setDate(hoje.getDate() - 30);
+                    dataFim.setHours(23, 59, 59, 999);
+                    break;
+                case 'personalizado':
+                    if (filtros.dataInicio && filtros.dataFim) {
+                        dataInicio = new Date(filtros.dataInicio);
+                        dataFim = new Date(filtros.dataFim);
+                        dataFim.setHours(23, 59, 59, 999);
+                    }
+                    break;
+            }
+            
+            whereClause.dataEntrega = {
+                gte: dataInicio,
+                lte: dataFim
+            };
+        }
+
+        // Carregar agendamentos FILTRADOS e CDs
         const [agendamentos, cds] = await Promise.all([
             prisma.agendamento.findMany({
+                where: whereClause,
                 include: {
                     notasFiscais: true,
                     fornecedor: {
@@ -230,7 +285,7 @@ router.get('/dados/:token', async (req, res) => {
             })
         ]);
 
-        console.log(`📦 [Relatório Público - Dados] Carregados ${agendamentos.length} agendamentos via token ${token.substring(0, 16)}...`);
+        console.log(`📦 [Relatório Público - Dados] Carregados ${agendamentos.length} agendamentos FILTRADOS via token ${token.substring(0, 16)}...`);
 
         // Converter BigInt para Number antes de serializar
         const agendamentosSerializaveis = JSON.parse(JSON.stringify(agendamentos, (key, value) =>
@@ -244,7 +299,7 @@ router.get('/dados/:token', async (req, res) => {
         res.json({
             agendamentos: agendamentosSerializaveis,
             cds: cdsSerializaveis,
-            filtros: JSON.parse(relatorio.filtros)
+            filtros: filtros
         });
 
     } catch (error) {
