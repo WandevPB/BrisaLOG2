@@ -60,6 +60,12 @@ class DashboardGestao {
             document.getElementById('data-fim-container').style.display = personalizado ? 'block' : 'none';
         });
 
+        // Filtro de Regional (filtra CDs automaticamente)
+        document.getElementById('filtro-regional').addEventListener('change', (e) => {
+            const regional = e.target.value;
+            this.filtrarCDsPorRegional(regional);
+        });
+
         // Multi-select CDs
         document.getElementById('filtro-cd').addEventListener('change', (e) => {
             const options = Array.from(e.target.selectedOptions);
@@ -88,6 +94,30 @@ class DashboardGestao {
             } else if (values.length === 0) {
                 e.target.options[0].selected = true;
             }
+        });
+    }
+
+    filtrarCDsPorRegional(regional) {
+        const selectCd = document.getElementById('filtro-cd');
+        
+        // Resetar para "todos"
+        Array.from(selectCd.options).forEach(opt => opt.selected = opt.value === 'todos');
+        
+        // Se for "todos", mostrar todos os CDs
+        if (regional === 'todos') {
+            Array.from(selectCd.options).forEach(opt => {
+                if (opt.value !== 'todos') opt.style.display = '';
+            });
+            return;
+        }
+        
+        // Filtrar CDs pela regional
+        const cdsRegional = this.cds.filter(cd => cd.regional === regional);
+        
+        Array.from(selectCd.options).forEach(opt => {
+            if (opt.value === 'todos') return;
+            const cd = this.cds.find(c => c.id === parseInt(opt.value));
+            opt.style.display = cd && cd.regional === regional ? '' : 'none';
         });
     }
 
@@ -126,10 +156,11 @@ class DashboardGestao {
             const periodo = document.getElementById('filtro-periodo').value;
             const dataInicio = document.getElementById('filtro-data-inicio').value;
             const dataFim = document.getElementById('filtro-data-fim').value;
+            const regional = document.getElementById('filtro-regional').value;
             const cds = Array.from(document.getElementById('filtro-cd').selectedOptions).map(opt => opt.value);
             const status = Array.from(document.getElementById('filtro-status').selectedOptions).map(opt => opt.value);
             
-            this.filtros = { periodo, dataInicio, dataFim, cds, status };
+            this.filtros = { periodo, dataInicio, dataFim, regional, cds, status };
             
             // Calcular datas do período
             const { inicio, fim } = this.calcularPeriodo(periodo, dataInicio, dataFim);
@@ -525,6 +556,7 @@ class DashboardGestao {
         
         // Período
         const periodoText = {
+            'todos': 'Todos os períodos',
             'hoje': 'Hoje',
             '7dias': 'Últimos 7 dias',
             '30dias': 'Últimos 30 dias',
@@ -533,6 +565,11 @@ class DashboardGestao {
             'personalizado': `${this.filtros.dataInicio || '?'} até ${this.filtros.dataFim || '?'}`
         };
         badges.push(`<span class="filter-badge"><i class="fas fa-calendar"></i> ${periodoText[this.filtros.periodo]}</span>`);
+        
+        // Regional
+        if (this.filtros.regional && this.filtros.regional !== 'todos') {
+            badges.push(`<span class="filter-badge"><i class="fas fa-map-marked-alt"></i> ${this.filtros.regional}</span>`);
+        }
         
         // CDs
         if (!this.filtros.cds.includes('todos')) {
@@ -561,6 +598,7 @@ class DashboardGestao {
         
         // Resumo dos filtros
         const periodoText = {
+            'todos': 'Todos os períodos',
             'hoje': 'Hoje',
             '7dias': 'Últimos 7 dias',
             '30dias': 'Últimos 30 dias',
