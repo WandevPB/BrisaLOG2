@@ -50,9 +50,6 @@ class DashboardGestao {
         
         // Aplicar filtros iniciais
         await this.aplicarFiltros();
-        
-        // Carregar links gerados
-        await this.carregarLinksGerados();
     }
 
     setupEventListeners() {
@@ -654,6 +651,15 @@ class DashboardGestao {
 
     fecharModalLink() {
         document.getElementById('modal-link-publico').classList.add('hidden');
+    }
+
+    abrirModalLinks() {
+        document.getElementById('modal-links-gerados').classList.remove('hidden');
+        this.carregarLinksGerados();
+    }
+
+    fecharModalLinks() {
+        document.getElementById('modal-links-gerados').classList.add('hidden');
     }
 
     async carregarLinksGerados() {
