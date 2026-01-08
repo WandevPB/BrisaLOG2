@@ -343,8 +343,20 @@
                         <span>Apresentação</span>
                     </button>
                     <div style="text-align: right; font-size: 0.875rem;">
-                        <p style="opacity: 0.8; margin: 0;">Gerado em</p>
-                        <p id="relatorio-data" style="font-weight: 600; margin: 4px 0 0 0;">-</p>
+                        <div style="display: flex; gap: 20px;">
+                            <div>
+                                <p style="opacity: 0.8; margin: 0;">Gerado em</p>
+                                <p id="relatorio-data-criacao" style="font-weight: 600; margin: 4px 0 0 0;">-</p>
+                            </div>
+                            <div>
+                                <p style="opacity: 0.8; margin: 0;">Atualizado em</p>
+                                <p id="relatorio-data-atualizacao" style="font-weight: 600; margin: 4px 0 0 0;">-</p>
+                            </div>
+                            <div>
+                                <p style="opacity: 0.8; margin: 0;">Expira em</p>
+                                <p id="relatorio-data-expiracao" style="font-weight: 600; margin: 4px 0 0 0; color: #ef4444;">-</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -634,7 +646,33 @@
 
                     document.getElementById('relatorio-nome').textContent = relatorio.nome;
                     document.getElementById('relatorio-descricao').textContent = relatorio.descricao || '';
-                    document.getElementById('relatorio-data').textContent = new Date(relatorio.criadoEm).toLocaleString('pt-BR');
+                    document.getElementById('relatorio-data-criacao').textContent = new Date(relatorio.criadoEm).toLocaleString('pt-BR');
+                    document.getElementById('relatorio-data-atualizacao').textContent = new Date(relatorio.atualizadoEm).toLocaleString('pt-BR');
+                    
+                    // Data de expiração
+                    if (relatorio.expiraEm) {
+                        const dataExpiracao = new Date(relatorio.expiraEm);
+                        const agora = new Date();
+                        const diasRestantes = Math.ceil((dataExpiracao - agora) / (1000 * 60 * 60 * 24));
+                        
+                        document.getElementById('relatorio-data-expiracao').textContent = dataExpiracao.toLocaleString('pt-BR');
+                        
+                        // Alterar cor baseado em dias restantes
+                        const elemExpiracao = document.getElementById('relatorio-data-expiracao');
+                        if (diasRestantes <= 0) {
+                            elemExpiracao.style.color = '#dc2626'; // Vermelho forte - expirado
+                            elemExpiracao.textContent += ' (EXPIRADO)';
+                        } else if (diasRestantes <= 7) {
+                            elemExpiracao.style.color = '#f59e0b'; // Laranja - expira em breve
+                            elemExpiracao.textContent += ` (${diasRestantes}d)`;
+                        } else {
+                            elemExpiracao.style.color = '#10b981'; // Verde - ainda válido
+                            elemExpiracao.textContent += ` (${diasRestantes}d)`;
+                        }
+                    } else {
+                        document.getElementById('relatorio-data-expiracao').textContent = 'Sem expiração';
+                        document.getElementById('relatorio-data-expiracao').style.color = '#10b981';
+                    }
 
                     this.mostrarFiltros(relatorio.filtros);
                     console.log('✅ [3/4] Filtros aplicados, carregando dados...');

@@ -499,6 +499,28 @@
         </div>
     </div>
 
+    <!-- Seção de Gerenciamento de Links -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    <i class="fas fa-link text-orange-primary mr-2"></i>
+                    Links Públicos Gerados
+                </h2>
+                <button onclick="dashboardGestao.carregarLinksGerados()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-sync-alt mr-2"></i>Atualizar
+                </button>
+            </div>
+            
+            <div id="links-gerados-lista" class="space-y-4">
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                    <p>Carregando links...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="text-center text-white">

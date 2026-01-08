@@ -50,6 +50,9 @@ class DashboardGestao {
         
         // Aplicar filtros iniciais
         await this.aplicarFiltros();
+        
+        // Carregar links gerados
+        await this.carregarLinksGerados();
     }
 
     setupEventListeners() {
@@ -651,6 +654,149 @@ class DashboardGestao {
 
     fecharModalLink() {
         document.getElementById('modal-link-publico').classList.add('hidden');
+    }
+
+    async carregarLinksGerados() {
+        const container = document.getElementById('links-gerados-lista');
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                <p>Carregando links...</p>
+            </div>
+        `;
+
+        try {
+            const links = await apiRequest('/api/relatorios-publicos');
+            
+            if (links.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-inbox text-5xl mb-3"></i>
+                        <p class="text-lg">Nenhum link público gerado ainda</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = links.map(link => {
+                const urlCompleta = `${window.location.origin}/relatorio-publico.html?token=${link.token}`;
+                const criadoEm = new Date(link.createdAt).toLocaleString('pt-BR');
+                const atualizadoEm = new Date(link.updatedAt).toLocaleString('pt-BR');
+                
+                let expiraTexto = 'Sem expiração';
+                let expiraCor = 'text-green-600';
+                
+                if (link.expiraEm) {
+                    const expiraEm = new Date(link.expiraEm);
+                    const agora = new Date();
+                    const diasRestantes = Math.ceil((expiraEm - agora) / (1000 * 60 * 60 * 24));
+                    
+                    expiraTexto = expiraEm.toLocaleString('pt-BR');
+                    
+                    if (diasRestantes <= 0) {
+                        expiraCor = 'text-red-600 font-bold';
+                        expiraTexto += ' (EXPIRADO)';
+                    } else if (diasRestantes <= 7) {
+                        expiraCor = 'text-orange-600 font-semibold';
+                        expiraTexto += ` (${diasRestantes} dias)`;
+                    } else {
+                        expiraCor = 'text-green-600';
+                        expiraTexto += ` (${diasRestantes} dias)`;
+                    }
+                }
+
+                const statusBadge = link.ativo 
+                    ? '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Ativo</span>'
+                    : '<span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Inativo</span>';
+
+                return `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-900">${link.nome}</h3>
+                                ${link.descricao ? `<p class="text-sm text-gray-600 mt-1">${link.descricao}</p>` : ''}
+                            </div>
+                            ${statusBadge}
+                        </div>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 text-sm">
+                            <div>
+                                <p class="text-gray-500">Criado em</p>
+                                <p class="font-semibold">${criadoEm}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Atualizado em</p>
+                                <p class="font-semibold">${atualizadoEm}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Expira em</p>
+                                <p class="font-semibold ${expiraCor}">${expiraTexto}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Acessos</p>
+                                <p class="font-semibold">${link.acessos}</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded p-2 mb-3">
+                            <p class="text-xs text-gray-600 break-all">${urlCompleta}</p>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="dashboardGestao.copiarLinkEspecifico('${urlCompleta}')" 
+                                    class="flex-1 bg-orange-primary hover:bg-orange-secondary text-white px-3 py-2 rounded text-sm transition">
+                                <i class="fas fa-copy mr-1"></i>Copiar
+                            </button>
+                            <button onclick="window.open('${urlCompleta}', '_blank')" 
+                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition">
+                                <i class="fas fa-external-link-alt mr-1"></i>Abrir
+                            </button>
+                            <button onclick="dashboardGestao.confirmarExcluirLink(${link.id}, '${link.nome}')" 
+                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (error) {
+            console.error('Erro ao carregar links:', error);
+            container.innerHTML = `
+                <div class="text-center py-8 text-red-600">
+                    <i class="fas fa-exclamation-triangle text-5xl mb-3"></i>
+                    <p class="text-lg">Erro ao carregar links</p>
+                </div>
+            `;
+        }
+    }
+
+    copiarLinkEspecifico(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('✅ Link copiado para a área de transferência!');
+        }).catch(err => {
+            console.error('Erro ao copiar:', err);
+            alert('Erro ao copiar link. Copie manualmente.');
+        });
+    }
+
+    async confirmarExcluirLink(id, nome) {
+        if (!confirm(`Tem certeza que deseja excluir o link "${nome}"?\n\nEsta ação não pode ser desfeita.`)) {
+            return;
+        }
+
+        try {
+            await apiRequest(`/api/relatorios-publicos/${id}`, {
+                method: 'DELETE'
+            });
+            
+            alert('✅ Link excluído com sucesso!');
+            await this.carregarLinksGerados();
+            
+        } catch (error) {
+            console.error('Erro ao excluir link:', error);
+            alert('❌ Erro ao excluir link. Tente novamente.');
+        }
     }
 
     async atualizarDados() {

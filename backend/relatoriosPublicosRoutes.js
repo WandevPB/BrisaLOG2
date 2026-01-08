@@ -119,7 +119,8 @@ router.get('/', authenticateToken, async (req, res) => {
                 expiraEm: true,
                 acessos: true,
                 ativo: true,
-                createdAt: true
+                createdAt: true,
+                updatedAt: true
             }
         });
 
@@ -128,6 +129,49 @@ router.get('/', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Erro ao listar relatórios públicos:', error);
         res.status(500).json({ error: 'Erro ao listar relatórios' });
+    }
+});
+
+// Excluir relatório público
+router.delete('/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Buscar dados do usuário logado
+        const usuarioLogado = await prisma.cd.findUnique({
+            where: { id: req.user.id }
+        });
+
+        // VERIFICAÇÃO EXCLUSIVA: Somente wanderson
+        if (!usuarioLogado || usuarioLogado.usuario !== 'wanderson') {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
+
+        // Verificar se o relatório existe e pertence ao usuário
+        const relatorio = await prisma.relatorioPublico.findUnique({
+            where: { id: parseInt(id) }
+        });
+
+        if (!relatorio) {
+            return res.status(404).json({ error: 'Relatório não encontrado' });
+        }
+
+        if (relatorio.criadoPor !== usuarioLogado.usuario) {
+            return res.status(403).json({ error: 'Você não tem permissão para excluir este relatório' });
+        }
+
+        // Excluir o relatório
+        await prisma.relatorioPublico.delete({
+            where: { id: parseInt(id) }
+        });
+
+        console.log(`🗑️ [Relatório Público] Excluído: ${relatorio.nome} por ${usuarioLogado.usuario}`);
+
+        res.json({ success: true, message: 'Relatório excluído com sucesso' });
+
+    } catch (error) {
+        console.error('Erro ao excluir relatório público:', error);
+        res.status(500).json({ error: 'Erro ao excluir relatório' });
     }
 });
 
@@ -165,7 +209,9 @@ router.get('/acesso/:token', async (req, res) => {
             nome: relatorio.nome,
             descricao: relatorio.descricao,
             filtros: JSON.parse(relatorio.filtros),
-            criadoEm: relatorio.createdAt
+            criadoEm: relatorio.createdAt,
+            atualizadoEm: relatorio.updatedAt,
+            expiraEm: relatorio.expiraEm
         });
 
     } catch (error) {
