@@ -136,9 +136,9 @@ class DashboardGestao {
             
             // Filtrar agendamentos
             let agendamentosFiltrados = this.agendamentos.filter(ag => {
-                const dataAg = new Date(ag.dataEntrega);
+                const dataAg = new Date(ag.createdAt);
                 
-                // Filtro de data
+                // Filtro de data (por data de criação)
                 if (dataAg < inicio || dataAg > fim) return false;
                 
                 // Filtro de CD
