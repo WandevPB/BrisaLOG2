@@ -872,23 +872,19 @@
                 const totalNFs = this.agendamentos.reduce((sum, ag) => sum + (ag.notasFiscais?.length || 0), 0);
                 document.getElementById('kpi-nfs').textContent = totalNFs.toLocaleString('pt-BR');
 
-                // Volumes
+                // Calcular volumes para a seção detalhada
                 const totalVolumes = this.agendamentos.reduce((sum, ag) => {
                     const qtd = parseInt(ag.quantidadeVolumes) || 0;
                     return sum + qtd;
                 }, 0);
-                document.getElementById('kpi-volumes').textContent = totalVolumes.toLocaleString('pt-BR');
                 
-                // Tipos de volumes mais comuns
+                // Tipos de volumes
                 const tiposVolumes = {};
                 this.agendamentos.forEach(ag => {
                     if (ag.tipoVolume) {
                         tiposVolumes[ag.tipoVolume] = (tiposVolumes[ag.tipoVolume] || 0) + (parseInt(ag.quantidadeVolumes) || 0);
                     }
                 });
-                const tipoMaisComum = Object.entries(tiposVolumes).sort((a, b) => b[1] - a[1])[0];
-                const tipoTexto = tipoMaisComum ? `${tipoMaisComum[0]} (${tipoMaisComum[1]})` : 'N/A';
-                document.getElementById('kpi-volumes-sub').textContent = tipoTexto;
 
                 // Atualizar seção de volumes por tipo
                 this.atualizarVolumesPorTipo(tiposVolumes, totalVolumes);
