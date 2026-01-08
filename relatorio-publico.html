@@ -673,12 +673,22 @@
                     
                     // Debug: verificar filtros aplicados
                     console.log('🔍 Filtros do relatório:', filtrosRelatorio);
-                    console.log('📊 Total de agendamentos recebidos (JÁ FILTRADOS):', agendamentos.length);
+                    console.log('📊 Total de agendamentos recebidos do backend:', agendamentos.length);
                     
                     this.cds = cds;
-                    this.agendamentos = agendamentos;
 
-                    console.log(`✅ [Relatório Público] Carregados ${this.agendamentos.length} agendamentos`);
+                    // Aplicar filtro de período no frontend
+                    const { inicio, fim } = this.calcularPeriodo(filtrosRelatorio.periodo, filtrosRelatorio.dataInicio, filtrosRelatorio.dataFim);
+                    
+                    console.log('📅 Período calculado:', { inicio, fim });
+
+                    this.agendamentos = agendamentos.filter(ag => {
+                        const dataAg = new Date(ag.dataEntrega);
+                        if (dataAg < inicio || dataAg > fim) return false;
+                        return true;
+                    });
+
+                    console.log(`✅ [Relatório Público] ${this.agendamentos.length} agendamentos após filtro de período (de ${agendamentos.length} totais)`);
 
                     this.atualizarKPIs();
                     this.atualizarGraficos();

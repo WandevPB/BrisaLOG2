@@ -200,6 +200,8 @@ router.get('/dados/:token', async (req, res) => {
         // Parse dos filtros
         const filtros = JSON.parse(relatorio.filtros);
         
+        console.log('🔍 [DEBUG] Filtros recebidos:', filtros);
+        
         // Construir where clause baseado nos filtros
         const whereClause = {};
         
@@ -217,39 +219,10 @@ router.get('/dados/:token', async (req, res) => {
             };
         }
         
-        // Filtro de Período
-        if (filtros.periodo) {
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-            let dataInicio = new Date(hoje);
-            let dataFim = new Date(hoje);
-            
-            switch (filtros.periodo) {
-                case 'hoje':
-                    dataFim.setHours(23, 59, 59, 999);
-                    break;
-                case '7dias':
-                    dataInicio.setDate(hoje.getDate() - 7);
-                    dataFim.setHours(23, 59, 59, 999);
-                    break;
-                case '30dias':
-                    dataInicio.setDate(hoje.getDate() - 30);
-                    dataFim.setHours(23, 59, 59, 999);
-                    break;
-                case 'personalizado':
-                    if (filtros.dataInicio && filtros.dataFim) {
-                        dataInicio = new Date(filtros.dataInicio);
-                        dataFim = new Date(filtros.dataFim);
-                        dataFim.setHours(23, 59, 59, 999);
-                    }
-                    break;
-            }
-            
-            whereClause.dataEntrega = {
-                gte: dataInicio,
-                lte: dataFim
-            };
-        }
+        // Filtro de Período - NÃO APLICAR FILTRO DE DATA, APENAS NO FRONTEND
+        // (Isso permite que o relatório mostre todos os dados históricos)
+        
+        console.log('🔍 [DEBUG] WhereClause construído:', JSON.stringify(whereClause));
 
         // Carregar agendamentos FILTRADOS e CDs
         const [agendamentos, cds] = await Promise.all([
