@@ -172,7 +172,13 @@ class DashboardGestao {
                 // Filtro de data (por data de criação)
                 if (dataAg < inicio || dataAg > fim) return false;
                 
-                // Filtro de CD
+                // Filtro de regional (aplica mesmo quando CD = 'todos')
+                if (regional !== 'todas') {
+                    const cd = this.cds.find(c => c.id === ag.cdId);
+                    if (!cd || cd.regional !== regional) return false;
+                }
+                
+                // Filtro de CD específico
                 if (!cds.includes('todos') && !cds.includes(ag.cdId.toString())) return false;
                 
                 // Filtro de status
@@ -309,6 +315,9 @@ class DashboardGestao {
         const tipoTexto = tipoMaisComum ? `${tipoMaisComum[0]} (${tipoMaisComum[1]})` : 'N/A';
         document.getElementById('kpi-volumes-sub').textContent = tipoTexto;
         
+        // Atualizar seção de volumes por tipo
+        this.atualizarVolumesPorTipo(tiposVolumes, totalVolumes);
+        
         // CD mais ativo (hotspot operacional)
         const cdCounts = {};
         agendamentos.forEach(ag => {
@@ -354,6 +363,34 @@ class DashboardGestao {
             document.getElementById('kpi-total-nfs').textContent = totalNFs.toLocaleString('pt-BR');
             document.getElementById('kpi-total-nfs-qtd').textContent = `Notas fiscais processadas`;
         }
+    }
+
+    atualizarVolumesPorTipo(tiposVolumes, totalVolumes) {
+        const container = document.getElementById('volumes-por-tipo');
+        if (!container) return;
+
+        if (Object.keys(tiposVolumes).length === 0) {
+            container.innerHTML = '<p class="text-gray-500 text-center col-span-5">Nenhum volume registrado no período</p>';
+            return;
+        }
+
+        // Ordenar por quantidade
+        const volumesOrdenados = Object.entries(tiposVolumes).sort((a, b) => b[1] - a[1]);
+
+        container.innerHTML = volumesOrdenados.map(([tipo, qtd]) => {
+            const percentual = totalVolumes > 0 ? ((qtd / totalVolumes) * 100).toFixed(1) : 0;
+            return `
+                <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200 hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <i class="fas fa-cube text-orange-600 text-2xl"></i>
+                        <span class="text-xs font-semibold text-orange-700 bg-orange-200 px-2 py-1 rounded">${percentual}%</span>
+                    </div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-1">${tipo}</h4>
+                    <p class="text-2xl font-bold text-orange-600">${qtd.toLocaleString('pt-BR')}</p>
+                    <p class="text-xs text-gray-600 mt-1">${qtd === 1 ? 'volume' : 'volumes'}</p>
+                </div>
+            `;
+        }).join('');
     }
 
     atualizarGraficos(agendamentos) {
