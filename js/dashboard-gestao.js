@@ -238,12 +238,16 @@ class DashboardGestao {
         // Tempo médio de confirmação (SLA operacional)
         const temposConfirmacao = agendamentos
             .filter(ag => ag.status === 'confirmado' || ag.status === 'entregue')
-            .filter(ag => ag.updatedAt && ag.createdAt)
+            .filter(ag => ag.historicoAcoes && ag.historicoAcoes.length > 0 && ag.createdAt)
             .map(ag => {
                 const criado = new Date(ag.createdAt);
-                const confirmado = new Date(ag.updatedAt);
+                // Buscar data da ação de confirmação no histórico
+                const confirmacaoAcao = ag.historicoAcoes.find(h => h.acao === 'confirmado');
+                if (!confirmacaoAcao) return null;
+                const confirmado = new Date(confirmacaoAcao.createdAt);
                 return (confirmado - criado) / (1000 * 60 * 60); // horas
-            });
+            })
+            .filter(tempo => tempo !== null); // Remove valores nulos
         
         const tempoMedio = temposConfirmacao.length > 0 
             ? (temposConfirmacao.reduce((a, b) => a + b, 0) / temposConfirmacao.length).toFixed(1)

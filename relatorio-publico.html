@@ -723,7 +723,11 @@
                 let inicio = new Date();
                 let fim = new Date();
 
-                if (periodo === 'personalizado' && dataInicio && dataFim) {
+                if (periodo === 'todos') {
+                    // Período amplo: de 2020 até hoje
+                    inicio = new Date('2020-01-01T00:00:00');
+                    fim.setHours(23, 59, 59, 999);
+                } else if (periodo === 'personalizado' && dataInicio && dataFim) {
                     inicio = new Date(dataInicio);
                     inicio.setHours(0, 0, 0, 0);
                     fim = new Date(dataFim);
@@ -747,6 +751,10 @@
                     inicio = new Date(inicio.getFullYear(), inicio.getMonth() - 1, 1);
                     inicio.setHours(0, 0, 0, 0);
                     fim = new Date(inicio.getFullYear(), inicio.getMonth(), 0);
+                    fim.setHours(23, 59, 59, 999);
+                } else {
+                    // Default: todos os períodos
+                    inicio = new Date('2020-01-01T00:00:00');
                     fim.setHours(23, 59, 59, 999);
                 }
 
