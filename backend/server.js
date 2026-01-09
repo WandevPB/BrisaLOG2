@@ -846,13 +846,16 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         'Ceará': 'Ceará',
         'ceará': 'Ceará',
         'CEARÁ': 'Ceará',
-        'Lagoa Nova': 'Lagoa Nova',
-        'lagoa nova': 'Lagoa Nova',
-        'LAGOA NOVA': 'Lagoa Nova',
-        'LagoaNova': 'Lagoa Nova',
-        'lagoanова': 'Lagoa Nova',
-        'Cd Lagoa Nova (TORRE)': 'Cd Lagoa Nova (TORRE)',
-        'Pereiro (Estoque de frotas)': 'Pereiro (Estoque de frotas)'
+        'Lagoa Nova': 'LagoaNova',
+        'lagoa nova': 'LagoaNova',
+        'LAGOA NOVA': 'LagoaNova',
+        'LagoaNova': 'LagoaNova',
+        'lagoanова': 'LagoaNova',
+        'Cd Lagoa Nova (TORRE)': 'cd lagoa nova (torre)',
+        'cd lagoa nova (torre)': 'cd lagoa nova (torre)',
+        'CD LAGOA NOVA (TORRE)': 'cd lagoa nova (torre)',
+        'pereiro-frota': 'pereiro-frota',
+        'Pereiro (Estoque de frotas)': 'pereiro-frota'
       };
       
       const cdNome = cdMap[cdInfo] || cdInfo;
