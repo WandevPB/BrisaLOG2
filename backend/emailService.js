@@ -5,6 +5,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const templateRecuperacaoCadastrada = require('./emails/recuperacaoCadastrada');
 const templateBoasVindasUsuario = require('./emails/boasVindasUsuario');
 const templateBoasVindasAdmin = require('./emails/boasVindasAdmin');
+const templateTransferenciaCD = require('./emails/transferenciaCD');
 // Alteração fictícia para forçar deploy no Render
 const nodemailer = require('nodemailer');
 
@@ -473,6 +474,24 @@ class EmailService {
         return this.sendEmail({
             to,
             subject: '[BrisaLOG] Boas-vindas - Acesso Admin Criado',
+            html
+        });
+    }
+
+    // E-mail de transferência de CD
+    async sendTransferenciaCDEmail({ to, fornecedorNome, agendamentoCodigo, cdAnterior, cdNovo, motivo, dataAgendamento, horarioAgendamento }) {
+        const html = templateTransferenciaCD({
+            transportadorNome: fornecedorNome,
+            agendamentoCodigo,
+            cdAnterior,
+            cdNovo,
+            motivo,
+            dataEntrega: dataAgendamento,
+            horario: horarioAgendamento
+        });
+        return this.sendEmail({
+            to,
+            subject: `🔄 Alteração de Local - Agendamento ${agendamentoCodigo}`,
             html
         });
     }

@@ -2485,21 +2485,30 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
       
       if (fornecedorEmail && fornecedorEmail.trim() !== '') {
         try {
-          const sendTransferenciaCDEmail = require('./sendTransferenciaCDEmail');
-          const emailResult = await sendTransferenciaCDEmail(
-            agendamento,
-            cdAnterior.nome,
-            cdNovo.nome,
-            motivo
-          );
-        
-          if (emailResult.success) {
-            console.log('✅ [POST /api/agendamentos/:codigo/transferir-cd] Email de transferência enviado com sucesso');
-          } else {
-            console.warn('⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Erro ao enviar email:', emailResult.error);
-          }
+          const fornecedorNome = agendamento.fornecedorNome || agendamento.transportadorNome || 'Transportador';
+          
+          // Formatar data para exibição no email
+          const dataFormatada = new Date(agendamento.dataEntrega).toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+
+          await emailService.sendTransferenciaCDEmail({
+            to: fornecedorEmail,
+            fornecedorNome: fornecedorNome,
+            agendamentoCodigo: agendamento.codigo,
+            cdAnterior: cdAnterior.nome,
+            cdNovo: cdNovo.nome,
+            motivo: motivo,
+            dataAgendamento: dataFormatada,
+            horarioAgendamento: agendamento.horarioEntrega
+          });
+
+          console.log('✅ [POST /api/agendamentos/:codigo/transferir-cd] Email de transferência enviado com sucesso');
         } catch (emailError) {
           console.error('❌ [POST /api/agendamentos/:codigo/transferir-cd] Erro ao enviar email:', emailError);
+          // Não falhar a requisição se o email não for enviado
         }
       } else {
         console.warn(`⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Email do fornecedor não encontrado ou vazio. Agendamento: ${JSON.stringify({codigo: agendamento.codigo, fornecedorEmail: agendamento.fornecedorEmail})}`);
