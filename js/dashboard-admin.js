@@ -1245,11 +1245,21 @@ class DashboardAdmin {
                             </div>
 
                             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <p class="text-blue-800 text-sm">
-                                    <i class="fas fa-envelope text-blue-600 mr-2"></i>
-                                    <strong>O transportador será notificado por email</strong> sobre a alteração do local de entrega
-                                </p>
-                                <p class="text-blue-700 text-xs mt-2">
+                                <div class="flex items-start">
+                                    <input type="checkbox" id="checkbox-enviar-email" 
+                                        class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" 
+                                        checked>
+                                    <label for="checkbox-enviar-email" class="ml-3 text-sm">
+                                        <p class="text-blue-800 font-medium">
+                                            <i class="fas fa-envelope text-blue-600 mr-2"></i>
+                                            Enviar notificação por email ao transportador
+                                        </p>
+                                        <p class="text-blue-700 text-xs mt-1">
+                                            Se marcado, o transportador receberá um email informando sobre a alteração do local de entrega
+                                        </p>
+                                    </label>
+                                </div>
+                                <p class="text-blue-700 text-xs mt-3 ml-7">
                                     <i class="fas fa-redo text-blue-600 mr-2"></i>
                                     O status do agendamento voltará para <strong>PENDENTE</strong> aguardando aprovação do novo CD
                                 </p>
@@ -1282,6 +1292,7 @@ class DashboardAdmin {
         try {
             const novoCdId = document.getElementById('select-novo-cd').value;
             const motivo = document.getElementById('textarea-motivo-transferencia').value.trim();
+            const enviarEmail = document.getElementById('checkbox-enviar-email').checked;
 
             // Validações
             if (!novoCdId) {
@@ -1294,7 +1305,11 @@ class DashboardAdmin {
                 return;
             }
 
-            if (!confirm('Confirmar transferência? O transportador será notificado por email.')) {
+            const mensagemConfirmacao = enviarEmail 
+                ? 'Confirmar transferência? O transportador será notificado por email.'
+                : 'Confirmar transferência? O transportador NÃO será notificado por email.';
+
+            if (!confirm(mensagemConfirmacao)) {
                 return;
             }
 
@@ -1307,7 +1322,8 @@ class DashboardAdmin {
                 },
                 body: JSON.stringify({
                     novoCdId: parseInt(novoCdId),
-                    motivo: motivo
+                    motivo: motivo,
+                    enviarEmail: enviarEmail
                 })
             });
 
@@ -1321,10 +1337,11 @@ class DashboardAdmin {
             // Fechar modal
             document.getElementById('modal-transferir-cd')?.remove();
 
-            this.showNotification(
-                `✅ Agendamento transferido de "${result.agendamento.cdAnterior}" para "${result.agendamento.cdNovo}" com sucesso! Email enviado ao transportador.`, 
-                'success'
-            );
+            const mensagemSucesso = enviarEmail 
+                ? `✅ Agendamento transferido de "${result.agendamento.cdAnterior}" para "${result.agendamento.cdNovo}" com sucesso! Email enviado ao transportador.`
+                : `✅ Agendamento transferido de "${result.agendamento.cdAnterior}" para "${result.agendamento.cdNovo}" com sucesso!`;
+
+            this.showNotification(mensagemSucesso, 'success');
 
             // Recarregar dados
             if (typeof dashboardConsultivo !== 'undefined' && dashboardConsultivo.loadAgendamentos) {

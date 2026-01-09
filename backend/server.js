@@ -2406,11 +2406,11 @@ app.post('/api/agendamentos/:codigo/cancelar', authenticateToken, async (req, re
 app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (req, res) => {
   try {
     const { codigo } = req.params;
-    const { novoCdId, motivo } = req.body;
+    const { novoCdId, motivo, enviarEmail = true } = req.body;
     const adminData = req.user;
 
     console.log(`🔄 [POST /api/agendamentos/${codigo}/transferir-cd] Transferência solicitada pelo admin`);
-    console.log(`📝 [POST /api/agendamentos/${codigo}/transferir-cd] Novo CD ID: ${novoCdId}, Motivo: ${motivo}`);
+    console.log(`📝 [POST /api/agendamentos/${codigo}/transferir-cd] Novo CD ID: ${novoCdId}, Motivo: ${motivo}, Enviar Email: ${enviarEmail}`);
 
     // Validações
     if (!novoCdId) {
@@ -2472,28 +2472,32 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
       }
     });
 
-    // Enviar email de transferência
-    const fornecedorEmail = agendamento.fornecedorEmail;
-    if (fornecedorEmail) {
-      try {
-        const sendTransferenciaCDEmail = require('./sendTransferenciaCDEmail');
-        const emailResult = await sendTransferenciaCDEmail(
-          agendamento,
-          cdAnterior.nome,
-          cdNovo.nome,
-          motivo
-        );
+    // Enviar email de transferência (se solicitado)
+    if (enviarEmail) {
+      const fornecedorEmail = agendamento.fornecedorEmail;
+      if (fornecedorEmail) {
+        try {
+          const sendTransferenciaCDEmail = require('./sendTransferenciaCDEmail');
+          const emailResult = await sendTransferenciaCDEmail(
+            agendamento,
+            cdAnterior.nome,
+            cdNovo.nome,
+            motivo
+          );
         
-        if (emailResult.success) {
-          console.log('✅ [POST /api/agendamentos/:codigo/transferir-cd] Email de transferência enviado');
-        } else {
-          console.warn('⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Erro ao enviar email:', emailResult.error);
+          if (emailResult.success) {
+            console.log('✅ [POST /api/agendamentos/:codigo/transferir-cd] Email de transferência enviado');
+          } else {
+            console.warn('⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Erro ao enviar email:', emailResult.error);
+          }
+        } catch (emailError) {
+          console.error('❌ [POST /api/agendamentos/:codigo/transferir-cd] Erro ao enviar email:', emailError);
         }
-      } catch (emailError) {
-        console.error('❌ [POST /api/agendamentos/:codigo/transferir-cd] Erro ao enviar email:', emailError);
+      } else {
+        console.warn('⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Email do fornecedor não encontrado');
       }
     } else {
-      console.warn('⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Email do fornecedor não encontrado');
+      console.log('📧 [POST /api/agendamentos/:codigo/transferir-cd] Envio de email desabilitado pelo admin');
     }
 
     console.log('✅ [POST /api/agendamentos/:codigo/transferir-cd] Transferência concluída com sucesso');

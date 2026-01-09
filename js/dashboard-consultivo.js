@@ -506,9 +506,9 @@ class DashboardConsultivo {
                     </button>
                     ${isAdmin && typeof dashboardAdmin !== 'undefined' ? `
                     <button onclick="dashboardConsultivo.abrirModalAlterarStatus(${agendamento.id})" 
-                        class="text-blue-600 hover:text-blue-800 transition-colors" 
+                        class="text-purple-600 hover:text-purple-800 transition-colors" 
                         title="Alterar Status">
-                        <i class="fas fa-exchange-alt text-lg"></i>
+                        <i class="fas fa-edit text-lg"></i>
                     </button>
                     <button onclick="dashboardAdmin.transferirCD(${agendamento.id}, '${agendamento.codigo}')" 
                         class="text-blue-600 hover:text-blue-800 transition-colors" 
