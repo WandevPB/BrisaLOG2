@@ -504,14 +504,17 @@ class DashboardConsultivo {
                         title="Ver Detalhes">
                         <i class="fas fa-eye text-lg"></i>
                     </button>
-                    ${isAdmin ? `
+                    ${isAdmin && typeof dashboardAdmin !== 'undefined' ? `
                     <button onclick="dashboardConsultivo.abrirModalAlterarStatus(${agendamento.id})" 
                         class="text-blue-600 hover:text-blue-800 transition-colors" 
                         title="Alterar Status">
                         <i class="fas fa-exchange-alt text-lg"></i>
                     </button>
-                    ` : ''}
-                    ${typeof dashboardAdmin !== 'undefined' ? `
+                    <button onclick="dashboardAdmin.transferirCD(${agendamento.id}, '${agendamento.codigo}')" 
+                        class="text-blue-600 hover:text-blue-800 transition-colors" 
+                        title="Transferir Local de Entrega">
+                        <i class="fas fa-exchange-alt text-lg"></i>
+                    </button>
                     <button onclick="dashboardAdmin.cancelarAgendamento('${agendamento.codigo}')" 
                         class="text-yellow-600 hover:text-yellow-800 transition-colors" 
                         title="Cancelar Agendamento">

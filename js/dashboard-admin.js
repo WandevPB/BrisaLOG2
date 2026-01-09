@@ -1238,5 +1238,170 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
 
+    async transferirCD(agendamentoId, codigo) {
+        try {
+            // Carregar lista de CDs
+            const token = sessionStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/api/cds`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao carregar lista de CDs');
+            }
+
+            const cds = await response.json();
+            
+            // Buscar CD atual do agendamento
+            let cdAtual = 'N/A';
+            if (typeof dashboardConsultivo !== 'undefined') {
+                const agendamento = dashboardConsultivo.agendamentos.find(a => a.id === agendamentoId);
+                if (agendamento) {
+                    cdAtual = agendamento.cd?.nome || 'N/A';
+                }
+            }
+            
+            // Criar modal de transferência
+            const modalHtml = `
+                <div id="modal-transferir-cd" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                        <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-2xl">
+                            <h3 class="text-2xl font-bold flex items-center gap-2">
+                                <i class="fas fa-exchange-alt"></i>
+                                Transferir Local de Entrega
+                            </h3>
+                            <p class="text-blue-100 mt-2 text-sm">Agendamento: ${codigo}</p>
+                        </div>
+                        
+                        <div class="p-6 space-y-4">
+                            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                                <div class="flex items-start">
+                                    <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mr-3 mt-1"></i>
+                                    <div>
+                                        <p class="text-yellow-800 font-medium text-sm">CD Atual: <strong>${cdAtual}</strong></p>
+                                        <p class="text-yellow-700 text-xs mt-1">Selecione o novo CD para transferir este agendamento</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">
+                                    <i class="fas fa-building mr-2 text-blue-600"></i>Novo CD de Destino *
+                                </label>
+                                <select id="select-novo-cd" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                    <option value="">Selecione o novo CD</option>
+                                    ${cds.map(cd => `<option value="${cd.id}">${cd.nome}</option>`).join('')}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">
+                                    <i class="fas fa-comment-alt mr-2 text-blue-600"></i>Motivo da Transferência *
+                                </label>
+                                <textarea id="textarea-motivo-transferencia" 
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                                    rows="4"
+                                    placeholder="Explique o motivo da transferência (será enviado por email ao transportador)"
+                                    required></textarea>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-info-circle"></i> Este motivo será incluído no email de notificação
+                                </p>
+                            </div>
+
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <p class="text-blue-800 text-sm">
+                                    <i class="fas fa-envelope text-blue-600 mr-2"></i>
+                                    <strong>O transportador será notificado por email</strong> sobre a alteração do local de entrega
+                                </p>
+                                <p class="text-blue-700 text-xs mt-2">
+                                    <i class="fas fa-redo text-blue-600 mr-2"></i>
+                                    O status do agendamento voltará para <strong>PENDENTE</strong> aguardando aprovação do novo CD
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="px-6 pb-6 flex gap-3">
+                            <button onclick="document.getElementById('modal-transferir-cd').remove()" 
+                                class="flex-1 bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all font-semibold">
+                                <i class="fas fa-times mr-2"></i>Cancelar
+                            </button>
+                            <button onclick="dashboardAdmin.confirmarTransferencia('${codigo}')" 
+                                class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all font-semibold">
+                                <i class="fas fa-check mr-2"></i>Confirmar Transferência
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        } catch (error) {
+            console.error('Erro ao abrir modal de transferência:', error);
+            this.showNotification('Erro ao carregar dados para transferência', 'error');
+        }
+    }
+
+    async confirmarTransferencia(codigo) {
+        try {
+            const novoCdId = document.getElementById('select-novo-cd').value;
+            const motivo = document.getElementById('textarea-motivo-transferencia').value.trim();
+
+            // Validações
+            if (!novoCdId) {
+                this.showNotification('Selecione o novo CD de destino', 'warning');
+                return;
+            }
+
+            if (!motivo || motivo.length < 10) {
+                this.showNotification('Digite um motivo detalhado (mínimo 10 caracteres)', 'warning');
+                return;
+            }
+
+            if (!confirm('Confirmar transferência? O transportador será notificado por email.')) {
+                return;
+            }
+
+            const token = sessionStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/api/agendamentos/${codigo}/transferir-cd`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    novoCdId: parseInt(novoCdId),
+                    motivo: motivo
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao transferir agendamento');
+            }
+
+            const result = await response.json();
+
+            // Fechar modal
+            document.getElementById('modal-transferir-cd')?.remove();
+
+            this.showNotification(
+                `✅ Agendamento transferido de "${result.agendamento.cdAnterior}" para "${result.agendamento.cdNovo}" com sucesso! Email enviado ao transportador.`, 
+                'success'
+            );
+
+            // Recarregar dados
+            if (typeof dashboardConsultivo !== 'undefined' && dashboardConsultivo.loadAgendamentos) {
+                await dashboardConsultivo.loadAgendamentos();
+            } else {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
+
+        } catch (error) {
+            console.error('Erro ao transferir agendamento:', error);
+            this.showNotification(`Erro: ${error.message}`, 'error');
+        }
+    }
