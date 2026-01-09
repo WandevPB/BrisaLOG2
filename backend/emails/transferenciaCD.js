@@ -15,7 +15,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdAnterior, cd
                 <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     
                     <tr>
-                        <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 40px 30px; text-align: center;">
+                        <td style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 50%, #FF9F66 100%); padding: 40px 30px; text-align: center;">
                             <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
                                 🔄 Alteração de Local de Entrega
                             </h1>
@@ -28,14 +28,14 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdAnterior, cd
                     <tr>
                         <td style="padding: 40px 30px;">
                             <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
-                                Olá <strong style="color: #3b82f6;">${transportadorNome}</strong>! 👋
+                                Olá <strong style="color: #FF6B35;">${transportadorNome}</strong>! 👋
                             </p>
                             
                             <p style="margin: 0 0 20px 0; color: #666666; font-size: 15px; line-height: 1.6;">
                                 Identificamos que houve um <strong>erro no local de entrega</strong> escolhido para seu agendamento. Para garantir o melhor atendimento, fizemos a transferência do seu ticket para o CD correto.
                             </p>
 
-                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #FFE5D9 0%, #FFD4C2 100%); border-left: 4px solid #FF6B35; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
                                 <tr>
                                     <td style="padding: 25px;">
                                         <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -44,7 +44,7 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdAnterior, cd
                                                     <span style="display: block; color: #666666; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
                                                         📦 Código do Agendamento
                                                     </span>
-                                                    <span style="display: block; color: #3b82f6; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                                                    <span style="display: block; color: #FF6B35; font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 2px;">
                                                         ${agendamentoCodigo}
                                                     </span>
                                                 </td>
@@ -147,23 +147,12 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdAnterior, cd
                                 <tr>
                                     <td align="center">
                                         <a href="https://brisalog-agenda.online/consultar-status.html?codigo=${agendamentoCodigo}" 
-                                           style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">
+                                           style="display: inline-block; background: linear-gradient(135deg, #FF6B35, #FF8C42); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(255, 107, 53, 0.3);">
                                             🔍 Acompanhar Agendamento
                                         </a>
                                     </td>
                                 </tr>
                             </table>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                                Dúvidas? Entre em contato conosco:
-                            </p>
-                            <p style="margin: 0; color: #3b82f6; font-size: 14px; font-weight: 600;">
-                                📧 suporte@brisalog.com.br | 📞 (84) 3027-1477
-                            </p>
                         </td>
                     </tr>
 
