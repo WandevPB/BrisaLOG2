@@ -2433,6 +2433,12 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
       return res.status(404).json({ error: 'Agendamento não encontrado' });
     }
 
+    // Validar se o agendamento está pendente
+    if (agendamento.status !== 'pendente') {
+      console.log(`❌ [POST /api/agendamentos/${codigo}/transferir-cd] Status inválido: ${agendamento.status}`);
+      return res.status(400).json({ error: 'Apenas agendamentos com status PENDENTE podem ser transferidos' });
+    }
+
     // Buscar CD novo
     const cdNovo = await prisma.cd.findUnique({
       where: { id: parseInt(novoCdId) }
@@ -2475,7 +2481,9 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
     // Enviar email de transferência (se solicitado)
     if (enviarEmail) {
       const fornecedorEmail = agendamento.fornecedorEmail;
-      if (fornecedorEmail) {
+      console.log(`📧 [POST /api/agendamentos/:codigo/transferir-cd] Verificando email: "${fornecedorEmail}"`);
+      
+      if (fornecedorEmail && fornecedorEmail.trim() !== '') {
         try {
           const sendTransferenciaCDEmail = require('./sendTransferenciaCDEmail');
           const emailResult = await sendTransferenciaCDEmail(
@@ -2486,7 +2494,7 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
           );
         
           if (emailResult.success) {
-            console.log('✅ [POST /api/agendamentos/:codigo/transferir-cd] Email de transferência enviado');
+            console.log('✅ [POST /api/agendamentos/:codigo/transferir-cd] Email de transferência enviado com sucesso');
           } else {
             console.warn('⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Erro ao enviar email:', emailResult.error);
           }
@@ -2494,7 +2502,7 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
           console.error('❌ [POST /api/agendamentos/:codigo/transferir-cd] Erro ao enviar email:', emailError);
         }
       } else {
-        console.warn('⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Email do fornecedor não encontrado');
+        console.warn(`⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Email do fornecedor não encontrado ou vazio. Agendamento: ${JSON.stringify({codigo: agendamento.codigo, fornecedorEmail: agendamento.fornecedorEmail})}`);
       }
     } else {
       console.log('📧 [POST /api/agendamentos/:codigo/transferir-cd] Envio de email desabilitado pelo admin');

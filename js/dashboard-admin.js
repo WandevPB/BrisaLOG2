@@ -1176,6 +1176,20 @@ class DashboardAdmin {
 
     async transferirCD(agendamentoId, codigo) {
         try {
+            // Buscar agendamento e validar status
+            let agendamento = null;
+            if (typeof dashboardConsultivo !== 'undefined') {
+                agendamento = dashboardConsultivo.agendamentos.find(a => a.id === agendamentoId);
+                
+                if (agendamento && agendamento.status !== 'pendente') {
+                    this.showNotification(
+                        `❌ Transferência não permitida! Apenas agendamentos com status PENDENTE podem ser transferidos. Status atual: ${agendamento.status.toUpperCase()}`,
+                        'error'
+                    );
+                    return;
+                }
+            }
+
             // Carregar lista de CDs
             const token = sessionStorage.getItem('token');
             const response = await fetch(`${API_BASE_URL}/api/cds`, {
@@ -1190,11 +1204,8 @@ class DashboardAdmin {
             
             // Buscar CD atual do agendamento
             let cdAtual = 'N/A';
-            if (typeof dashboardConsultivo !== 'undefined') {
-                const agendamento = dashboardConsultivo.agendamentos.find(a => a.id === agendamentoId);
-                if (agendamento) {
-                    cdAtual = agendamento.cd?.nome || 'N/A';
-                }
+            if (agendamento) {
+                cdAtual = agendamento.cd?.nome || 'N/A';
             }
             
             // Criar modal de transferência

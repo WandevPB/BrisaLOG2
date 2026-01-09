@@ -1,7 +1,7 @@
 const transferenciaTemplate = require('./emails/transferenciaCD');
-const { Resend } = require('resend');
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+const nodemailer = require('nodemailer');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 async function sendTransferenciaCDEmail(agendamento, cdAnterior, cdNovo, motivo) {
   try {
@@ -18,6 +18,19 @@ async function sendTransferenciaCDEmail(agendamento, cdAnterior, cdNovo, motivo)
       return { success: false, error: 'Email do transportador não encontrado' };
     }
 
+    // Configurar transporter do Gmail
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br',
+        pass: process.env.GMAIL_APP_PASSWORD
+      }
+    });
+
+    if (!process.env.GMAIL_APP_PASSWORD) {
+      console.error('❌ [sendTransferenciaCDEmail] GMAIL_APP_PASSWORD não configurada');
+      return { success: false, error: 'Configuração de email não encontrada' };
+    }
     // Formatar data
     const dataEntrega = new Date(agendamento.dataEntrega);
     const dataFormatada = dataEntrega.toLocaleDateString('pt-BR', {
@@ -36,15 +49,19 @@ async function sendTransferenciaCDEmail(agendamento, cdAnterior, cdNovo, motivo)
       horario: agendamento.horarioEntrega
     });
 
-    const data = await resend.emails.send({
-      from: 'BrisaLOG Agendamentos <agendamentos@brisalog-agenda.online>',
-      to: [transportadorEmail],
+    const mailOptions = {
+      from: `"BrisaLOG Agendamentos" <${process.env.FROM_EMAIL || 'wanderson.goncalves@grupobrisanet.com.br'}>`,
+      to: transportadorEmail,
       subject: `🔄 Alteração de Local - Agendamento ${agendamento.codigo}`,
       html: htmlContent
-    });
+    };
 
-    console.log('✅ [sendTransferenciaCDEmail] Email enviado com sucesso:', data.id);
-    return { success: true, messageId: data.id };
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log('✅ [sendTransferenciaCDEmail] Email enviado com sucesso');
+    console.log('📧 [sendTransferenciaCDEmail] Message ID:', info.messageId);
+
+    return { success: true, messageId: info.messageId };
 
   } catch (error) {
     console.error('❌ [sendTransferenciaCDEmail] Erro ao enviar email:', error);

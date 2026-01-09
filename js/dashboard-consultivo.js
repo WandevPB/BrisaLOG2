@@ -511,8 +511,9 @@ class DashboardConsultivo {
                         <i class="fas fa-edit text-lg"></i>
                     </button>
                     <button onclick="dashboardAdmin.transferirCD(${agendamento.id}, '${agendamento.codigo}')" 
-                        class="text-blue-600 hover:text-blue-800 transition-colors" 
-                        title="Transferir Local de Entrega">
+                        class="text-blue-600 hover:text-blue-800 transition-colors ${status !== 'pendente' ? 'opacity-50 cursor-not-allowed' : ''}" 
+                        title="${status !== 'pendente' ? 'Transferência disponível apenas para agendamentos PENDENTES' : 'Transferir Local de Entrega'}"
+                        ${status !== 'pendente' ? 'disabled' : ''}>
                         <i class="fas fa-exchange-alt text-lg"></i>
                     </button>
                     <button onclick="dashboardAdmin.cancelarAgendamento('${agendamento.codigo}')" 
