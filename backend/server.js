@@ -2402,6 +2402,121 @@ app.post('/api/agendamentos/:codigo/cancelar', authenticateToken, async (req, re
   }
 });
 
+// Transferir agendamento para outro CD (somente admin)
+app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const { novoCdId, motivo } = req.body;
+    const adminData = req.user;
+
+    console.log(`🔄 [POST /api/agendamentos/${codigo}/transferir-cd] Transferência solicitada pelo admin`);
+    console.log(`📝 [POST /api/agendamentos/${codigo}/transferir-cd] Novo CD ID: ${novoCdId}, Motivo: ${motivo}`);
+
+    // Validações
+    if (!novoCdId) {
+      return res.status(400).json({ error: 'Novo CD é obrigatório' });
+    }
+    if (!motivo || motivo.trim() === '') {
+      return res.status(400).json({ error: 'Motivo da transferência é obrigatório' });
+    }
+
+    // Buscar agendamento
+    const agendamento = await prisma.agendamento.findFirst({
+      where: { codigo },
+      include: {
+        cd: true
+      }
+    });
+
+    if (!agendamento) {
+      console.log(`❌ [POST /api/agendamentos/${codigo}/transferir-cd] Agendamento não encontrado`);
+      return res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+
+    // Buscar CD novo
+    const cdNovo = await prisma.cd.findUnique({
+      where: { id: parseInt(novoCdId) }
+    });
+
+    if (!cdNovo) {
+      return res.status(404).json({ error: 'CD de destino não encontrado' });
+    }
+
+    // Guardar CD anterior para o email
+    const cdAnterior = agendamento.cd;
+
+    console.log(`📦 [POST /api/agendamentos/${codigo}/transferir-cd] Transferindo:`, {
+      de: cdAnterior.nome,
+      para: cdNovo.nome,
+      status_atual: agendamento.status
+    });
+
+    // Atualizar agendamento
+    const agendamentoAtualizado = await prisma.agendamento.update({
+      where: { id: agendamento.id },
+      data: {
+        cdId: cdNovo.id,
+        status: 'pendente' // Volta para pendente aguardando aprovação do novo CD
+      }
+    });
+
+    // Criar histórico
+    await prisma.historicoAcao.create({
+      data: {
+        acao: 'transferencia_cd',
+        descricao: `Transferido de "${cdAnterior.nome}" para "${cdNovo.nome}". Motivo: ${motivo}`,
+        autor: adminData.nome || 'Admin',
+        codigoUsuario: adminData.codigo || null,
+        agendamentoId: agendamento.id,
+        cdId: cdNovo.id
+      }
+    });
+
+    // Enviar email de transferência
+    const fornecedorEmail = agendamento.fornecedorEmail;
+    if (fornecedorEmail) {
+      try {
+        const sendTransferenciaCDEmail = require('./sendTransferenciaCDEmail');
+        const emailResult = await sendTransferenciaCDEmail(
+          agendamento,
+          cdAnterior.nome,
+          cdNovo.nome,
+          motivo
+        );
+        
+        if (emailResult.success) {
+          console.log('✅ [POST /api/agendamentos/:codigo/transferir-cd] Email de transferência enviado');
+        } else {
+          console.warn('⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Erro ao enviar email:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('❌ [POST /api/agendamentos/:codigo/transferir-cd] Erro ao enviar email:', emailError);
+      }
+    } else {
+      console.warn('⚠️ [POST /api/agendamentos/:codigo/transferir-cd] Email do fornecedor não encontrado');
+    }
+
+    console.log('✅ [POST /api/agendamentos/:codigo/transferir-cd] Transferência concluída com sucesso');
+
+    res.json({
+      success: true,
+      message: 'Agendamento transferido com sucesso',
+      agendamento: {
+        id: agendamento.id,
+        codigo: agendamento.codigo,
+        cdAnterior: cdAnterior.nome,
+        cdNovo: cdNovo.nome,
+        status: 'pendente',
+        transferido_por: adminData.nome || 'Admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [POST /api/agendamentos/:codigo/transferir-cd] Erro:', error);
+    res.status(500).json({ error: 'Erro interno do servidor ao transferir agendamento' });
+  }
+});
+
 // Reagendar entrega (fornecedor em caso de "nao-veio")
 app.post('/api/agendamentos/:codigo/reagendar-fornecedor', async (req, res) => {
   try {
