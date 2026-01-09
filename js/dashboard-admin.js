@@ -1173,71 +1173,6 @@ class DashboardAdmin {
             this.showNotification(error.message, 'error');
         }
     }
-}
-
-// Instância global
-let dashboardAdmin;
-
-// Inicializar quando DOM carregar
-document.addEventListener('DOMContentLoaded', () => {
-    dashboardAdmin = new DashboardAdmin();
-
-    // Handler do formulário de cancelamento
-    const formCancelar = document.getElementById('form-cancelar-agendamento');
-    if (formCancelar) {
-        formCancelar.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const motivo = document.getElementById('cancelar-motivo').value.trim();
-            
-            if (!motivo) {
-                dashboardAdmin.mostrarErroCancelar('Motivo do cancelamento é obrigatório');
-                return;
-            }
-
-            try {
-                dashboardAdmin.esconderErroCancelar();
-                dashboardAdmin.mostrarLoadingCancelar(true);
-
-                const cancelResponse = await fetch(`${API_BASE_URL}/api/agendamentos/${dashboardAdmin.agendamentoCancelarCodigo}/cancelar`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        motivo: motivo
-                    })
-                });
-
-                if (cancelResponse.ok) {
-                    dashboardAdmin.fecharModalCancelar();
-                    dashboardAdmin.showNotification(
-                        `✅ Agendamento cancelado com sucesso. E-mail enviado ao transportador.`, 
-                        'success'
-                    );
-                    
-                    // Recarregar dados do dashboard consultivo
-                    if (typeof dashboardConsultivo !== 'undefined' && dashboardConsultivo.loadAgendamentos) {
-                        await dashboardConsultivo.loadAgendamentos();
-                    } else {
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
-                    }
-                } else {
-                    const errorData = await cancelResponse.json();
-                    dashboardAdmin.mostrarLoadingCancelar(false);
-                    dashboardAdmin.mostrarErroCancelar(errorData.error || 'Erro ao cancelar agendamento');
-                }
-
-            } catch (error) {
-                console.error('Erro ao cancelar agendamento:', error);
-                dashboardAdmin.mostrarLoadingCancelar(false);
-                dashboardAdmin.mostrarErroCancelar('Erro ao cancelar agendamento: ' + error.message);
-            }
-        });
-    }
 
     async transferirCD(agendamentoId, codigo) {
         try {
@@ -1405,3 +1340,69 @@ document.addEventListener('DOMContentLoaded', () => {
             this.showNotification(`Erro: ${error.message}`, 'error');
         }
     }
+}
+
+// Instância global
+let dashboardAdmin;
+
+// Inicializar quando DOM carregar
+document.addEventListener('DOMContentLoaded', () => {
+    dashboardAdmin = new DashboardAdmin();
+
+    // Handler do formulário de cancelamento
+    const formCancelar = document.getElementById('form-cancelar-agendamento');
+    if (formCancelar) {
+        formCancelar.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const motivo = document.getElementById('cancelar-motivo').value.trim();
+            
+            if (!motivo) {
+                dashboardAdmin.mostrarErroCancelar('Motivo do cancelamento é obrigatório');
+                return;
+            }
+
+            try {
+                dashboardAdmin.esconderErroCancelar();
+                dashboardAdmin.mostrarLoadingCancelar(true);
+
+                const cancelResponse = await fetch(`${API_BASE_URL}/api/agendamentos/${dashboardAdmin.agendamentoCancelarCodigo}/cancelar`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        motivo: motivo
+                    })
+                });
+
+                if (cancelResponse.ok) {
+                    dashboardAdmin.fecharModalCancelar();
+                    dashboardAdmin.showNotification(
+                        `✅ Agendamento cancelado com sucesso. E-mail enviado ao transportador.`, 
+                        'success'
+                    );
+                    
+                    // Recarregar dados do dashboard consultivo
+                    if (typeof dashboardConsultivo !== 'undefined' && dashboardConsultivo.loadAgendamentos) {
+                        await dashboardConsultivo.loadAgendamentos();
+                    } else {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    }
+                } else {
+                    const errorData = await cancelResponse.json();
+                    dashboardAdmin.mostrarLoadingCancelar(false);
+                    dashboardAdmin.mostrarErroCancelar(errorData.error || 'Erro ao cancelar agendamento');
+                }
+
+            } catch (error) {
+                console.error('Erro ao cancelar agendamento:', error);
+                dashboardAdmin.mostrarLoadingCancelar(false);
+                dashboardAdmin.mostrarErroCancelar('Erro ao cancelar agendamento: ' + error.message);
+            }
+        });
+    }
+});
