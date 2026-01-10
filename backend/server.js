@@ -2454,8 +2454,69 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
     console.log(`📦 [POST /api/agendamentos/${codigo}/transferir-cd] Transferindo:`, {
       de: cdAnterior.nome,
       para: cdNovo.nome,
-      status_atual: agendamento.status
+      status_atual: agendamento.status,
+      data: agendamento.dataEntrega,
+      horario: agendamento.horarioEntrega
     });
+
+    // Validar disponibilidade de horário no CD de destino
+    const dataAgendamento = new Date(agendamento.dataEntrega);
+    const inicioDia = new Date(dataAgendamento);
+    inicioDia.setHours(0, 0, 0, 0);
+    const fimDia = new Date(dataAgendamento);
+    fimDia.setHours(23, 59, 59, 999);
+
+    // Buscar agendamentos já confirmados no novo CD para o mesmo horário
+    const agendamentosNoCDNovo = await prisma.agendamento.findMany({
+      where: {
+        cdId: cdNovo.id,
+        dataEntrega: {
+          gte: inicioDia,
+          lte: fimDia
+        },
+        horarioEntrega: agendamento.horarioEntrega,
+        status: {
+          in: ['pendente', 'confirmado']
+        }
+      }
+    });
+
+    // Buscar bloqueios no novo CD para o mesmo horário
+    const bloqueiosNoCDNovo = await prisma.bloqueioHorario.findMany({
+      where: {
+        cdId: cdNovo.id,
+        data: {
+          gte: inicioDia,
+          lte: fimDia
+        },
+        horario: agendamento.horarioEntrega,
+        ativo: true
+      }
+    });
+
+    console.log(`🔍 [POST /api/agendamentos/${codigo}/transferir-cd] Verificação de disponibilidade:`, {
+      cdNovo: cdNovo.nome,
+      horario: agendamento.horarioEntrega,
+      agendamentosExistentes: agendamentosNoCDNovo.length,
+      bloqueiosAtivos: bloqueiosNoCDNovo.length
+    });
+
+    // Se houver bloqueio ou horário não disponível, retornar erro específico
+    if (bloqueiosNoCDNovo.length > 0 || agendamentosNoCDNovo.length >= 3) {
+      console.log(`❌ [POST /api/agendamentos/${codigo}/transferir-cd] Horário indisponível no CD de destino`);
+      return res.status(400).json({ 
+        error: 'Horário indisponível no CD de destino',
+        details: {
+          cdDestino: cdNovo.nome,
+          dataEntrega: agendamento.dataEntrega,
+          horario: agendamento.horarioEntrega,
+          motivo: bloqueiosNoCDNovo.length > 0 
+            ? 'Horário bloqueado no CD de destino' 
+            : 'Horário já possui o número máximo de agendamentos',
+          recomendacao: 'Recomendamos cancelar este ticket informando o erro de localidade no motivo e solicitar que o transportador faça um novo agendamento para o CD correto.'
+        }
+      });
+    }
 
     // Atualizar agendamento
     const agendamentoAtualizado = await prisma.agendamento.update({

@@ -1212,12 +1212,12 @@ class DashboardAdmin {
             const modalHtml = `
                 <div id="modal-transferir-cd" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-                        <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-2xl">
+                        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-t-2xl">
                             <h3 class="text-2xl font-bold flex items-center gap-2">
                                 <i class="fas fa-exchange-alt"></i>
                                 Transferir Local de Entrega
                             </h3>
-                            <p class="text-blue-100 mt-2 text-sm">Agendamento: ${codigo}</p>
+                            <p class="text-orange-100 mt-2 text-sm">Agendamento: ${codigo}</p>
                         </div>
                         
                         <div class="p-6 space-y-4">
@@ -1255,23 +1255,23 @@ class DashboardAdmin {
                                 </p>
                             </div>
 
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
                                 <div class="flex items-start">
                                     <input type="checkbox" id="checkbox-enviar-email" 
-                                        class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" 
+                                        class="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded" 
                                         checked>
                                     <label for="checkbox-enviar-email" class="ml-3 text-sm">
-                                        <p class="text-blue-800 font-medium">
-                                            <i class="fas fa-envelope text-blue-600 mr-2"></i>
+                                        <p class="text-orange-800 font-medium">
+                                            <i class="fas fa-envelope text-orange-600 mr-2"></i>
                                             Enviar notificação por email ao transportador
                                         </p>
-                                        <p class="text-blue-700 text-xs mt-1">
+                                        <p class="text-orange-700 text-xs mt-1">
                                             Se marcado, o transportador receberá um email informando sobre a alteração do local de entrega
                                         </p>
                                     </label>
                                 </div>
-                                <p class="text-blue-700 text-xs mt-3 ml-7">
-                                    <i class="fas fa-redo text-blue-600 mr-2"></i>
+                                <p class="text-orange-700 text-xs mt-3 ml-7">
+                                    <i class="fas fa-redo text-orange-600 mr-2"></i>
                                     O status do agendamento voltará para <strong>PENDENTE</strong> aguardando aprovação do novo CD
                                 </p>
                             </div>
@@ -1283,7 +1283,7 @@ class DashboardAdmin {
                                 <i class="fas fa-times mr-2"></i>Cancelar
                             </button>
                             <button onclick="dashboardAdmin.confirmarTransferencia('${codigo}')" 
-                                class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all font-semibold">
+                                class="flex-1 bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-all font-semibold">
                                 <i class="fas fa-check mr-2"></i>Confirmar Transferência
                             </button>
                         </div>
@@ -1340,6 +1340,28 @@ class DashboardAdmin {
 
             if (!response.ok) {
                 const error = await response.json();
+                
+                // Verificar se é erro de horário indisponível
+                if (error.error === 'Horário indisponível no CD de destino' && error.details) {
+                    // Fechar modal
+                    document.getElementById('modal-transferir-cd')?.remove();
+                    
+                    // Mostrar alert detalhado
+                    const alertMsg = `⚠️ HORÁRIO INDISPONÍVEL NO CD DE DESTINO\n\n` +
+                        `CD Destino: ${error.details.cdDestino}\n` +
+                        `Data: ${new Date(error.details.dataEntrega).toLocaleDateString('pt-BR')}\n` +
+                        `Horário: ${error.details.horario}\n\n` +
+                        `Motivo: ${error.details.motivo}\n\n` +
+                        `💡 RECOMENDAÇÃO:\n${error.details.recomendacao}\n\n` +
+                        `Clique em OK para abrir o modal de cancelamento.`;
+                    
+                    alert(alertMsg);
+                    
+                    // Abrir modal de cancelamento automaticamente
+                    this.cancelarAgendamento(codigo);
+                    return;
+                }
+                
                 throw new Error(error.error || 'Erro ao transferir agendamento');
             }
 
