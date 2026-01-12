@@ -2300,11 +2300,9 @@ app.post('/api/agendamentos/bulk-delete', authenticateToken, async (req, res) =>
   try {
     const { agendamentosIds } = req.body;
 
-    // Verificar se é o usuário wanderson
-    const tokenDecoded = jwt.verify(req.headers.authorization.split(' ')[1], SECRET_KEY);
-    
-    if (tokenDecoded.codigo !== 'wanderson') {
-      console.log(`❌ [BULK-DELETE] Acesso negado para usuário: ${tokenDecoded.codigo}`);
+    // Verificar se é o usuário wanderson (req.user foi populado pelo middleware authenticateToken)
+    if (req.user.codigo !== 'wanderson') {
+      console.log(`❌ [BULK-DELETE] Acesso negado para usuário: ${req.user.codigo}`);
       return res.status(403).json({ error: 'Acesso negado. Esta funcionalidade é exclusiva do usuário wanderson.' });
     }
 
