@@ -2550,10 +2550,9 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
     }
 
     // Validar disponibilidade de horário no CD de destino
-    const dataAgendamento = new Date(agendamento.dataEntrega);
-    const inicioDia = new Date(dataAgendamento);
+    const inicioDia = new Date(agendamento.dataEntrega);
     inicioDia.setHours(0, 0, 0, 0);
-    const fimDia = new Date(dataAgendamento);
+    const fimDia = new Date(agendamento.dataEntrega);
     fimDia.setHours(23, 59, 59, 999);
 
     // Buscar agendamentos já confirmados no novo CD para o mesmo horário
