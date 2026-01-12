@@ -2299,14 +2299,15 @@ app.delete('/api/agendamentos/:codigo/excluir', async (req, res) => {
 app.post('/api/agendamentos/bulk-delete', authenticateToken, async (req, res) => {
   try {
     const { agendamentosIds } = req.body;
+    const adminData = req.user; // Dados do admin autenticado via token
 
-    // Verificar se é o usuário wanderson (req.user foi populado pelo middleware authenticateToken)
-    if (req.user.codigo !== 'wanderson') {
-      console.log(`❌ [BULK-DELETE] Acesso negado para usuário: ${req.user.codigo}`);
+    // Verificar se é o usuário wanderson
+    if (adminData.codigo !== 'wanderson') {
+      console.log(`❌ [BULK-DELETE] Acesso negado para usuário: ${adminData.codigo || adminData.nome}`);
       return res.status(403).json({ error: 'Acesso negado. Esta funcionalidade é exclusiva do usuário wanderson.' });
     }
 
-    console.log(`🗑️ [BULK-DELETE] Exclusão em lote solicitada por wanderson`);
+    console.log(`🗑️ [BULK-DELETE] Exclusão em lote solicitada por ${adminData.nome || 'wanderson'}`);
     console.log(`📋 [BULK-DELETE] IDs para exclusão:`, agendamentosIds);
 
     // Validar dados
