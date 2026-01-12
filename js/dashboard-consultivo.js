@@ -474,8 +474,21 @@ class DashboardConsultivo {
         // Verificar se é admin
         const cdDataString = sessionStorage.getItem('cdData');
         const isAdmin = cdDataString ? JSON.parse(cdDataString).tipoPerfil === 'admin' : false;
+        
+        // Verificar se é wanderson especificamente
+        const usuarioDataString = sessionStorage.getItem('usuario');
+        const isWanderson = usuarioDataString ? JSON.parse(usuarioDataString).codigo === 'wanderson' : false;
 
         tr.innerHTML = `
+            ${isWanderson ? `
+            <td class="px-6 py-4 text-center">
+                <input type="checkbox" 
+                    class="agendamento-checkbox h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded cursor-pointer" 
+                    data-agendamento-id="${agendamento.id}"
+                    data-agendamento-codigo="${codigo}"
+                    onchange="dashboardAdmin.atualizarSelecao()">
+            </td>
+            ` : ''}
             <td class="px-6 py-4">
                 <span class="badge-cd">${cdNome}</span>
             </td>
@@ -530,6 +543,7 @@ class DashboardConsultivo {
                 </div>
             </td>
         `;
+
 
         return tr;
     }

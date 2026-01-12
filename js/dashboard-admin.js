@@ -1341,12 +1341,25 @@ class DashboardAdmin {
             if (!response.ok) {
                 const error = await response.json();
                 
-                // Verificar se é erro de horário indisponível
-                if (error.error === 'Horário indisponível no CD de destino' && error.details) {
-                    // Fechar modal
-                    document.getElementById('modal-transferir-cd')?.remove();
+                // Fechar modal primeiro
+                document.getElementById('modal-transferir-cd')?.remove();
+                
+                // Verificar se é erro de data passada
+                if (error.errorType === 'DATA_PASSADA' && error.details) {
+                    const alertMsg = `⚠️ DATA DE ENTREGA INVÁLIDA\n\n` +
+                        `${error.details.mensagem}\n\n` +
+                        `Data do agendamento: ${new Date(error.details.dataEntrega).toLocaleDateString('pt-BR')}\n\n` +
+                        `💡 AÇÃO RECOMENDADA:\nCancele este agendamento e oriente o transportador a fazer um novo agendamento com data válida.`;
                     
-                    // Mostrar alert detalhado
+                    alert(alertMsg);
+                    
+                    // Abrir modal de cancelamento
+                    this.cancelarAgendamento(codigo);
+                    return;
+                }
+                
+                // Verificar se é erro de horário indisponível
+                if (error.errorType === 'HORARIO_INDISPONIVEL' && error.details) {
                     const alertMsg = `⚠️ HORÁRIO INDISPONÍVEL NO CD DE DESTINO\n\n` +
                         `CD Destino: ${error.details.cdDestino}\n` +
                         `Data: ${new Date(error.details.dataEntrega).toLocaleDateString('pt-BR')}\n` +
@@ -1357,12 +1370,14 @@ class DashboardAdmin {
                     
                     alert(alertMsg);
                     
-                    // Abrir modal de cancelamento automaticamente
+                    // Abrir modal de cancelamento
                     this.cancelarAgendamento(codigo);
                     return;
                 }
                 
-                throw new Error(error.error || 'Erro ao transferir agendamento');
+                // Outros erros genéricos
+                alert(`❌ ERRO NA TRANSFERÊNCIA\n\n${error.error || 'Erro ao transferir agendamento'}`);
+                return;
             }
 
             const result = await response.json();
@@ -1390,6 +1405,124 @@ class DashboardAdmin {
             this.showNotification(`Erro: ${error.message}`, 'error');
         }
     }
+
+    // ===== FUNÇÕES DE SELEÇÃO EM MASSA =====
+    
+    atualizarSelecao() {
+        const checkboxes = document.querySelectorAll('.agendamento-checkbox:checked');
+        const count = checkboxes.length;
+        const bulkActionsBar = document.getElementById('bulk-actions-bar');
+        const selectedCountSpan = document.getElementById('selected-count');
+        const selectAllCheckbox = document.getElementById('select-all-checkbox');
+        
+        // Atualizar contador
+        if (selectedCountSpan) {
+            selectedCountSpan.textContent = `${count} ${count === 1 ? 'item selecionado' : 'itens selecionados'}`;
+        }
+        
+        // Mostrar/ocultar barra de ações
+        if (bulkActionsBar) {
+            if (count > 0) {
+                bulkActionsBar.classList.remove('hidden');
+            } else {
+                bulkActionsBar.classList.add('hidden');
+            }
+        }
+        
+        // Atualizar estado do select all
+        const totalCheckboxes = document.querySelectorAll('.agendamento-checkbox').length;
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = count === totalCheckboxes && totalCheckboxes > 0;
+            selectAllCheckbox.indeterminate = count > 0 && count < totalCheckboxes;
+        }
+    }
+    
+    selecionarTodos() {
+        const selectAllCheckbox = document.getElementById('select-all-checkbox');
+        const checkboxes = document.querySelectorAll('.agendamento-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        
+        this.atualizarSelecao();
+    }
+    
+    deselecionarTodos() {
+        const checkboxes = document.querySelectorAll('.agendamento-checkbox');
+        const selectAllCheckbox = document.getElementById('select-all-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        }
+        
+        this.atualizarSelecao();
+    }
+    
+    async excluirSelecionados() {
+        const checkboxes = document.querySelectorAll('.agendamento-checkbox:checked');
+        
+        if (checkboxes.length === 0) {
+            this.showNotification('Nenhum agendamento selecionado', 'warning');
+            return;
+        }
+        
+        const agendamentosIds = Array.from(checkboxes).map(cb => cb.dataset.agendamentoId);
+        const agendamentosCodigos = Array.from(checkboxes).map(cb => cb.dataset.agendamentoCodigo);
+        
+        // Confirmação
+        const confirmacao = confirm(
+            `Tem certeza que deseja EXCLUIR PERMANENTEMENTE ${agendamentosIds.length} ${agendamentosIds.length === 1 ? 'agendamento' : 'agendamentos'}?\n\n` +
+            `Códigos: ${agendamentosCodigos.join(', ')}\n\n` +
+            `Esta ação NÃO pode ser desfeita!`
+        );
+        
+        if (!confirmacao) {
+            return;
+        }
+        
+        try {
+            this.showNotification('Excluindo agendamentos...', 'info');
+            
+            const response = await fetch(`${API_BASE_URL}/api/agendamentos/bulk-delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ agendamentosIds })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Erro ao excluir agendamentos');
+            }
+            
+            const data = await response.json();
+            
+            this.showNotification(
+                `${data.deletados} agendamento(s) excluído(s) com sucesso!`,
+                'success'
+            );
+            
+            // Limpar seleção e recarregar
+            this.deselecionarTodos();
+            
+            // Recarregar dados
+            if (typeof dashboardConsultivo !== 'undefined') {
+                await dashboardConsultivo.loadAgendamentos();
+            }
+            
+        } catch (error) {
+            console.error('Erro ao excluir agendamentos:', error);
+            this.showNotification(`Erro: ${error.message}`, 'error');
+        }
+    }
 }
 
 // Instância global
@@ -1398,6 +1531,17 @@ let dashboardAdmin;
 // Inicializar quando DOM carregar
 document.addEventListener('DOMContentLoaded', () => {
     dashboardAdmin = new DashboardAdmin();
+    
+    // Mostrar checkbox header se for wanderson
+    const usuarioDataString = sessionStorage.getItem('usuario');
+    const isWanderson = usuarioDataString ? JSON.parse(usuarioDataString).codigo === 'wanderson' : false;
+    
+    if (isWanderson) {
+        const checkboxHeader = document.getElementById('checkbox-header');
+        if (checkboxHeader) {
+            checkboxHeader.classList.remove('hidden');
+        }
+    }
 
     // Handler do formulário de cancelamento
     const formCancelar = document.getElementById('form-cancelar-agendamento');

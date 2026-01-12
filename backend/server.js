@@ -2295,6 +2295,78 @@ app.delete('/api/agendamentos/:codigo/excluir', async (req, res) => {
   }
 });
 
+// Exclusão em lote (apenas wanderson)
+app.post('/api/agendamentos/bulk-delete', authenticateToken, async (req, res) => {
+  try {
+    const { agendamentosIds } = req.body;
+
+    // Verificar se é o usuário wanderson
+    const tokenDecoded = jwt.verify(req.headers.authorization.split(' ')[1], SECRET_KEY);
+    
+    if (tokenDecoded.codigo !== 'wanderson') {
+      console.log(`❌ [BULK-DELETE] Acesso negado para usuário: ${tokenDecoded.codigo}`);
+      return res.status(403).json({ error: 'Acesso negado. Esta funcionalidade é exclusiva do usuário wanderson.' });
+    }
+
+    console.log(`🗑️ [BULK-DELETE] Exclusão em lote solicitada por wanderson`);
+    console.log(`📋 [BULK-DELETE] IDs para exclusão:`, agendamentosIds);
+
+    // Validar dados
+    if (!agendamentosIds || !Array.isArray(agendamentosIds) || agendamentosIds.length === 0) {
+      return res.status(400).json({ error: 'Lista de agendamentos vazia ou inválida' });
+    }
+
+    // Converter IDs para números
+    const idsNumericos = agendamentosIds.map(id => parseInt(id)).filter(id => !isNaN(id));
+
+    if (idsNumericos.length === 0) {
+      return res.status(400).json({ error: 'Nenhum ID válido fornecido' });
+    }
+
+    console.log(`🔢 [BULK-DELETE] Total de IDs válidos: ${idsNumericos.length}`);
+
+    // Buscar agendamentos para log
+    const agendamentosParaExcluir = await prisma.agendamento.findMany({
+      where: {
+        id: { in: idsNumericos }
+      },
+      select: {
+        id: true,
+        codigo: true,
+        status: true,
+        transportadorNome: true,
+        fornecedorNome: true
+      }
+    });
+
+    console.log(`📄 [BULK-DELETE] Agendamentos encontrados: ${agendamentosParaExcluir.length}`);
+    agendamentosParaExcluir.forEach(ag => {
+      console.log(`  → ${ag.codigo} | Status: ${ag.status} | Transportador: ${ag.transportadorNome || ag.fornecedorNome}`);
+    });
+
+    // Deletar agendamentos (cascade delete cuidará das relações)
+    const resultado = await prisma.agendamento.deleteMany({
+      where: {
+        id: { in: idsNumericos }
+      }
+    });
+
+    console.log(`✅ [BULK-DELETE] ${resultado.count} agendamento(s) excluído(s) com sucesso!`);
+
+    res.json({
+      success: true,
+      message: `${resultado.count} agendamento(s) excluído(s) permanentemente`,
+      deletados: resultado.count,
+      solicitados: idsNumericos.length,
+      agendamentos: agendamentosParaExcluir.map(ag => ag.codigo)
+    });
+
+  } catch (error) {
+    console.error('Erro ao excluir agendamentos em lote:', error);
+    res.status(500).json({ error: 'Erro interno do servidor ao excluir agendamentos' });
+  }
+});
+
 // Cancelar agendamento (Admin com motivo e envio de email)
 app.post('/api/agendamentos/:codigo/cancelar', authenticateToken, async (req, res) => {
   try {
@@ -2459,6 +2531,24 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
       horario: agendamento.horarioEntrega
     });
 
+    // Validar se a data de entrega é anterior ao dia atual
+    const dataAgendamento = new Date(agendamento.dataEntrega);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    dataAgendamento.setHours(0, 0, 0, 0);
+
+    if (dataAgendamento < hoje) {
+      console.log(`❌ [POST /api/agendamentos/${codigo}/transferir-cd] Data de entrega anterior ao dia atual`);
+      return res.status(400).json({ 
+        error: 'Data de entrega inválida',
+        errorType: 'DATA_PASSADA',
+        details: {
+          dataEntrega: agendamento.dataEntrega,
+          mensagem: 'A data de entrega deste agendamento já passou. Não é possível transferir agendamentos com datas anteriores ao dia atual.'
+        }
+      });
+    }
+
     // Validar disponibilidade de horário no CD de destino
     const dataAgendamento = new Date(agendamento.dataEntrega);
     const inicioDia = new Date(dataAgendamento);
@@ -2485,11 +2575,18 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
     const bloqueiosNoCDNovo = await prisma.bloqueioHorario.findMany({
       where: {
         cdId: cdNovo.id,
-        data: {
-          gte: inicioDia,
+        dataInicio: {
           lte: fimDia
         },
-        horario: agendamento.horarioEntrega,
+        dataFim: {
+          gte: inicioDia
+        },
+        horarioInicio: {
+          lte: agendamento.horarioEntrega
+        },
+        horarioFim: {
+          gte: agendamento.horarioEntrega
+        },
         ativo: true
       }
     });
@@ -2506,6 +2603,7 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
       console.log(`❌ [POST /api/agendamentos/${codigo}/transferir-cd] Horário indisponível no CD de destino`);
       return res.status(400).json({ 
         error: 'Horário indisponível no CD de destino',
+        errorType: 'HORARIO_INDISPONIVEL',
         details: {
           cdDestino: cdNovo.nome,
           dataEntrega: agendamento.dataEntrega,

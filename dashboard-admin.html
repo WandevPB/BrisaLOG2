@@ -371,10 +371,31 @@
                     </div>
                 </div>
                 
+                <!-- Barra de ações em lote (apenas para wanderson) -->
+                <div id="bulk-actions-bar" class="hidden bg-orange-50 border-l-4 border-orange-500 p-4 mb-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-square text-orange-600 mr-2"></i>
+                            <span id="selected-count" class="text-sm font-medium text-gray-900">0 itens selecionados</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="dashboardAdmin.deselecionarTodos()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                <i class="fas fa-times mr-1"></i> Desmarcar Todos
+                            </button>
+                            <button onclick="dashboardAdmin.excluirSelecionados()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <i class="fas fa-trash-alt mr-1"></i> Excluir Selecionados
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-gray-50 border-b-2 border-gray-200">
                             <tr>
+                                <th id="checkbox-header" class="hidden px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    <input type="checkbox" id="select-all-checkbox" onchange="dashboardAdmin.selecionarTodos()" class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded cursor-pointer">
+                                </th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">CD</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Transportador</th>
