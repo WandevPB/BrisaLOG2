@@ -477,7 +477,17 @@ class DashboardConsultivo {
         
         // Verificar se é wanderson especificamente
         const usuarioDataString = sessionStorage.getItem('usuario');
-        const isWanderson = usuarioDataString ? JSON.parse(usuarioDataString).codigo === 'wanderson' : false;
+        let isWanderson = false;
+        if (usuarioDataString) {
+            try {
+                // Tentar parsear como JSON (objeto)
+                const usuarioObj = JSON.parse(usuarioDataString);
+                isWanderson = usuarioObj.codigo === 'wanderson';
+            } catch (e) {
+                // Se falhar, é uma string simples
+                isWanderson = usuarioDataString === 'wanderson';
+            }
+        }
 
         tr.innerHTML = `
             ${isWanderson ? `
