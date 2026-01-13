@@ -1475,15 +1475,52 @@ class DashboardAdmin {
         const agendamentosIds = Array.from(checkboxes).map(cb => cb.dataset.agendamentoId);
         const agendamentosCodigos = Array.from(checkboxes).map(cb => cb.dataset.agendamentoCodigo);
         
-        // Confirmação
-        const confirmacao = confirm(
-            `Tem certeza que deseja EXCLUIR PERMANENTEMENTE ${agendamentosIds.length} ${agendamentosIds.length === 1 ? 'agendamento' : 'agendamentos'}?\n\n` +
+        // Primeira confirmação
+        const confirmacao1 = confirm(
+            `⚠️ ATENÇÃO: Você está prestes a EXCLUIR PERMANENTEMENTE ${agendamentosIds.length} ${agendamentosIds.length === 1 ? 'agendamento' : 'agendamentos'}!\n\n` +
             `Códigos: ${agendamentosCodigos.join(', ')}\n\n` +
-            `Esta ação NÃO pode ser desfeita!`
+            `Esta ação é IRREVERSÍVEL e os registros serão COMPLETAMENTE REMOVIDOS.\n\n` +
+            `Deseja continuar?`
         );
         
-        if (!confirmacao) {
+        if (!confirmacao1) {
             return;
+        }
+
+        // Segunda confirmação
+        const confirmacao2 = confirm(
+            `🔴 ÚLTIMA CONFIRMAÇÃO!\n\n` +
+            `Confirma a EXCLUSÃO PERMANENTE de ${agendamentosIds.length} agendamento(s)?\n\n` +
+            `Não será possível recuperar estes registros!`
+        );
+        
+        if (!confirmacao2) {
+            return;
+        }
+
+        // Solicitar código do usuário
+        const codigoUsuario = prompt('Digite seu código de usuário para confirmar a exclusão:');
+        
+        if (!codigoUsuario || codigoUsuario.trim() === '') {
+            this.showNotification('Código de usuário é obrigatório', 'warning');
+            return;
+        }
+
+        // Verificar se é código GOD ou usuário cadastrado
+        let nomeUsuario;
+        const CODIGO_GOD = 'BrisaLOG2';
+        
+        if (codigoUsuario.trim() === CODIGO_GOD) {
+            nomeUsuario = 'BrisaLOG2 (GOD)';
+            console.log('🔐 Código GOD utilizado para exclusão em lote');
+        } else {
+            // Buscar nome do usuário cadastrado
+            const usuario = this.usuarios.find(u => u.codigo === codigoUsuario.trim());
+            if (!usuario) {
+                this.showNotification('Usuário não encontrado. Verifique o código digitado.', 'error');
+                return;
+            }
+            nomeUsuario = usuario.nome;
         }
         
         try {
@@ -1495,7 +1532,11 @@ class DashboardAdmin {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ agendamentosIds })
+                body: JSON.stringify({ 
+                    agendamentosIds,
+                    codigoUsuario: codigoUsuario.trim(),
+                    nomeUsuario: nomeUsuario
+                })
             });
             
             if (!response.ok) {
@@ -1506,7 +1547,7 @@ class DashboardAdmin {
             const data = await response.json();
             
             this.showNotification(
-                `${data.deletados} agendamento(s) excluído(s) com sucesso!`,
+                `✅ ${data.deletados} agendamento(s) excluído(s) permanentemente por ${nomeUsuario}`,
                 'success'
             );
             

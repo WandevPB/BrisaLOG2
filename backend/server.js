@@ -2298,16 +2298,36 @@ app.delete('/api/agendamentos/:codigo/excluir', async (req, res) => {
 // Exclusão em lote (apenas wanderson)
 app.post('/api/agendamentos/bulk-delete', authenticateToken, async (req, res) => {
   try {
-    const { agendamentosIds } = req.body;
-    const adminData = req.user; // Dados do admin autenticado via token
+    const { agendamentosIds, codigoUsuario, nomeUsuario } = req.body;
 
-    // Verificar se é o usuário wanderson
-    if (adminData.codigo !== 'wanderson') {
-      console.log(`❌ [BULK-DELETE] Acesso negado para usuário: ${adminData.codigo || adminData.nome}`);
-      return res.status(403).json({ error: 'Acesso negado. Esta funcionalidade é exclusiva do usuário wanderson.' });
+    console.log(`🗑️ [BULK-DELETE] Exclusão em lote solicitada por: ${nomeUsuario} (${codigoUsuario})`);
+
+    // Validar código do usuário (aceita código GOD ou usuário cadastrado)
+    let usuarioValido = false;
+    let nomeUsuarioFinal = nomeUsuario;
+
+    if (validarCodigoGOD(codigoUsuario)) {
+      usuarioValido = true;
+      nomeUsuarioFinal = 'BrisaLOG2 (GOD)';
+      console.log(`🔐 [BULK-DELETE] Código GOD utilizado!`);
+    } else {
+      // Validar se é usuário cadastrado
+      const usuario = await prisma.usuario.findUnique({
+        where: { codigo: codigoUsuario }
+      });
+      
+      if (usuario && usuario.ativo) {
+        usuarioValido = true;
+        nomeUsuarioFinal = usuario.nome;
+        console.log(`👤 [BULK-DELETE] Usuário válido: ${usuario.nome}`);
+      }
     }
 
-    console.log(`🗑️ [BULK-DELETE] Exclusão em lote solicitada por ${adminData.nome || 'wanderson'}`);
+    if (!usuarioValido) {
+      console.log(`❌ [BULK-DELETE] Código de usuário inválido`);
+      return res.status(403).json({ error: 'Código de usuário inválido ou inativo' });
+    }
+
     console.log(`📋 [BULK-DELETE] IDs para exclusão:`, agendamentosIds);
 
     // Validar dados
@@ -2350,14 +2370,15 @@ app.post('/api/agendamentos/bulk-delete', authenticateToken, async (req, res) =>
       }
     });
 
-    console.log(`✅ [BULK-DELETE] ${resultado.count} agendamento(s) excluído(s) com sucesso!`);
+    console.log(`✅ [BULK-DELETE] ${resultado.count} agendamento(s) excluído(s) com sucesso por ${nomeUsuarioFinal}!`);
 
     res.json({
       success: true,
-      message: `${resultado.count} agendamento(s) excluído(s) permanentemente`,
+      message: `${resultado.count} agendamento(s) excluído(s) permanentemente por ${nomeUsuarioFinal}`,
       deletados: resultado.count,
       solicitados: idsNumericos.length,
-      agendamentos: agendamentosParaExcluir.map(ag => ag.codigo)
+      agendamentos: agendamentosParaExcluir.map(ag => ag.codigo),
+      excluido_por: nomeUsuarioFinal
     });
 
   } catch (error) {
