@@ -404,6 +404,23 @@ class AgendamentoForm {
             return;
         }
 
+        // Verificar se há campos com validação customizada inválida (CPF, CNPJ, Placa)
+        const currentStepElement = document.getElementById(`form-step-${this.currentStep}`);
+        const invalidInputs = currentStepElement?.querySelectorAll('input:invalid');
+        
+        if (invalidInputs && invalidInputs.length > 0) {
+            // Encontrar o primeiro campo inválido e mostrar mensagem específica
+            const firstInvalid = invalidInputs[0];
+            const fieldName = firstInvalid.placeholder || firstInvalid.name || 'campo';
+            
+            // Scroll até o campo inválido
+            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstInvalid.focus();
+            
+            this.showNotification(`Por favor, corrija o campo "${fieldName}" antes de continuar.`, 'error');
+            return;
+        }
+
         this.saveStepData();
         this.currentStep++;
 
