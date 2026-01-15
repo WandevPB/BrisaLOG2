@@ -398,13 +398,6 @@
                     <p class="kpi-subtitle" id="kpi-entrega-sub">0 entregues</p>
                 </div>
 
-                <!-- Taxa de Assertividade -->
-                <div class="kpi-card-mini kpi-purple">
-                    <p class="kpi-label"><i class="fas fa-bullseye"></i> Assertividade</p>
-                    <p class="kpi-value" style="color: #8b5cf6;"><span id="kpi-assertividade">0</span>%</p>
-                    <p class="kpi-subtitle" id="kpi-assertividade-sub">Confirmados × Entregues</p>
-                </div>
-
                 <!-- Taxa de Cancelamento -->
                 <div class="kpi-card-mini kpi-danger">
                     <p class="kpi-label"><i class="fas fa-ban"></i> Taxa de Cancelamento</p>
@@ -853,10 +846,6 @@
                 const taxaEntrega = confirmados > 0 ? (entregues / confirmados * 100).toFixed(1) : 0;
                 document.getElementById('kpi-entrega').textContent = taxaEntrega;
                 document.getElementById('kpi-entrega-sub').textContent = `${entregues} de ${confirmados} confirmados`;
-
-                // Assertividade
-                const taxaAssertividade = confirmados > 0 ? (entregues / confirmados * 100).toFixed(1) : 0;
-                document.getElementById('kpi-assertividade').textContent = taxaAssertividade;
 
                 // Cancelamento
                 const taxaCancelamento = total > 0 ? (cancelados / total * 100).toFixed(1) : 0;
