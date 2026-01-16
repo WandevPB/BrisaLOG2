@@ -49,7 +49,7 @@ model Agendamento {
   codigo                 String                  @unique
   dataEntrega            DateTime
   horarioEntrega         String
-  tipoCarga              String
+  tipoCarga              String?
   status                 String                  @default("pendente")
   tipoRegistro           String                  @default("agendamento")
   observacoes            String?
