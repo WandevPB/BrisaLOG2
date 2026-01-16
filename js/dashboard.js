@@ -1821,21 +1821,6 @@ class CDDashboard {
             </div>
         ` : '';
 
-        const volumesHtml = (agendamento.quantidadeVolumes || agendamento.tipoVolume) ? `
-            <div class="bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
-                <div class="flex items-center mb-3">
-                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-2">
-                        <i class="fas fa-boxes text-orange-600 text-sm"></i>
-                    </div>
-                    <h3 class="text-md font-semibold text-gray-800">Volumes</h3>
-                </div>
-                <div class="space-y-2 text-sm">
-                    <div><span class="text-gray-600 text-xs">Quantidade</span><p class="font-semibold">${agendamento.quantidadeVolumes || 'Não informado'}</p></div>
-                    <div><span class="text-gray-600 text-xs">Tipo</span><p class="font-semibold">${agendamento.tipoVolume || 'Não informado'}</p></div>
-                </div>
-            </div>
-        ` : '';
-
         const detailContent = document.getElementById('detail-content');
         // Calcular valor total das NFs
         let valorTotal = 0;
@@ -1900,8 +1885,6 @@ class CDDashboard {
                     </div>
                     <!-- Transportador -->
                     ${transportadorHtml}
-                    <!-- Volumes -->
-                    ${volumesHtml}
                     <!-- Dados do Transportador -->
                     <div class="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
                         <div class="flex items-center mb-3">
