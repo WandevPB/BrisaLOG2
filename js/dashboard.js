@@ -4741,6 +4741,7 @@ async function handleRegistrarEntrega(e) {
     // Coletar dados do step 2 - Dados da Entrega
     const dataEntrega = document.getElementById('entrega-data-realizada').value;
     const horarioEntrega = document.getElementById('entrega-horario-preferencial').value;
+    const tipoCarga = document.getElementById('entrega-tipo-carga').value;
     const quantidadeVolumes = parseInt(document.getElementById('entrega-quantidade-volumes').value);
     const tipoVolume = document.getElementById('entrega-tipo-volume').value;
     const observacoesStep2 = document.getElementById('entrega-observacoes-step2')?.value || '';
@@ -4774,6 +4775,7 @@ async function handleRegistrarEntrega(e) {
             cdDestino: cdId, // Usa o CD do usuário logado
             dataEntrega: dataEntrega,
             horarioEntrega: horarioEntrega,
+            tipoCarga: tipoCarga,
             quantidadeVolumes: quantidadeVolumes,
             tipoVolume: tipoVolume,
             observacoes: observacoesStep2
