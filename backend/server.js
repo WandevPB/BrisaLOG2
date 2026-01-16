@@ -1049,14 +1049,22 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
         .trim();
     };
 
+    // Determinar tipoCarga: 
+    // - Para entregas sem agendamento (registro pelo CD): usar 'Geral' como padrão
+    // - Para agendamentos normais: campo obrigatório do frontend
+    const tipoCargaFinal = isEntregaPeloCD 
+      ? 'Geral' 
+      : sanitizeStringAg(agendamentoData.entrega.tipoCarga);
+
     // Criar agendamento (SEM relação fornecedor - usando snapshot)
     console.log('[Agendamento Create] Dados:', {
       codigo,
       dataEntrega: dataEntregaLocal,
       horarioEntrega: agendamentoData.entrega.horarioEntrega,
-      tipoCarga: agendamentoData.entrega.tipoCarga || 'Geral',
+      tipoCarga: tipoCargaFinal,
       tipoVeiculo: agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo,
-      cdId: cd.id
+      cdId: cd.id,
+      isEntregaPeloCD
     });
 
     let agendamento;
@@ -1066,7 +1074,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
           codigo: sanitizeStringAg(codigo),
           dataEntrega: dataEntregaLocal,
           horarioEntrega: sanitizeStringAg(agendamentoData.entrega.horarioEntrega),
-          tipoCarga: sanitizeStringAg(agendamentoData.entrega.tipoCarga || 'Geral'),
+          tipoCarga: tipoCargaFinal,
           observacoes: sanitizeStringAg(observacoesFinal),
           status: sanitizeStringAg(statusFinal),
           tipoRegistro: sanitizeStringAg(agendamentoData.tipoRegistro || 'agendamento'),
