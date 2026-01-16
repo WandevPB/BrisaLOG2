@@ -1054,7 +1054,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       codigo,
       dataEntrega: dataEntregaLocal,
       horarioEntrega: agendamentoData.entrega.horarioEntrega,
-      tipoCarga: agendamentoData.entrega.tipoCarga,
+      tipoCarga: agendamentoData.entrega.tipoCarga || 'Geral',
       tipoVeiculo: agendamentoData.fornecedor?.tipoVeiculo || agendamentoData.tipoVeiculo,
       cdId: cd.id
     });
@@ -1066,7 +1066,7 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
           codigo: sanitizeStringAg(codigo),
           dataEntrega: dataEntregaLocal,
           horarioEntrega: sanitizeStringAg(agendamentoData.entrega.horarioEntrega),
-          tipoCarga: sanitizeStringAg(agendamentoData.entrega.tipoCarga),
+          tipoCarga: sanitizeStringAg(agendamentoData.entrega.tipoCarga || 'Geral'),
           observacoes: sanitizeStringAg(observacoesFinal),
           status: sanitizeStringAg(statusFinal),
           tipoRegistro: sanitizeStringAg(agendamentoData.tipoRegistro || 'agendamento'),
