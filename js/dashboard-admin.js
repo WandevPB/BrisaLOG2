@@ -1385,9 +1385,17 @@ class DashboardAdmin {
             // Fechar modal
             document.getElementById('modal-transferir-cd')?.remove();
 
-            const mensagemSucesso = enviarEmail 
+            let mensagemSucesso = enviarEmail 
                 ? `✅ Agendamento transferido de "${result.agendamento.cdAnterior}" para "${result.agendamento.cdNovo}" com sucesso! Email enviado ao transportador.`
                 : `✅ Agendamento transferido de "${result.agendamento.cdAnterior}" para "${result.agendamento.cdNovo}" com sucesso!`;
+
+            // Se houver ajuste de horário, adicionar à mensagem
+            if (result.agendamento.horarioFoiAjustado) {
+                mensagemSucesso += `\n\n⏰ ATENÇÃO: Horário foi ajustado automaticamente!\n`;
+                mensagemSucesso += `Horário original: ${result.agendamento.horarioOriginal}\n`;
+                mensagemSucesso += `Horário novo: ${result.agendamento.horarioAjustado}\n`;
+                mensagemSucesso += `Motivo: CD LagoaNova possui restrição de horários até às 15h.`;
+            }
 
             this.showNotification(mensagemSucesso, 'success');
 

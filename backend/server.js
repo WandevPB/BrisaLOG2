@@ -2647,16 +2647,36 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
       });
     }
 
+    // Validar restrição de horário para LagoaNova
+    let horarioOriginal = agendamento.horarioEntrega;
+    let horarioAjustado = agendamento.horarioEntrega;
+    let horarioFoiAjustado = false;
+    let motivoAjusteHorario = '';
+
+    if (cdNovo.nome === 'LagoaNova' || cdNovo.nome === 'Lagoa Nova') {
+      // Extrair hora inicial do horário (ex: "16:00-17:00" -> 16)
+      const horaInicial = parseInt(agendamento.horarioEntrega.split(':')[0]);
+      
+      // Se horário for > 15h (16h ou depois), ajustar para 14:00-16:00
+      if (horaInicial >= 16) {
+        horarioAjustado = '14:00-16:00';
+        horarioFoiAjustado = true;
+        motivoAjusteHorario = `Ajuste automático: CD LagoaNova possui restrição de horário até 15h. Horário alterado de "${horarioOriginal}" para "${horarioAjustado}"`;
+        console.log(`⏰ [POST /api/agendamentos/${codigo}/transferir-cd] Horário ajustado para LagoaNova: ${horarioOriginal} → ${horarioAjustado}`);
+      }
+    }
+
     // Atualizar agendamento
     const agendamentoAtualizado = await prisma.agendamento.update({
       where: { id: agendamento.id },
       data: {
         cdId: cdNovo.id,
+        horarioEntrega: horarioAjustado, // Usar horário ajustado
         status: 'pendente' // Volta para pendente aguardando aprovação do novo CD
       }
     });
 
-    // Criar histórico
+    // Criar histórico da transferência
     await prisma.historicoAcao.create({
       data: {
         acao: 'transferencia_cd',
@@ -2667,6 +2687,20 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
         cdId: cdNovo.id
       }
     });
+
+    // Se houve ajuste de horário, criar histórico adicional
+    if (horarioFoiAjustado) {
+      await prisma.historicoAcao.create({
+        data: {
+          acao: 'ajuste_horario_transferencia',
+          descricao: motivoAjusteHorario,
+          autor: 'Sistema',
+          codigoUsuario: null,
+          agendamentoId: agendamento.id,
+          cdId: cdNovo.id
+        }
+      });
+    }
 
     // Enviar email de transferência (se solicitado)
     if (enviarEmail) {
@@ -2692,7 +2726,9 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
             cdNovo: cdNovo.nome,
             motivo: motivo,
             dataAgendamento: dataFormatada,
-            horarioAgendamento: agendamento.horarioEntrega
+            horarioAgendamento: horarioAjustado, // Usar horário ajustado no email
+            horarioOriginal: horarioFoiAjustado ? horarioOriginal : null, // Informar horário original se foi ajustado
+            horarioFoiAjustado: horarioFoiAjustado
           });
 
           console.log('✅ [POST /api/agendamentos/:codigo/transferir-cd] Email de transferência enviado com sucesso');
@@ -2717,6 +2753,9 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
         codigo: agendamento.codigo,
         cdAnterior: cdAnterior.nome,
         cdNovo: cdNovo.nome,
+        horarioOriginal: horarioFoiAjustado ? horarioOriginal : null,
+        horarioAjustado: horarioFoiAjustado ? horarioAjustado : null,
+        horarioFoiAjustado: horarioFoiAjustado,
         status: 'pendente',
         transferido_por: adminData.nome || 'Admin'
       }

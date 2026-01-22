@@ -1,5 +1,5 @@
 // Template: Transferência de CD
-module.exports = function({ transportadorNome, agendamentoCodigo, cdAnterior, cdNovo, motivo, dataEntrega, horario }) {
+module.exports = function({ transportadorNome, agendamentoCodigo, cdAnterior, cdNovo, motivo, dataEntrega, horario, horarioOriginal, horarioFoiAjustado }) {
   return `
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -120,7 +120,34 @@ module.exports = function({ transportadorNome, agendamentoCodigo, cdAnterior, cd
                                         </table>
                                     </td>
                                 </tr>
+                                ${horarioFoiAjustado ? `
+                                <tr>
+                                    <td style="padding: 15px 0; background-color: #fef3c7; border-radius: 8px;">
+                                        <table role="presentation" style="width: 100%;">
+                                            <tr>
+                                                <td style="width: 40%; color: #92400e; font-size: 14px; font-weight: 600;">
+                                                    ⏰ Horário Original:
+                                                </td>
+                                                <td style="color: #c2410c; font-size: 14px; font-weight: 600; text-decoration: line-through;">
+                                                    ${horarioOriginal}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                ` : ''}
                             </table>
+
+                            ${horarioFoiAjustado ? `
+                            <div style="background-color: #fef3c7; border-radius: 8px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #f59e0b;">
+                                <p style="margin: 0 0 10px 0; color: #92400e; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    ⏰ Ajuste de Horário
+                                </p>
+                                <p style="margin: 0; color: #78350f; font-size: 15px; line-height: 1.6;">
+                                    O horário foi ajustado automaticamente de <strong>${horarioOriginal}</strong> para <strong>${horario}</strong> porque o CD <strong>${cdNovo}</strong> possui restrição de horários apenas até às 15h.
+                                </p>
+                            </div>
+                            ` : ''}
 
                             <div style="background-color: #fef3c7; border-radius: 8px; padding: 20px; margin-bottom: 30px; border-left: 4px solid #f59e0b;">
                                 <p style="margin: 0 0 10px 0; color: #92400e; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">

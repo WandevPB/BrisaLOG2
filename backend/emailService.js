@@ -479,7 +479,7 @@ class EmailService {
     }
 
     // E-mail de transferência de CD
-    async sendTransferenciaCDEmail({ to, fornecedorNome, agendamentoCodigo, cdAnterior, cdNovo, motivo, dataAgendamento, horarioAgendamento }) {
+    async sendTransferenciaCDEmail({ to, fornecedorNome, agendamentoCodigo, cdAnterior, cdNovo, motivo, dataAgendamento, horarioAgendamento, horarioOriginal, horarioFoiAjustado }) {
         const html = templateTransferenciaCD({
             transportadorNome: fornecedorNome,
             agendamentoCodigo,
@@ -487,7 +487,9 @@ class EmailService {
             cdNovo,
             motivo,
             dataEntrega: dataAgendamento,
-            horario: horarioAgendamento
+            horario: horarioAgendamento,
+            horarioOriginal: horarioOriginal,
+            horarioFoiAjustado: horarioFoiAjustado
         });
         return this.sendEmail({
             to,
