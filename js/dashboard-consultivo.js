@@ -919,6 +919,14 @@ class DashboardConsultivo {
                     agendamento.fornecedorDocumento
                 ].filter(Boolean).map(f => f.toLowerCase());
 
+                // Adicionar campos de Nota Fiscal
+                if (agendamento.notasFiscais && agendamento.notasFiscais.length > 0) {
+                    agendamento.notasFiscais.forEach(nf => {
+                        if (nf.numeroNF) searchFields.push(nf.numeroNF.toLowerCase());
+                        if (nf.numeroPedido) searchFields.push(nf.numeroPedido.toString().toLowerCase());
+                    });
+                }
+
                 if (!searchFields.some(field => field.includes(searchTerm))) {
                     return false;
                 }

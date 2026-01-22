@@ -719,7 +719,11 @@ app.get('/api/agendamentos/todos', authenticateToken, async (req, res) => {
         { codigo: { contains: search } },
         { fornecedorNome: { contains: search } },
         { fornecedorEmail: { contains: search } },
-        { fornecedorDocumento: { contains: search } }
+        { fornecedorDocumento: { contains: search } },
+        { transportadorNome: { contains: search } },
+        { transportadorDocumento: { contains: search } },
+        { notasFiscais: { some: { numeroNF: { contains: search } } } },
+        { notasFiscais: { some: { numeroPedido: { contains: search } } } }
       ];
     }
 
