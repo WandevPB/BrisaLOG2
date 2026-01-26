@@ -612,6 +612,8 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
     console.log('🔍 [GET /api/agendamentos] Iniciando listagem de agendamentos...');
     const { status, search, page = 1, limit = 50 } = req.query;
     const cdId = req.user.id;
+    
+    console.log(`👤 [GET /api/agendamentos] CD ID do usuário logado: ${cdId} (${req.user.nome})`);
 
     // Construir filtros
     const where = {
@@ -630,7 +632,7 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
       ];
     }
 
-    console.log('🔍 [GET /api/agendamentos] Filtros aplicados:', where);
+    console.log('🔍 [GET /api/agendamentos] Filtros aplicados:', JSON.stringify(where, null, 2));
 
     // Buscar agendamentos
     const agendamentos = await prisma.agendamento.findMany({
@@ -661,9 +663,41 @@ app.get('/api/agendamentos', authenticateToken, async (req, res) => {
     const total = await prisma.agendamento.count({ where });
 
     console.log(`✅ [GET /api/agendamentos] ${agendamentos.length} agendamentos encontrados de ${total} total`);
-    console.log('📋 [GET /api/agendamentos] Status dos agendamentos:', 
-      agendamentos.map(a => ({ id: a.id, codigo: a.codigo, status: a.status }))
+    console.log('📋 [GET /api/agendamentos] Códigos dos agendamentos:', 
+      agendamentos.map(a => `${a.codigo} (status: ${a.status}, cdId: ${a.cdId})`)
     );
+    
+    // Verificar se AGD812791 está na lista
+    const agd812791 = agendamentos.find(a => a.codigo === 'AGD812791');
+    if (agd812791) {
+      console.log('✅ [GET /api/agendamentos] AGD812791 ENCONTRADO:', {
+        id: agd812791.id,
+        codigo: agd812791.codigo,
+        status: agd812791.status,
+        cdId: agd812791.cdId,
+        dataEntrega: agd812791.dataEntrega
+      });
+    } else {
+      console.log('❌ [GET /api/agendamentos] AGD812791 NÃO ENCONTRADO na lista retornada');
+      
+      // Buscar AGD812791 diretamente no banco para debug
+      const agd812791Direct = await prisma.agendamento.findFirst({
+        where: { codigo: 'AGD812791' }
+      });
+      
+      if (agd812791Direct) {
+        console.log('🔍 [GET /api/agendamentos] AGD812791 existe no banco:', {
+          id: agd812791Direct.id,
+          codigo: agd812791Direct.codigo,
+          status: agd812791Direct.status,
+          cdId: agd812791Direct.cdId,
+          cdIdDoUsuario: cdId,
+          corresponde: agd812791Direct.cdId === cdId
+        });
+      } else {
+        console.log('❌ [GET /api/agendamentos] AGD812791 NÃO EXISTE no banco de dados');
+      }
+    }
 
     // Serializa BigInt para string
     function replacer(key, value) {
