@@ -2822,6 +2822,8 @@ class CDDashboard {
         const sortFilter = document.getElementById('filter-ordenar')?.value || '';
         const searchText = document.getElementById('search-input')?.value?.toLowerCase() || '';
         
+        console.log('[Dashboard] Aplicando filtros:', { statusFilter, periodoFilter, sortFilter, searchText });
+        
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         
@@ -2835,23 +2837,30 @@ class CDDashboard {
                 const dataEntrega = new Date(agendamento.dataEntrega);
                 dataEntrega.setHours(0, 0, 0, 0);
                 
+                // REGRA ESPECIAL: Agendamentos PENDENTES sempre aparecem, independente do período
+                const isPendente = agendamento.status === 'pendente';
+                
+                if (isPendente) {
+                    console.log('[Dashboard] Agendamento pendente sempre visível:', agendamento.codigo, 'Data:', agendamento.dataEntrega);
+                }
+                
                 switch(periodoFilter) {
                     case 'hoje':
-                        matchesPeriodo = dataEntrega.getTime() === hoje.getTime();
+                        matchesPeriodo = isPendente || dataEntrega.getTime() === hoje.getTime();
                         break;
                     case 'amanha':
                         const amanha = new Date(hoje);
                         amanha.setDate(amanha.getDate() + 1);
-                        matchesPeriodo = dataEntrega.getTime() === amanha.getTime();
+                        matchesPeriodo = isPendente || dataEntrega.getTime() === amanha.getTime();
                         break;
                     case 'semana':
                         const fimSemana = new Date(hoje);
                         fimSemana.setDate(fimSemana.getDate() + 7);
-                        matchesPeriodo = dataEntrega >= hoje && dataEntrega <= fimSemana;
+                        matchesPeriodo = isPendente || (dataEntrega >= hoje && dataEntrega <= fimSemana);
                         break;
                     case 'mes':
                         const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-                        matchesPeriodo = dataEntrega >= hoje && dataEntrega <= fimMes;
+                        matchesPeriodo = isPendente || (dataEntrega >= hoje && dataEntrega <= fimMes);
                         break;
                     case 'atrasados':
                         matchesPeriodo = dataEntrega < hoje && agendamento.status !== 'entregue' && agendamento.status !== 'nao-veio';
@@ -2870,8 +2879,17 @@ class CDDashboard {
                     nf.numeroPedido.toString().includes(searchText)
                 ));
                 
-            return matchesStatus && matchesPeriodo && matchesSearch;
+            const matches = matchesStatus && matchesPeriodo && matchesSearch;
+            
+            if (!matches && agendamento.status === 'pendente') {
+                console.log('[Dashboard] Agendamento pendente FILTRADO:', agendamento.codigo, { matchesStatus, matchesPeriodo, matchesSearch });
+            }
+                
+            return matches;
         });
+        
+        console.log(`[Dashboard] Total de agendamentos após filtros: ${this.filteredAgendamentos.length} de ${this.agendamentos.length}`);
+        console.log(`[Dashboard] Agendamentos pendentes visíveis: ${this.filteredAgendamentos.filter(a => a.status === 'pendente').length}`);
         
         // Ordenação
         this.filteredAgendamentos.sort((a, b) => {
