@@ -774,14 +774,21 @@ class CDDashboard {
         }
     }
 
-    async loadAgendamentos() {
+    async loadAgendamentos(searchQuery = null) {
         this.showLoading(true);
         
         try {
             const token = sessionStorage.getItem('token');
             
-            // Adicionar timestamp para evitar cache
-            const url = `${getApiBaseUrl()}/api/agendamentos?t=${Date.now()}`;
+            // Construir URL com parâmetros
+            let url = `${getApiBaseUrl()}/api/agendamentos?t=${Date.now()}&limit=1000`;
+            
+            // Se houver busca, enviar para o backend
+            if (searchQuery && searchQuery.trim()) {
+                url += `&search=${encodeURIComponent(searchQuery.trim())}`;
+                console.log(`🔍 [Dashboard] Buscando no backend: "${searchQuery}"`);
+            }
+            
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
@@ -2816,13 +2823,20 @@ class CDDashboard {
         window.open(fileUrl, '_blank');
     }
 
-    applyFilters() {
+    async applyFilters() {
         const statusFilter = document.getElementById('filter-status')?.value || '';
         const periodoFilter = document.getElementById('filter-periodo')?.value || '';
         const sortFilter = document.getElementById('filter-ordenar')?.value || '';
-        const searchText = document.getElementById('search-input')?.value?.toLowerCase() || '';
+        const searchText = document.getElementById('search-input')?.value?.trim() || '';
         
         console.log('[Dashboard] Aplicando filtros:', { statusFilter, periodoFilter, sortFilter, searchText });
+        
+        // Se houver texto de busca, recarregar do backend
+        if (searchText.length >= 3) {
+            console.log('[Dashboard] Buscando no backend...');
+            await this.loadAgendamentos(searchText);
+            // Após carregar, aplicar filtros de status e período localmente
+        }
         
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
@@ -2868,14 +2882,14 @@ class CDDashboard {
                 }
             }
             
-            // Busca Avançada (múltiplos campos)
+            // Busca local (já filtrada pelo backend se houver searchText)
             const matchesSearch = !searchText || 
-                agendamento.codigo.toLowerCase().includes(searchText) ||
-                (agendamento.transportadorNome && agendamento.transportadorNome.toLowerCase().includes(searchText)) ||
-                (agendamento.transportadorEmail && agendamento.transportadorEmail.toLowerCase().includes(searchText)) ||
-                (agendamento.fornecedorNome && agendamento.fornecedorNome.toLowerCase().includes(searchText)) ||
+                agendamento.codigo.toLowerCase().includes(searchText.toLowerCase()) ||
+                (agendamento.transportadorNome && agendamento.transportadorNome.toLowerCase().includes(searchText.toLowerCase())) ||
+                (agendamento.transportadorEmail && agendamento.transportadorEmail.toLowerCase().includes(searchText.toLowerCase())) ||
+                (agendamento.fornecedorNome && agendamento.fornecedorNome.toLowerCase().includes(searchText.toLowerCase())) ||
                 (agendamento.notasFiscais && agendamento.notasFiscais.some(nf => 
-                    nf.numeroNF.toLowerCase().includes(searchText) || 
+                    nf.numeroNF.toLowerCase().includes(searchText.toLowerCase()) || 
                     nf.numeroPedido.toString().includes(searchText)
                 ));
                 
