@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agendamento de Entrega - BrisaLOG Portal</title>
 
+
   <script src="config.js"></script>
   <script src="js/apiRequest.js"></script>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Flatpickr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
   <script>
     tailwind.config = {
@@ -421,8 +426,8 @@
                   <i class="fas fa-calendar mr-2 text-orange-primary"></i>
                   Data de Entrega *
                 </label>
-                <input type="date" id="data-entrega" name="dataEntrega" required
-                  class="input-themed">
+                <input type="text" id="data-entrega" name="dataEntrega" required
+                  class="input-themed" autocomplete="off">
                 <div class="invalid-feedback hidden text-red-500 text-sm mt-1"></div>
               </div>
 
@@ -1430,7 +1435,26 @@
     }
   </script>
 
-  <script src="js/agendamento.js"></script>
+    <script src="js/agendamento.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Inicializa o flatpickr no campo de data
+        if (window.flatpickr) {
+          flatpickr("#data-entrega", {
+            dateFormat: "Y-m-d",
+            locale: "pt",
+            allowInput: true,
+            disableMobile: true,
+            // minDate e maxDate serão setados dinamicamente pelo JS já existente
+            onChange: function(selectedDates, dateStr, instance) {
+              // Dispara evento 'change' para integração com JS existente
+              const event = new Event('change', { bubbles: true });
+              instance._input.dispatchEvent(event);
+            }
+          });
+        }
+      });
+    </script>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       setTimeout(function() {
