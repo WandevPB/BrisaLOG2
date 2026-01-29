@@ -1521,10 +1521,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         const cdId = cdMap[cdNomeFinal];
-        const date = dateInput?.value;
+        let date = dateInput?.value;
         const isCDTorre = cdNomeFinal === 'cd lagoa nova (torre)';
         const isCDLagoaNova = cdNomeFinal === 'LagoaNova';
-        
+
+        // Converter data para formato YYYY-MM-DD se vier como DD/MM/YYYY
+        if (date && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+            const [dia, mes, ano] = date.split('/');
+            date = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        }
+
         console.log('🔍 [DEBUG atualizarHorarios]', {
             cdNome,
             subCategoria,
@@ -1532,15 +1538,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             cdId,
             isCDTorre,
             isCDLagoaNova,
-            cdMap
+            cdMap,
+            date
         });
-        
+
         // Mostrar/esconder aviso do CD Torre
         const avisoTorre = document.getElementById('aviso-cd-torre');
         if (avisoTorre) {
             avisoTorre.style.display = isCDTorre ? 'block' : 'none';
         }
-        
+
         if (cdId && date) {
             if (horarioSelect) horarioSelect.disabled = false;
             if (agendamentoForm) agendamentoForm.loadAvailableHours(date, cdId, isCDTorre, isCDLagoaNova);
