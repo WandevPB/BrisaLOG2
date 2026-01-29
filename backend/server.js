@@ -1051,12 +1051,17 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     // Bloqueio de agendamento duplicado para mesmo CD, data e horário (apenas para agendamentos pendentes/confirmados)
     // Converte dataEntrega para data local
     const dataEntregaLocal = toLocalDateOnly(agendamentoData.entrega.dataEntrega);
-    
+    console.log('[DEBUG] dataEntrega recebido:', agendamentoData.entrega.dataEntrega, '| convertido:', dataEntregaLocal);
+
     // Só verificar duplicação se for agendamento normal (não entrega pelo CD)
     const statusFinal = agendamentoData.status || 'pendente';
     const isEntregaPeloCD = agendamentoData.incluidoPeloCD || agendamentoData.tipoRegistro === 'fora_agendamento';
-    
+
     if (!isEntregaPeloCD) {
+      if (!dataEntregaLocal) {
+        console.error('❌ [POST /api/agendamentos] Data de entrega ausente ou inválida:', agendamentoData.entrega.dataEntrega);
+        return res.status(400).json({ error: 'Data de entrega não informada ou inválida.' });
+      }
       const existe = await prisma.agendamento.findFirst({
         where: {
           cdId: cd.id,
