@@ -1438,10 +1438,19 @@
     <script src="js/agendamento.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        // Inicializa o flatpickr no campo de data
+        // Flatpickr com formato brasileiro e idioma pt
         if (window.flatpickr) {
+          // Carrega locale pt-BR se disponível
+          if (window.flatpickr && window.flatpickr.l10ns && window.flatpickr.l10ns.pt) {
+            // já está disponível
+          } else {
+            // Carrega locale pt.js dinamicamente se necessário
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js';
+            document.head.appendChild(script);
+          }
           flatpickr("#data-entrega", {
-            dateFormat: "Y-m-d",
+            dateFormat: "d/m/Y",
             locale: "pt",
             allowInput: true,
             disableMobile: true,
