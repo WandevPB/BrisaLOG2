@@ -1438,17 +1438,7 @@
     <script src="js/agendamento.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        // Flatpickr com formato brasileiro e idioma pt
-        if (window.flatpickr) {
-          // Carrega locale pt-BR se disponível
-          if (window.flatpickr && window.flatpickr.l10ns && window.flatpickr.l10ns.pt) {
-            // já está disponível
-          } else {
-            // Carrega locale pt.js dinamicamente se necessário
-            var script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js';
-            document.head.appendChild(script);
-          }
+        function initFlatpickrPT() {
           flatpickr("#data-entrega", {
             dateFormat: "d/m/Y",
             locale: "pt",
@@ -1458,17 +1448,48 @@
             disable: [
               function(date) {
                 // Desabilita sábados (6) e domingos (0)
-                return (date.getDay() === 0 || date.getDay() === 6);
+                if (date.getDay() === 0 || date.getDay() === 6) return true;
+                // Desabilita dias acima do 25
+                if (date.getDate() > 25) return true;
+                return false;
               }
             ],
-            // minDate e maxDate também podem ser setados dinamicamente pelo JS já existente
             onChange: function(selectedDates, dateStr, instance) {
-              // Dispara evento 'change' para integração com JS existente
               const event = new Event('change', { bubbles: true });
               instance._input.dispatchEvent(event);
-            }
+            },
+            defaultDate: null,
+            allowBlank: true
           });
         }
+
+        // Força o carregamento do locale pt.js e só inicializa após carregar
+        if (window.flatpickr && (!window.flatpickr.l10ns || !window.flatpickr.l10ns.pt)) {
+          var script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js';
+          script.onload = function() {
+            initFlatpickrPT();
+          };
+          document.head.appendChild(script);
+        } else {
+          initFlatpickrPT();
+        }
+
+        // Garante que o campo de data fique vazio ao entrar no step 2
+        document.addEventListener('DOMContentLoaded', function() {
+          var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+              if (mutation.type === 'attributes' && mutation.target.id === 'form-step-2' && mutation.target.style.display !== 'none') {
+                var dataInput = document.getElementById('data-entrega');
+                if (dataInput) dataInput.value = '';
+              }
+            });
+          });
+          var step2 = document.getElementById('form-step-2');
+          if (step2) {
+            observer.observe(step2, { attributes: true, attributeFilter: ['style'] });
+          }
+        });
       });
     </script>
   <script>
