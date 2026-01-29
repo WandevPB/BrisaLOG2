@@ -1565,7 +1565,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             const cdSelecionado = cdInput.value;
             const subcategoriaContainer = document.getElementById('subcategoria-cd-container');
             const subcategoriaSelect = document.getElementById('subcategoria-cd');
-            
+            const dateInput = document.getElementById('data-entrega');
+
+            // Sempre limpar o campo de data ao trocar o CD
+            if (dateInput) {
+                dateInput.value = '';
+                // Se estiver usando flatpickr, limpar também a instância
+                if (dateInput._flatpickr) {
+                    dateInput._flatpickr.clear();
+                }
+            }
+
             // Verificar se é CD Ceará (mostra subcategorias)
             if (cdSelecionado && cdSelecionado === 'Ceará') {
                 // Mostrar subcategoria
@@ -1585,7 +1595,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
             }
-            
+
             atualizarHorarios();
         });
         dateInput.addEventListener('change', atualizarHorarios);
