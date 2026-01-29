@@ -1454,7 +1454,14 @@
             locale: "pt",
             allowInput: true,
             disableMobile: true,
-            // minDate e maxDate serão setados dinamicamente pelo JS já existente
+            minDate: "today",
+            disable: [
+              function(date) {
+                // Desabilita sábados (6) e domingos (0)
+                return (date.getDay() === 0 || date.getDay() === 6);
+              }
+            ],
+            // minDate e maxDate também podem ser setados dinamicamente pelo JS já existente
             onChange: function(selectedDates, dateStr, instance) {
               // Dispara evento 'change' para integração com JS existente
               const event = new Event('change', { bubbles: true });
