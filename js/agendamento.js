@@ -557,10 +557,16 @@ class AgendamentoForm {
                     cdDestinoFinal = subcategoriaCD;
                 }
                 
+                // Converter dataEntrega para formato ISO (YYYY-MM-DD) se vier como DD/MM/YYYY
+                let dataEntregaFinal = dataEntregaISO;
+                if (dataEntregaFinal && /^\d{2}\/\d{2}\/\d{4}$/.test(dataEntregaFinal)) {
+                    const [dia, mes, ano] = dataEntregaFinal.split('/');
+                    dataEntregaFinal = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+                }
                 this.formData.entrega = {
                     cdDestino: cdDestinoFinal,
                     tipoCarga: getElValue('tipo-carga'),
-                    dataEntrega: dataEntregaISO, // formato ISO
+                    dataEntrega: dataEntregaFinal, // sempre ISO
                     horarioEntrega: getElValue('horario-entrega'),
                     quantidadeVolumes: getElValue('quantidade-volumes'),
                     tipoVolume: getElValue('tipo-volume'),
