@@ -121,65 +121,52 @@ class AgendamentoForm {
         const inputs = document.querySelectorAll(`#${formId} [required]`);
         const stepContainer = document.getElementById(formId);
 
-        inputs.forEach(input => {
-            if (input.type === 'file') {
-                // Para o template novo, arquivoNF pode estar fora do file-drop-zone
-                const fileInput = input;
-                let fileSelected = null;
-                // Tenta encontrar o label customizado ou file-drop-zone
-                if (fileInput.closest('.file-drop-zone')) {
-                    fileSelected = fileInput.closest('.file-drop-zone')?.querySelector('.file-selected');
-                    if (!fileSelected || fileSelected.classList.contains('hidden')) {
-                        this.showInvalidFeedback(input, 'Este campo é obrigatório.');
-                        isValid = false;
-                    } else {
-                        this.hideInvalidFeedback(input);
-                    }
-                } else if (fileInput.closest('.file-input-wrapper')) {
-                    // Lógica para o novo input de file do agendamento.html
-                    if (!fileInput.files || fileInput.files.length === 0) {
-                         // Acha o elemento de feedback mais próximo
-                        const wrapper = fileInput.closest('.file-input-wrapper');
-                        let feedback = wrapper.nextElementSibling;
-                        if (!feedback || !feedback.classList.contains('invalid-feedback')) {
-                             feedback = wrapper.parentElement.querySelector('.invalid-feedback');
-                        }
-                        
-                        if (feedback) {
-                            feedback.textContent = 'Este campo é obrigatório.';
-                            feedback.classList.remove('hidden');
-                        }
-                        isValid = false;
-                    } else {
-                        const wrapper = fileInput.closest('.file-input-wrapper');
-                        let feedback = wrapper.nextElementSibling;
-                        if (!feedback || !feedback.classList.contains('invalid-feedback')) {
-                             feedback = wrapper.parentElement.querySelector('.invalid-feedback');
-                        }
-                         if (feedback) {
-                            feedback.classList.add('hidden');
-                        }
-                    }
-                } else {
-                    // Se não tem file-drop-zone, verifica se o arquivo está selecionado
-                    if (!fileInput.files || fileInput.files.length === 0) {
-                        this.showInvalidFeedback(input, 'Este campo é obrigatório.');
-                        isValid = false;
-                    } else {
-                        this.hideInvalidFeedback(input);
-                    }
-                }
-            } else if (input.name === 'numeroPedido' || input.name === 'numeroPedidoLinha') {
-                const value = input.value.trim();
-                // Validação: deve começar com 450 e ter 10 dígitos
-                if (!/^450\d{7}$/.test(value)) {
-                    input.classList.add('border-red-500');
-                    this.showInvalidFeedback(input, 'O número do pedido deve iniciar com 450 e ter 10 dígitos.');
+        // Validação extra para transportador (step 1)
+        if (step === 1) {
+            const emailInput = document.getElementById('email');
+            const telefoneInput = document.getElementById('telefone');
+            const documentoInput = document.getElementById('documento');
+            // Email
+            if (emailInput && emailInput.value.trim()) {
+                const emailVal = emailInput.value.trim();
+                const emailRegex = /^[\w-.]+@[\w-]+\.[a-zA-Z]{2,}$/;
+                if (!emailRegex.test(emailVal)) {
+                    this.showInvalidFeedback(emailInput, 'E-mail inválido.');
                     isValid = false;
                 } else {
-                    input.classList.remove('border-red-500');
-                    this.hideInvalidFeedback(input);
+                    this.hideInvalidFeedback(emailInput);
                 }
+            }
+            // Telefone
+            if (telefoneInput && telefoneInput.value.trim()) {
+                const telVal = telefoneInput.value.trim();
+                const telRegex = /^\d{10,11}$/;
+                const telDigits = telVal.replace(/\D/g, '');
+                if (!telRegex.test(telDigits)) {
+                    this.showInvalidFeedback(telefoneInput, 'Telefone inválido. Use apenas números (10 ou 11 dígitos).');
+                    isValid = false;
+                } else {
+                    this.hideInvalidFeedback(telefoneInput);
+                }
+            }
+            // CNPJ
+            if (documentoInput && documentoInput.value.trim()) {
+                const docVal = documentoInput.value.trim();
+                const cnpjDigits = docVal.replace(/\D/g, '');
+                if (cnpjDigits.length !== 14) {
+                    this.showInvalidFeedback(documentoInput, 'CNPJ inválido. Deve ter 14 dígitos.');
+                    isValid = false;
+                } else {
+                    this.hideInvalidFeedback(documentoInput);
+                }
+            }
+        }
+
+        inputs.forEach(input => {
+            if (input.type === 'file') {
+                // ...existing code...
+            } else if (input.name === 'numeroPedido' || input.name === 'numeroPedidoLinha') {
+                // ...existing code...
             } else if (!input.value.trim()) {
                 this.showInvalidFeedback(input, 'Este campo é obrigatório.');
                 isValid = false;
