@@ -1043,25 +1043,26 @@ class AgendamentoForm {
                     }
                 });
             } catch (error) {
-                // Fallback para dados mock se API não estiver disponível
-                console.warn('API não disponível, usando dados mock');
-                response = await this.mockApiResponse();
+                // Não exibe tela de sucesso se API falhar
+                console.error('Erro ao enviar agendamento:', error);
+                this.showNotification('Erro ao processar agendamento. Tente novamente ou contate o suporte.', 'error');
+                return;
             }
 
-            if (response.ok) {
+            if (response && response.ok) {
                 const result = await response.json();
                 this.showSuccess(result);
             } else {
-                const contentType = response.headers.get('content-type');
+                const contentType = response && response.headers ? response.headers.get('content-type') : null;
                 let errorData;
                 if (contentType && contentType.includes('application/json')) {
                     errorData = await response.json();
                     console.error('Erro da API:', errorData);
-                    throw new Error(errorData.message || 'Erro ao processar agendamento');
+                    this.showNotification(errorData.message || 'Erro ao processar agendamento', 'error');
                 } else {
-                    const errorText = await response.text();
+                    const errorText = response ? await response.text() : '';
                     console.error('Resposta não JSON:', errorText);
-                    throw new Error('Erro inesperado do servidor. Tente novamente ou contate o suporte.');
+                    this.showNotification('Erro inesperado do servidor. Tente novamente ou contate o suporte.', 'error');
                 }
             }
             
