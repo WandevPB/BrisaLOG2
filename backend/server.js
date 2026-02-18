@@ -1052,6 +1052,21 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     // Converte dataEntrega para data local
     const dataEntregaLocal = toLocalDateOnly(agendamentoData.entrega.dataEntrega);
     console.log('[DEBUG] dataEntrega recebido:', agendamentoData.entrega.dataEntrega, '| convertido:', dataEntregaLocal);
+    
+    // Regra: Não permite agendamento no mesmo dia, EXCETO para CD Lagoa Nova frotas (ID 10)
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const dataAgendamento = new Date(dataEntregaLocal);
+    dataAgendamento.setHours(0, 0, 0, 0);
+    const isCDFrotas = (cd.id === 10);
+    
+    if (!isCDFrotas && dataAgendamento.getTime() === hoje.getTime()) {
+      console.log(`❌ [POST /api/agendamentos] Tentativa de agendar no mesmo dia para CD ${cd.nome} (ID ${cd.id})`);
+      return res.status(400).json({ 
+        error: 'Agendamentos devem ser feitos com pelo menos 1 dia de antecedência. Selecione uma data a partir de amanhã.',
+        errorType: 'MESMO_DIA'
+      });
+    }
 
     // Só verificar duplicação se for agendamento normal (não entrega pelo CD)
     const statusFinal = agendamentoData.status || 'pendente';
@@ -3688,10 +3703,17 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
 
     // Verificar se a data não é no passado
     if (selectedDate < today) {
       return res.status(400).json({ error: 'Não é possível consultar horários para datas passadas' });
+    }
+    
+    // Regra: Não permite agendamento no mesmo dia, EXCETO para CD Lagoa Nova frotas (ID 10)
+    const isCDFrotas = (cd === 10 || cdId === 10);
+    if (!isCDFrotas && selectedDate.getTime() === today.getTime()) {
+      return res.status(400).json({ error: 'Agendamentos devem ser feitos com pelo menos 1 dia de antecedência. Selecione uma data a partir de amanhã.' });
     }
 
     // Verificar se não é fim de semana (0=Domingo, 6=Sábado)

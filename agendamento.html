@@ -1439,12 +1439,38 @@
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         function initFlatpickrPT() {
-          flatpickr("#data-entrega", {
+          // Calcula próximo dia útil (exceto para CD Lagoa Nova frotas ID 10)
+          function getMinDateForCD() {
+            const cdSelect = document.getElementById('cd-destino');
+            const subcategoriaSelect = document.getElementById('subcategoria-cd');
+            const cdValue = cdSelect ? cdSelect.value : '';
+            const subValue = subcategoriaSelect ? subcategoriaSelect.value : '';
+            
+            // CD Lagoa Nova frotas (ID 10) = "pereiro-frota" no select
+            const isCDFrotas = (subValue === 'pereiro-frota');
+            
+            if (isCDFrotas) {
+              return "today"; // Pode agendar hoje
+            }
+            
+            // Para outros CDs: próximo dia útil (não hoje)
+            let nextDate = new Date();
+            nextDate.setDate(nextDate.getDate() + 1); // Amanhã
+            
+            // Pula finais de semana
+            while (nextDate.getDay() === 0 || nextDate.getDay() === 6) {
+              nextDate.setDate(nextDate.getDate() + 1);
+            }
+            
+            return nextDate;
+          }
+          
+          const flatpickrInstance = flatpickr("#data-entrega", {
             dateFormat: "d/m/Y",
             locale: "pt",
             allowInput: true,
             disableMobile: true,
-            minDate: "today",
+            minDate: getMinDateForCD(),
             disable: [
               function(date) {
                 // Desabilita sábados (6) e domingos (0)
@@ -1461,6 +1487,40 @@
             defaultDate: null,
             allowBlank: true
           });
+          
+          // Atualiza minDate quando o CD mudar
+          const cdSelect = document.getElementById('cd-destino');
+          const subcategoriaSelect = document.getElementById('subcategoria-cd');
+          
+          function updateMinDate() {
+            const cdValue = cdSelect ? cdSelect.value : '';
+            const subValue = subcategoriaSelect ? subcategoriaSelect.value : '';
+            const isCDFrotas = (subValue === 'pereiro-frota');
+            
+            let newMinDate;
+            if (isCDFrotas) {
+              newMinDate = "today";
+            } else {
+              let nextDate = new Date();
+              nextDate.setDate(nextDate.getDate() + 1);
+              while (nextDate.getDay() === 0 || nextDate.getDay() === 6) {
+                nextDate.setDate(nextDate.getDate() + 1);
+              }
+              newMinDate = nextDate;
+            }
+            
+            if (flatpickrInstance) {
+              flatpickrInstance.set('minDate', newMinDate);
+              // Limpa o campo se a data atual for inválida
+              const currentDate = flatpickrInstance.selectedDates[0];
+              if (currentDate && currentDate < new Date(newMinDate)) {
+                flatpickrInstance.clear();
+              }
+            }
+          }
+          
+          if (cdSelect) cdSelect.addEventListener('change', updateMinDate);
+          if (subcategoriaSelect) subcategoriaSelect.addEventListener('change', updateMinDate);
         }
 
         // Força o carregamento do locale pt.js e só inicializa após carregar
