@@ -3709,12 +3709,6 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
     if (selectedDate < today) {
       return res.status(400).json({ error: 'Não é possível consultar horários para datas passadas' });
     }
-    
-    // Regra: Não permite agendamento no mesmo dia, EXCETO para CD Lagoa Nova frotas (ID 10)
-    const isCDFrotas = (cd === 10 || cdId === 10);
-    if (!isCDFrotas && selectedDate.getTime() === today.getTime()) {
-      return res.status(400).json({ error: 'Agendamentos devem ser feitos com pelo menos 1 dia de antecedência. Selecione uma data a partir de amanhã.' });
-    }
 
     // Verificar se não é fim de semana (0=Domingo, 6=Sábado)
     const dayOfWeek = selectedDate.getDay();
@@ -3754,6 +3748,12 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
       } catch (error) {
         console.error(`❌ [GET /api/horarios-disponiveis] Erro ao buscar CD: ${cd}`, error);
       }
+    }
+    
+    // Regra: Não permite agendamento no mesmo dia, EXCETO para CD Lagoa Nova frotas (ID 10)
+    const isCDFrotas = (cdId === 10);
+    if (!isCDFrotas && selectedDate.getTime() === today.getTime()) {
+      return res.status(400).json({ error: 'Agendamentos devem ser feitos com pelo menos 1 dia de antecedência. Selecione uma data a partir de amanhã.' });
     }
 
     // Buscar agendamentos existentes para a data (criar data local diretamente)
