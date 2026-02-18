@@ -120,6 +120,7 @@ class AgendamentoForm {
         let formId = `form-step-${step}`;
         const inputs = document.querySelectorAll(`#${formId} [required]`);
         const stepContainer = document.getElementById(formId);
+        let firstInvalidInput = null;
 
         // Validação extra para transportador (step 1)
         if (step === 1) {
@@ -131,10 +132,13 @@ class AgendamentoForm {
                 const emailVal = emailInput.value.trim();
                 const emailRegex = /^[\w-.]+@[\w-]+\.[a-zA-Z]{2,}$/;
                 if (!emailRegex.test(emailVal)) {
-                    this.showInvalidFeedback(emailInput, 'E-mail inválido.');
+                    this.showInvalidFeedback(emailInput, 'E-mail inválido. Formato esperado: exemplo@dominio.com');
+                    emailInput.classList.add('border-red-500', 'bg-red-50');
+                    if (!firstInvalidInput) firstInvalidInput = emailInput;
                     isValid = false;
                 } else {
                     this.hideInvalidFeedback(emailInput);
+                    emailInput.classList.remove('border-red-500', 'bg-red-50');
                 }
             }
             // Telefone
@@ -143,10 +147,13 @@ class AgendamentoForm {
                 const telRegex = /^\d{10,11}$/;
                 const telDigits = telVal.replace(/\D/g, '');
                 if (!telRegex.test(telDigits)) {
-                    this.showInvalidFeedback(telefoneInput, 'Telefone inválido. Use apenas números (10 ou 11 dígitos).');
+                    this.showInvalidFeedback(telefoneInput, 'Telefone inválido. Deve ter 10 ou 11 dígitos.');
+                    telefoneInput.classList.add('border-red-500', 'bg-red-50');
+                    if (!firstInvalidInput) firstInvalidInput = telefoneInput;
                     isValid = false;
                 } else {
                     this.hideInvalidFeedback(telefoneInput);
+                    telefoneInput.classList.remove('border-red-500', 'bg-red-50');
                 }
             }
             // CNPJ
@@ -155,22 +162,81 @@ class AgendamentoForm {
                 const cnpjDigits = docVal.replace(/\D/g, '');
                 if (cnpjDigits.length !== 14) {
                     this.showInvalidFeedback(documentoInput, 'CNPJ inválido. Deve ter 14 dígitos.');
+                    documentoInput.classList.add('border-red-500', 'bg-red-50');
+                    if (!firstInvalidInput) firstInvalidInput = documentoInput;
                     isValid = false;
                 } else {
                     this.hideInvalidFeedback(documentoInput);
+                    documentoInput.classList.remove('border-red-500', 'bg-red-50');
                 }
             }
         }
 
         inputs.forEach(input => {
             if (input.type === 'file') {
-                // ...existing code...
+                const fileInput = input;
+                if (fileInput.closest('.file-drop-zone')) {
+                    const fileSelected = fileInput.closest('.file-drop-zone')?.querySelector('.file-selected');
+                    if (!fileSelected || fileSelected.classList.contains('hidden')) {
+                        this.showInvalidFeedback(input, 'Arquivo é obrigatório.');
+                        if (!firstInvalidInput) firstInvalidInput = input;
+                        isValid = false;
+                    } else {
+                        this.hideInvalidFeedback(input);
+                    }
+                } else if (fileInput.closest('.file-input-wrapper')) {
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        const wrapper = fileInput.closest('.file-input-wrapper');
+                        let feedback = wrapper.nextElementSibling;
+                        if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                             feedback = wrapper.parentElement.querySelector('.invalid-feedback');
+                        }
+                        if (feedback) {
+                            feedback.textContent = 'Arquivo é obrigatório.';
+                            feedback.classList.remove('hidden');
+                        }
+                        wrapper.classList.add('border-red-500', 'bg-red-50');
+                        if (!firstInvalidInput) firstInvalidInput = input;
+                        isValid = false;
+                    } else {
+                        const wrapper = fileInput.closest('.file-input-wrapper');
+                        let feedback = wrapper.nextElementSibling;
+                        if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                             feedback = wrapper.parentElement.querySelector('.invalid-feedback');
+                        }
+                         if (feedback) {
+                            feedback.classList.add('hidden');
+                        }
+                        wrapper.classList.remove('border-red-500', 'bg-red-50');
+                    }
+                } else {
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        this.showInvalidFeedback(input, 'Arquivo é obrigatório.');
+                        if (!firstInvalidInput) firstInvalidInput = input;
+                        isValid = false;
+                    } else {
+                        this.hideInvalidFeedback(input);
+                    }
+                }
             } else if (input.name === 'numeroPedido' || input.name === 'numeroPedidoLinha') {
-                // ...existing code...
+                const value = input.value.trim();
+                if (!/^450\d{7}$/.test(value)) {
+                    input.classList.add('border-red-500', 'bg-red-50');
+                    this.showInvalidFeedback(input, 'Número do pedido inválido. Deve iniciar com 450 e ter 10 dígitos.');
+                    if (!firstInvalidInput) firstInvalidInput = input;
+                    isValid = false;
+                } else {
+                    input.classList.remove('border-red-500', 'bg-red-50');
+                    this.hideInvalidFeedback(input);
+                }
             } else if (!input.value.trim()) {
-                this.showInvalidFeedback(input, 'Este campo é obrigatório.');
+                input.classList.add('border-red-500', 'bg-red-50');
+                const fieldName = input.placeholder || input.name || 'Campo';
+                this.showInvalidFeedback(input, `${fieldName} é obrigatório.`);
+                if (!firstInvalidInput) firstInvalidInput = input;
                 isValid = false;
             } else {
+                input.classList.remove('border-red-500', 'bg-red-50');
                 this.hideInvalidFeedback(input);
             }
         });
@@ -192,38 +258,52 @@ class AgendamentoForm {
                     const arquivoNF = nfDiv.querySelector('[name="arquivoNF"]');
 
                     if (!numeroNF || !numeroNF.value.trim()) {
-                        this.showInvalidFeedback(numeroNF, 'Este campo é obrigatório.');
+                        numeroNF.classList.add('border-red-500', 'bg-red-50');
+                        this.showInvalidFeedback(numeroNF, 'Número da NF é obrigatório.');
+                        if (!firstInvalidInput) firstInvalidInput = numeroNF;
                         isValid = false;
                     } else {
+                        numeroNF.classList.remove('border-red-500', 'bg-red-50');
                         this.hideInvalidFeedback(numeroNF);
                     }
                     
                     if (!numeroPedidoLinha || !numeroPedidoLinha.value.trim()) {
-                        this.showInvalidFeedback(numeroPedidoLinha, 'Este campo é obrigatório.');
+                        numeroPedidoLinha.classList.add('border-red-500', 'bg-red-50');
+                        this.showInvalidFeedback(numeroPedidoLinha, 'Número do Pedido é obrigatório.');
+                        if (!firstInvalidInput) firstInvalidInput = numeroPedidoLinha;
+                        isValid = false;
+                    } else if (!/^450\d{7}$/.test(numeroPedidoLinha.value.trim())) {
+                        numeroPedidoLinha.classList.add('border-red-500', 'bg-red-50');
+                        this.showInvalidFeedback(numeroPedidoLinha, 'Número do pedido inválido. Deve iniciar com 450 e ter 10 dígitos.');
+                        if (!firstInvalidInput) firstInvalidInput = numeroPedidoLinha;
                         isValid = false;
                     } else {
+                        numeroPedidoLinha.classList.remove('border-red-500', 'bg-red-50');
                         this.hideInvalidFeedback(numeroPedidoLinha);
                     }
 
                     if (!valorNF || !valorNF.value.trim() || valorNF.value === 'R$ 0,00') {
-                        this.showInvalidFeedback(valorNF, 'Este campo é obrigatório.');
+                        valorNF.classList.add('border-red-500', 'bg-red-50');
+                        this.showInvalidFeedback(valorNF, 'Valor da NF é obrigatório e deve ser maior que zero.');
+                        if (!firstInvalidInput) firstInvalidInput = valorNF;
                         isValid = false;
                     } else {
+                        valorNF.classList.remove('border-red-500', 'bg-red-50');
                         this.hideInvalidFeedback(valorNF);
                     }
                     
                     if (!arquivoNF || !arquivoNF.files || !arquivoNF.files.length) {
-                        // Acha o feedback do input de arquivo
                         const wrapper = arquivoNF.closest('.file-input-wrapper');
                         let feedback = wrapper.nextElementSibling;
                          if (!feedback || !feedback.classList.contains('invalid-feedback')) {
                              feedback = wrapper.parentElement.querySelector('.invalid-feedback');
                         }
-
                         if (feedback) {
-                            feedback.textContent = 'Este campo é obrigatório.';
+                            feedback.textContent = 'Arquivo da NF é obrigatório.';
                             feedback.classList.remove('hidden');
                         }
+                        wrapper.classList.add('border-red-500', 'bg-red-50');
+                        if (!firstInvalidInput) firstInvalidInput = arquivoNF;
                         isValid = false;
                     } else {
                          const wrapper = arquivoNF.closest('.file-input-wrapper');
@@ -234,6 +314,7 @@ class AgendamentoForm {
                          if (feedback) {
                             feedback.classList.add('hidden');
                         }
+                        wrapper.classList.remove('border-red-500', 'bg-red-50');
                     }
                 });
             } else {
@@ -242,11 +323,18 @@ class AgendamentoForm {
                 if (pedidoInputs?.length === 0) {
                     this.showNotification('É necessário adicionar pelo menos um pedido.', 'error');
                     isValid = false;
-                } else {
-                    // ... (lógica de validação do sistema de abas)
                 }
             }
         }
+
+        // Se houver campo inválido, fazer scroll até ele
+        if (!isValid && firstInvalidInput) {
+            firstInvalidInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+                firstInvalidInput.focus();
+            }, 500);
+        }
+
         return isValid;
     }
 
@@ -387,7 +475,9 @@ class AgendamentoForm {
 
     nextStep() {
         if (!this.validateStep(this.currentStep)) {
-            this.showNotification('Por favor, preencha todos os campos obrigatórios.', 'error');
+            // A validação já fez scroll até o primeiro campo inválido
+            // Mostrar mensagem genérica
+            this.showNotification('Verifique os campos destacados em vermelho e corrija os erros antes de continuar.', 'error');
             return;
         }
 
