@@ -127,20 +127,7 @@ class AgendamentoForm {
             const emailInput = document.getElementById('email');
             const telefoneInput = document.getElementById('telefone');
             const documentoInput = document.getElementById('documento');
-            // Email
-            if (emailInput && emailInput.value.trim()) {
-                const emailVal = emailInput.value.trim();
-                const emailRegex = /^[\w-.]+@[\w-]+\.[a-zA-Z]{2,}$/;
-                if (!emailRegex.test(emailVal)) {
-                    this.showInvalidFeedback(emailInput, 'E-mail inválido. Formato esperado: exemplo@dominio.com');
-                    emailInput.classList.add('border-red-500', 'bg-red-50');
-                    if (!firstInvalidInput) firstInvalidInput = emailInput;
-                    isValid = false;
-                } else {
-                    this.hideInvalidFeedback(emailInput);
-                    emailInput.classList.remove('border-red-500', 'bg-red-50');
-                }
-            }
+            // Email - Sem validação de formato, apenas obrigatório
             // Telefone
             if (telefoneInput && telefoneInput.value.trim()) {
                 const telVal = telefoneInput.value.trim();
