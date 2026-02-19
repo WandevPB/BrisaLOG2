@@ -735,7 +735,7 @@ app.get('/api/agendamentos/todos', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Acesso negado. Apenas perfis consultivos podem acessar esta rota.' });
     }
 
-    const { status, search, cdId, page = 1, limit = 100 } = req.query;
+    const { status, search, cdId, page = 1, limit = 10000 } = req.query;
 
     // Construir filtros (SEM filtro de cdId padrão)
     const where = {};
