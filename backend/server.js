@@ -610,7 +610,7 @@ app.post('/api/renew-token', async (req, res) => {
 app.get('/api/agendamentos', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 [GET /api/agendamentos] Iniciando listagem de agendamentos...');
-    const { status, search, page = 1, limit = 200 } = req.query;
+    const { status, search, page = 1, limit = 10000 } = req.query;
     const cdId = req.user.id;
     
     console.log(`👤 [GET /api/agendamentos] CD ID do usuário logado: ${cdId} (${req.user.nome})`);
