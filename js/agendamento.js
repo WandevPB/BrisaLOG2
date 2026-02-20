@@ -1633,7 +1633,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (cdInput && dateInput) {
         cdInput.addEventListener('change', function() {
-            // Verificar se selecionou CD Lagoa Nova (qualquer variação)
             const cdSelecionado = cdInput.value;
             const subcategoriaContainer = document.getElementById('subcategoria-cd-container');
             const subcategoriaSelect = document.getElementById('subcategoria-cd');
@@ -1642,23 +1641,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Sempre limpar o campo de data ao trocar o CD
             if (dateInput) {
                 dateInput.value = '';
-                // Se estiver usando flatpickr, limpar também a instância
                 if (dateInput._flatpickr) {
                     dateInput._flatpickr.clear();
                 }
             }
 
-            // Verificar se é CD Ceará (mostra subcategorias)
-            if (cdSelecionado && cdSelecionado === 'Ceará') {
-                // Mostrar subcategoria
+            // Mostrar subcategoria se Ceará ou Bahia
+            if (cdSelecionado === 'Ceará' || cdSelecionado === 'Bahia') {
                 if (subcategoriaContainer) {
                     subcategoriaContainer.style.display = 'block';
                     if (subcategoriaSelect) {
                         subcategoriaSelect.required = true;
+                        // Preencher opções de subcategoria
+                        subcategoriaSelect.innerHTML = '<option value="">Selecione o destino</option>';
+                        if (cdSelecionado === 'Ceará') {
+                            subcategoriaSelect.innerHTML += `
+                                <option value="LagoaNova">CD LAGOA NOVA (SEDE)</option>
+                                <option value="pereiro-frota">CD PEREIRO (PEÇAS DE VEICULOS)</option>
+                                <option value="cd lagoa nova (torre)">CD LAGOA NOVA (Itens de TORRE)</option>
+                            `;
+                        } else if (cdSelecionado === 'Bahia') {
+                            subcategoriaSelect.innerHTML += `
+                                <option value="CD BAHIA - CAMAÇARI">CD BAHIA - CAMAÇARI</option>
+                                <option value="CD 4J PAULO AFONSO - BA">CD 4J PAULO AFONSO - BA</option>
+                            `;
+                        }
                     }
                 }
             } else {
-                // Esconder subcategoria
                 if (subcategoriaContainer) {
                     subcategoriaContainer.style.display = 'none';
                     if (subcategoriaSelect) {
