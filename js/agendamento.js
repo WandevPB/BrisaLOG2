@@ -65,12 +65,14 @@ async function loadCDsFromDatabase() {
         if (selectCD && selectCD.options.length <= 1) {
             selectCD.innerHTML = `
                 <option value="">Selecione o CD</option>
-                <option value="Bahia">CD Bahia</option>
+                <option value="CD BAHIA - CAMAÇARI">CD BAHIA - CAMAÇARI</option>
+                <option value="CD 4J PAULO AFONSO - BA">CD 4J PAULO AFONSO - BA</option>
                 <option value="Pernambuco">CD Pernambuco</option>
                 <option value="Lagoa Nova">CD Lagoa Nova</option>
             `;
             cdMap = {
-                'Bahia': 1,
+                'CD BAHIA - CAMAÇARI': 1,
+                'CD 4J PAULO AFONSO - BA': 4,
                 'Pernambuco': 2,
                 'Lagoa Nova': 3
             };
