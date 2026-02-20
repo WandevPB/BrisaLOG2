@@ -28,35 +28,34 @@ async function loadCDsFromDatabase() {
 
         // Limpar opções existentes (exceto a primeira "Selecione o CD")
         selectCD.innerHTML = '<option value="">Selecione o CD</option>';
-        
-        // Adicionar "Ceará" como opção especial (agrupador, não é um CD real)
+
+        // Adicionar "Ceará" e "Bahia" como opções agrupadoras
         const optionCeara = document.createElement('option');
         optionCeara.value = 'Ceará';
         optionCeara.textContent = 'Ceará';
         selectCD.appendChild(optionCeara);
-        
+
+        const optionBahia = document.createElement('option');
+        optionBahia.value = 'Bahia';
+        optionBahia.textContent = 'Bahia';
+        selectCD.appendChild(optionBahia);
+
+        // Adicionar Pernambuco normalmente
+        const optionPe = document.createElement('option');
+        optionPe.value = 'Pernambuco';
+        optionPe.textContent = 'Pernambuco';
+        selectCD.appendChild(optionPe);
+
         // Resetar cdMap
         cdMap = {};
 
-        // Filtrar apenas os CDs principais (Pernambuco, Bahia)
-        const cdsPermitidos = ['Pernambuco', 'Bahia'];
-        
-        // Adicionar CDs dinamicamente
+        // Mapear todos os CDs para uso posterior (ao selecionar Bahia, mostrar os CDs da Bahia)
         cds.forEach(cd => {
-            // Adicionar ao mapeamento (todos os CDs)
             cdMap[cd.nome] = cd.id;
-            
-            // Adicionar ao select apenas os permitidos (não inclui Lagoa Nova, Pereiro, Torre)
-            if (cdsPermitidos.includes(cd.nome)) {
-                const option = document.createElement('option');
-                option.value = cd.nome;
-                option.textContent = cd.nome;
-                selectCD.appendChild(option);
-            }
         });
 
-        console.log('✅ CDs carregados:', cds.length, 'CDs no banco,', (cdsPermitidos.length + 1), 'exibidos no select (incluindo Ceará)');
-        console.log('📋 Mapeamento de CDs:', cdMap);
+        // Exemplo: você pode criar uma função para mostrar os CDs da Bahia ao selecionar Bahia
+        // (essa função já pode existir no seu código, só garantir que use os nomes corretos)
 
     } catch (error) {
         console.error('❌ Erro ao carregar CDs:', error);
