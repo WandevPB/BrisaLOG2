@@ -1252,9 +1252,9 @@ class AgendamentoForm {
         }, 5000);
     }
 
-    async loadAvailableHours(date, cdDestino, isCDTorre = false, isCDLagoaNova = false) {
+    async loadAvailableHours(date, cdDestino, isCDTorre = false, isCDLagoaNova = false, isCDBahia = false) {
         try {
-            console.log('🔍 Carregando horários disponíveis para:', { date, cdDestino, isCDTorre, isCDLagoaNova });
+            console.log('🔍 Carregando horários disponíveis para:', { date, cdDestino, isCDTorre, isCDLagoaNova, isCDBahia });
             
             // Fazer requisição para a API de horários disponíveis sem necessidade de autenticação
             const url = `${getApiBaseUrl()}/api/horarios-disponiveis?date=${date}&cd=${cdDestino}`;
@@ -1622,7 +1622,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (cdId && date) {
             if (horarioSelect) horarioSelect.disabled = false;
-            if (agendamentoForm) agendamentoForm.loadAvailableHours(date, cdId, isCDTorre, isCDLagoaNova);
+            if (agendamentoForm) agendamentoForm.loadAvailableHours(date, cdId, isCDTorre, isCDLagoaNova, isCDBahia);
         } else {
             if (horarioSelect) {
                 horarioSelect.disabled = true;
