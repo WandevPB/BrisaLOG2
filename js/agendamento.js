@@ -1575,8 +1575,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const subcategoriaSelect = document.getElementById('subcategoria-cd');
         const subCategoria = subcategoriaSelect?.value;
         
-        // Se CD Ceará estiver selecionado, PRECISA ter subcategoria
-        if (cdNome === 'Ceará') {
+        // Se CD Ceará ou Bahia estiver selecionado, PRECISA ter subcategoria
+        if (cdNome === 'Ceará' || cdNome === 'Bahia') {
             if (!subCategoria) {
                 // Não buscar horários se não tiver subcategoria selecionada
                 if (horarioSelect) {
