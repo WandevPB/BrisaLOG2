@@ -1293,15 +1293,15 @@ class AgendamentoForm {
                             return; // Pular este horário
                         }
                         
-                        // Se for CD Lagoa Nova, limitar horários da tarde até 15:00
-                        if (isCDLagoaNova) {
-                            const horaInt = parseInt(horario.valor.split(':')[0]);
-                            // Permitir manhã (08-11) e tarde (13-15)
-                            if (horaInt > 15 || horaInt === 12) {
-                                console.log(`   ⏭️ Pulando horário ${horario.valor} (CD Lagoa Nova: tarde 13h-15h)`);
-                                return; // Pular horários após 15h e horário de almoço (12h)
-                            }
-                        }
+                        // Se for CD Lagoa Nova OU CDs da Bahia, limitar horários da tarde até 15:00
+                        if (isCDLagoaNova || isCDBahia) {
+                                 const horaInt = parseInt(horario.valor.split(':')[0]);
+                                    // Permitir manhã (08-11) e tarde (13-15)
+                                 if (horaInt > 15 || horaInt === 12) {
+                                       console.log(`   ⏭️ Pulando horário ${horario.valor} (CD Lagoa Nova/Bahia: tarde 13h-15h)`);
+                                     return; // Pular horários após 15h e horário de almoço (12h)
+                                  }
+                                }
                         
                         const option = document.createElement('option');
                         option.value = horario.valor;
@@ -1596,7 +1596,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let date = dateInput?.value;
         const isCDTorre = cdNomeFinal === 'cd lagoa nova (torre)';
         const isCDLagoaNova = cdNomeFinal === 'LagoaNova';
-
+        const isCDBahia = cdNomeFinal === 'CD BAHIA - CAMAÇARI' || cdNomeFinal === 'CD 4J PAULO AFONSO - BA';
         // Converter data para formato YYYY-MM-DD se vier como DD/MM/YYYY
         if (date && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
             const [dia, mes, ano] = date.split('/');
