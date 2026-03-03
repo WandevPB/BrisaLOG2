@@ -1053,12 +1053,12 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
     const dataEntregaLocal = toLocalDateOnly(agendamentoData.entrega.dataEntrega);
     console.log('[DEBUG] dataEntrega recebido:', agendamentoData.entrega.dataEntrega, '| convertido:', dataEntregaLocal);
     
-    // Regra: Não permite agendamento no mesmo dia, EXCETO para CD Lagoa Nova frotas (ID 10)
+    // Regra: Não permite agendamento no mesmo dia, EXCETO para CD Lagoa Nova frotas (ID 10) e Pereiro-frota (ID 9)
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     const dataAgendamento = new Date(dataEntregaLocal);
     dataAgendamento.setHours(0, 0, 0, 0);
-    const isCDFrotas = (cd.id === 10);
+    const isCDFrotas = (cd.id === 10 || cd.id === 9);
     
     if (!isCDFrotas && dataAgendamento.getTime() === hoje.getTime()) {
       console.log(`❌ [POST /api/agendamentos] Tentativa de agendar no mesmo dia para CD ${cd.nome} (ID ${cd.id})`);
@@ -3750,8 +3750,8 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
       }
     }
     
-    // Regra: Não permite agendamento no mesmo dia, EXCETO para CD Lagoa Nova frotas (ID 10)
-    const isCDFrotas = (cdId === 10);
+    // Regra: Não permite agendamento no mesmo dia, EXCETO para CD Lagoa Nova frotas (ID 10) e Pereiro-frota (ID 9)
+    const isCDFrotas = (cdId === 10 || cdId === 9);
     if (!isCDFrotas && selectedDate.getTime() === today.getTime()) {
       return res.status(400).json({ error: 'Agendamentos devem ser feitos com pelo menos 1 dia de antecedência. Selecione uma data a partir de amanhã.' });
     }
