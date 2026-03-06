@@ -2734,6 +2734,32 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
       }
     }
 
+    // Se o horário foi ajustado, verificar disponibilidade do novo horário no CD destino
+    if (horarioFoiAjustado) {
+      const agendamentosNoHorarioAjustado = await prisma.agendamento.findMany({
+        where: {
+          cdId: cdNovo.id,
+          dataEntrega: agendamento.dataEntrega,
+          horarioEntrega: horarioAjustado,
+          status: { not: 'cancelado' }
+        }
+      });
+      if (agendamentosNoHorarioAjustado.length >= 1) {
+        console.log(`❌ [POST /api/agendamentos/${codigo}/transferir-cd] Horário ajustado ${horarioAjustado} também está ocupado no CD destino`);
+        return res.status(400).json({
+          error: `Horário indisponível no CD de destino após ajuste automático`,
+          errorType: 'HORARIO_AJUSTADO_INDISPONIVEL',
+          details: {
+            cdDestino: cdNovo.nome,
+            horarioOriginal,
+            horarioAjustado,
+            motivo: `O horário ${horarioOriginal} foi ajustado automaticamente para ${horarioAjustado} (restrição LagoaNova), mas este horário também está ocupado.`,
+            recomendacao: 'Cancele este ticket e solicite ao transportador um novo agendamento diretamente para o CD correto, em um horário disponível.'
+          }
+        });
+      }
+    }
+
     // Atualizar agendamento
     const agendamentoAtualizado = await prisma.agendamento.update({
       where: { id: agendamento.id },
