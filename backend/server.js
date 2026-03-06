@@ -2725,9 +2725,9 @@ app.post('/api/agendamentos/:codigo/transferir-cd', authenticateToken, async (re
       // Extrair hora inicial do horário (ex: "16:00-17:00" -> 16)
       const horaInicial = parseInt(agendamento.horarioEntrega.split(':')[0]);
       
-      // Se horário for > 15h (16h ou depois), ajustar para 14:00-16:00
+      // Se horário for > 15h (16h ou depois), ajustar para 15:00
       if (horaInicial >= 16) {
-        horarioAjustado = '14:00-16:00';
+        horarioAjustado = '15:00';
         horarioFoiAjustado = true;
         motivoAjusteHorario = `Ajuste automático: CD LagoaNova possui restrição de horário até 15h. Horário alterado de "${horarioOriginal}" para "${horarioAjustado}"`;
         console.log(`⏰ [POST /api/agendamentos/${codigo}/transferir-cd] Horário ajustado para LagoaNova: ${horarioOriginal} → ${horarioAjustado}`);
