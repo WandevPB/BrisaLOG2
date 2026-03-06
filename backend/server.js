@@ -1088,6 +1088,20 @@ app.post('/api/agendamentos', upload.any(), async (req, res) => {
       if (existe) {
         return res.status(400).json({ error: 'Já existe agendamento para este CD, data e horário.' });
       }
+
+      // Também bloquear se já existe reagendamento com sugestão do CD para este slot
+      const existeReagendamentoSugerido = await prisma.agendamento.findFirst({
+        where: {
+          cdId: cd.id,
+          dataSugestaoCD: dataEntregaLocal,
+          horarioSugestaoCD: agendamentoData.entrega.horarioEntrega,
+          status: 'reagendamento'
+        }
+      });
+      if (existeReagendamentoSugerido) {
+        console.log(`❌ [POST /api/agendamentos] Horário ${agendamentoData.entrega.horarioEntrega} bloqueado por reagendamento pendente (${existeReagendamentoSugerido.codigo})`);
+        return res.status(400).json({ error: 'Este horário já está reservado para um reagendamento pendente. Selecione outro horário.' });
+      }
     }
 
     // Preparar observações especiais para entrega pelo CD
@@ -3783,6 +3797,33 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
         cdId: true
       }
     });
+
+    // Buscar também reagendamentos com sugestão do CD para esta data
+    // Quando o CD sugere novo horário (dataSugestaoCD), aquele slot também deve ser bloqueado
+    const reagendamentosSugeridos = await prisma.agendamento.findMany({
+      where: {
+        dataSugestaoCD: {
+          gte: inicioDia,
+          lte: fimDia
+        },
+        ...(cdId && { cdId }),
+        status: 'reagendamento',
+        horarioSugestaoCD: { not: null }
+      },
+      select: {
+        id: true,
+        codigo: true,
+        dataSugestaoCD: true,
+        horarioSugestaoCD: true,
+        status: true,
+        cdId: true
+      }
+    });
+
+    console.log(`🔍 [DEBUG] Reagendamentos com sugestão de CD na data: ${reagendamentosSugeridos.length}`);
+    reagendamentosSugeridos.forEach(r => {
+      console.log(`   - ${r.codigo}: horarioSugestaoCD=${r.horarioSugestaoCD}`);
+    });
     
     console.log(`🔍 [DEBUG] Query executada com critérios:
        - dataEntrega >= ${inicioDia.toISOString()}
@@ -3898,11 +3939,17 @@ app.get('/api/horarios-disponiveis', async (req, res) => {
     // Função para contar agendamentos por horário
     const getAgendamentosPorHorario = (horario) => {
       const agendamentos = agendamentosExistentes.filter(ag => ag.horarioEntrega === horario);
-      console.log(`🔍 [DEBUG] Horário ${horario}: ${agendamentos.length} agendamentos encontrados`);
+      // Também bloquear horários sugeridos pelo CD em reagendamentos pendentes
+      const sugestoesCd = reagendamentosSugeridos.filter(r => r.horarioSugestaoCD === horario);
+      const total = agendamentos.length + sugestoesCd.length;
+      console.log(`🔍 [DEBUG] Horário ${horario}: ${agendamentos.length} agendamento(s) + ${sugestoesCd.length} sugestão(ões) CD = ${total}`);
       if (agendamentos.length > 0) {
         console.log(`   Agendamentos no horário ${horario}:`, agendamentos.map(ag => `ID: ${ag.id || 'N/A'}`).join(', '));
       }
-      return agendamentos.length;
+      if (sugestoesCd.length > 0) {
+        console.log(`   Sugestões CD no horário ${horario}:`, sugestoesCd.map(r => `Reagend. ${r.codigo}`).join(', '));
+      }
+      return total;
     };
 
     // Processar horários disponíveis
